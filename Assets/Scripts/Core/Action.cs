@@ -8,7 +8,6 @@ using System.Runtime.InteropServices;
 
 namespace Game.Core
 {
-    ///edfweadawwdwewqdwqdwqdqwdwqdwqfwd
     /// <summary>
     /// Flat, ID-only record of one legal action.
     /// Layout is intentionally compact (12 bytes) for ML pipelines.
