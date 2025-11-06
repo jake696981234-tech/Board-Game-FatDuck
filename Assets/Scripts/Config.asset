@@ -1,0 +1,74 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dd830153b3ff57c4e8e6a5eaec83d024, type: 3}
+  m_Name: Config
+  m_EditorClassIdentifier: Assembly-CSharp::Config
+  agent:
+    maxOffersToConsider: 64
+    rolloutDepth: 0
+    thinkBudgetMs: 5
+  observations:
+    maxCells: 217
+    maxDistance: 16
+  playerControl: 02020202
+  behaviorParams:
+    behaviorName: OmegaPPO
+    useChildSensors: 1
+    vectorObservationSize: 2625
+    actionBranchSize: 64
+  useMLAgents: 1
+  autoRestartOnGameOver: 1
+  maxAutoGames: 20
+  boardRadius: 8
+  boardInvalidId: -1
+  victoryPointCellId: 108
+  coreCellIdByPlayer: 46000000c9000000920000000f000000
+  startingBudgetPerPlayer: 100
+  numberOfRounds: 5
+  startOfTurnBudgetDecrease: 5
+  startCenterVP: 5
+  startCoreHp: 3
+  baseActionCost: 5
+  actionGrowthFactor: 1.5
+  budgetBonusForVP: 5
+  budgetBonusForCoreDamage: 5
+  capMaxActionsPerTurn: 30
+  capMaxVP: 30
+  capMaxBudget: 150
+  capMaxVPPool: 5
+  capMaxCoreHealth: 3
+  playerCount: 4
+  players:
+  - name: P0
+    isAI: 1
+    applyBotSurcharges: 1
+    applyStartOfTurnBudgetDecrease: 1
+    startingBudgetOverride: -1
+    team: 0
+  - name: P1
+    isAI: 1
+    applyBotSurcharges: 1
+    applyStartOfTurnBudgetDecrease: 1
+    startingBudgetOverride: -1
+    team: 1
+  - name: P2
+    isAI: 1
+    applyBotSurcharges: 1
+    applyStartOfTurnBudgetDecrease: 1
+    startingBudgetOverride: -1
+    team: 2
+  - name: P3
+    isAI: 1
+    applyBotSurcharges: 1
+    applyStartOfTurnBudgetDecrease: 1
+    startingBudgetOverride: -1
+    team: 3

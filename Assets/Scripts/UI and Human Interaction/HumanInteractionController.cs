@@ -1,0 +1,691 @@
+// Assets/Scripts/UI/HIC/HumanInteractionController.cs
+using System;
+using System.Collections.Generic;
+using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.InputSystem;
+using Game.Core; // for GameState
+
+public sealed class HumanInteractionController : MonoBehaviour
+{
+    public enum Mode { Build, Create, PieceAction, ActionExecute }
+
+    List<int> _targetsBuffer = new List<int>(128);
+
+    [Header("Config & Refs")]
+    public InteractionConfig config;
+    public BoardViewController boardView;   // emits CellClicked(int)
+    public GameState gameState;             // your core state (read-only in this skeleton)
+    // public OfferProvider offerProvider;  // we'll integrate next pass with your existing OfferProvider API :contentReference[oaicite:7]{index=7}
+    // public Pieces pieces;                // for names/icons/costs (aligns with your Pieces registry) :contentReference[oaicite:8]{index=8}
+
+    // Core systems used to build offers:
+    public OfferProvider offerProvider;     // assign in inspector
+    public BoardModel boardModel;        // assign the same model used by GameState
+    public Pieces pieces;            // your registry (names, flags, etc.)
+    public CostEngine costEngine;        // pricing engine used by GameState
+
+    [Header("Canvas/UI")]
+    public Image backdrop;
+    public Image panelBackDrop;
+    public GameObject blockInputOverlay;
+
+    public TMP_Text turnStatusText;
+    public TMP_Text budgetText;
+    public Button endTurnButton;
+
+    [Header("Panels")]
+    public BuildMenuPresenter buildMenu;         // BuildPanel
+    public RectTransform createPanel;       // CreatePanel
+    public TMP_Text createTitleText;
+    public TMP_Text createCostText;
+    public Image createSprite;
+
+    // Right side (default layout): Build (60%) + Action (non-piece actions) (40%)
+    public RectTransform actionPanel;                // 40% panel for non-piece actions
+    public ActionListPresenter nonPieceActionList;   // presenter on actionPanel
+
+    // Full coverage panel shown only in PieceAction mode (piece-driven actions)
+    public RectTransform pieceActionPanelFull;       // full coverage on right side
+    public ActionListPresenter pieceActionListFull;  // presenter on pieceActionPanelFull
+
+
+    public RectTransform actionExecutePanel; // ActionExecutePanel
+    public TMP_Text actionTitleText, actionPieceText, actionCostText;
+
+    // ---------------- HUD (Left) ----------------
+    [Header("HUD / Match Header")]
+    public TMP_Text Header_TurnOwnerText;
+    public TMP_Text Header_ModeText;
+
+    [Header("HUD / Player Panel - Personal")]
+    public TMP_Text Personal_BudgetText;
+    public TMP_Text Personal_VPText;
+    public TMP_Text Personal_CoreHPText;
+    public Image    Personal_TintSwatch; // optional
+
+    [Header("HUD / Player Panel - All Players")]
+    public RectTransform AllPlayers_ListRoot; // container to hold rows
+    public GameObject    PlayerRowPrefab;     // prefab with child names:
+                                              // PlayerRow_NameText, PlayerRow_TintSwatch,
+                                             // PlayerRow_BudgetText, PlayerRow_VPText, PlayerRow_CoreHPText
+
+    [Header("HUD / Debug Box")]
+    public TMP_Text Debug_OffersText;
+    public TMP_Text Debug_LastActionText;
+    public TMP_Text Debug_SnapshotText;
+
+
+
+    // ---------- runtime state ----------
+    private Mode _mode = Mode.Build;
+
+    [SerializeField, Range(0, 3)] private byte _humanPlayer = 0; // bound by bootstrapper
+    private int? _selectedPieceId;
+    private int? _selectedCellId;
+    private ActionItem? _selectedAction;
+    private int _selectedActionIndex = -1;
+
+    // Create flow
+    private byte _selectedCreateType = 0;   // which piece type we're trying to create
+    private bool _createArmed = false;      // in Create mode and seeded
+
+    // Offers built from core (capacity big enough to hold a full turn's options)
+    const int kCap = 256;
+    private Game.Core.Action[] _offers = new Game.Core.Action[kCap];
+    private float[] _quoted = new float[kCap];
+    private byte[] _mask = new byte[kCap];
+    private int _total;   // total actions returned by provider (may exceed cap)
+    private int _count;   // displayed = min(total, cap)
+
+     private string _lastActionLabel = string.Empty; // for Debug HUD
+
+
+    private void Awake()
+    {
+        if (boardView) boardView.CellClicked += OnCellClicked;   // from your BoardViewController
+        if (endTurnButton) endTurnButton.onClick.AddListener(OnEndTurnClicked);
+    }
+
+    private void OnEnable()
+    {
+        if (gameState != null) gameState.OnActionExecuted += HandleActionExecuted; // refresh on every mutation
+        RebuildOffersForCurrentPlayer();
+        EnterBuildMode(); // will push menus from offers
+        HookPresenters();
+        HudRefresh();
+    }
+
+    private void OnDisable()
+    {
+        if (gameState != null) gameState.OnActionExecuted -= HandleActionExecuted;
+        UnhookPresenters();
+    }
+
+    private void Update()
+    {
+        // Global cancel (New Input System)
+        // Esc key OR Right Mouse Button pressed this frame
+        bool cancel =
+            (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame) ||
+           (Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame);
+
+        if (cancel)
+        {
+            switch (_mode)
+            {
+                case Mode.Create: EnterBuildMode(); break;
+                case Mode.PieceAction: EnterBuildMode(); break;
+                case Mode.ActionExecute: EnterPieceActionMode(); break;
+            }
+        }
+    }
+
+    // ===================== Mode transitions =====================
+    private void EnterBuildMode()
+    {
+        boardView.ClearHighlights();
+         if (config && boardView) boardView.ApplyDefaultCellColor(config.defaultCellColor);
+        _mode = Mode.Build;
+        _selectedPieceId = null;
+        _selectedAction = null;
+
+        SetBackdropColor(config ? config.buildModeBackground : new Color(0, 0, 0, 0.8f));
+        SetPanelBackdropColor(config ? config.buildModePanelBackground : new Color(0, 0, 0, 0.8f));
+        
+        TogglePanels(build: true, create: false, action: true, pieceFull: false, execute: false);
+        PushBuildMenu();
+        PushNonPieceActionList();   // NEW: default action list = non-piece actions (e.g., End Turn)
+
+        HudRefresh();
+    }
+
+    private void EnterCreateMode(BuildItem build)
+    {
+        boardView.ClearHighlights();
+        if (config && boardView) boardView.ApplyDefaultCellColor(config.defaultCellColor);
+        // Seed the create family (piece type) and highlight all legal cells for that type.
+        _selectedCreateType = build.pieceType;
+        _selectedActionIndex = FindFirstCreateIndexForType(_selectedCreateType); // seed (can be -1 if none)
+        _createArmed = (_selectedActionIndex >= 0);
+        boardView.HighlightCells(
+            ComputeCreateTargetsForPieceType(_selectedCreateType),
+            config ? config.createModeCellHighlight : new Color(0.25f, 0.75f, 0.25f, 0.6f)
+        );
+        _mode = Mode.Create;
+        _selectedPieceId = null;
+        _selectedCellId = null;
+        _selectedAction = null;
+
+        SetBackdropColor(config ? config.createModeBackground : new Color(0, 0, 0, 0.8f));
+        SetPanelBackdropColor(config ? config.createModePanelBackground : new Color(0, 0, 0, 0.8f));
+        TogglePanels(build: false, create: true, action: false, pieceFull: false, execute: false);
+
+        if (createTitleText) createTitleText.text = $"Create: {build.name}";
+        if (createCostText) createCostText.text = $"Cost: {build.cost}";
+        if (createSprite)
+        {
+            var s = !string.IsNullOrEmpty(build.spritePath) ? Resources.Load<Sprite>(build.spritePath) : null;
+            createSprite.sprite = s;
+            createSprite.enabled = (s != null);
+        }
+
+        // NOTE: We haven't added highlight APIs to BoardViewController yet, so no highlight calls here.
+        HudRefresh();
+    }
+
+    private void EnterPieceActionMode(int? pieceId = null)
+    {
+        boardView.ClearHighlights();
+        if (config && boardView) boardView.ApplyDefaultCellColor(config.defaultCellColor);
+        _mode = Mode.PieceAction;
+        _selectedAction = null;
+        if (pieceId.HasValue) _selectedPieceId = pieceId;
+
+        SetBackdropColor(config ? config.pieceActionBackground : new Color(0, 0, 0, 0.8f));
+        SetPanelBackdropColor(config ? config.pieceActionPanelBackground : new Color(0, 0, 0, 0.8f));
+        
+        TogglePanels(build: false, create: false, action: false, pieceFull: true, execute: false);
+        // Immediately fill the full panel so it shows on the first click:
+        PushPieceActionListForSelection();
+
+        HudRefresh();
+    }
+
+    private void EnterActionExecuteMode(ActionItem action)
+    {
+        boardView.ClearHighlights();
+        _mode = Mode.ActionExecute;
+        _selectedAction = action;
+
+        SetBackdropColor(config ? config.actionExecuteBackground : new Color(0, 0, 0, 0.8f));
+        SetPanelBackdropColor(config ? config.actionExecutePanelBackground : new Color(0, 0, 0, 0.8f));
+        
+        TogglePanels(build: false, create: false, action: false, pieceFull: false, execute: true);
+        // (Re)apply legal-target highlights for clarity while in execute mode
+        if (_selectedActionIndex >= 0)
+        {
+            var col = (config ? config.actionLegalTargetHighlight : new Color(0.6f, 0.35f, 0.9f, 0.65f));
+            boardView.ClearHighlights();
+            boardView.HighlightCells(ComputeTargetsForActionIndex(_selectedActionIndex), col);
+        }
+
+        if (actionTitleText) actionTitleText.text = action.name;
+        if (actionPieceText) actionPieceText.text = _selectedPieceId.HasValue ? $"Piece #{_selectedPieceId.Value}" : "Piece (none)";
+        if (actionCostText) actionCostText.text = $"Cost: {action.cost}";
+
+        HudRefresh();
+    }
+
+    // ===================== Input (from board) =====================
+    private void OnCellClicked(int cellId)
+    {
+        if (config && config.blockInputWhenNotYourTurn && gameState != null)
+        {
+            // gate input while not human's turn (wire up your player id if needed)
+            if (gameState.CurrentPlayerId != _humanPlayer) return;
+        }
+
+        switch (_mode)
+        {
+            case Mode.Build:
+                _selectedCellId = cellId;
+                // Selection/hover feedback: show selected cell using config colour
+                if (config && boardView) {
+                    boardView.ClearHighlights();
+                    boardView.HighlightSelection(cellId, config.selectionHighlight);
+                }
+                // Only enter piece mode if the cell has any piece-driven actions.
+                if (HasPieceActionsForCell(cellId))
+                {
+                    EnterPieceActionMode();  // switches right column to full panel
+                    // NOTE: EnterPieceActionMode() calls PushPieceActionListForSelection(),
+                    // so the list is visible on the very first click.
+                }
+                // else: stay on default Build + Non-piece Action layout
+                break;
+
+            case Mode.Create:
+                // Click on a highlighted target → perform the concrete Create action
+                if (_createArmed)
+                {
+                    int idx = FindConcreteCreateAction(_selectedCreateType, (ushort)cellId);
+                    if (idx >= 0) PerformActionIndex(idx);
+                }
+                // Clear either way and return to Build
+                boardView.ClearHighlights();
+                EnterBuildMode();
+                break;
+
+            case Mode.PieceAction:
+                _selectedCellId = cellId;
+                PushPieceActionListForSelection();
+                break;
+
+            case Mode.ActionExecute:
+                // We’re in targeting: the user clicked a highlighted cell → find the concrete action
+                if (_selectedActionIndex >= 0)
+                {
+                    var seed = _offers[_selectedActionIndex];
+                    int idx = FindConcreteAction(seed.kind, seed.srcCell, seed.pieceType, (ushort)cellId);
+                    if (idx >= 0) { PerformActionIndex(idx); }
+                    // Clear highlights regardless (perform may change board)
+                    boardView.ClearHighlights();
+                    EnterBuildMode();
+                }
+                break;
+        }
+    }
+
+    private int FindConcreteAction(byte kind, ushort src, byte type, ushort dst)
+    {
+        for (int i = 0; i < _count; i++)
+        {
+            var a = _offers[i];
+            if (a.kind != kind) continue;
+            if (a.srcCell != src) continue;
+            if (a.pieceType != type) continue;
+            if (a.dstCell != dst) continue;
+            if (_mask[i] == 0) continue;
+            return i;
+        }
+        return -1;
+    }
+
+
+    // ===================== Buttons =====================
+    private void OnEndTurnClicked()
+    {
+        // find EndTurn in the current offers and perform it
+        int idx = FindEndTurnIndex();
+        if (idx >= 0) PerformActionIndex(idx);
+    }
+
+
+    private void PerformActionIndex(int idx)
+    {
+        if (gameState == null) return;
+        var a = _offers[idx];
+        // Execute through reducer (single source of truth). This method fires OnActionExecuted afterwards. :contentReference[oaicite:9]{index=9}
+        if (!gameState.Perform(in a))
+        {
+            Debug.LogWarning($"[HIC] Perform rejected: {PrettyAction(a)}");
+        }
+        else
+        {
+            _lastActionLabel = PrettyAction(a); // show in Debug HUD
+        }
+        // UI refresh happens via HandleActionExecuted()
+    }
+
+    private int FindEndTurnIndex()
+    {
+        for (int i = 0; i < _count; i++) if (_offers[i].kind == Game.Core.ActionKind.EndTurn) return i;
+        return -1;
+    }
+
+    // ===================== UI helpers =====================
+    private void TogglePanels(bool build, bool create, bool action, bool pieceFull, bool execute)
+    {
+        if (buildMenu) buildMenu.gameObject.SetActive(build);
+        if (createPanel) createPanel.gameObject.SetActive(create);
+        if (actionPanel) actionPanel.gameObject.SetActive(action);
+        if (pieceActionPanelFull) pieceActionPanelFull.gameObject.SetActive(pieceFull);
+        if (actionExecutePanel) actionExecutePanel.gameObject.SetActive(execute);
+    }
+
+    private void SetBackdropColor(Color c)
+    {
+        if (backdrop) backdrop.color = c;
+    }
+
+    private void SetPanelBackdropColor(Color c)
+    {
+        if (panelBackDrop) panelBackDrop.color = c;
+    }
+
+    // Legacy small HUD fields (kept) + new consolidated HUD refresh
+    private void UpdateHud_LegacySmall()
+    {
+        if (budgetText && gameState != null)
+            budgetText.text = $"Budget: {gameState.GetBudget(_humanPlayer):0}";
+        if (blockInputOverlay && gameState != null && config != null && config.blockInputWhenNotYourTurn)
+            blockInputOverlay.SetActive(gameState.CurrentPlayerId != _humanPlayer);
+    }
+
+    private void HudRefresh()
+    {
+        UpdateHud_LegacySmall();
+        if (gameState == null) return;
+
+        // --- Match header ---
+        if (Header_TurnOwnerText) Header_TurnOwnerText.text = $"Player {gameState.CurrentPlayerId}";
+        if (Header_ModeText)      Header_ModeText.text      = _mode.ToString();
+
+        // --- Personal stats (your seat) ---
+        if (Personal_BudgetText)  Personal_BudgetText.text  = $"{Mathf.RoundToInt(gameState.GetBudget(_humanPlayer))}";
+        if (Personal_VPText)      Personal_VPText.text      = $"{gameState.GetVP(_humanPlayer)}";
+        if (Personal_CoreHPText)  Personal_CoreHPText.text  = $"{gameState.GetCoreHealth(_humanPlayer)}";
+        // Tint swatch optional; if you have a palette somewhere you can assign it here.
+
+        // --- All players list ---
+        if (AllPlayers_ListRoot && PlayerRowPrefab)
+        {
+            // Clear old rows
+            for (int i = AllPlayers_ListRoot.childCount - 1; i >= 0; i--)
+                Destroy(AllPlayers_ListRoot.GetChild(i).gameObject);
+
+            // Show current player first, then others in seat order
+            Span<int> order = stackalloc int[4] { gameState.CurrentPlayerId, (gameState.CurrentPlayerId + 1) & 3, (gameState.CurrentPlayerId + 2) & 3, (gameState.CurrentPlayerId + 3) & 3 };
+            for (int k = 0; k < 4; k++)
+            {
+                int p = order[k];
+                var go = Instantiate(PlayerRowPrefab, AllPlayers_ListRoot);
+                BindPlayerRow(go.transform as RectTransform, p);
+            }
+        }
+
+        // --- Debug box ---
+        if (Debug_OffersText)
+        {
+            int masked = 0; for (int i = 0; i < _count; i++) if (_mask[i] == 0) masked++;
+            Debug_OffersText.text = $"Shown: {_count}  /  Total: {_total}  (Masked: {masked})";
+        }
+        if (Debug_LastActionText)   Debug_LastActionText.text = string.IsNullOrEmpty(_lastActionLabel) ? "—" : _lastActionLabel;
+        if (Debug_SnapshotText)
+        {
+            // We don't hold a snapshot here; show some quick match counters instead.
+            Debug_SnapshotText.text = $"CenterVP={gameState.GetCenterVP()}  RoundsLeft={gameState.RoundsLeft}";
+        }
+    }
+    private void BindPlayerRow(RectTransform row, int playerId)
+    {
+        if (!row) return;
+        // Find children by the agreed names
+        var nameText   = row.Find("PlayerRow_NameText")?.GetComponent<TMP_Text>();
+        var tintImg    = row.Find("PlayerRow_TintSwatch")?.GetComponent<Image>();
+        var budgetText = row.Find("PlayerRow_BudgetText")?.GetComponent<TMP_Text>();
+        var vpText     = row.Find("PlayerRow_VPText")?.GetComponent<TMP_Text>();
+        var hpText     = row.Find("PlayerRow_CoreHPText")?.GetComponent<TMP_Text>();
+
+        if (nameText)   nameText.text   = (playerId == gameState.CurrentPlayerId) ? $"▶ Player {playerId}" : $"Player {playerId}";
+        if (budgetText) budgetText.text = $"{Mathf.RoundToInt(gameState.GetBudget((byte)playerId))}";
+        if (vpText)     vpText.text     = $"{gameState.GetVP((byte)playerId)}";
+        if (hpText)     hpText.text     = $"{gameState.GetCoreHealth((byte)playerId)}";
+
+        // Optional tint swatch: if you have a palette elsewhere, assign it here (left blank by default)
+        if (tintImg)    tintImg.enabled = false;
+    }
+
+    // Called by bootstrapper
+    public void SetHumanSeat(byte seat)
+    {
+        _humanPlayer = seat;
+        HudRefresh();
+    }
+
+    private void HookPresenters()
+    {
+        if (buildMenu) buildMenu.OnItemClicked += OnBuildItemClicked;
+        if (nonPieceActionList) nonPieceActionList.OnItemClicked += OnActionItemClicked;
+        if (pieceActionListFull) pieceActionListFull.OnItemClicked += OnActionItemClicked;
+    }
+
+    private void UnhookPresenters()
+    {
+        if (buildMenu) buildMenu.OnItemClicked -= OnBuildItemClicked;
+        if (nonPieceActionList) nonPieceActionList.OnItemClicked -= OnActionItemClicked;
+        if (pieceActionListFull) pieceActionListFull.OnItemClicked -= OnActionItemClicked;
+    }
+
+    private void OnBuildItemClicked(BuildItem item)
+    {
+        EnterCreateMode(item);
+    }
+
+    private void OnActionItemClicked(ActionItem item)
+    {
+        if (!int.TryParse(item.id, out var idx)) return;
+        if (idx < 0 || idx >= _count) return;
+
+        // If this is a NON-piece action (e.g., End Turn), perform immediately.
+        // NOTE: If your constant lives at Action.Kind.EndTurn, swap the symbol accordingly.
+        if (_offers[idx].kind == Game.Core.ActionKind.EndTurn)
+        {
+            PerformActionIndex(idx);
+            boardView.ClearHighlights();
+            EnterBuildMode(); // stay on default layout after executing a non-piece action
+            return;
+        }
+
+       // Piece-derived action: highlight all legal target cells right away
+        var col = (config ? config.actionLegalTargetHighlight : new Color(0.6f, 0.35f, 0.9f, 0.65f));
+        _selectedAction = item;
+        _selectedActionIndex = idx; // seed used for target resolution
+        boardView.ClearHighlights();
+        boardView.HighlightCells(ComputeTargetsForActionIndex(_selectedActionIndex), col);
+        EnterActionExecuteMode(item);
+    }
+
+    // Buffer for create targets (re-use across calls)
+    readonly List<int> _createTargetsBuffer = new List<int>(128);
+
+
+    // Collect all legal dst cells for "Create <pieceType>"
+    IEnumerable<int> ComputeCreateTargetsForPieceType(byte pieceType)
+    {
+        _createTargetsBuffer.Clear();
+        for (int i = 0; i < _count; i++)
+        {
+            var a = _offers[i];
+            if (a.kind != Game.Core.ActionKind.Create) continue;   // byte code
+            if (a.pieceType != pieceType) continue;
+            if (_mask[i] == 0) continue; // masked out = illegal/unaffordable
+            _createTargetsBuffer.Add(a.dstCell);
+        }
+        return _createTargetsBuffer;
+    }
+
+
+    // ===================== Offer plumbing (real) =====================
+    private void RebuildOffersForCurrentPlayer()
+    {
+        _total = _count = 0;
+        if (offerProvider == null || boardModel == null || pieces == null || costEngine == null || gameState == null)
+            return;
+
+        // Build the query from live systems (readonly struct → must use constructor)
+        var q = new OfferQuery(
+            boardModel,
+            pieces,
+            gameState.CurrentPlayerRef,
+            gameState.CurrentPlayerId,
+            costEngine
+        );
+
+        // Fill the spans (zero-alloc path in OfferProvider). Function returns TOTAL (may exceed cap). :contentReference[oaicite:7]{index=7}
+        _total = offerProvider.BuildActionList(in q, _offers.AsSpan(), _quoted.AsSpan(), _mask.AsSpan());
+        _count = Mathf.Min(kCap, _total);
+    }
+
+    private void HandleActionExecuted()
+    {
+        // World changed; rebuild and refresh UI
+        RebuildOffersForCurrentPlayer();
+        if (_mode == Mode.PieceAction)
+        {
+            PushPieceActionListForSelection();
+        }
+        else
+        {
+            PushBuildMenu();
+            PushNonPieceActionList();
+        }
+        HudRefresh();
+    }
+
+    // Pretty label for an action (for list rows)
+    private static string PrettyAction(Game.Core.Action a)
+    {
+        switch (a.kind)
+        {
+            case Game.Core.ActionKind.Move: return $"Move {a.srcCell} → {a.dstCell}";
+            case Game.Core.ActionKind.Shoot: return $"Shoot {a.srcCell} → {a.dstCell}";
+            case Game.Core.ActionKind.Create: return $"Create {a.pieceType} @ {a.dstCell}";
+            case Game.Core.ActionKind.CaptureVP: return $"Capture VP @ {a.dstCell}";
+            case Game.Core.ActionKind.CoreDamage: return $"Core Damage @ {a.dstCell}";
+            case Game.Core.ActionKind.EndTurn: return "End Turn";
+            default: return $"{a.kind} [{a.srcCell}->{a.dstCell}]";
+        }
+    }
+
+
+    private void PushBuildMenu()
+    {
+        // Build list shows all Create* actions this turn (grouping/labeling by piece type + quoted cost)
+        var items = new List<BuildItem>(_count);
+        if (_count > 0)
+        {
+            var names = pieces.displayNameByType;     // assumed from your Pieces registry
+            var paths = pieces.spritePathByType;      // assumed from your Pieces registry
+
+            for (int i = 0; i < _count; i++)
+            {
+                var a = _offers[i];
+                if (a.kind != Game.Core.ActionKind.Create) continue;
+                byte t = a.pieceType;
+                string name = (t < names.Length) ? names[t] : $"Type {t}";
+                string path = (t < paths.Length) ? paths[t] : null;
+                int cost = Mathf.RoundToInt(_quoted[i]);
+                bool legal = _mask[i] != 0;           // 1 = affordable+legal; 0 = masked out by cost, etc. :contentReference[oaicite:8]{index=8}
+                items.Add(new BuildItem(t, name, path, cost, legal));
+            }
+        }
+        buildMenu.Show(items);
+    }
+
+     // Default layout (right-side 40%): Non-piece actions only (e.g., End Turn)
+    private void PushNonPieceActionList()
+    {
+        var items = new List<ActionItem>();
+        for (int i = 0; i < _count; i++)
+        {
+            var a = _offers[i];
+            if (a.kind != Game.Core.ActionKind.EndTurn) continue; // future: add more non-piece kinds here
+            int cost = Mathf.RoundToInt(_quoted[i]);
+            bool legal = _mask[i] != 0;
+            items.Add(new ActionItem(i.ToString(), PrettyAction(a), cost, legal, Array.Empty<int>()));
+        }
+        nonPieceActionList.Show(items);
+    }
+
+    // PieceAction mode (full coverage panel): Only actions originating at the selected cell
+    private void PushPieceActionListForSelection()
+    {
+        var items = new List<ActionItem>();
+        if (_selectedCellId.HasValue)
+        {
+            int cell = _selectedCellId.Value;
+            for (int i = 0; i < _count; i++)
+            {
+                var a = _offers[i];
+               if (a.kind == Game.Core.ActionKind.EndTurn) continue; // exclude non-piece actions
+                if (a.srcCell != (ushort)cell) continue;               // only actions from this piece
+
+                string label = PrettyAction(a);
+                int cost = Mathf.RoundToInt(_quoted[i]);
+                bool legal = _mask[i] != 0;
+                items.Add(new ActionItem(i.ToString(), label, cost, legal, Array.Empty<int>()));
+            }
+        }
+        pieceActionListFull.Show(items);
+    }
+
+    IEnumerable<int> ComputeTargetsForActionIndex(int idx)
+    {
+        _targetsBuffer.Clear();
+        if (idx < 0 || idx >= _count) return _targetsBuffer;
+
+        var seed = _offers[idx];
+        var kind = seed.kind;
+        var src = seed.srcCell;
+        var type = seed.pieceType;
+
+        for (int i = 0; i < _count; i++)
+        {
+            var a = _offers[i];
+            if (a.kind != kind) continue;
+            if (a.srcCell != src) continue;
+            if (a.pieceType != type) continue;
+            if (_mask[i] == 0) continue; // masked out = illegal
+            _targetsBuffer.Add(a.dstCell);
+        }
+        return _targetsBuffer;
+    }
+
+
+// --- Create helpers ---
+    private int FindFirstCreateIndexForType(byte type)
+    {
+        for (int i = 0; i < _count; i++)
+        {
+            var a = _offers[i];
+            if (a.kind != Game.Core.ActionKind.Create) continue;
+            if (a.pieceType != type) continue;
+            if (_mask[i] == 0) continue;
+            return i;
+        }
+        return -1;
+    }
+
+    private int FindConcreteCreateAction(byte type, ushort dst)
+    {
+        // In OfferProvider, Create uses srcCell = 0xFFFF sentinel and kind=Create. We only match type+dst+mask. :contentReference[oaicite:1]{index=1}
+        for (int i = 0; i < _count; i++)
+        {
+            var a = _offers[i];
+            if (a.kind != Game.Core.ActionKind.Create) continue;
+            if (a.pieceType != type) continue;
+            if (a.dstCell != dst) continue;
+            if (_mask[i] == 0) continue;
+            return i;
+        }
+        return -1;
+    }
+
+    private bool HasPieceActionsForCell(int cellId)
+    {
+        ushort src = (ushort)cellId;
+        for (int i = 0; i < _count; i++)
+        {
+            var a = _offers[i];
+            if (_mask[i] == 0) continue;                    // illegal/masked
+            if (a.kind == Game.Core.ActionKind.EndTurn) continue; // non-piece; ignore
+            if (a.srcCell != src) continue;
+            return true;
+        }
+        return false;
+    }
+
+}
