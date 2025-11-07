@@ -14,11 +14,8 @@ public static class DbLoggingConfig
 
     //Values you must change for each simulation
     public readonly static int inputSimID = 3;
-
     public readonly static string inputSimName = "Does it work this way though?";
-
     public readonly static string inputRuleVersion = "v1";
-
     public readonly static string inputNotes = "No notes";
 
     //Prefrenece values
@@ -29,12 +26,13 @@ public static class DbLoggingConfig
     private readonly static string SqlConnection = "Server=localhost;Database=GameSim;Trusted_Connection=True;TrustServerCertificate=True";
 
     //Values that are a manual copy out of somewhere else- when adding/changing content double check if these are right (preferably change these to auto align)
-    private readonly static int moveID = 10;
-    private readonly static int shootID = 1;
-    private readonly static int captureVPID = 2;
-    private readonly static int coreDamageID = 3;
-    private readonly static int createID = 4;
-    private readonly static int endTurnID = 5;
+    // Hard Coded- subject to break code if the system is changed.
+    private readonly static int moveID = 1;
+    private readonly static int shootID = 2;
+    private readonly static int captureVPID = 3;
+    private readonly static int coreDamageID = 4;
+    private readonly static int createID = 5;
+    private readonly static int endTurnID = 6;
 
     private readonly static string moveString = "move";
     private readonly static string shootString = "shoot";
@@ -49,35 +47,29 @@ public static class DbLoggingConfig
     private readonly static string placeholder = "placeholder";
 
 
-    //SK values seeded on boostrap
+    //SK values seeded on bootstrap
+
 
     private static int skForMoveAction;
-
     private static int skForShootAction;
-
     private static int skForCaptureVPAction;
-
     private static int skForCoreDamageAction;
-
     private static int skForCreateAction;
-
     private static int skForEndTurnAction;
 
-    private static int skForpiece;
+    // Cache of pieceSK by pieceID for the current sim (populated during ImportAndLogDimPiece)
+    private static readonly Dictionary<int, int> pieceSKByPieceID = new Dictionary<int, int>();
+    public static IReadOnlyDictionary<int, int> PieceSKByPieceID => pieceSKByPieceID;
+    public static bool TryGetPieceSK(int pieceID, out int pieceSK) => pieceSKByPieceID.TryGetValue(pieceID, out pieceSK);
 
 
     private static int playerOneSK;
-
     private static int playerTwoSK;
-
     private static int playerThreeSK;
-
     private static int playerFourSK;
 
     public static int wonByEndVpSK;
-
     public static int wonByEliminationSK;
-
     public static int tieSK;
 
 
@@ -85,11 +77,13 @@ public static class DbLoggingConfig
     //SK values changed during runtime
 
     private static int latestGameSK;
-
     private static int latestRoundSK;
+    private static int latestTurnSK;
+    private static int latestActionSK;
 
     //ordinals
     private static int gameOrdinal = 0;
+    private static int actionOrdinal = 0;
 
     //Local Values being seeded
 
@@ -106,7 +100,7 @@ public static class DbLoggingConfig
         Hub = hub;
         TurnBudgetDecrease = Hub.match_startOfTurnBudgetDecrease;
         startingBudget = Hub.match_startingBudgetPerPlayer;
-        inputMaxRounds = Hub.match_numberOfRounds;     
+        inputMaxRounds = Hub.match_numberOfRounds;
     }
 
 
@@ -175,43 +169,49 @@ public static class DbLoggingConfig
     }
 
 
-    
 
-    
+
+
     public static void ImportAndLogDimPiece(string csvPath, int simID)
     {
-    using var conn = new SqlConnection(SqlConnection);
-    conn.Open();
-    using var tx = conn.BeginTransaction();
+        using var conn = new SqlConnection(SqlConnection);
+        conn.Open();
+        using var tx = conn.BeginTransaction();
 
-    using var cmd = new SqlCommand(
-        "INSERT INTO dbo.DimPiece(simID, pieceID, pieceName, isBuilding, faction, baseCost) " +
-        "VALUES (@simID, @pieceID, @pieceName, @isBuilding, @faction, @baseCost);", conn, tx);
+        using var cmd = new SqlCommand(
+            // Return the generated pieceSK so we can cache it by pieceID
+            "INSERT INTO dbo.DimPiece(simID, pieceID, pieceName, isBuilding, faction, baseCost) " +
+            "OUTPUT INSERTED.pieceSK " +
+            "VALUES (@simID, @pieceID, @pieceName, @isBuilding, @faction, @baseCost);",
+            conn, tx);
 
-    var pSimID       = cmd.Parameters.Add("@simID", SqlDbType.Int);
-    var pPieceID     = cmd.Parameters.Add("@pieceID", SqlDbType.Int);
-    var pPieceName   = cmd.Parameters.Add("@pieceName", SqlDbType.VarChar, 100);
-    var pIsBuilding  = cmd.Parameters.Add("@isBuilding", SqlDbType.Bit);
-    var pFactionName = cmd.Parameters.Add("@faction", SqlDbType.VarChar, 50);
-    var pBaseCost    = cmd.Parameters.Add("@baseCost", SqlDbType.Decimal);
-    pBaseCost.Precision = 19; pBaseCost.Scale = 4;
+        var pSimID = cmd.Parameters.Add("@simID", SqlDbType.Int);
+        var pPieceID = cmd.Parameters.Add("@pieceID", SqlDbType.Int);
+        var pPieceName = cmd.Parameters.Add("@pieceName", SqlDbType.VarChar, 100);
+        var pIsBuilding = cmd.Parameters.Add("@isBuilding", SqlDbType.Bit);
+        var pFactionName = cmd.Parameters.Add("@faction", SqlDbType.VarChar, 50);
+        var pBaseCost = cmd.Parameters.Add("@baseCost", SqlDbType.Decimal);
+        pBaseCost.Precision = 19; pBaseCost.Scale = 4;
 
-    pSimID.Value = simID;
-    
+        pSimID.Value = simID;
 
-    var pcs = PiecesCsvImporter.Import(csvPath, onTypeDefined: (pieceID, pieceName, isBuilding, faction, buildCost) =>
-    {
-        pPieceID.Value     = pieceID;
-        pPieceName.Value   = pieceName ?? (object)DBNull.Value;
-        pIsBuilding.Value  = isBuilding;
-        pFactionName.Value = string.IsNullOrEmpty(faction) ? (object)DBNull.Value : faction;
-        pBaseCost.Value    = buildCost == 0 ? (object)DBNull.Value : buildCost; // adjust if 0 is valid
 
-        cmd.ExecuteNonQuery();
-    });
+        var pcs = PiecesCsvImporter.Import(csvPath, onTypeDefined: (pieceID, pieceName, isBuilding, faction, buildCost) =>
+        {
+            pPieceID.Value = pieceID;
+            pPieceName.Value = pieceName ?? (object)DBNull.Value;
+            pIsBuilding.Value = isBuilding;
+            pFactionName.Value = string.IsNullOrEmpty(faction) ? (object)DBNull.Value : faction;
+            pBaseCost.Value = buildCost == 0 ? (object)DBNull.Value : buildCost; // adjust if 0 is valid
 
-    tx.Commit();
-}
+            // Capture the new pieceSK and cache it by pieceID
+            object skObj = cmd.ExecuteScalar();
+            int newPieceSK = Convert.ToInt32(skObj);
+            pieceSKByPieceID[pieceID] = newPieceSK;
+        });
+
+        tx.Commit();
+    }
 
 
 
@@ -248,7 +248,7 @@ public static class DbLoggingConfig
             new SqlParameter("@winCategory", winCategory ?? DBNull.Value)
         );
     }
-    
+
     public static void prepDimGameVersion(int simID, int gameOrdinal)
     {
         Execute(
@@ -259,7 +259,7 @@ public static class DbLoggingConfig
         );
     }
 
- 
+
     public static void dimGameVersion(int gameSK, object winnerPlayerSK, object winTypeSK)
     {
         Execute(
@@ -323,29 +323,27 @@ public static class DbLoggingConfig
     }
 
 
-    
+
 
 
     // TO DO FactAction
     public static void FactAction(
-        long actionID,
         int turnSK,
         int actionTypeSK,
         object pieceSK,
         int actingPlayerSK,
         object targetPlayerSK,
         int actionSeq,
-        decimal actionCost,
-        decimal buildCost,
-        decimal surchargeCost,
-        decimal totalCost)
+        decimal? actionCost,
+        decimal? buildCost,
+        decimal? surchargeCost,
+        decimal? totalCost)
     {
         Execute(
-            "INSERT INTO dbo.FactAction (actionID, turnSK, actionTypeSK, pieceSK, actingPlayerSK, targetPlayerSK, actionSeq, " +
+            "INSERT INTO dbo.FactAction (turnSK, actionTypeSK, pieceSK, actingPlayerSK, targetPlayerSK, actionSeq, " +
             "actionCost, buildCost, surchargeCost, totalCost) " +
-            "VALUES (@actionID, @turnSK, @actionTypeSK, @pieceSK, @actingPlayerSK, @targetPlayerSK, @actionSeq, " +
+            "VALUES (@turnSK, @actionTypeSK, @pieceSK, @actingPlayerSK, @targetPlayerSK, @actionSeq, " +
             "@actionCost, @buildCost, @surchargeCost, @totalCost);",
-            new SqlParameter("@actionID", actionID),
             new SqlParameter("@turnSK", turnSK),
             new SqlParameter("@actionTypeSK", actionTypeSK),
             new SqlParameter("@pieceSK", pieceSK ?? DBNull.Value),
@@ -471,7 +469,6 @@ public static class DbLoggingConfig
         string csvPath = Path.Combine(Application.streamingAssetsPath, "pieces.csv");
 
         ImportAndLogDimPiece(csvPath, inputSimID);
-        skForpiece  = GetMostRecentSK("DimPiece", "pieceSK");
     }
 
     public static void logPlayerVersion()
@@ -507,7 +504,7 @@ public static class DbLoggingConfig
         prepDimGameVersion(inputSimID, gameOrdinal);
         latestGameSK = GetMostRecentSK("DimGame", "gameSK");
     }
-    
+
 
     public static void logDimGame(int winTypeSK, int? winnerPlayerIndex)
     {
@@ -551,6 +548,7 @@ public static class DbLoggingConfig
     int? piecesOnBoardStart,
     int? piecesOnBoardEnd)
     {
+        actionOrdinal = 0;
 
         int playerSK = whichPlayer switch
         {
@@ -575,11 +573,52 @@ public static class DbLoggingConfig
         piecesOnBoardStart,
         piecesOnBoardEnd
     );
+
+        latestTurnSK = GetMostRecentSK("DimTurn", "turnSK");
+
     }
 
 
+    public static void logAction(int actionType, int? piece, int? targetPlayer, int thePlayer, decimal actionCost, decimal? buildCost, decimal? surchargeCost)
+    {
+        actionOrdinal++;
+        int typeAction = actionType switch
+        {
+            0 => skForMoveAction,
+            1 => skForShootAction,
+            2 => skForCaptureVPAction,
+            3 => skForCoreDamageAction,
+            4 => skForCreateAction,
+            5 => skForEndTurnAction,
+            _ => throw new ArgumentOutOfRangeException(nameof(actionType), "Actiontype must be 0..3.")
+        };
 
+        int playerSK = thePlayer switch
+        {
+            0 => playerOneSK,
+            1 => playerTwoSK,
+            2 => playerThreeSK,
+            3 => playerFourSK,
+            _ => throw new ArgumentOutOfRangeException(nameof(thePlayer), "Player index must be 0..3.")
+        };
+
+        int? TargetPlayer = targetPlayer switch
+        {
+            0 => playerOneSK,
+            1 => playerTwoSK,
+            2 => playerThreeSK,
+            3 => playerFourSK,
+            _ => (int?)null
+        };
+
+
+
+
+        decimal? cost = actionCost + buildCost + surchargeCost;
+
+        FactAction(latestTurnSK, typeAction, pieceSKByPieceID(piece), playerSK, TargetPlayer, actionOrdinal, actionCost, buildCost, surchargeCost, cost);
+        latestActionSK = GetMostRecentSK("FactAction", "actionID");
+    }
 
 
 }
-
