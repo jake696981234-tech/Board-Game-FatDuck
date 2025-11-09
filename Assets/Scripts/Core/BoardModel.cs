@@ -24,6 +24,9 @@ public sealed class BoardModel
     // ---------- Geometry (injected at Init; shared, readonly) ----------
     private BoardGeometry geo;
 
+    // Precomputed per-cell shortest-path distances to the configured VP cell
+    private int[] _distFromVP;
+
     // ---------- Cells (mutable occupancy) ----------
     // occupantPieceId[cellId] = pieceId | -1
     public int[] occupantPieceId;
@@ -71,6 +74,9 @@ public void Init(in BoardGeometry geometry, in GameConfigHub hub, int playerCoun
         // allocate occupancy & pieces as before, using initialPieceCapacity
         EnsurePieceCapacity(Math.Max(1, initialPieceCapacity));
     EnsureScratchAllocated();
+
+    // Precompute distance map from the configured VP cell for fast lookups
+    _distFromVP = ComputeDistFromCell(_vpCellId);
 }
 
 
@@ -165,10 +171,37 @@ public void Init(in BoardGeometry geometry, in GameConfigHub hub, int playerCoun
     public int DistToVictoryPoint(int cellId)
     {
         if (!IsValidCellId(cellId) || _vpCellId == _invalidId) return int.MaxValue / 4;
-        if (geo.distFromCenter != null && _vpCellId == 0) // center VP special-case
-            return geo.distFromCenter[cellId];
-        // else caller can precompute dist-to-specific VP id and store externally if needed
+        if (_distFromVP != null && _distFromVP.Length == _cellCount)
+            return _distFromVP[cellId];
+        // Fallback: compute on the fly if precompute is unavailable
         return DistanceCells(cellId, _vpCellId);
+    }
+
+    // ----------------------------------------------------------------------------
+    // Internal helpers
+    // ----------------------------------------------------------------------------
+    private int[] ComputeDistFromCell(int startCell)
+    {
+        if (!IsValidCellId(startCell)) return null;
+        var dist = new int[_cellCount];
+        for (int i = 0; i < dist.Length; i++) dist[i] = int.MaxValue / 4;
+        var q = new System.Collections.Generic.Queue<int>();
+        dist[startCell] = 0;
+        q.Enqueue(startCell);
+        while (q.Count > 0)
+        {
+            int c = q.Dequeue();
+            var nbrs = geo.neighborsById[c];
+            for (int i = 0; i < 6 && i < nbrs.Length; i++)
+            {
+                int nb = nbrs[i];
+                if (nb < 0 || nb >= _cellCount) continue;
+                if (dist[nb] <= dist[c] + 1) continue;
+                dist[nb] = dist[c] + 1;
+                q.Enqueue(nb);
+            }
+        }
+        return dist;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

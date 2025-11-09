@@ -59,8 +59,33 @@ public static class DbLoggingConfig
 
     // Cache of pieceSK by pieceID for the current sim (populated during ImportAndLogDimPiece)
     private static readonly Dictionary<int, int> pieceSKByPieceID = new Dictionary<int, int>();
-    public static IReadOnlyDictionary<int, int> PieceSKByPieceID => pieceSKByPieceID;
-    public static bool TryGetPieceSK(int pieceID, out int pieceSK) => pieceSKByPieceID.TryGetValue(pieceID, out pieceSK);
+
+    // Resolve gameplay pieceID to DimPiece.pieceSK for current sim. Returns null if unknown.
+    public static int? ResolvePieceSKForCurrentSim(int? pieceId)
+    {
+        if (!pieceId.HasValue)
+            return null;
+
+        int id = pieceId.Value;
+        if (pieceSKByPieceID.TryGetValue(id, out var cached))
+            return cached;
+
+        using var conn = new SqlConnection(SqlConnection);
+        using var cmd = new SqlCommand(
+            "SELECT TOP 1 pieceSK FROM dbo.DimPiece WHERE simID = @simID AND pieceID = @pieceID ORDER BY pieceSK DESC",
+            conn);
+        cmd.Parameters.AddWithValue("@simID", inputSimID);
+        cmd.Parameters.AddWithValue("@pieceID", id);
+        conn.Open();
+        object obj = cmd.ExecuteScalar();
+        if (obj == null || obj == DBNull.Value)
+            return null;
+
+        int pieceSk = Convert.ToInt32(obj);
+        pieceSKByPieceID[id] = pieceSk;
+        return pieceSk;
+    }
+
 
 
     private static int playerOneSK;
@@ -286,29 +311,45 @@ public static class DbLoggingConfig
         );
     }
 
+    public static void prepTurnVersion(int RoundSK)
+    {
+        Execute(
+            "INSERT INTO dbo.DimTurn (roundSK) " +
+            "VALUES (@roundSK);",
+            new SqlParameter("@roundSK", RoundSK)
+        );
+    }
 
 
 
     // TO DO DimTurn
     public static void turnVersion(
-        int roundSK,
-        int playerSK,
-        int turnOrdinal,
-        bool isPassOnly,
-        int coreHealthEnd,
-        int victoryPointsEnd,
-        object resourceTotalEnd,
-        object digitsStart,
-        object digitsEnd,
-        object piecesOnBoardStart,
-        object piecesOnBoardEnd)
+    int TurnSK,
+    int playerSK,
+    int turnOrdinal,
+    bool isPassOnly,
+    int coreHealthEnd,
+    int victoryPointsEnd,
+    object resourceTotalEnd,
+    object digitsStart,
+    object digitsEnd,
+    object piecesOnBoardStart,
+    object piecesOnBoardEnd)
     {
         Execute(
-            "INSERT INTO dbo.DimTurn (roundSK, playerSK, turnOrdinal, isPassOnly, coreHealthEnd, victoryPointsEnd, " +
-            "resourceTotalEnd, digitsStart, digitsEnd, piecesOnBoardStart, piecesOnBoardEnd) " +
-            "VALUES (@roundSK, @playerSK, @turnOrdinal, @isPassOnly, @coreHealthEnd, @victoryPointsEnd, " +
-            "@resourceTotalEnd, @digitsStart, @digitsEnd, @piecesOnBoardStart, @piecesOnBoardEnd);",
-            new SqlParameter("@roundSK", roundSK),
+            "UPDATE dbo.DimTurn " +
+            "SET playerSK = @playerSK, " +
+            "    turnOrdinal = @turnOrdinal, " +
+            "    isPassOnly = @isPassOnly, " +
+            "    coreHealthEnd = @coreHealthEnd, " +
+            "    victoryPointsEnd = @victoryPointsEnd, " +
+            "    resourceTotalEnd = @resourceTotalEnd, " +
+            "    digitsStart = @digitsStart, " +
+            "    digitsEnd = @digitsEnd, " +
+            "    piecesOnBoardStart = @piecesOnBoardStart, " +
+            "    piecesOnBoardEnd = @piecesOnBoardEnd " +
+            "WHERE turnSK = @turnSK;",
+            new SqlParameter("@turnSK", TurnSK),
             new SqlParameter("@playerSK", playerSK),
             new SqlParameter("@turnOrdinal", turnOrdinal),
             new SqlParameter("@isPassOnly", isPassOnly),
@@ -321,8 +362,6 @@ public static class DbLoggingConfig
             new SqlParameter("@piecesOnBoardEnd", piecesOnBoardEnd ?? DBNull.Value)
         );
     }
-
-
 
 
 
@@ -535,6 +574,14 @@ public static class DbLoggingConfig
     }
 
 
+    public static void prepTurn()
+    {
+        prepTurnVersion(latestRoundSK);
+        latestTurnSK = GetMostRecentSK("DimTurn", "turnSK");
+    }
+
+
+
 
     public static void logturnVersion(
     int whichPlayer,          // 0..3
@@ -561,7 +608,7 @@ public static class DbLoggingConfig
 
 
         turnVersion(
-        latestRoundSK,
+        latestTurnSK,
         playerSK,
         turnOrdinal,
         isPassOnly,
@@ -574,9 +621,12 @@ public static class DbLoggingConfig
         piecesOnBoardEnd
     );
 
-        latestTurnSK = GetMostRecentSK("DimTurn", "turnSK");
-
     }
+
+
+
+
+
 
 
     public static void logAction(int actionType, int? piece, int? targetPlayer, int thePlayer, decimal actionCost, decimal? buildCost, decimal? surchargeCost)
@@ -590,7 +640,7 @@ public static class DbLoggingConfig
             3 => skForCoreDamageAction,
             4 => skForCreateAction,
             5 => skForEndTurnAction,
-            _ => throw new ArgumentOutOfRangeException(nameof(actionType), "Actiontype must be 0..3.")
+            _ => throw new ArgumentOutOfRangeException(nameof(actionType), "Actiontype must be 0..5.")
         };
 
         int playerSK = thePlayer switch
@@ -612,11 +662,14 @@ public static class DbLoggingConfig
         };
 
 
+        var build = buildCost ?? 0m;
+        var surcharge = surchargeCost ?? 0m;
+        var total = actionCost + build + surcharge;
 
+        // Convert gameplay pieceID to pieceSK (nullable) for logging
+        int? pieceSK = ResolvePieceSKForCurrentSim(piece);
 
-        decimal? cost = actionCost + buildCost + surchargeCost;
-
-        FactAction(latestTurnSK, typeAction, pieceSKByPieceID(piece), playerSK, TargetPlayer, actionOrdinal, actionCost, buildCost, surchargeCost, cost);
+        FactAction(latestTurnSK, typeAction, pieceSK, playerSK, TargetPlayer, actionOrdinal, actionCost, build, surcharge, total);
         latestActionSK = GetMostRecentSK("FactAction", "actionID");
     }
 

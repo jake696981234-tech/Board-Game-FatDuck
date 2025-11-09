@@ -28,7 +28,7 @@ public sealed class GameBootstrapper : MonoBehaviour
     public PlayerAgent playerAgent;
 
     public GameSnapshotComposer snapshotComposer;   // snapshot builder
-    public GameSnapshot        currentSnapshot;     // latest snapshot (read-only for views)
+    public GameSnapshot currentSnapshot;     // latest snapshot (read-only for views)
     public BoardViewController boardView;           // assign in Inspector
 
 
@@ -79,7 +79,22 @@ public sealed class GameBootstrapper : MonoBehaviour
 
         // 5) Initialize GameState
         gameState = new Game.Core.GameState();
+        //Telementry to data base
+        //To do- add missing call, and check order of call
+        DbLoggingConfig.InitializeLoggingValues(in hub);
+        DbLoggingConfig.DeleteConflictingSimIdRows();
+        DbLoggingConfig.logDimSim();
+        DbLoggingConfig.logDimActionType();
+        DbLoggingConfig.logDimPiece();
+        DbLoggingConfig.logPlayerVersion();
+        DbLoggingConfig.logWinTypeVersion();
+        DbLoggingConfig.prepDimGame();
+        DbLoggingConfig.logRoundVersion(5); //hard coded -to do- 5 is hard coded number- needs to adjust to the rule number
         gameState.Initialize(in hub, board, GameBootstrapper.PiecesData, cost, ps, startingPlayer);
+
+
+
+
 
         // 6) Shared offer provider
         offers = new OfferProvider();
@@ -158,11 +173,11 @@ public sealed class GameBootstrapper : MonoBehaviour
             }
 
             // inject live systems (same ones agents/ML use)
-            hic.gameState    = gameState;
-            hic.boardModel   = board;
-            hic.pieces       = PiecesData;
-            hic.costEngine   = cost;
-            hic.offerProvider= offers;
+            hic.gameState = gameState;
+            hic.boardModel = board;
+            hic.pieces = PiecesData;
+            hic.costEngine = cost;
+            hic.offerProvider = offers;
             if (hic.boardView == null) hic.boardView = boardView;
             hic.SetHumanSeat(humanSeat);
         }
@@ -248,23 +263,12 @@ public sealed class GameBootstrapper : MonoBehaviour
         };
 
 
-        //Telementry to data base
-        //To do- add missing call, and check order of call
-        DbLoggingConfig.InitializeLoggingValues(in hub);
-        DbLoggingConfig.DeleteConflictingSimIdRows();
-        DbLoggingConfig.logDimSim();
-        DbLoggingConfig.logDimActionType();
-        DbLoggingConfig.logDimPiece();
-        DbLoggingConfig.logPlayerVersion();
-        DbLoggingConfig.logWinTypeVersion();
-        DbLoggingConfig.prepDimGame();
-        DbLoggingConfig.logRoundVersion(5); //to do- 5 is hard coded number- needs to adjust to the rule number
-        
-        
+
+
 
     }
-    
-     void Update()
+
+    void Update()
     {
         // Auto-restart flow: detect game end once and optionally restart
         if (gameState != null && gameState.IsGameOver)

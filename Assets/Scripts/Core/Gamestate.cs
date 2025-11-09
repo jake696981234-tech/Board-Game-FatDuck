@@ -1,10 +1,11 @@
 using System;
 using static Game.Core.ActionKind;
 using UnityEngine;
+using System.Collections.Generic;
 
 namespace Game.Core
 {
-  
+
     // Deterministic, allocation-free mutation entrypoint for Phase A.
     // Aligns with Pieces.AbilityKind (incl. CoreDamage), pricing-only CostEngine,
     // and read-only OfferProvider. All state mutations happen here.
@@ -12,10 +13,10 @@ namespace Game.Core
     {
         // === Phase B: notify views when the world actually changed ===
         public event System.Action OnActionExecuted;
-        
+
         private GameConfigHub hub;
 
-        private int   currentCenterVP;             // was BM.currentCenterCellVictoryPointAmount
+        private int currentCenterVP;             // was BM.currentCenterCellVictoryPointAmount
         private int[] currentCoreHealthByPlayer;   // was BM.currentCoreHealthByPlayer
 
         // simple accessors (optional)
@@ -112,12 +113,34 @@ namespace Game.Core
             if (!FastCheck(a)) return false;
             if (!IsStillLegal(in a, currentPlayer)) return false;
 
-            float quoted = 0;
+            CostEngine.CostBreakdown quote = default;
             if (a.kind != EndTurn)
             {
-                if (!cost.IsAffordable(cur, a, bm, pcs, out quoted))
-                    return false; // pricing-only check (no mutations)
+                if (!cost.IsAffordable(cur, a, bm, pcs, out quote))
+                    return false;
             }
+
+
+            // logging stuff
+            int loggedplayer = currentPlayer;
+            int loggedType = a.kind;
+            byte? pieceTypeForLog = null;
+
+            if (a.kind == Create)
+            {
+                pieceTypeForLog = a.pieceType;           // which piece we're creating
+            }
+            else if (a.kind != EndTurn)
+            {
+                int actorPid = bm.GetCellOccupant(a.srcCell);
+                if (actorPid >= 0)
+                    pieceTypeForLog = bm.GetPieceType(actorPid);
+            }
+
+            // Geometry-free "before" snapshot     
+            var beforeCounts = SnapshotOwnerTypeCounts(bm);
+            var coreBefore = SnapshotCoreHP(this);
+
 
             switch (a.kind)
             {
@@ -132,22 +155,54 @@ namespace Game.Core
 
             if (a.kind != EndTurn)
             {
-                cur.AddBudget(-(float)quoted);
+                cur.AddBudget(-(float)quote.Total);
                 cur.AdvanceActionIndex();
             }
+
+            // Map DB fields so that actionCost == growth-based turn fee (from actionGrowthFactor)
+            decimal actionCost = (a.kind == EndTurn) ? 0m : (decimal)quote.TurnFee;
+            decimal? buildCost = (a.kind == EndTurn) ? (decimal?)null : (decimal)quote.BuildCost;
+            decimal? surchargeCost = (a.kind == EndTurn) ? (decimal?)null : (decimal)quote.AbilityCost;
+
+
+
+            // Geometry-free "after" snapshot and deltas
+            var afterCounts = SnapshotOwnerTypeCounts(bm);
+            var coreAfter = SnapshotCoreHP(this);
+            var losses = new Dictionary<(int owner, int type), int>(afterCounts.Count);
+            foreach (var kv in beforeCounts)
+            {
+                int after = afterCounts.TryGetValue(kv.Key, out var c) ? c : 0;
+                int lost = kv.Value - after;
+                if (lost > 0) losses[kv.Key] = lost;
+            }
+            int? targetPlayerForLog = PickTargetPlayer(losses, coreBefore, coreAfter);
+
+
+
+            DbLoggingConfig.logAction(
+                loggedType,
+                pieceTypeForLog,
+                targetPlayerForLog,
+                loggedplayer,
+                actionCost,
+                buildCost,
+                surchargeCost
+            );
+
 
             //Debug log
             if (GameEvents.enableDebugLogsFromPeform)
             {
                 Debug.Log($"Player {currentPlayer} performed action {a.kind}.");
             }
-            
 
             // Tell listeners (Bootstrapper/View) to refresh visuals
             OnActionExecuted?.Invoke();
             return true;
-            
+
         }
+
 
         // --- Current player read-only accessors (no duplication) ---
         public byte CurrentPlayerId => currentPlayer;
@@ -160,10 +215,10 @@ namespace Game.Core
             => cost.IsAffordable(ps[currentPlayer], a, bm, pcs, out quoted);
 
         // --- Minimal read-only surface for agents/UI ---
-        public int  RoundsLeft      => roundsLeft;
+        public int RoundsLeft => roundsLeft;
         public bool IsGameOver => isGameOver;   // requires fields existing in your GameState
         public byte Winner => winner;       // 0..3 or 255 for draw/no winner
-        
+
         public int GetCenterVP() => currentCenterVP;
 
         public int GetCoreHealth(byte player) => currentCoreHealthByPlayer[player];
@@ -203,6 +258,46 @@ namespace Game.Core
         }
 
 
+        // ---- Geometry-free snapshots for analytics/logging ----
+        private static Dictionary<(int owner, int type), int> SnapshotOwnerTypeCounts(BoardModel bm)
+        {
+            var map = new Dictionary<(int, int), int>(32);
+            for (int pid = 0; pid < bm.pieceCount; pid++)
+            {
+                int owner = bm.pieceOwner[pid];
+                int type = bm.pieceType[pid];
+                var key = (owner, type);
+                map.TryGetValue(key, out var c);
+                map[key] = c + 1;
+            }
+            return map;
+        }
+
+        private static int[] SnapshotCoreHP(GameState gs)
+        {
+            var hp = new int[4];
+            for (byte p = 0; p < 4; p++) hp[p] = gs.GetCoreHealth(p);
+            return hp;
+        }
+
+        private static int? PickTargetPlayer(Dictionary<(int owner, int type), int> losses, int[] coreBefore, int[] coreAfter)
+        {
+            // Prefer any player whose core HP dropped
+            if (coreBefore != null && coreAfter != null)
+            {
+                int n = System.Math.Min(coreBefore.Length, coreAfter.Length);
+                for (int p = 0; p < n; p++) if (coreAfter[p] < coreBefore[p]) return p;
+            }
+            // Else owner with max piece losses
+            int bestOwner = -1, bestLoss = 0;
+            if (losses != null)
+            {
+                foreach (var kv in losses)
+                    if (kv.Value > bestLoss) { bestLoss = kv.Value; bestOwner = kv.Key.owner; }
+            }
+            return (bestLoss > 0) ? bestOwner : (int?)null;
+        }
+
 
 
 
@@ -220,7 +315,7 @@ namespace Game.Core
                 // cell must be empty
                 if (bm.GetCellOccupant(a.dstCell) >= 0) return false;
 
-               // geometry: on core OR adjacent to core OR adjacent to any of your buildings
+                // geometry: on core OR adjacent to core OR adjacent to any of your buildings
                 bool geomOk = false;
                 int core = bm.GetPlayerCoreCellId(p);
                 if (a.dstCell == core) { geomOk = true; }
@@ -233,7 +328,7 @@ namespace Game.Core
                 if (!geomOk)
                 {
                     var scratch2 = bm.GetScratchCellBuffer();
-                   int n2 = bm.GetNeighbors(a.dstCell, scratch2);
+                    int n2 = bm.GetNeighbors(a.dstCell, scratch2);
                     for (int i = 0; i < n2; i++)
                     {
                         int nb = scratch2[i];
@@ -246,7 +341,7 @@ namespace Game.Core
                 }
                 if (!geomOk) return false;
 
-               // parity with OfferProvider: buildable flag + required digit gate
+                // parity with OfferProvider: buildable flag + required digit gate
                 if (!pcs.IsBuildable(a.pieceType)) return false;
                 int req = pcs.GetRequiredDigit(a.pieceType);
                 if (req >= 0 && !ps[p].HasDigit(req)) return false;
@@ -264,8 +359,8 @@ namespace Game.Core
             int abilityId = pcs.AbilityIdAtSlot(type, a.abilitySlot);
             if (abilityId < 0) return false;
 
-        byte kind = pcs.GetAbilityKind(type, a.abilitySlot);
-           if (kind != a.kind) return false; // slot-kind drift guard
+            byte kind = pcs.GetAbilityKind(type, a.abilitySlot);
+            if (kind != a.kind) return false; // slot-kind drift guard
 
             int[] targets = bm.GetScratchCellBuffer();
             int count;
@@ -384,7 +479,7 @@ namespace Game.Core
         {
             ps[p].OnCoreDamage();
 
-            
+
 
             int actorPid = bm.GetCellOccupant(a.srcCell);
             if (actorPid < 0) return;
@@ -430,18 +525,18 @@ namespace Game.Core
             ps[ended].endedWithoutActionThisCycle = ps[ended].actionIndexThisTurn == 0;
             bool isPassOnly = ps[ended].endedWithoutActionThisCycle;
 
-            int  coreEnd   = GetCoreHealth(ended);
-            int  vpEnd     = ps[ended].vpTotal;
+            int coreEnd = GetCoreHealth(ended);
+            int vpEnd = ps[ended].vpTotal;
             decimal budgetEnd = (decimal)ps[ended].budget;
 
             int digitsStart = tStart[ended].digitsStart;
             int piecesStart = tStart[ended].piecesStart;
 
-            int digitsEnd   = CountDigits(ended);
-            int piecesEnd   = CountPiecesOnBoard(ended);
+            int digitsEnd = CountDigits(ended);
+            int piecesEnd = CountPiecesOnBoard(ended);
 
 
-        DbLoggingConfig.logturnVersion(ended, turnOrdinal, isPassOnly, coreEnd, vpEnd, budgetEnd, digitsStart, digitsEnd, piecesStart, piecesEnd);
+            DbLoggingConfig.logturnVersion(ended, turnOrdinal, isPassOnly, coreEnd, vpEnd, budgetEnd, digitsStart, digitsEnd, piecesStart, piecesEnd);
 
             // Advance to next alive player
             currentPlayer = NextAlivePlayerAfter(ended);
@@ -466,11 +561,11 @@ namespace Game.Core
             bool killed = bm.DamagePieceRow(defenderPid, dmg);
             if (killed)
             {
-            // Revoke digit from the defender's owner if this type granted one
-            int deadOwner = bm.GetPieceOwner(defenderPid);
-            byte deadType = bm.GetPieceType(defenderPid);
-            int g = pcs.GrantsDigit(deadType);
-            if (g >= 0) ps[deadOwner].RevokeDigit(g);
+                // Revoke digit from the defender's owner if this type granted one
+                int deadOwner = bm.GetPieceOwner(defenderPid);
+                byte deadType = bm.GetPieceType(defenderPid);
+                int g = pcs.GrantsDigit(deadType);
+                if (g >= 0) ps[deadOwner].RevokeDigit(g);
                 bm.FreeRowSwapBack(defenderPid);
                 bm.MovePieceRow(actorPid, a.dstCell);
             }
@@ -618,6 +713,7 @@ namespace Game.Core
 
         private void BeginTurn()
         {
+            DbLoggingConfig.prepTurn();
             ps[currentPlayer].BeginTurnReset();
 
             turnOrdinal++;

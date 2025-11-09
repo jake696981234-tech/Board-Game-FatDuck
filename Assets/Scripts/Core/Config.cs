@@ -58,7 +58,7 @@ public sealed class Config : ScriptableObject
     [Header("Board")]
     [Range(1, 10)] public byte boardRadius = 8;
     public int boardInvalidId = -1;
-    public int victoryPointCellId = 0;      // e.g., center
+    public int victoryPointCellId = 108;      // e.g., center
     public int[] coreCellIdByPlayer = new int[4]; // set per map
 
     [Header("Match Defaults")]

@@ -42,23 +42,23 @@ public sealed class GameSnapshotComposer
         // pieces
         snapshot.pieceCount = board.pieceCount;
         snapshot.pieceCellId = board.pieceCellId;
-        snapshot.pieceOwner  = board.pieceOwner;
-        snapshot.pieceType   = board.pieceType;
-        snapshot.pieceHP     = board.pieceHP;
+        snapshot.pieceOwner = board.pieceOwner;
+        snapshot.pieceType = board.pieceType;
+        snapshot.pieceHP = board.pieceHP;
 
         // live counters
         snapshot.centerVP = state.GetCenterVP();
 
         snapshot.coreHPByPlayer = new int[4];
-        snapshot.vpByPlayer     = new int[4];
+        snapshot.vpByPlayer = new int[4];
         for (byte p = 0; p < 4; p++)
         {
             snapshot.coreHPByPlayer[p] = state.GetCoreHealth(p);
-            snapshot.vpByPlayer[p]     = state.GetVP(p);
+            snapshot.vpByPlayer[p] = state.GetVP(p);
         }
 
         // per-type UI metadata
-        snapshot.spritePathByType  = pieces.spritePathByType;
+        snapshot.spritePathByType = pieces.spritePathByType;
         snapshot.displayNameByType = pieces.displayNameByType;
 
         // default owner palette (can replace later)
@@ -66,6 +66,34 @@ public sealed class GameSnapshotComposer
 
         snapshot.version++;
         return snapshot;
+    }
+
+    /// <summary>
+    /// Create a frozen (deep-copied) snapshot of just the mutable state we need for analytics/logging.
+    /// Does NOT allocate/duplicate static geometry.
+    /// </summary>
+    public GameSnapshot GetFrozenMinimal()
+    {
+        var s = new GameSnapshot();
+        // --- Pieces (deep copy) ---
+        s.pieceCount = board.pieceCount;
+        s.pieceCellId = (int[])board.pieceCellId.Clone();
+        s.pieceOwner = (int[])board.pieceOwner.Clone();
+        s.pieceType = (byte[])board.pieceType.Clone();
+        s.pieceHP = (short[])board.pieceHP.Clone();
+
+        // --- Match counters (copy values) ---
+        s.centerVP = state.GetCenterVP();
+        s.coreHPByPlayer = new int[4];
+        s.vpByPlayer = new int[4];
+        for (byte p = 0; p < 4; p++)
+        {
+            s.coreHPByPlayer[p] = state.GetCoreHealth(p);
+            s.vpByPlayer[p] = state.GetVP(p);
+        }
+        // Not needed for logging:
+        // s.worldPosById, s.spritePathByType, etc.
+        return s;
     }
 
     private static Vector3 AxialToWorld(short q, short r, float radius)

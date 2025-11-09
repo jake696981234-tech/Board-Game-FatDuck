@@ -64,7 +64,7 @@ public sealed class CostEngine
             quoted = 0;
             return true;
         }
-    
+
         if (a.kind == ActionKind.EndTurn)
         {
             quoted = 0;
@@ -75,8 +75,8 @@ public sealed class CostEngine
         if (cur.budget < quoted) return false;
 
         // Once-per-turn gates (read-only caps)
-        if (a.kind == ActionKind.CaptureVP  && cur.didCaptureVP)   return false;
-        if (a.kind == ActionKind.CoreDamage && cur.didCoreDamage)  return false;
+        if (a.kind == ActionKind.CaptureVP && cur.didCaptureVP) return false;
+        if (a.kind == ActionKind.CoreDamage && cur.didCoreDamage) return false;
 
         return true;
     }
@@ -103,5 +103,65 @@ public sealed class CostEngine
         // Deterministic rounding for pricing (midpoint away from zero)
         return (int)MathF.Round(value, MidpointRounding.AwayFromZero);
     }
+
+
+    // ---- NEW: structured breakdown ----
+    public readonly struct CostBreakdown
+    {
+        public readonly int TurnFee;       // geometric per-turn fee
+        public readonly int AbilityCost;   // surcharge from ability metadata
+        public readonly int BuildCost;     // create/build cost
+        public readonly int Total;         // TurnFee + AbilityCost + BuildCost
+        public CostBreakdown(int tf, int ac, int bc)
+        { TurnFee = tf; AbilityCost = ac; BuildCost = bc; Total = tf + ac + bc; }
+    }
+
+    public CostBreakdown QuoteBreakdown(in PlayerState cur, in Action a, in BoardModel b, in Pieces pcs)
+    {
+        // Turn fee
+        int k = cur.actionIndexThisTurn;
+        int turnFee = (k == 0) ? 0 : RoundToInt(baseActionCost * MathF.Pow(actionGrowthFactor, k - 1));
+        // Ability surcharge (non-EndTurn/Create)
+        int abilityCost = 0;
+        int abilityId = ResolveAbilityId(a, b, pcs);
+        if (a.kind != ActionKind.EndTurn && a.kind != ActionKind.Create && abilityId >= 0)
+            abilityCost = pcs.AbilitySurcharge(abilityId, applyBotSurcharges: cur.applyBotSurcharges);
+        // Build cost (Create only)
+        int buildCost = (a.kind == ActionKind.Create) ? pcs.GetBuildCost(a.pieceType) : 0;
+        return new CostBreakdown(turnFee, abilityCost, buildCost);
+    }
+
+
+
+
+    // ---- NEW: overload that also returns the breakdown (non-breaking addition) ----
+    public bool IsAffordable(in PlayerState cur, in Action a, in BoardModel b, in Pieces pcs, out CostBreakdown breakdown)
+    {
+        if (a.kind == ActionKind.EndTurn)
+        {
+            breakdown = new CostBreakdown(0, 0, 0);
+            return true;
+        }
+        breakdown = QuoteBreakdown(cur, a, b, pcs);
+        if (cur.budget < breakdown.Total) return false;
+        if (a.kind == ActionKind.CaptureVP && cur.didCaptureVP) return false;
+        if (a.kind == ActionKind.CoreDamage && cur.didCoreDamage) return false;
+        return true;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
 

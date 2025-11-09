@@ -111,13 +111,24 @@ public sealed class OfferProvider
                         {
                             if (q.pcs.IsLegal_CoreDamage(q.bm, pieceId, abilityId))
                             {
+                                // Determine which adjacent cell is the enemy core and set dstCell accordingly
+                                ushort dstCore = 0;
+                                int owner = GetPieceOwner(q.bm, pieceId);
+                                int nNbrs = GetNeighbors(q.bm, cell, scratch);
+                                for (int i = 0; i < nNbrs; i++)
+                                {
+                                    int nb = scratch[i];
+                                    if (nb < 0) continue;
+                                    if (q.bm.IsEnemyCoreCell(nb, owner)) { dstCore = (ushort)nb; break; }
+                                }
+
                                 var a = new Action
                                 {
                                     kind = CoreDamage,
                                     abilitySlot = (byte)slot,
                                     pieceType = 0,
                                     srcCell = (ushort)cell,
-                                    dstCell = 0,
+                                    dstCell = dstCore,
                                     aux = 0
                                 };
                                 Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask);
