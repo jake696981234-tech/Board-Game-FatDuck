@@ -33,6 +33,14 @@ public sealed class Config : ScriptableObject
     GameConfigHub.ControlMode.Heuristic
 };
 
+    [Header("Bot Policies (for Heuristic seats)")]
+    public GameConfigHub.PolicyKind[] playerPolicy = new GameConfigHub.PolicyKind[4] {
+        GameConfigHub.PolicyKind.Heuristic,
+        GameConfigHub.PolicyKind.Heuristic,
+        GameConfigHub.PolicyKind.Heuristic,
+        GameConfigHub.PolicyKind.Heuristic
+    };
+
     [Header("ML Behavior Parameters (auto-injected)")]
     public BehaviorParametersAuthoring behaviorParams = new BehaviorParametersAuthoring
     {
@@ -208,6 +216,9 @@ public sealed class Config : ScriptableObject
                 playerControl: (playerControl != null && playerControl.Length >= N)
                 ? playerControl[..N]
                 : new GameConfigHub.ControlMode[N],
+                playerPolicy: (playerPolicy != null && playerPolicy.Length >= N)
+                ? playerPolicy[..N]
+                : new GameConfigHub.PolicyKind[N],
                 enableMLAgents: useMLAgents,
                 mlObservationSize: mlObsSize,
                 mlBehavior: new GameConfigHub.BehaviorParametersConfig(

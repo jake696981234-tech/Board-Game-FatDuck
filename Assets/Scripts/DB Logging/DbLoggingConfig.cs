@@ -334,7 +334,8 @@ public static class DbLoggingConfig
     object digitsStart,
     object digitsEnd,
     object piecesOnBoardStart,
-    object piecesOnBoardEnd)
+    object piecesOnBoardEnd,
+    int playerTurnOrdinal)
     {
         Execute(
             "UPDATE dbo.DimTurn " +
@@ -347,7 +348,8 @@ public static class DbLoggingConfig
             "    digitsStart = @digitsStart, " +
             "    digitsEnd = @digitsEnd, " +
             "    piecesOnBoardStart = @piecesOnBoardStart, " +
-            "    piecesOnBoardEnd = @piecesOnBoardEnd " +
+            "    piecesOnBoardEnd = @piecesOnBoardEnd, " +
+            "    playerTurnOrdinal = @playerTurnOrdinal " +
             "WHERE turnSK = @turnSK;",
             new SqlParameter("@turnSK", TurnSK),
             new SqlParameter("@playerSK", playerSK),
@@ -359,7 +361,8 @@ public static class DbLoggingConfig
             new SqlParameter("@digitsStart", digitsStart ?? DBNull.Value),
             new SqlParameter("@digitsEnd", digitsEnd ?? DBNull.Value),
             new SqlParameter("@piecesOnBoardStart", piecesOnBoardStart ?? DBNull.Value),
-            new SqlParameter("@piecesOnBoardEnd", piecesOnBoardEnd ?? DBNull.Value)
+            new SqlParameter("@piecesOnBoardEnd", piecesOnBoardEnd ?? DBNull.Value),
+            new SqlParameter("@playerTurnOrdinal", playerTurnOrdinal)
         );
     }
 
@@ -593,7 +596,8 @@ public static class DbLoggingConfig
     int? digitsStart,
     int? digitsEnd,
     int? piecesOnBoardStart,
-    int? piecesOnBoardEnd)
+    int? piecesOnBoardEnd,
+    int playerTurnOrdinal)
     {
         actionOrdinal = 0;
 
@@ -618,7 +622,8 @@ public static class DbLoggingConfig
         digitsStart,
         digitsEnd,
         piecesOnBoardStart,
-        piecesOnBoardEnd
+        piecesOnBoardEnd,
+        playerTurnOrdinal
     );
 
     }

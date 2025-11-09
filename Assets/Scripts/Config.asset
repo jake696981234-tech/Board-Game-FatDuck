@@ -19,7 +19,8 @@ MonoBehaviour:
   observations:
     maxCells: 217
     maxDistance: 16
-  playerControl: 02020202
+  playerControl: 01010101
+  playerPolicy: 00010101
   behaviorParams:
     behaviorName: OmegaPPO
     useChildSensors: 1
@@ -32,7 +33,7 @@ MonoBehaviour:
   boardInvalidId: -1
   victoryPointCellId: 108
   coreCellIdByPlayer: 46000000c9000000920000000f000000
-  startingBudgetPerPlayer: 100
+  startingBudgetPerPlayer: 1000
   numberOfRounds: 5
   startOfTurnBudgetDecrease: 5
   startCenterVP: 5
@@ -49,25 +50,25 @@ MonoBehaviour:
   playerCount: 4
   players:
   - name: P0
-    isAI: 1
+    isAI: 0
     applyBotSurcharges: 1
     applyStartOfTurnBudgetDecrease: 1
     startingBudgetOverride: -1
     team: 0
   - name: P1
-    isAI: 1
+    isAI: 0
     applyBotSurcharges: 1
     applyStartOfTurnBudgetDecrease: 1
     startingBudgetOverride: -1
     team: 1
   - name: P2
-    isAI: 1
+    isAI: 0
     applyBotSurcharges: 1
     applyStartOfTurnBudgetDecrease: 1
     startingBudgetOverride: -1
     team: 2
   - name: P3
-    isAI: 1
+    isAI: 0
     applyBotSurcharges: 1
     applyStartOfTurnBudgetDecrease: 1
     startingBudgetOverride: -1

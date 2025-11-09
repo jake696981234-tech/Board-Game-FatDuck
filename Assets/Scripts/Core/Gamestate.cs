@@ -109,6 +109,7 @@ namespace Game.Core
         public bool Perform(in Action a)
         {
             ref var cur = ref ps[currentPlayer];
+            incrementPlayerActionOrdinal();
 
             if (!FastCheck(a)) return false;
             if (!IsStillLegal(in a, currentPlayer)) return false;
@@ -137,6 +138,12 @@ namespace Game.Core
                     pieceTypeForLog = bm.GetPieceType(actorPid);
             }
 
+
+            if (a.kind == EndTurn)
+            {
+                resetActionPlayerOrd = true;
+            }
+
             // Geometry-free "before" snapshot     
             var beforeCounts = SnapshotOwnerTypeCounts(bm);
             var coreBefore = SnapshotCoreHP(this);
@@ -157,7 +164,9 @@ namespace Game.Core
             {
                 cur.AddBudget(-(float)quote.Total);
                 cur.AdvanceActionIndex();
+
             }
+
 
             // Map DB fields so that actionCost == growth-based turn fee (from actionGrowthFactor)
             decimal actionCost = (a.kind == EndTurn) ? 0m : (decimal)quote.TurnFee;
@@ -231,6 +240,51 @@ namespace Game.Core
         // ------------------------ Counters for SQL logging ------------------------
         //These counters are for SQL logging- remove this line if you want to use them gamelogic.
         private int turnOrdinal = 0;
+
+        // Store all player ordinals in one array
+        private int[] playerTurnOrdinals = new int[4];  // automatically initialized to 0
+
+        private int getPlayerTurnOrdinal()
+        {
+            if (currentPlayer >= 0 && currentPlayer < playerTurnOrdinals.Length)
+                return playerTurnOrdinals[currentPlayer];
+
+            Debug.LogError("PlayerTurnOrdinal out of range");
+            return -1;
+        }
+
+        private void incrementPlayerTurnOrdinal()
+        {
+            if (currentPlayer >= 0 && currentPlayer < playerTurnOrdinals.Length)
+                playerTurnOrdinals[currentPlayer]++;
+            else
+                Debug.LogError("PlayerTurnOrdinal increment out of range");
+        }
+
+
+        private int[] playerActionOrdinals = new int[4];  // automatically initialized to 0
+
+        private bool resetActionPlayerOrd = false;
+
+        private int getActionOrdinal()
+        {
+            if (currentPlayer >= 0 && currentPlayer < playerActionOrdinals.Length)
+                return playerActionOrdinals[currentPlayer];
+
+            Debug.LogError("PlayerTurnOrdinal out of range");
+            return -1;
+        }
+
+        private void incrementPlayerActionOrdinal()
+        {
+            if (currentPlayer >= 0 && currentPlayer < playerActionOrdinals.Length)
+                playerActionOrdinals[currentPlayer]++;
+            else
+                Debug.LogError("PlayerTurnOrdinal increment out of range");
+        }
+
+
+
 
         private struct TurnStartSnap
         {
@@ -536,7 +590,9 @@ namespace Game.Core
             int piecesEnd = CountPiecesOnBoard(ended);
 
 
-            DbLoggingConfig.logturnVersion(ended, turnOrdinal, isPassOnly, coreEnd, vpEnd, budgetEnd, digitsStart, digitsEnd, piecesStart, piecesEnd);
+            incrementPlayerTurnOrdinal();
+            DbLoggingConfig.logturnVersion(ended, turnOrdinal, isPassOnly, coreEnd, vpEnd, budgetEnd, digitsStart, digitsEnd, piecesStart, piecesEnd, getPlayerTurnOrdinal());
+
 
             // Advance to next alive player
             currentPlayer = NextAlivePlayerAfter(ended);
@@ -717,6 +773,8 @@ namespace Game.Core
             ps[currentPlayer].BeginTurnReset();
 
             turnOrdinal++;
+
+
             tStart[currentPlayer].digitsStart = CountDigits(currentPlayer);
             tStart[currentPlayer].piecesStart = CountPiecesOnBoard(currentPlayer);
 
@@ -734,7 +792,10 @@ namespace Game.Core
         private void EndRound()
         {
             Debug.Log("End of round.");
+
             turnOrdinal = 0;
+            Array.Clear(playerTurnOrdinals, 0, playerTurnOrdinals.Length);
+
             // 1) Purge temporary units (soldiers), keep buildings
             GameStateUtilities.RemoveAllSoldiers(bm, pcs);
 

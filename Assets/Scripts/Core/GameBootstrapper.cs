@@ -110,7 +110,20 @@ public sealed class GameBootstrapper : MonoBehaviour
                 case GameConfigHub.ControlMode.Heuristic:
                     {
                         var agent = new PlayerAgent();
-                        agent.Init(in hub, gameState, board, GameBootstrapper.PiecesData, cost, offers);
+                        // Select a policy per seat
+                        IBotPolicy policy;
+                        if (hub.playerPolicy != null && seat < hub.playerPolicy.Length)
+                        {
+                            switch (hub.playerPolicy[seat])
+                            {
+                                case GameConfigHub.PolicyKind.DumbGreg: policy = new DumbGregBotPolicy(); break;
+                                case GameConfigHub.PolicyKind.Heuristic:
+                                default: policy = new HeuristicPolicy(); break;
+                            }
+                        }
+                        else { policy = new HeuristicPolicy(); }
+
+                        agent.Init(in hub, gameState, board, GameBootstrapper.PiecesData, cost, offers, policy);
                         agent.BindSeat(seat); // (see tiny method below)
                         heuristicControllers[seat] = agent;
                         break;

@@ -77,8 +77,13 @@ public readonly struct GameConfigHub
        // ---- CONTROL & ML (NEW) ----
     public enum ControlMode : byte { Human = 0, Heuristic = 1, ML = 2 }
 
+    // Bot policy kinds for heuristic seats
+    public enum PolicyKind : byte { Heuristic = 0, DumbGreg = 1 }
+
     // Per-seat control mode; length = player_count
     public readonly ControlMode[] playerControl;
+    // Per-seat bot policy (used when ControlMode == Heuristic); length = player_count
+    public readonly PolicyKind[] playerPolicy;
 
     // Global ML flag (enable/disable ML Agents in this build/scene)
     public readonly bool enableMLAgents;
@@ -136,6 +141,7 @@ public readonly struct GameConfigHub
         AgentConfig agent,
         // ---- CONTROL & ML (NEW) ----
         ControlMode[] playerControl,
+        PolicyKind[] playerPolicy,
         bool enableMLAgents,
         int mlObservationSize,
         BehaviorParametersConfig mlBehavior
@@ -180,6 +186,7 @@ public readonly struct GameConfigHub
         this.agent = agent;
         
         this.playerControl    = playerControl;
+        this.playerPolicy     = playerPolicy;
         this.enableMLAgents   = enableMLAgents;
         this.mlObservationSize = mlObservationSize;
         this.mlBehavior = mlBehavior;

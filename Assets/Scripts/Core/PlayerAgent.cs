@@ -26,6 +26,7 @@ public sealed class PlayerAgent
     private Pieces _pcs;
     private CostEngine _cost;
     private OfferProvider _offers;
+    private IBotPolicy _policy;
 
     private byte _mySeat;
 
@@ -50,10 +51,26 @@ public sealed class PlayerAgent
         _cost = cost;
         _offers = offers;
 
+        // default policy
+        _policy = new HeuristicPolicy();
+
         int cap = Math.Max(1, _cfg.maxOffersToConsider);   // allocate once, no mid-episode growth
         _actions     = new Game.Core.Action[cap];
         _quotedCosts = new float[cap];
         _mask        = new byte[cap];
+    }
+
+    // Overload allowing explicit policy
+    public void Init(in GameConfigHub hub,
+                     Game.Core.GameState gs,
+                     BoardModel bm,
+                     Pieces pcs,
+                     CostEngine cost,
+                     OfferProvider offers,
+                     IBotPolicy policy)
+    {
+        Init(in hub, gs, bm, pcs, cost, offers);
+        _policy = policy ?? new HeuristicPolicy();
     }
     
      public void BindSeat(byte seat) => _mySeat = seat;
@@ -85,7 +102,7 @@ public sealed class PlayerAgent
         var costsN = costs.Slice(0, Math.Min(n, costs.Length));
         var maskN  = mask.Slice(0, Math.Min(n, mask.Length));
 
-        int chosen = PickCheapestAffordableNonEndTurn(actsN, costsN, maskN);
+        int chosen = _policy?.PickAction(in q, actsN, costsN, maskN) ?? -1;
         if (chosen < 0) chosen = FindEndTurn(actsN);
 
         if (chosen < 0) return false;
@@ -247,44 +264,7 @@ public sealed class PlayerAgent
     // Internals
     // =================================================================
 
-    private int PickCheapestAffordableNonEndTurn(ReadOnlySpan<Game.Core.Action> acts,
-                                             ReadOnlySpan<float> costs,
-                                             ReadOnlySpan<byte> mask)
-    {
-        const float EPS = 1e-4f;
-        float bestCost = float.PositiveInfinity;
-        int bestIdx = -1;
-        int bestDist = int.MaxValue;
-
-        for (int i = 0; i < acts.Length; i++)
-        {
-            if (i >= mask.Length || mask[i] == 0) continue;
-            if (acts[i].kind == ActionKind.EndTurn) continue;
-            float c = (i < costs.Length) ? costs[i] : 0f;
-
-            // Prefer lower cost; on ties, prefer reducing distance to VP
-            int dist = DistanceToVpForAction(in acts[i]);
-            bool better = (c < bestCost - EPS) || (Math.Abs(c - bestCost) <= EPS && dist < bestDist);
-            if (better) { bestCost = c; bestIdx = i; bestDist = dist; }
-        }
-        return bestIdx;
-    }
-
-    private int DistanceToVpForAction(in Game.Core.Action a)
-    {
-        switch (a.kind)
-        {
-            case ActionKind.Move:
-            case ActionKind.CaptureVP:
-            case ActionKind.Create:
-                return _bm.DistToVictoryPoint(a.dstCell);
-            case ActionKind.Shoot:
-            case ActionKind.CoreDamage:
-                return _bm.DistToVictoryPoint(a.srcCell);
-            default:
-                return int.MaxValue / 4;
-        }
-    }
+    // Selection moved to IBotPolicy
 
 
     private int FindEndTurn(ReadOnlySpan<Game.Core.Action> acts)
