@@ -251,16 +251,39 @@ public sealed class PlayerAgent
                                              ReadOnlySpan<float> costs,
                                              ReadOnlySpan<byte> mask)
     {
-        float best = float.PositiveInfinity;
+        const float EPS = 1e-4f;
+        float bestCost = float.PositiveInfinity;
         int bestIdx = -1;
+        int bestDist = int.MaxValue;
+
         for (int i = 0; i < acts.Length; i++)
         {
             if (i >= mask.Length || mask[i] == 0) continue;
             if (acts[i].kind == ActionKind.EndTurn) continue;
             float c = (i < costs.Length) ? costs[i] : 0f;
-            if (c < best) { best = c; bestIdx = i; }
+
+            // Prefer lower cost; on ties, prefer reducing distance to VP
+            int dist = DistanceToVpForAction(in acts[i]);
+            bool better = (c < bestCost - EPS) || (Math.Abs(c - bestCost) <= EPS && dist < bestDist);
+            if (better) { bestCost = c; bestIdx = i; bestDist = dist; }
         }
         return bestIdx;
+    }
+
+    private int DistanceToVpForAction(in Game.Core.Action a)
+    {
+        switch (a.kind)
+        {
+            case ActionKind.Move:
+            case ActionKind.CaptureVP:
+            case ActionKind.Create:
+                return _bm.DistToVictoryPoint(a.dstCell);
+            case ActionKind.Shoot:
+            case ActionKind.CoreDamage:
+                return _bm.DistToVictoryPoint(a.srcCell);
+            default:
+                return int.MaxValue / 4;
+        }
     }
 
 
