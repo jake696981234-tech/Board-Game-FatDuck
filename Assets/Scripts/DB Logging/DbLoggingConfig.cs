@@ -5,6 +5,7 @@ using System.Data.SqlClient; // System.Data.SqlClient contains SqlConnection/Sql
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.IO;
 using UnityEngine;
 
@@ -14,14 +15,14 @@ public static class DbLoggingConfig
 {
 
 
-    //Values you must change for each simulation
-    public readonly static int inputSimID = 4;
-    public readonly static string inputSimName = "Does it work this way though?";
-    public readonly static string inputRuleVersion = "v1";
-    public readonly static string inputNotes = "No notes";
+    //Values you must change for each simulation (can be overridden via Config)
+    public static int inputSimID = 4;
+    public static string inputSimName = "Does it work this way though?";
+    public static string inputRuleVersion = "v1";
+    public static string inputNotes = "No notes";
 
-    //Prefrenece values
-    public readonly static bool enabled = true;
+    //Preference values
+    public static bool enabled = true;
 
 
     //probably never change values
@@ -131,6 +132,20 @@ public static class DbLoggingConfig
         inputMaxRounds = Hub.match_numberOfRounds;
     }
 
+    public static void ApplyConfig(in Config.DbLoggingAuthoring cfg)
+    {
+        enabled = cfg.enabled;
+        inputSimID = cfg.simID;
+        inputSimName = string.IsNullOrEmpty(cfg.simName) ? inputSimName : cfg.simName;
+        inputRuleVersion = string.IsNullOrEmpty(cfg.ruleVersion) ? inputRuleVersion : cfg.ruleVersion;
+        inputNotes = string.IsNullOrEmpty(cfg.notes) ? inputNotes : cfg.notes;
+        if (cfg.batchSize > 0) BatchSize = cfg.batchSize;
+        if (cfg.flushIntervalMs > 0) FlushIntervalMs = cfg.flushIntervalMs;
+        if (cfg.maxQueue > 0) MaxQueue = cfg.maxQueue;
+        if (cfg.maxRetries >= 0) MaxRetries = cfg.maxRetries;
+        if (cfg.retryBackoffMs >= 0) RetryBackoffMs = cfg.retryBackoffMs;
+    }
+
     // -------------------- Shared connection + prepared commands --------------------
     private static SqlConnection _sharedConn;
     private static SqlTransaction _sharedTx;
@@ -142,11 +157,11 @@ public static class DbLoggingConfig
     private static SqlCommand _cmdInsertTurn;
     // Async batching for FactAction
     private static readonly bool BatchFactActions = true;
-    private static readonly int BatchSize = 200;
-    private static readonly int FlushIntervalMs = 250;
-    private static readonly int MaxQueue = 10000;
-    private static readonly int MaxRetries = 3;
-    private static readonly int RetryBackoffMs = 250;
+    private static int BatchSize = 200;
+    private static int FlushIntervalMs = 250;
+    private static int MaxQueue = 10000;
+    private static int MaxRetries = 3;
+    private static int RetryBackoffMs = 250;
 
     private struct FactActionRow
     {
@@ -157,6 +172,15 @@ public static class DbLoggingConfig
     private static readonly ConcurrentQueue<FactActionRow> _faQueue = new ConcurrentQueue<FactActionRow>();
     private static CancellationTokenSource _flushCts;
     private static Task _flushTask;
+
+    // Metrics
+    private static long _mEnqueued;
+    private static long _mDropped;
+    private static long _mFlushed;
+    private static long _mFlushErrors;
+    private static long _mRetryAttempts;
+    private static long _mFlushCount;
+    private static long _mTotalFlushMs;
 
     public static void StartLoggingSession(bool transactional = false)
     {
@@ -176,9 +200,9 @@ public static class DbLoggingConfig
         _cmdFactAction.Parameters.Add("@targetPlayerSK", SqlDbType.Int);
         _cmdFactAction.Parameters.Add("@actionSeq", SqlDbType.Int);
         var pAC = _cmdFactAction.Parameters.Add("@actionCost", SqlDbType.Decimal); pAC.Precision = 19; pAC.Scale = 4;
-        var pBC = _cmdFactAction.Parameters.Add("@buildCost", SqlDbType.Decimal);  pBC.Precision = 19; pBC.Scale = 4;
+        var pBC = _cmdFactAction.Parameters.Add("@buildCost", SqlDbType.Decimal); pBC.Precision = 19; pBC.Scale = 4;
         var pSC = _cmdFactAction.Parameters.Add("@surchargeCost", SqlDbType.Decimal); pSC.Precision = 19; pSC.Scale = 4;
-        var pTC = _cmdFactAction.Parameters.Add("@totalCost", SqlDbType.Decimal);  pTC.Precision = 19; pTC.Scale = 4;
+        var pTC = _cmdFactAction.Parameters.Add("@totalCost", SqlDbType.Decimal); pTC.Precision = 19; pTC.Scale = 4;
 
         // Prepare DimRound insert
         _cmdInsertRound = new SqlCommand(
@@ -194,6 +218,15 @@ public static class DbLoggingConfig
         _cmdInsertTurn.Parameters.Add("@roundSK", SqlDbType.Int);
 
         _sessionActive = true;
+
+        // Reset metrics
+        Interlocked.Exchange(ref _mEnqueued, 0);
+        Interlocked.Exchange(ref _mDropped, 0);
+        Interlocked.Exchange(ref _mFlushed, 0);
+        Interlocked.Exchange(ref _mFlushErrors, 0);
+        Interlocked.Exchange(ref _mRetryAttempts, 0);
+        Interlocked.Exchange(ref _mFlushCount, 0);
+        Interlocked.Exchange(ref _mTotalFlushMs, 0);
 
         // Start background flusher for FactAction if enabled
         if (BatchFactActions && (_flushTask == null || _flushTask.IsCompleted))
@@ -220,6 +253,21 @@ public static class DbLoggingConfig
             {
                 try { _flushCts.Cancel(); _flushTask?.Wait(1000); } catch { }
                 _flushTask = null; _flushCts.Dispose(); _flushCts = null;
+            }
+            // Emit metrics summary
+            if (enabled)
+            {
+                long enq = Interlocked.Read(ref _mEnqueued);
+                long drp = Interlocked.Read(ref _mDropped);
+                long fls = Interlocked.Read(ref _mFlushed);
+                long err = Interlocked.Read(ref _mFlushErrors);
+                long rty = Interlocked.Read(ref _mRetryAttempts);
+                long cnt = Interlocked.Read(ref _mFlushCount);
+                long ms = Interlocked.Read(ref _mTotalFlushMs);
+                if (enq + fls + err + rty + cnt > 0)
+                {
+                    UnityEngine.Debug.Log($"[DBLog] enqueued={enq}, flushed={fls}, dropped={drp}, flushes={cnt}, totalMs={ms}, avgMs={(cnt > 0 ? (ms / (double)cnt) : 0):F2}, flushErrors={err}, retryAttempts={rty}");
+                }
             }
             _cmdFactAction?.Dispose(); _cmdFactAction = null;
             _cmdInsertRound?.Dispose(); _cmdInsertRound = null;
@@ -295,6 +343,7 @@ public static class DbLoggingConfig
                 {
                     DestinationTableName = "dbo.FactAction"
                 };
+                var sw = Stopwatch.StartNew();
                 bulk.ColumnMappings.Add("turnSK", "turnSK");
                 bulk.ColumnMappings.Add("actionTypeSK", "actionTypeSK");
                 bulk.ColumnMappings.Add("pieceSK", "pieceSK");
@@ -306,11 +355,17 @@ public static class DbLoggingConfig
                 bulk.ColumnMappings.Add("surchargeCost", "surchargeCost");
                 bulk.ColumnMappings.Add("totalCost", "totalCost");
                 bulk.WriteToServer(dt);
+                sw.Stop();
+                Interlocked.Add(ref _mFlushed, dt.Rows.Count);
+                Interlocked.Increment(ref _mFlushCount);
+                Interlocked.Add(ref _mTotalFlushMs, sw.ElapsedMilliseconds);
                 break;
             }
             catch (Exception)
             {
                 attempts++;
+                Interlocked.Increment(ref _mFlushErrors);
+                Interlocked.Increment(ref _mRetryAttempts);
                 if (attempts >= MaxRetries) break;
                 Thread.Sleep(RetryBackoffMs * attempts);
             }
@@ -650,12 +705,12 @@ public static class DbLoggingConfig
 
     public static void logDimActionType()
     {
-        skForMoveAction       = actionTypeVersion(inputSimID, moveID,      moveString,      placeholder, false, false, true);
-        skForShootAction      = actionTypeVersion(inputSimID, shootID,     shootString,     placeholder, false, false, true);
-        skForCaptureVPAction  = actionTypeVersion(inputSimID, captureVPID, captureVPString, placeholder, false, false, true);
-        skForCoreDamageAction = actionTypeVersion(inputSimID, coreDamageID,coreDamageString,placeholder, false, true,  true);
-        skForCreateAction     = actionTypeVersion(inputSimID, createID,    createString,    placeholder, true,  false, false);
-        skForEndTurnAction    = actionTypeVersion(inputSimID, endTurnID,   endTurnString,   placeholder, false, false, false);
+        skForMoveAction = actionTypeVersion(inputSimID, moveID, moveString, placeholder, false, false, true);
+        skForShootAction = actionTypeVersion(inputSimID, shootID, shootString, placeholder, false, false, true);
+        skForCaptureVPAction = actionTypeVersion(inputSimID, captureVPID, captureVPString, placeholder, false, false, true);
+        skForCoreDamageAction = actionTypeVersion(inputSimID, coreDamageID, coreDamageString, placeholder, false, true, true);
+        skForCreateAction = actionTypeVersion(inputSimID, createID, createString, placeholder, true, false, false);
+        skForEndTurnAction = actionTypeVersion(inputSimID, endTurnID, endTurnString, placeholder, false, false, false);
     }
 
 
@@ -668,17 +723,17 @@ public static class DbLoggingConfig
 
     public static void logPlayerVersion()
     {
-        playerOneSK   = playerVersion(inputSimID, 1, "Mathew", placeholder, false);
-        playerTwoSK   = playerVersion(inputSimID, 2, "Mark",   placeholder, false);
-        playerThreeSK = playerVersion(inputSimID, 3, "Luke",   placeholder, false);
-        playerFourSK  = playerVersion(inputSimID, 4, "John",   placeholder, false);
+        playerOneSK = playerVersion(inputSimID, 1, "Mathew", placeholder, false);
+        playerTwoSK = playerVersion(inputSimID, 2, "Mark", placeholder, false);
+        playerThreeSK = playerVersion(inputSimID, 3, "Luke", placeholder, false);
+        playerFourSK = playerVersion(inputSimID, 4, "John", placeholder, false);
     }
 
     public static void logWinTypeVersion()
     {
-        wonByEndVpSK       = winTypeVersion(inputSimID, wonByEndVp,      placeholder);
+        wonByEndVpSK = winTypeVersion(inputSimID, wonByEndVp, placeholder);
         wonByEliminationSK = winTypeVersion(inputSimID, wonByElimination, placeholder);
-        tieSK              = winTypeVersion(inputSimID, tie,             placeholder);
+        tieSK = winTypeVersion(inputSimID, tie, placeholder);
     }
 
     public static void prepDimGame()
@@ -821,7 +876,7 @@ public static class DbLoggingConfig
         if (BatchFactActions)
         {
             // backpressure: if queue is too large, drop oldest one
-            while (_faQueue.Count >= MaxQueue && _faQueue.TryDequeue(out _)) { }
+            while (_faQueue.Count >= MaxQueue && _faQueue.TryDequeue(out _)) { Interlocked.Increment(ref _mDropped); }
             _faQueue.Enqueue(new FactActionRow
             {
                 turnSK = latestTurnSK,
@@ -835,6 +890,7 @@ public static class DbLoggingConfig
                 surchargeCost = surcharge,
                 totalCost = total
             });
+            Interlocked.Increment(ref _mEnqueued);
             latestActionSK = 0; // not available in batch mode
         }
         else

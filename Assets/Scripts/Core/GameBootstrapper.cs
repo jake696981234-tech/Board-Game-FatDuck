@@ -82,14 +82,21 @@ public sealed class GameBootstrapper : MonoBehaviour
         //Telementry to data base
         //To do- add missing call, and check order of call
         DbLoggingConfig.InitializeLoggingValues(in hub);
-        DbLoggingConfig.DeleteConflictingSimIdRows();
-        DbLoggingConfig.logDimSim();
-        DbLoggingConfig.logDimActionType();
-        DbLoggingConfig.logDimPiece();
-        DbLoggingConfig.logPlayerVersion();
-        DbLoggingConfig.logWinTypeVersion();
-        DbLoggingConfig.prepDimGame();
-        DbLoggingConfig.logRoundVersion();
+        // Apply runtime logging tuning from Config
+        DbLoggingConfig.ApplyConfig(in config.dbLogging);
+        if (config.dbLogging.enabled)
+        {
+            DbLoggingConfig.DeleteConflictingSimIdRows();
+            DbLoggingConfig.logDimSim();
+            DbLoggingConfig.logDimActionType();
+            DbLoggingConfig.logDimPiece();
+            DbLoggingConfig.logPlayerVersion();
+            DbLoggingConfig.logWinTypeVersion();
+            DbLoggingConfig.prepDimGame();
+            DbLoggingConfig.logRoundVersion();
+            if (config.dbLogging.useSharedSession)
+                DbLoggingConfig.StartLoggingSession(transactional: config.dbLogging.transactionalSession);
+        }
         // Start a shared logging session for faster inserts during gameplay
         DbLoggingConfig.StartLoggingSession(transactional: false);
         gameState.Initialize(in hub, board, GameBootstrapper.PiecesData, cost, ps, startingPlayer);
@@ -334,7 +341,8 @@ public sealed class GameBootstrapper : MonoBehaviour
 
     private void OnDestroy()
     {
-        DbLoggingConfig.EndLoggingSession(commit: true);
+        if (config != null && config.dbLogging.enabled && config.dbLogging.useSharedSession)
+            DbLoggingConfig.EndLoggingSession(commit: true);
     }
 
     private void RestartMatch()

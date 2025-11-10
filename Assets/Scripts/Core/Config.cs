@@ -42,6 +42,40 @@ public sealed class Config : ScriptableObject
     };
 
     [System.Serializable]
+    public struct DbLoggingAuthoring
+    {
+        public bool enabled;
+        public int simID;
+        public string simName;
+        public string ruleVersion;
+        public string notes;
+        public bool useSharedSession;
+        public bool transactionalSession;
+        [Min(1)] public int batchSize;
+        [Min(1)] public int flushIntervalMs;
+        [Min(1)] public int maxQueue;
+        [Min(0)] public int maxRetries;
+        [Min(0)] public int retryBackoffMs;
+    }
+
+    [Header("DB Logging Tuning")]
+    public DbLoggingAuthoring dbLogging = new DbLoggingAuthoring
+    {
+        enabled = true,
+        simID = 4,
+        simName = "Does it work this way though?",
+        ruleVersion = "v1",
+        notes = "No notes",
+        useSharedSession = true,
+        transactionalSession = false,
+        batchSize = 200,
+        flushIntervalMs = 250,
+        maxQueue = 10000,
+        maxRetries = 3,
+        retryBackoffMs = 250
+    };
+
+    [System.Serializable]
     public struct DumbGregAuthoring
     {
         [Range(0f,1f)] public float endTurnAfterFirstPct; // chance to end turn after first action
