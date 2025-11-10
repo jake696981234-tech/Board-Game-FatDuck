@@ -89,7 +89,7 @@ public sealed class GameBootstrapper : MonoBehaviour
         DbLoggingConfig.logPlayerVersion();
         DbLoggingConfig.logWinTypeVersion();
         DbLoggingConfig.prepDimGame();
-        DbLoggingConfig.logRoundVersion(5); //hard coded -to do- 5 is hard coded number- needs to adjust to the rule number
+        DbLoggingConfig.logRoundVersion();
         gameState.Initialize(in hub, board, GameBootstrapper.PiecesData, cost, ps, startingPlayer);
 
 
@@ -116,7 +116,24 @@ public sealed class GameBootstrapper : MonoBehaviour
                         {
                             switch (hub.playerPolicy[seat])
                             {
-                                case GameConfigHub.PolicyKind.DumbGreg: policy = new DumbGregBotPolicy(); break;
+                                case GameConfigHub.PolicyKind.DumbGreg:
+                                {
+                                    var dg = (config != null) ? config.dumbGreg : default;
+                                    int? seed = null;
+                                    if (dg.seedBase != 0)
+                                    {
+                                        seed = dg.seedBySeat ? dg.seedBase + seat : dg.seedBase;
+                                    }
+                                    policy = new DumbGregBotPolicy(
+                                        endTurnAfterFirstPct: dg.endTurnAfterFirstPct,
+                                        shootInsteadPct: dg.shootInsteadPct,
+                                        moveAnotherPct: dg.moveAnotherPct,
+                                        moveBuildingPct: dg.moveBuildingPct,
+                                        createInsteadPct: dg.createInsteadPct,
+                                        seed: seed
+                                    );
+                                    break;
+                                }
                                 case GameConfigHub.PolicyKind.Heuristic:
                                 default: policy = new HeuristicPolicy(); break;
                             }

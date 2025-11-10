@@ -13,7 +13,7 @@ public static class DbLoggingConfig
 
 
     //Values you must change for each simulation
-    public readonly static int inputSimID = 3;
+    public readonly static int inputSimID = 4;
     public readonly static string inputSimName = "Does it work this way though?";
     public readonly static string inputRuleVersion = "v1";
     public readonly static string inputNotes = "No notes";
@@ -109,6 +109,7 @@ public static class DbLoggingConfig
     //ordinals
     private static int gameOrdinal = 0;
     private static int actionOrdinal = 0;
+    private static int roundOrdinalUp = 0; // counts rounds 1..N per game
 
     //Local Values being seeded
 
@@ -543,6 +544,7 @@ public static class DbLoggingConfig
     public static void prepDimGame()
     {
         gameOrdinal++;
+        roundOrdinalUp = 0; // reset round counter at new game start
         prepDimGameVersion(inputSimID, gameOrdinal);
         latestGameSK = GetMostRecentSK("DimGame", "gameSK");
     }
@@ -566,13 +568,18 @@ public static class DbLoggingConfig
             winnerPlayerSK.HasValue ? (object)winnerPlayerSK.Value : DBNull.Value,
             winTypeSK
         );
+
+        // Game ended; prepare for next game by resetting round ordinal
+        roundOrdinalUp = 0;
     }
 
 
 
-    public static void logRoundVersion(int RoundsLeft)
+    public static void logRoundVersion()
     {
-        roundVersion(latestGameSK, RoundsLeft);
+        // Ignore RoundsLeft; log ascending round ordinal starting at 1
+        roundOrdinalUp++;
+        roundVersion(latestGameSK, roundOrdinalUp);
         latestRoundSK = GetMostRecentSK("DimRound", "roundSK");
     }
 

@@ -41,6 +41,31 @@ public sealed class Config : ScriptableObject
         GameConfigHub.PolicyKind.Heuristic
     };
 
+    [System.Serializable]
+    public struct DumbGregAuthoring
+    {
+        [Range(0f,1f)] public float endTurnAfterFirstPct; // chance to end turn after first action
+        [Range(0f,1f)] public float shootInsteadPct;       // chance to shoot instead within tiers
+        [Range(0f,1f)] public float moveAnotherPct;        // chance to pick second-best move
+        [Range(0f,1f)] public float moveBuildingPct;       // chance to move building instead
+        [Range(0f,1f)] public float createInsteadPct;      // chance to create instead within tiers
+
+        public int seedBase;          // base seed used for RNG (combine with seat)
+        public bool seedBySeat;       // if true, actual seed = seedBase + seat
+    }
+
+    [Header("Dumb Greg Policy Tuning")]
+    public DumbGregAuthoring dumbGreg = new DumbGregAuthoring
+    {
+        endTurnAfterFirstPct = 0.08f,
+        shootInsteadPct      = 0.12f,
+        moveAnotherPct       = 0.10f,
+        moveBuildingPct      = 0.05f,
+        createInsteadPct     = 0.10f,
+        seedBase             = 12345,
+        seedBySeat           = true
+    };
+
     [Header("ML Behavior Parameters (auto-injected)")]
     public BehaviorParametersAuthoring behaviorParams = new BehaviorParametersAuthoring
     {

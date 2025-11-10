@@ -109,7 +109,6 @@ namespace Game.Core
         public bool Perform(in Action a)
         {
             ref var cur = ref ps[currentPlayer];
-            incrementPlayerActionOrdinal();
 
             if (!FastCheck(a)) return false;
             if (!IsStillLegal(in a, currentPlayer)) return false;
@@ -138,10 +137,22 @@ namespace Game.Core
                     pieceTypeForLog = bm.GetPieceType(actorPid);
             }
 
-
+            // Special-case EndTurn: log it against the current turn before handoff
             if (a.kind == EndTurn)
             {
-                resetActionPlayerOrd = true;
+                DbLoggingConfig.logAction(
+                    loggedType,
+                    null,               // no piece for EndTurn
+                    null,               // no target for EndTurn
+                    loggedplayer,
+                    0m,                 // actionCost
+                    null,               // buildCost
+                    null                // surchargeCost
+                );
+
+                ApplyEndTurn();
+                OnActionExecuted?.Invoke();
+                return true;
             }
 
             // Geometry-free "before" snapshot     
@@ -156,22 +167,19 @@ namespace Game.Core
                 case Create: ApplyCreate(in a, currentPlayer); break;
                 case CaptureVP: ApplyCaptureVP(in a, currentPlayer); break; // sets flags + VP counters + vpPool
                 case CoreDamage: ApplyCoreDamage(in a, currentPlayer); break; // sets flag + damages enemy core + elim check
-                case EndTurn: ApplyEndTurn(); break; // turn/round transitions
+                case EndTurn: ApplyEndTurn(); break; // unreachable due to early return above
                 default: return false;
             }
 
-            if (a.kind != EndTurn)
-            {
-                cur.AddBudget(-(float)quote.Total);
-                cur.AdvanceActionIndex();
-
-            }
+            // For non-EndTurn actions, apply costs and advance index
+            cur.AddBudget(-(float)quote.Total);
+            cur.AdvanceActionIndex();
 
 
             // Map DB fields so that actionCost == growth-based turn fee (from actionGrowthFactor)
-            decimal actionCost = (a.kind == EndTurn) ? 0m : (decimal)quote.TurnFee;
-            decimal? buildCost = (a.kind == EndTurn) ? (decimal?)null : (decimal)quote.BuildCost;
-            decimal? surchargeCost = (a.kind == EndTurn) ? (decimal?)null : (decimal)quote.AbilityCost;
+            decimal actionCost = (decimal)quote.TurnFee;
+            decimal? buildCost = (decimal)quote.BuildCost;
+            decimal? surchargeCost = (decimal)quote.AbilityCost;
 
 
 
@@ -262,26 +270,7 @@ namespace Game.Core
         }
 
 
-        private int[] playerActionOrdinals = new int[4];  // automatically initialized to 0
 
-        private bool resetActionPlayerOrd = false;
-
-        private int getActionOrdinal()
-        {
-            if (currentPlayer >= 0 && currentPlayer < playerActionOrdinals.Length)
-                return playerActionOrdinals[currentPlayer];
-
-            Debug.LogError("PlayerTurnOrdinal out of range");
-            return -1;
-        }
-
-        private void incrementPlayerActionOrdinal()
-        {
-            if (currentPlayer >= 0 && currentPlayer < playerActionOrdinals.Length)
-                playerActionOrdinals[currentPlayer]++;
-            else
-                Debug.LogError("PlayerTurnOrdinal increment out of range");
-        }
 
 
 
@@ -805,7 +794,7 @@ namespace Game.Core
             // 3) Decrement rounds, clear counters and per-cycle flags
             roundsLeft = Math.Max(0, roundsLeft - 1);
 
-            DbLoggingConfig.logRoundVersion(roundsLeft);
+            DbLoggingConfig.logRoundVersion();
 
             for (int i = 0; i < 4; i++)
             {
