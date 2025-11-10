@@ -90,6 +90,8 @@ public sealed class GameBootstrapper : MonoBehaviour
         DbLoggingConfig.logWinTypeVersion();
         DbLoggingConfig.prepDimGame();
         DbLoggingConfig.logRoundVersion();
+        // Start a shared logging session for faster inserts during gameplay
+        DbLoggingConfig.StartLoggingSession(transactional: false);
         gameState.Initialize(in hub, board, GameBootstrapper.PiecesData, cost, ps, startingPlayer);
 
 
@@ -328,6 +330,11 @@ public sealed class GameBootstrapper : MonoBehaviour
             if (agent != null) agent.Tick();
         }
         // ML seats: driven by ML-Agents components; Human seats: idle in Phase A
+    }
+
+    private void OnDestroy()
+    {
+        DbLoggingConfig.EndLoggingSession(commit: true);
     }
 
     private void RestartMatch()

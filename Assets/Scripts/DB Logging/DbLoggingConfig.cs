@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient; // System.Data.SqlClient contains SqlConnection/SqlBulkCopy
 using System.Threading;
+using System.Threading.Tasks;
+using System.Collections.Concurrent;
 using System.IO;
 using UnityEngine;
 
@@ -104,7 +106,7 @@ public static class DbLoggingConfig
     private static int latestGameSK;
     private static int latestRoundSK;
     private static int latestTurnSK;
-    private static int latestActionSK;
+    private static long latestActionSK;
 
     //ordinals
     private static int gameOrdinal = 0;
@@ -129,36 +131,194 @@ public static class DbLoggingConfig
         inputMaxRounds = Hub.match_numberOfRounds;
     }
 
+    // -------------------- Shared connection + prepared commands --------------------
+    private static SqlConnection _sharedConn;
+    private static SqlTransaction _sharedTx;
+    private static bool _sessionActive = false;
 
-    //Table methods helper!
-    public static void Execute(string sql, params SqlParameter[] p)
+    // Prepared commands (created on StartLoggingSession)
+    private static SqlCommand _cmdFactAction;
+    private static SqlCommand _cmdInsertRound;
+    private static SqlCommand _cmdInsertTurn;
+    // Async batching for FactAction
+    private static readonly bool BatchFactActions = true;
+    private static readonly int BatchSize = 200;
+    private static readonly int FlushIntervalMs = 250;
+    private static readonly int MaxQueue = 10000;
+    private static readonly int MaxRetries = 3;
+    private static readonly int RetryBackoffMs = 250;
+
+    private struct FactActionRow
     {
-        using var conn = new SqlConnection(SqlConnection);
-        using var cmd = new SqlCommand(sql, conn);
-        cmd.Parameters.AddRange(p);
-        conn.Open();
-        cmd.ExecuteNonQuery();
+        public int turnSK, actionTypeSK, actingPlayerSK, actionSeq;
+        public int? pieceSK, targetPlayerSK;
+        public decimal actionCost, buildCost, surchargeCost, totalCost;
+    }
+    private static readonly ConcurrentQueue<FactActionRow> _faQueue = new ConcurrentQueue<FactActionRow>();
+    private static CancellationTokenSource _flushCts;
+    private static Task _flushTask;
+
+    public static void StartLoggingSession(bool transactional = false)
+    {
+        if (_sessionActive) return;
+        _sharedConn = new SqlConnection(SqlConnection);
+        _sharedConn.Open();
+        _sharedTx = transactional ? _sharedConn.BeginTransaction() : null;
+
+        // Prepare FactAction command
+        _cmdFactAction = new SqlCommand(
+            "INSERT INTO dbo.FactAction (turnSK, actionTypeSK, pieceSK, actingPlayerSK, targetPlayerSK, actionSeq, actionCost, buildCost, surchargeCost, totalCost) OUTPUT INSERTED.actionID VALUES (@turnSK, @actionTypeSK, @pieceSK, @actingPlayerSK, @targetPlayerSK, @actionSeq, @actionCost, @buildCost, @surchargeCost, @totalCost);",
+            _sharedConn, _sharedTx);
+        _cmdFactAction.Parameters.Add("@turnSK", SqlDbType.Int);
+        _cmdFactAction.Parameters.Add("@actionTypeSK", SqlDbType.Int);
+        _cmdFactAction.Parameters.Add("@pieceSK", SqlDbType.Int);
+        _cmdFactAction.Parameters.Add("@actingPlayerSK", SqlDbType.Int);
+        _cmdFactAction.Parameters.Add("@targetPlayerSK", SqlDbType.Int);
+        _cmdFactAction.Parameters.Add("@actionSeq", SqlDbType.Int);
+        var pAC = _cmdFactAction.Parameters.Add("@actionCost", SqlDbType.Decimal); pAC.Precision = 19; pAC.Scale = 4;
+        var pBC = _cmdFactAction.Parameters.Add("@buildCost", SqlDbType.Decimal);  pBC.Precision = 19; pBC.Scale = 4;
+        var pSC = _cmdFactAction.Parameters.Add("@surchargeCost", SqlDbType.Decimal); pSC.Precision = 19; pSC.Scale = 4;
+        var pTC = _cmdFactAction.Parameters.Add("@totalCost", SqlDbType.Decimal);  pTC.Precision = 19; pTC.Scale = 4;
+
+        // Prepare DimRound insert
+        _cmdInsertRound = new SqlCommand(
+            "INSERT INTO dbo.DimRound (gameSK, roundOrdinal) OUTPUT INSERTED.roundSK VALUES (@gameSK, @roundOrdinal);",
+            _sharedConn, _sharedTx);
+        _cmdInsertRound.Parameters.Add("@gameSK", SqlDbType.Int);
+        _cmdInsertRound.Parameters.Add("@roundOrdinal", SqlDbType.Int);
+
+        // Prepare DimTurn insert
+        _cmdInsertTurn = new SqlCommand(
+            "INSERT INTO dbo.DimTurn (roundSK) OUTPUT INSERTED.turnSK VALUES (@roundSK);",
+            _sharedConn, _sharedTx);
+        _cmdInsertTurn.Parameters.Add("@roundSK", SqlDbType.Int);
+
+        _sessionActive = true;
+
+        // Start background flusher for FactAction if enabled
+        if (BatchFactActions && (_flushTask == null || _flushTask.IsCompleted))
+        {
+            _flushCts = new CancellationTokenSource();
+            _flushTask = Task.Run(() => FlushLoop(_flushCts.Token));
+        }
     }
 
-    public static int GetMostRecentSK(string tableName, string skColumn)
+    public static void EndLoggingSession(bool commit = true)
     {
-        // Basic sanitization to avoid SQL injection: allow only alphanumeric + underscore
-        if (string.IsNullOrWhiteSpace(tableName) || string.IsNullOrWhiteSpace(skColumn))
-            throw new ArgumentException("Table name and column name cannot be null or empty.");
-
-        if (!System.Text.RegularExpressions.Regex.IsMatch(tableName, @"^[A-Za-z0-9_]+$") ||
-            !System.Text.RegularExpressions.Regex.IsMatch(skColumn, @"^[A-Za-z0-9_]+$"))
-            throw new ArgumentException("Invalid table or column name.");
-
-        // Build dynamic SQL safely (identifiers cannot be parameterized)
-        string sql = $"SELECT MAX([{skColumn}]) FROM dbo.[{tableName}];";
-
-        using var conn = new SqlConnection(SqlConnection);
-        using var cmd = new SqlCommand(sql, conn);
-        conn.Open();
-        object result = cmd.ExecuteScalar();
-        return (result == DBNull.Value) ? 0 : Convert.ToInt32(result);
+        if (!_sessionActive) return;
+        try
+        {
+            if (_sharedTx != null)
+            {
+                if (commit) _sharedTx.Commit(); else _sharedTx.Rollback();
+            }
+        }
+        finally
+        {
+            // Stop background flusher
+            if (_flushCts != null)
+            {
+                try { _flushCts.Cancel(); _flushTask?.Wait(1000); } catch { }
+                _flushTask = null; _flushCts.Dispose(); _flushCts = null;
+            }
+            _cmdFactAction?.Dispose(); _cmdFactAction = null;
+            _cmdInsertRound?.Dispose(); _cmdInsertRound = null;
+            _cmdInsertTurn?.Dispose(); _cmdInsertTurn = null;
+            _sharedTx?.Dispose(); _sharedTx = null;
+            _sharedConn?.Close(); _sharedConn?.Dispose(); _sharedConn = null;
+            _sessionActive = false;
+        }
     }
+
+    private static async Task FlushLoop(CancellationToken ct)
+    {
+        var delay = TimeSpan.FromMilliseconds(FlushIntervalMs);
+        while (!ct.IsCancellationRequested)
+        {
+            try
+            {
+                await Task.Delay(delay, ct).ConfigureAwait(false);
+            }
+            catch (TaskCanceledException) { break; }
+            FlushFactActions(BatchSize);
+        }
+        // final drain
+        FlushFactActions(int.MaxValue);
+    }
+
+    private static void FlushFactActions(int max)
+    {
+        if (!BatchFactActions) return;
+        // Fast check
+        if (_faQueue.IsEmpty) return;
+
+        // Build DataTable
+        var dt = new DataTable();
+        dt.Columns.Add("turnSK", typeof(int));
+        dt.Columns.Add("actionTypeSK", typeof(int));
+        dt.Columns.Add("pieceSK", typeof(int));
+        dt.Columns.Add("actingPlayerSK", typeof(int));
+        dt.Columns.Add("targetPlayerSK", typeof(int));
+        dt.Columns.Add("actionSeq", typeof(int));
+        dt.Columns.Add("actionCost", typeof(decimal));
+        dt.Columns.Add("buildCost", typeof(decimal));
+        dt.Columns.Add("surchargeCost", typeof(decimal));
+        dt.Columns.Add("totalCost", typeof(decimal));
+
+        int taken = 0;
+        while (taken < max && _faQueue.TryDequeue(out var row))
+        {
+            var dr = dt.NewRow();
+            dr["turnSK"] = row.turnSK;
+            dr["actionTypeSK"] = row.actionTypeSK;
+            dr["pieceSK"] = (object)row.pieceSK ?? DBNull.Value;
+            dr["actingPlayerSK"] = row.actingPlayerSK;
+            dr["targetPlayerSK"] = (object)row.targetPlayerSK ?? DBNull.Value;
+            dr["actionSeq"] = row.actionSeq;
+            dr["actionCost"] = row.actionCost;
+            dr["buildCost"] = row.buildCost;
+            dr["surchargeCost"] = row.surchargeCost;
+            dr["totalCost"] = row.totalCost;
+            dt.Rows.Add(dr);
+            taken++;
+        }
+        if (dt.Rows.Count == 0) return;
+
+        int attempts = 0;
+        while (true)
+        {
+            try
+            {
+                using var conn = new SqlConnection(SqlConnection);
+                conn.Open();
+                using var bulk = new SqlBulkCopy(conn)
+                {
+                    DestinationTableName = "dbo.FactAction"
+                };
+                bulk.ColumnMappings.Add("turnSK", "turnSK");
+                bulk.ColumnMappings.Add("actionTypeSK", "actionTypeSK");
+                bulk.ColumnMappings.Add("pieceSK", "pieceSK");
+                bulk.ColumnMappings.Add("actingPlayerSK", "actingPlayerSK");
+                bulk.ColumnMappings.Add("targetPlayerSK", "targetPlayerSK");
+                bulk.ColumnMappings.Add("actionSeq", "actionSeq");
+                bulk.ColumnMappings.Add("actionCost", "actionCost");
+                bulk.ColumnMappings.Add("buildCost", "buildCost");
+                bulk.ColumnMappings.Add("surchargeCost", "surchargeCost");
+                bulk.ColumnMappings.Add("totalCost", "totalCost");
+                bulk.WriteToServer(dt);
+                break;
+            }
+            catch (Exception)
+            {
+                attempts++;
+                if (attempts >= MaxRetries) break;
+                Thread.Sleep(RetryBackoffMs * attempts);
+            }
+        }
+    }
+
+
+    // Legacy helpers removed; use OUTPUT + prepared commands
 
 
 
@@ -168,30 +328,37 @@ public static class DbLoggingConfig
     //Tables methods!
     public static void SimVersion(int simID, string simName, string ruleVersion, string notes, float maxRounds, float startingBudget, float startOfTurnDeduction)
     {
-        Execute(
+        using var conn = new SqlConnection(SqlConnection);
+        using var cmd = new SqlCommand(
             "INSERT INTO dbo.DimSim(SimID, SimName, RuleVersion, Notes, MaxRounds, StartingBudget, startOfTurnDeduction) VALUES (@simID, @simName, @ruleVersion, @notes, @maxRounds, @startingBudget, @startOfTurnDeduction);",
-            new SqlParameter("@simID", simID),
-            new SqlParameter("@simName", simName),
-            new SqlParameter("@ruleVersion", ruleVersion),
-            new SqlParameter("@notes", notes),
-            new SqlParameter("@maxRounds", maxRounds),
-            new SqlParameter("@startingBudget", startingBudget),
-            new SqlParameter("@startOfTurnDeduction", startOfTurnDeduction)
-        );
+            conn);
+        cmd.Parameters.AddWithValue("@simID", simID);
+        cmd.Parameters.AddWithValue("@simName", simName);
+        cmd.Parameters.AddWithValue("@ruleVersion", ruleVersion);
+        cmd.Parameters.AddWithValue("@notes", notes);
+        cmd.Parameters.AddWithValue("@maxRounds", maxRounds);
+        cmd.Parameters.AddWithValue("@startingBudget", startingBudget);
+        cmd.Parameters.AddWithValue("@startOfTurnDeduction", startOfTurnDeduction);
+        conn.Open();
+        cmd.ExecuteNonQuery();
     }
 
-    public static void actionTypeVersion(int simID, int actionTypeID, string actionName, string category, bool isBuild, bool affectsCore, bool needsPiece)
+    public static int actionTypeVersion(int simID, int actionTypeID, string actionName, string category, bool isBuild, bool affectsCore, bool needsPiece)
     {
-        Execute(
-            "INSERT INTO dbo.DimActionType(simID, actionTypeID, actionName, category, isBuild, affectsCore, needsPiece) VALUES (@simID, @actionTypeID, @actionName, @category, @isBuild, @affectsCore, @needsPiece);",
-            new SqlParameter("@simID", simID),
-            new SqlParameter("@actionTypeID", actionTypeID),
-            new SqlParameter("@actionName", actionName),
-            new SqlParameter("@category", category),
-            new SqlParameter("@isBuild", isBuild),
-            new SqlParameter("@affectsCore", affectsCore),
-            new SqlParameter("@needsPiece", needsPiece)
-        );
+        using var conn = new SqlConnection(SqlConnection);
+        using var cmd = new SqlCommand(
+            "INSERT INTO dbo.DimActionType(simID, actionTypeID, actionName, category, isBuild, affectsCore, needsPiece) " +
+            "OUTPUT INSERTED.actionTypeSK VALUES (@simID, @actionTypeID, @actionName, @category, @isBuild, @affectsCore, @needsPiece);",
+            conn);
+        cmd.Parameters.AddWithValue("@simID", simID);
+        cmd.Parameters.AddWithValue("@actionTypeID", actionTypeID);
+        cmd.Parameters.AddWithValue("@actionName", actionName);
+        cmd.Parameters.AddWithValue("@category", category);
+        cmd.Parameters.AddWithValue("@isBuild", isBuild);
+        cmd.Parameters.AddWithValue("@affectsCore", affectsCore);
+        cmd.Parameters.AddWithValue("@needsPiece", needsPiece);
+        conn.Open();
+        return Convert.ToInt32(cmd.ExecuteScalar());
     }
 
 
@@ -242,83 +409,115 @@ public static class DbLoggingConfig
 
 
 
-    public static void playerVersion(
+    public static int playerVersion(
         int simID,
         int playerID,
         object playerName,
         object policyName,
         object isHuman)
     {
-        Execute(
+        using var conn = new SqlConnection(SqlConnection);
+        using var cmd = new SqlCommand(
             "INSERT INTO dbo.DimPlayer (simID, playerID, playerName, policyName, isHuman) " +
-            "VALUES (@simID, @playerID, @playerName, @policyName, @isHuman);",
-            new SqlParameter("@simID", simID),
-            new SqlParameter("@playerID", playerID),
-            new SqlParameter("@playerName", playerName ?? DBNull.Value),
-            new SqlParameter("@policyName", policyName ?? DBNull.Value),
-            new SqlParameter("@isHuman", isHuman ?? DBNull.Value)
-        );
+            "OUTPUT INSERTED.playerSK VALUES (@simID, @playerID, @playerName, @policyName, @isHuman);",
+            conn);
+        cmd.Parameters.AddWithValue("@simID", simID);
+        cmd.Parameters.AddWithValue("@playerID", playerID);
+        cmd.Parameters.AddWithValue("@playerName", playerName ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@policyName", policyName ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@isHuman", isHuman ?? DBNull.Value);
+        conn.Open();
+        return Convert.ToInt32(cmd.ExecuteScalar());
     }
 
 
-    public static void winTypeVersion(
+    public static int winTypeVersion(
         int simID,
         string winName,
         object winCategory)
     {
-        Execute(
+        using var conn = new SqlConnection(SqlConnection);
+        using var cmd = new SqlCommand(
             "INSERT INTO dbo.DimWinType (simID, winName, winCategory) " +
-            "VALUES (@simID, @winName, @winCategory);",
-            new SqlParameter("@simID", simID),
-            new SqlParameter("@winName", winName),
-            new SqlParameter("@winCategory", winCategory ?? DBNull.Value)
-        );
+            "OUTPUT INSERTED.winTypeSK VALUES (@simID, @winName, @winCategory);",
+            conn);
+        cmd.Parameters.AddWithValue("@simID", simID);
+        cmd.Parameters.AddWithValue("@winName", winName);
+        cmd.Parameters.AddWithValue("@winCategory", winCategory ?? DBNull.Value);
+        conn.Open();
+        return Convert.ToInt32(cmd.ExecuteScalar());
     }
 
-    public static void prepDimGameVersion(int simID, int gameOrdinal)
+    public static int prepDimGameVersion(int simID, int gameOrdinal)
     {
-        Execute(
-            "INSERT INTO dbo.DimGame (simID, gameOrdinal) " +
-            "VALUES (@simID, @gameOrdinal);",
-            new SqlParameter("@simID", simID),
-            new SqlParameter("@gameOrdinal", gameOrdinal)
-        );
+        using var conn = new SqlConnection(SqlConnection);
+        using var cmd = new SqlCommand(
+            "INSERT INTO dbo.DimGame (simID, gameOrdinal) OUTPUT INSERTED.gameSK VALUES (@simID, @gameOrdinal);",
+            conn);
+        cmd.Parameters.AddWithValue("@simID", simID);
+        cmd.Parameters.AddWithValue("@gameOrdinal", gameOrdinal);
+        conn.Open();
+        return Convert.ToInt32(cmd.ExecuteScalar());
     }
 
 
     public static void dimGameVersion(int gameSK, object winnerPlayerSK, object winTypeSK)
     {
-        Execute(
-            "UPDATE dbo.DimGame " +
-            "SET winnerPlayerSK = @winnerPlayerSK, " +
-            "    winTypeSK      = @winTypeSK " +
-            "WHERE gameSK = @gameSK;",
-            new SqlParameter("@gameSK", gameSK),
-            new SqlParameter("@winnerPlayerSK", winnerPlayerSK ?? DBNull.Value),
-            new SqlParameter("@winTypeSK", winTypeSK ?? DBNull.Value)
-        );
+        using var conn = new SqlConnection(SqlConnection);
+        using var cmd = new SqlCommand(
+            "UPDATE dbo.DimGame SET winnerPlayerSK=@winnerPlayerSK, winTypeSK=@winTypeSK WHERE gameSK=@gameSK;",
+            conn);
+        cmd.Parameters.AddWithValue("@gameSK", gameSK);
+        cmd.Parameters.AddWithValue("@winnerPlayerSK", winnerPlayerSK ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@winTypeSK", winTypeSK ?? DBNull.Value);
+        conn.Open();
+        cmd.ExecuteNonQuery();
     }
 
 
     // TO DO DimRound
-    public static void roundVersion(
+    public static int roundVersion(
         int gameSK,
         int roundOrdinal)
     {
-        Execute(
-            "INSERT INTO dbo.DimRound (gameSK, roundOrdinal) " + "VALUES (@gameSK, @roundOrdinal);",
-            new SqlParameter("@gameSK", gameSK),
-            new SqlParameter("@roundOrdinal", roundOrdinal)
-        );
+        if (_sessionActive && _cmdInsertRound != null)
+        {
+            _cmdInsertRound.Parameters["@gameSK"].Value = gameSK;
+            _cmdInsertRound.Parameters["@roundOrdinal"].Value = roundOrdinal;
+            object sk = _cmdInsertRound.ExecuteScalar();
+            return Convert.ToInt32(sk);
+        }
+        else
+        {
+            using var conn = new SqlConnection(SqlConnection);
+            using var cmd = new SqlCommand(
+                "INSERT INTO dbo.DimRound (gameSK, roundOrdinal) OUTPUT INSERTED.roundSK VALUES (@gameSK, @roundOrdinal);",
+                conn);
+            cmd.Parameters.AddWithValue("@gameSK", gameSK);
+            cmd.Parameters.AddWithValue("@roundOrdinal", roundOrdinal);
+            conn.Open();
+            return Convert.ToInt32(cmd.ExecuteScalar());
+        }
     }
 
-    public static void prepTurnVersion(int RoundSK)
+    public static int prepTurnVersion(int RoundSK)
     {
-        Execute(
-            "INSERT INTO dbo.DimTurn (roundSK) " +
-            "VALUES (@roundSK);",
-            new SqlParameter("@roundSK", RoundSK)
-        );
+        if (_sessionActive && _cmdInsertTurn != null)
+        {
+            _cmdInsertTurn.Parameters["@roundSK"].Value = RoundSK;
+            object sk = _cmdInsertTurn.ExecuteScalar();
+            return Convert.ToInt32(sk);
+        }
+        else
+        {
+            using var conn = new SqlConnection(SqlConnection);
+            using var cmd = new SqlCommand(
+                "INSERT INTO dbo.DimTurn (roundSK) OUTPUT INSERTED.turnSK VALUES (@roundSK);",
+                conn);
+            cmd.Parameters.AddWithValue("@roundSK", RoundSK);
+            conn.Open();
+            return Convert.ToInt32(cmd.ExecuteScalar());
+        }
     }
 
 
@@ -338,39 +537,30 @@ public static class DbLoggingConfig
     object piecesOnBoardEnd,
     int playerTurnOrdinal)
     {
-        Execute(
-            "UPDATE dbo.DimTurn " +
-            "SET playerSK = @playerSK, " +
-            "    turnOrdinal = @turnOrdinal, " +
-            "    isPassOnly = @isPassOnly, " +
-            "    coreHealthEnd = @coreHealthEnd, " +
-            "    victoryPointsEnd = @victoryPointsEnd, " +
-            "    resourceTotalEnd = @resourceTotalEnd, " +
-            "    digitsStart = @digitsStart, " +
-            "    digitsEnd = @digitsEnd, " +
-            "    piecesOnBoardStart = @piecesOnBoardStart, " +
-            "    piecesOnBoardEnd = @piecesOnBoardEnd, " +
-            "    playerTurnOrdinal = @playerTurnOrdinal " +
-            "WHERE turnSK = @turnSK;",
-            new SqlParameter("@turnSK", TurnSK),
-            new SqlParameter("@playerSK", playerSK),
-            new SqlParameter("@turnOrdinal", turnOrdinal),
-            new SqlParameter("@isPassOnly", isPassOnly),
-            new SqlParameter("@coreHealthEnd", coreHealthEnd),
-            new SqlParameter("@victoryPointsEnd", victoryPointsEnd),
-            new SqlParameter("@resourceTotalEnd", resourceTotalEnd ?? DBNull.Value),
-            new SqlParameter("@digitsStart", digitsStart ?? DBNull.Value),
-            new SqlParameter("@digitsEnd", digitsEnd ?? DBNull.Value),
-            new SqlParameter("@piecesOnBoardStart", piecesOnBoardStart ?? DBNull.Value),
-            new SqlParameter("@piecesOnBoardEnd", piecesOnBoardEnd ?? DBNull.Value),
-            new SqlParameter("@playerTurnOrdinal", playerTurnOrdinal)
-        );
+        using var conn = new SqlConnection(SqlConnection);
+        using var cmd = new SqlCommand(
+            "UPDATE dbo.DimTurn SET playerSK=@playerSK, turnOrdinal=@turnOrdinal, isPassOnly=@isPassOnly, coreHealthEnd=@coreHealthEnd, victoryPointsEnd=@victoryPointsEnd, resourceTotalEnd=@resourceTotalEnd, digitsStart=@digitsStart, digitsEnd=@digitsEnd, piecesOnBoardStart=@piecesOnBoardStart, piecesOnBoardEnd=@piecesOnBoardEnd, playerTurnOrdinal=@playerTurnOrdinal WHERE turnSK=@turnSK;",
+            conn);
+        cmd.Parameters.AddWithValue("@turnSK", TurnSK);
+        cmd.Parameters.AddWithValue("@playerSK", playerSK);
+        cmd.Parameters.AddWithValue("@turnOrdinal", turnOrdinal);
+        cmd.Parameters.AddWithValue("@isPassOnly", isPassOnly);
+        cmd.Parameters.AddWithValue("@coreHealthEnd", coreHealthEnd);
+        cmd.Parameters.AddWithValue("@victoryPointsEnd", victoryPointsEnd);
+        cmd.Parameters.AddWithValue("@resourceTotalEnd", resourceTotalEnd ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@digitsStart", digitsStart ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@digitsEnd", digitsEnd ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@piecesOnBoardStart", piecesOnBoardStart ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@piecesOnBoardEnd", piecesOnBoardEnd ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@playerTurnOrdinal", playerTurnOrdinal);
+        conn.Open();
+        cmd.ExecuteNonQuery();
     }
 
 
 
     // TO DO FactAction
-    public static void FactAction(
+    public static long FactAction(
         int turnSK,
         int actionTypeSK,
         object pieceSK,
@@ -382,75 +572,48 @@ public static class DbLoggingConfig
         decimal? surchargeCost,
         decimal? totalCost)
     {
-        Execute(
-            "INSERT INTO dbo.FactAction (turnSK, actionTypeSK, pieceSK, actingPlayerSK, targetPlayerSK, actionSeq, " +
-            "actionCost, buildCost, surchargeCost, totalCost) " +
-            "VALUES (@turnSK, @actionTypeSK, @pieceSK, @actingPlayerSK, @targetPlayerSK, @actionSeq, " +
-            "@actionCost, @buildCost, @surchargeCost, @totalCost);",
-            new SqlParameter("@turnSK", turnSK),
-            new SqlParameter("@actionTypeSK", actionTypeSK),
-            new SqlParameter("@pieceSK", pieceSK ?? DBNull.Value),
-            new SqlParameter("@actingPlayerSK", actingPlayerSK),
-            new SqlParameter("@targetPlayerSK", targetPlayerSK ?? DBNull.Value),
-            new SqlParameter("@actionSeq", actionSeq),
-            new SqlParameter("@actionCost", actionCost),
-            new SqlParameter("@buildCost", buildCost),
-            new SqlParameter("@surchargeCost", surchargeCost),
-            new SqlParameter("@totalCost", totalCost)
-        );
+        if (_sessionActive && _cmdFactAction != null)
+        {
+            _cmdFactAction.Parameters["@turnSK"].Value = turnSK;
+            _cmdFactAction.Parameters["@actionTypeSK"].Value = actionTypeSK;
+            _cmdFactAction.Parameters["@pieceSK"].Value = pieceSK ?? DBNull.Value;
+            _cmdFactAction.Parameters["@actingPlayerSK"].Value = actingPlayerSK;
+            _cmdFactAction.Parameters["@targetPlayerSK"].Value = targetPlayerSK ?? DBNull.Value;
+            _cmdFactAction.Parameters["@actionSeq"].Value = actionSeq;
+            _cmdFactAction.Parameters["@actionCost"].Value = actionCost;
+            _cmdFactAction.Parameters["@buildCost"].Value = buildCost;
+            _cmdFactAction.Parameters["@surchargeCost"].Value = surchargeCost;
+            _cmdFactAction.Parameters["@totalCost"].Value = totalCost;
+            object id = _cmdFactAction.ExecuteScalar();
+            return Convert.ToInt64(id);
+        }
+        else
+        {
+            using var conn = new SqlConnection(SqlConnection);
+            using var cmd = new SqlCommand(
+                "INSERT INTO dbo.FactAction (turnSK, actionTypeSK, pieceSK, actingPlayerSK, targetPlayerSK, actionSeq, actionCost, buildCost, surchargeCost, totalCost) OUTPUT INSERTED.actionID VALUES (@turnSK, @actionTypeSK, @pieceSK, @actingPlayerSK, @targetPlayerSK, @actionSeq, @actionCost, @buildCost, @surchargeCost, @totalCost);",
+                conn);
+            cmd.Parameters.AddWithValue("@turnSK", turnSK);
+            cmd.Parameters.AddWithValue("@actionTypeSK", actionTypeSK);
+            cmd.Parameters.AddWithValue("@pieceSK", pieceSK ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@actingPlayerSK", actingPlayerSK);
+            cmd.Parameters.AddWithValue("@targetPlayerSK", targetPlayerSK ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@actionSeq", actionSeq);
+            cmd.Parameters.AddWithValue("@actionCost", actionCost);
+            cmd.Parameters.AddWithValue("@buildCost", buildCost);
+            cmd.Parameters.AddWithValue("@surchargeCost", surchargeCost);
+            cmd.Parameters.AddWithValue("@totalCost", totalCost);
+            conn.Open();
+            object id = cmd.ExecuteScalar();
+            return Convert.ToInt64(id);
+        }
     }
 
 
-    // TO DO FactActionPieceLoss
-    public static void FactActionPieceLoss(
-        long actionID,
-        int lostPlayerSK,
-        int lostPieceSK,
-        int lostCount,
-        object valueLost)
-    {
-        Execute(
-            "INSERT INTO dbo.FactActionPieceLoss (actionID, lostPlayerSK, lostPieceSK, lostCount, valueLost) " +
-            "VALUES (@actionID, @lostPlayerSK, @lostPieceSK, @lostCount, @valueLost);",
-            new SqlParameter("@actionID", actionID),
-            new SqlParameter("@lostPlayerSK", lostPlayerSK),
-            new SqlParameter("@lostPieceSK", lostPieceSK),
-            new SqlParameter("@lostCount", lostCount),
-            new SqlParameter("@valueLost", valueLost ?? DBNull.Value)
-        );
-    }
+    // FactActionPieceLoss removed (unused). Consider TVP batch when needed.
 
 
-    // TO DO FactRoundPlayer
-    public static void logFactRoundPlayer(
-        int roundSK,
-        int playerSK,
-        int soldiersRemovedThisRound,
-        int piecesOnBoardStart,
-        int piecesOnBoardEnd,
-        int digitsStart,
-        int digitsEnd,
-        decimal totalCostThisRound,
-        bool passedFlag,
-        bool eliminatedFlag)
-    {
-        Execute(
-            "INSERT INTO dbo.FactRoundPlayer (roundSK, playerSK, soldiersRemovedThisRound, piecesOnBoardStart, piecesOnBoardEnd, " +
-            "digitsStart, digitsEnd, totalCostThisRound, passedFlag, eliminatedFlag) " +
-            "VALUES (@roundSK, @playerSK, @soldiersRemovedThisRound, @piecesOnBoardStart, @piecesOnBoardEnd, " +
-            "@digitsStart, @digitsEnd, @totalCostThisRound, @passedFlag, @eliminatedFlag);",
-            new SqlParameter("@roundSK", roundSK),
-            new SqlParameter("@playerSK", playerSK),
-            new SqlParameter("@soldiersRemovedThisRound", soldiersRemovedThisRound),
-            new SqlParameter("@piecesOnBoardStart", piecesOnBoardStart),
-            new SqlParameter("@piecesOnBoardEnd", piecesOnBoardEnd),
-            new SqlParameter("@digitsStart", digitsStart),
-            new SqlParameter("@digitsEnd", digitsEnd),
-            new SqlParameter("@totalCostThisRound", totalCostThisRound),
-            new SqlParameter("@passedFlag", passedFlag),
-            new SqlParameter("@eliminatedFlag", eliminatedFlag)
-        );
-    }
+    // FactRoundPlayer logging removed for now (unused)
 
 
 
@@ -487,23 +650,12 @@ public static class DbLoggingConfig
 
     public static void logDimActionType()
     {
-        actionTypeVersion(inputSimID, moveID, moveString, placeholder, false, false, true);
-        skForMoveAction = GetMostRecentSK("DimActionType", "actionTypeSK");
-
-        actionTypeVersion(inputSimID, shootID, shootString, placeholder, false, false, true);
-        skForShootAction = GetMostRecentSK("DimActionType", "actionTypeSK");
-
-        actionTypeVersion(inputSimID, captureVPID, captureVPString, placeholder, false, false, true);
-        skForCaptureVPAction = GetMostRecentSK("DimActionType", "actionTypeSK");
-
-        actionTypeVersion(inputSimID, coreDamageID, coreDamageString, placeholder, false, true, true);
-        skForCoreDamageAction = GetMostRecentSK("DimActionType", "actionTypeSK");
-
-        actionTypeVersion(inputSimID, createID, createString, placeholder, true, false, false);
-        skForCreateAction = GetMostRecentSK("DimActionType", "actionTypeSK");
-
-        actionTypeVersion(inputSimID, endTurnID, endTurnString, placeholder, false, false, false);
-        skForEndTurnAction = GetMostRecentSK("DimActionType", "actionTypeSK");
+        skForMoveAction       = actionTypeVersion(inputSimID, moveID,      moveString,      placeholder, false, false, true);
+        skForShootAction      = actionTypeVersion(inputSimID, shootID,     shootString,     placeholder, false, false, true);
+        skForCaptureVPAction  = actionTypeVersion(inputSimID, captureVPID, captureVPString, placeholder, false, false, true);
+        skForCoreDamageAction = actionTypeVersion(inputSimID, coreDamageID,coreDamageString,placeholder, false, true,  true);
+        skForCreateAction     = actionTypeVersion(inputSimID, createID,    createString,    placeholder, true,  false, false);
+        skForEndTurnAction    = actionTypeVersion(inputSimID, endTurnID,   endTurnString,   placeholder, false, false, false);
     }
 
 
@@ -516,37 +668,24 @@ public static class DbLoggingConfig
 
     public static void logPlayerVersion()
     {
-        playerVersion(inputSimID, 1, "Mathew", placeholder, false);
-        playerOneSK = GetMostRecentSK("DimPlayer", "playerSK");
-
-        playerVersion(inputSimID, 2, "Mark", placeholder, false);
-        playerTwoSK = GetMostRecentSK("DimPlayer", "playerSK");
-
-        playerVersion(inputSimID, 3, "Luke", placeholder, false);
-        playerThreeSK = GetMostRecentSK("DimPlayer", "playerSK");
-
-        playerVersion(inputSimID, 4, "John", placeholder, false);
-        playerFourSK = GetMostRecentSK("DimPlayer", "playerSK");
+        playerOneSK   = playerVersion(inputSimID, 1, "Mathew", placeholder, false);
+        playerTwoSK   = playerVersion(inputSimID, 2, "Mark",   placeholder, false);
+        playerThreeSK = playerVersion(inputSimID, 3, "Luke",   placeholder, false);
+        playerFourSK  = playerVersion(inputSimID, 4, "John",   placeholder, false);
     }
 
     public static void logWinTypeVersion()
     {
-        winTypeVersion(inputSimID, wonByEndVp, placeholder);
-        wonByEndVpSK = GetMostRecentSK("DimWinType", "winTypeSK");
-
-        winTypeVersion(inputSimID, wonByElimination, placeholder);
-        wonByEliminationSK = GetMostRecentSK("DimWinType", "winTypeSK");
-
-        winTypeVersion(inputSimID, tie, placeholder);
-        tieSK = GetMostRecentSK("DimWinType", "winTypeSK");
+        wonByEndVpSK       = winTypeVersion(inputSimID, wonByEndVp,      placeholder);
+        wonByEliminationSK = winTypeVersion(inputSimID, wonByElimination, placeholder);
+        tieSK              = winTypeVersion(inputSimID, tie,             placeholder);
     }
 
     public static void prepDimGame()
     {
         gameOrdinal++;
         roundOrdinalUp = 0; // reset round counter at new game start
-        prepDimGameVersion(inputSimID, gameOrdinal);
-        latestGameSK = GetMostRecentSK("DimGame", "gameSK");
+        latestGameSK = prepDimGameVersion(inputSimID, gameOrdinal);
     }
 
 
@@ -579,15 +718,13 @@ public static class DbLoggingConfig
     {
         // Ignore RoundsLeft; log ascending round ordinal starting at 1
         roundOrdinalUp++;
-        roundVersion(latestGameSK, roundOrdinalUp);
-        latestRoundSK = GetMostRecentSK("DimRound", "roundSK");
+        latestRoundSK = roundVersion(latestGameSK, roundOrdinalUp);
     }
 
 
     public static void prepTurn()
     {
-        prepTurnVersion(latestRoundSK);
-        latestTurnSK = GetMostRecentSK("DimTurn", "turnSK");
+        latestTurnSK = prepTurnVersion(latestRoundSK);
     }
 
 
@@ -681,8 +818,29 @@ public static class DbLoggingConfig
         // Convert gameplay pieceID to pieceSK (nullable) for logging
         int? pieceSK = ResolvePieceSKForCurrentSim(piece);
 
-        FactAction(latestTurnSK, typeAction, pieceSK, playerSK, TargetPlayer, actionOrdinal, actionCost, build, surcharge, total);
-        latestActionSK = GetMostRecentSK("FactAction", "actionID");
+        if (BatchFactActions)
+        {
+            // backpressure: if queue is too large, drop oldest one
+            while (_faQueue.Count >= MaxQueue && _faQueue.TryDequeue(out _)) { }
+            _faQueue.Enqueue(new FactActionRow
+            {
+                turnSK = latestTurnSK,
+                actionTypeSK = typeAction,
+                pieceSK = pieceSK,
+                actingPlayerSK = playerSK,
+                targetPlayerSK = TargetPlayer,
+                actionSeq = actionOrdinal,
+                actionCost = actionCost,
+                buildCost = build,
+                surchargeCost = surcharge,
+                totalCost = total
+            });
+            latestActionSK = 0; // not available in batch mode
+        }
+        else
+        {
+            latestActionSK = FactAction(latestTurnSK, typeAction, pieceSK, playerSK, TargetPlayer, actionOrdinal, actionCost, build, surcharge, total);
+        }
     }
 
 
