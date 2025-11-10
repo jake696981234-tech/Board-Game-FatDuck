@@ -112,43 +112,104 @@ public sealed class Config : ScriptableObject
 
     public bool useMLAgents = false;
 
+    [System.Serializable]
+    public struct MLRewardsAuthoring
+    {
+        public float rewardWin;
+        public float rewardLoss;
+        public float rewardCaptureVP;
+        public float rewardCoreDamage;
+        public float moveTowardVpScale;   // multiplied by (distBefore - distAfter)
+        public float costPenaltyScale;    // multiplied by normalized cost (0..1)
+        public float stepPenalty;         // applied each action
+        public float endTurnPenalty;      // additional penalty if EndTurn
+    }
+
+    [Header("ML Rewards Tuning")]
+    public MLRewardsAuthoring mlRewards = new MLRewardsAuthoring
+    {
+        rewardWin = 10f,
+        rewardLoss = -10f,
+        rewardCaptureVP = 1.0f,
+        rewardCoreDamage = 0.5f,
+        moveTowardVpScale = 0.1f,
+        costPenaltyScale = 0.05f,
+        stepPenalty = 0.0f,
+        endTurnPenalty = 0.0f
+    };
+
+
+    [System.Serializable]
+    public struct AutoSimAuthoring
+    {
+        [Tooltip("When checked, automatically start a new game when one ends.")]
+        public bool autoRestartOnGameOver;
+        [Tooltip("Maximum number of games to auto-play. 0 = unlimited.")]
+        [Min(0)] public int maxAutoGames;
+    }
 
     [Header("Auto Simulation")]
-    [Tooltip("When checked, automatically start a new game when one ends.")]
-    public bool autoRestartOnGameOver = false;
-
-    [Tooltip("Maximum number of games to auto-play. 0 = unlimited.")]
-    [Min(0)] public int maxAutoGames = 1;
+    public AutoSimAuthoring autoSim = new AutoSimAuthoring { autoRestartOnGameOver = false, maxAutoGames = 1 };
 
 
+
+    [System.Serializable]
+    public struct BoardAuthoring
+    {
+        [Range(1, 10)] public byte radius;
+        public int invalidId;
+        public int victoryPointCellId;      // e.g., center
+        public int[] coreCellIdByPlayer; // set per map
+    }
 
     [Header("Board")]
-    [Range(1, 10)] public byte boardRadius = 8;
-    public int boardInvalidId = -1;
-    public int victoryPointCellId = 108;      // e.g., center
-    public int[] coreCellIdByPlayer = new int[4]; // set per map
+    public BoardAuthoring board = new BoardAuthoring { radius = 8, invalidId = -1, victoryPointCellId = 108, coreCellIdByPlayer = new int[4] };
+
+    [System.Serializable]
+    public struct MatchAuthoring
+    {
+        public float startingBudgetPerPlayer;
+        public int numberOfRounds;
+        public int startOfTurnBudgetDecrease;
+        public int startCenterVP;
+        public int startCoreHp;
+    }
 
     [Header("Match Defaults")]
-    public float startingBudgetPerPlayer = 100f;
-    public int numberOfRounds = 5;
-    public int startOfTurnBudgetDecrease = 5;
-    public int startCenterVP = 5;
-    public int startCoreHp = 3;
+    public MatchAuthoring match = new MatchAuthoring { startingBudgetPerPlayer = 100f, numberOfRounds = 5, startOfTurnBudgetDecrease = 5, startCenterVP = 5, startCoreHp = 3 };
+
+    [System.Serializable]
+    public struct CostAuthoring
+    {
+        public int baseActionCost;
+        public float actionGrowthFactor;
+    }
 
     [Header("Cost Tuning")]
-    public int   baseActionCost = 10;
-    public float actionGrowthFactor = 1.5f;
+    public CostAuthoring costs = new CostAuthoring { baseActionCost = 10, actionGrowthFactor = 1.5f };
+
+    [System.Serializable]
+    public struct RewardAuthoring
+    {
+        public int budgetBonusForVP;
+        public int budgetBonusForCoreDamage;
+    }
 
     [Header("Rewards / Economy")]
-    public int budgetBonusForVP = 5;
-    public int budgetBonusForCoreDamage = 5;
+    public RewardAuthoring rewards = new RewardAuthoring { budgetBonusForVP = 5, budgetBonusForCoreDamage = 5 };
+
+    [System.Serializable]
+    public struct CapsAuthoring
+    {
+        public int capMaxActionsPerTurn;
+        public int capMaxVP;
+        public float capMaxBudget;
+        public int capMaxVPPool;
+        public int capMaxCoreHealth;
+    }
 
     [Header("Caps")]
-    public int   capMaxActionsPerTurn = 30;
-    public int   capMaxVP = 30;
-    public float capMaxBudget = 150f;
-    public int   capMaxVPPool = 5;
-    public int capMaxCoreHealth = 3;
+    public CapsAuthoring caps = new CapsAuthoring { capMaxActionsPerTurn = 30, capMaxVP = 30, capMaxBudget = 150f, capMaxVPPool = 5, capMaxCoreHealth = 3 };
 
     // Config.cs  (inside the class)
     [System.Serializable]
@@ -206,7 +267,7 @@ public sealed class Config : ScriptableObject
 
     public GameConfigHub BuildHub()
     {
-        short totalCells = (short)(1 + 3 * boardRadius * (boardRadius + 1));
+        short totalCells = (short)(1 + 3 * board.radius * (board.radius + 1));
 
         int N = Mathf.Clamp(playerCount, 1, 4);
 
@@ -225,7 +286,7 @@ public sealed class Config : ScriptableObject
 
             p_applyBot[i] = pc.applyBotSurcharges;
             p_applyDec[i] = pc.applyStartOfTurnBudgetDecrease;
-            p_budget[i] = (pc.startingBudgetOverride >= 0f) ? pc.startingBudgetOverride : startingBudgetPerPlayer;
+            p_budget[i] = (pc.startingBudgetOverride >= 0f) ? pc.startingBudgetOverride : match.startingBudgetPerPlayer;
 
             p_isAI[i] = pc.isAI;
             p_team[i] = pc.team;
@@ -235,29 +296,29 @@ public sealed class Config : ScriptableObject
 
 
         return new GameConfigHub(
-            board_radius: boardRadius,
+            board_radius: board.radius,
             board_totalCells: totalCells,
-            board_invalidCellId: boardInvalidId,
-            board_vpCellId: victoryPointCellId,
-            board_coreCellIdByPlayer: (int[])coreCellIdByPlayer.Clone(),
+            board_invalidCellId: board.invalidId,
+            board_vpCellId: board.victoryPointCellId,
+            board_coreCellIdByPlayer: (int[])board.coreCellIdByPlayer.Clone(),
 
-            match_startingBudgetPerPlayer: startingBudgetPerPlayer,
-            match_numberOfRounds: numberOfRounds,
-            match_startOfTurnBudgetDecrease: startOfTurnBudgetDecrease,
-            match_startCenterVP: startCenterVP,
-            match_startCoreHp: startCoreHp,
+            match_startingBudgetPerPlayer: match.startingBudgetPerPlayer,
+            match_numberOfRounds: match.numberOfRounds,
+            match_startOfTurnBudgetDecrease: match.startOfTurnBudgetDecrease,
+            match_startCenterVP: match.startCenterVP,
+            match_startCoreHp: match.startCoreHp,
 
-            cost_baseActionCost: baseActionCost,
-            cost_actionGrowthFactor: actionGrowthFactor,
+            cost_baseActionCost: costs.baseActionCost,
+            cost_actionGrowthFactor: costs.actionGrowthFactor,
 
-            reward_budgetBonusForVP: budgetBonusForVP,
-            reward_budgetBonusForCoreDamage: budgetBonusForCoreDamage,
+            reward_budgetBonusForVP: rewards.budgetBonusForVP,
+            reward_budgetBonusForCoreDamage: rewards.budgetBonusForCoreDamage,
 
-            cap_maxActionsPerTurn: capMaxActionsPerTurn,
-            cap_maxVP: capMaxVP,
-            cap_maxBudget: capMaxBudget,
-            cap_maxVPPool: capMaxVPPool,
-            cap_maxCoreHealth: capMaxCoreHealth,
+            cap_maxActionsPerTurn: caps.capMaxActionsPerTurn,
+            cap_maxVP: caps.capMaxVP,
+            cap_maxBudget: caps.capMaxBudget,
+            cap_maxVPPool: caps.capMaxVPPool,
+            cap_maxCoreHealth: caps.capMaxCoreHealth,
             player_count: N,
                 player_applyBotSurcharges: p_applyBot,
                 player_applyStartOfTurnBudgetDecrease: p_applyDec,

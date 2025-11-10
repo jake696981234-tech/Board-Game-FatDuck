@@ -209,6 +209,27 @@ public sealed class Pieces
 
         // Emit MELEE targets (enemy cells adjacent to any reachable empty approach cell)
         int meleeStart = count;
+
+        // Direct adjacent melee (one-step onto enemy) when [rmin,rmax] includes 1
+        if (rmin <= 1 && 1 <= rmax)
+        {
+            int[] neigh0 = bm.GetScratchNeighborBuffer();
+            int n0 = bm.GetNeighbors(originCell, neigh0);
+            int actorOwner0 = bm.GetPieceOwner(actorPieceId);
+            for (int n = 0; n < n0; n++)
+            {
+                int tgt = neigh0[n];
+                int pid = bm.GetCellOccupant(tgt);
+                if (pid < 0) continue;
+                if (bm.GetPieceOwner(pid) == actorOwner0) continue;
+                // de-dup within melee segment
+                bool seen = false;
+                for (int k = meleeStart; k < count && k < cap; k++) { if (outTargets[k] == tgt) { seen = true; break; } }
+                if (seen) continue;
+                if (count < cap) outTargets[count] = tgt;
+                count++;
+            }
+        }
         int[] neigh = bm.GetScratchNeighborBuffer();
         int actorOwner = bm.GetPieceOwner(actorPieceId);
         for (int i = 0; i < reachCount; i++)

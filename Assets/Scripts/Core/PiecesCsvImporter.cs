@@ -131,7 +131,8 @@ public static class PiecesCsvImporter
             {
                 int rMin = GetInt(cols, H, "move_rangeMin", 1);
                 int rMax = GetInt(cols, H, "move_rangeMax", 1);
-                int abilityId = DefineSynthAbility_Move(pcs, typeName, rMin, rMax,
+                int mDmg = GetInt(cols, H, "move_damage", 0); // optional; defaults to 0
+                int abilityId = DefineSynthAbility_Move(pcs, typeName, rMin, rMax, mDmg,
                     ref nextAbilityId,
                     botSurcharge: GetInt(cols, H, "botThinkSurcharge_move", 0));
                 pcs.AddAbilitySlot((byte)typeId, abilityId); // slot 0 by order
@@ -193,7 +194,7 @@ public static class PiecesCsvImporter
     }
 
     // ---- Ability synthesizers ------------------------------------------------
-    private static int DefineSynthAbility_Move(Pieces pcs, string typeName, int rangeMin, int rangeMax, ref int nextA, int botSurcharge)
+    private static int DefineSynthAbility_Move(Pieces pcs, string typeName, int rangeMin, int rangeMax, int damage, ref int nextA, int botSurcharge)
     {
         int a = nextA++; // next synthesized id
         string name = $"Move@{typeName}";
@@ -201,7 +202,7 @@ public static class PiecesCsvImporter
         if (a < pcs.rangeMin.Length)          pcs.rangeMin[a] = rangeMin;
         if (a < pcs.rangeMax.Length)          pcs.rangeMax[a] = rangeMax;
         if (a < pcs.areaRadius.Length)        pcs.areaRadius[a] = 0;
-        if (a < pcs.damage.Length)            pcs.damage[a] = 0;
+        if (a < pcs.damage.Length)            pcs.damage[a] = damage;
         if (a < pcs.customParam.Length)       pcs.customParam[a] = 0;
         if (a < pcs.baseSurcharge.Length)     pcs.baseSurcharge[a] = 0;
         if (a < pcs.botThinkSurcharge.Length) pcs.botThinkSurcharge[a] = botSurcharge;

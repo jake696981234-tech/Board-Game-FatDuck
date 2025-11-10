@@ -183,7 +183,7 @@ public sealed class GameBootstrapper : MonoBehaviour
                         paBridge.BindSeat(seat);
                         paBridge.Init(in hub, gameState, board, GameBootstrapper.PiecesData, cost, offers);
                         // Wire everything into the ML controller
-                        ml.Init(hub, gameState, board, GameBootstrapper.PiecesData, cost, offers, paBridge, seat);
+                        ml.Init(hub, gameState, board, GameBootstrapper.PiecesData, cost, offers, paBridge, seat, in config.mlRewards);
                         break;
                     }
                 case GameConfigHub.ControlMode.Human:
@@ -317,8 +317,8 @@ public sealed class GameBootstrapper : MonoBehaviour
                 _gameOverHandled = true;
                 _completedGamesCount++;
 
-                bool auto = (config != null && config.autoRestartOnGameOver);
-                bool underCap = (config == null) || (config.maxAutoGames <= 0) || (_completedGamesCount < config.maxAutoGames);
+                bool auto = (config != null && config.autoSim.autoRestartOnGameOver);
+                bool underCap = (config == null) || (config.autoSim.maxAutoGames <= 0) || (_completedGamesCount < config.autoSim.maxAutoGames);
 
                 if (auto && underCap && !_restartInProgress)
                 {

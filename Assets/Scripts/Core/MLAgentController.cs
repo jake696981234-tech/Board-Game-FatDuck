@@ -39,6 +39,14 @@ public sealed class MLAgentController : Agent
     // Cached offer slice length for this decision
     private int _emitCount;
 
+    // Rewards tuning (set by bootstrapper)
+    public struct RewardsTuning
+    {
+        public float rewardWin, rewardLoss, rewardCaptureVP, rewardCoreDamage;
+        public float moveTowardVpScale, costPenaltyScale, stepPenalty, endTurnPenalty;
+    }
+    private RewardsTuning _rt;
+
     // -------------------- Bootstrap wiring --------------------
 
     // Call this from your GameBootstrapper after systems are constructed.
@@ -49,7 +57,8 @@ public sealed class MLAgentController : Agent
                      CostEngine cost,
                      OfferProvider offers,
                      PlayerAgent pa,
-                     byte myPlayerId)
+                     byte myPlayerId,
+                     in Config.MLRewardsAuthoring rewards)
     {
         _hub    = hub;
         _gs     = gs;
@@ -59,6 +68,18 @@ public sealed class MLAgentController : Agent
         _offers = offers;
         _pa     = pa;
         playerId = myPlayerId;
+
+        _rt = new RewardsTuning
+        {
+            rewardWin = rewards.rewardWin,
+            rewardLoss = rewards.rewardLoss,
+            rewardCaptureVP = rewards.rewardCaptureVP,
+            rewardCoreDamage = rewards.rewardCoreDamage,
+            moveTowardVpScale = rewards.moveTowardVpScale,
+            costPenaltyScale = rewards.costPenaltyScale,
+            stepPenalty = rewards.stepPenalty,
+            endTurnPenalty = rewards.endTurnPenalty
+        };
 
         int cap = Math.Max(1, _hub.agent.maxOffersToConsider);
         _actions = new Game.Core.Action[cap];
@@ -133,28 +154,80 @@ public sealed class MLAgentController : Agent
             if (endIdx >= 0) idx = endIdx; else return;
         }
 
+        // Precompute shaping components before applying the action
+        var aChosen = _actions[idx];
+        int distBefore = DistanceBefore(ref aChosen);
+        int distAfterPlanned = DistanceAfter(ref aChosen);
+        float normalizedCost = 0f;
+        if (idx < _quoted.Length)
+            normalizedCost = Mathf.Clamp01(_quoted[idx] / Mathf.Max(1f, _hub.cap_maxBudget));
+
         // Step the game
-        bool ok = _gs.Perform(in _actions[idx]);
+        bool ok = _gs.Perform(in aChosen);
         if (!ok) return; // illegal due to race (rare), skip reward
 
         // --- Minimal reward shaping (optional; safe defaults) ---
-        // You can expand this using deltas tracked inside GameState if available.
         float r = 0f;
-
-        // Example quick signals (replace with your actual getters if present)
-        // r += _gs.LastCaptureVPBy(playerId) ? +1.0f : 0f;
-        // r += _gs.LastCoreHitBy(playerId)   ? +0.5f : 0f;
-        // If you can access the quoted cost of the chosen action, add a tiny penalty:
-        // r += -0.05f * Mathf.Clamp01((_quoted[idx] / Mathf.Max(1f, _hub.cap_maxBudget)));
+        // Step penalty
+        r += _rt.stepPenalty;
+        // EndTurn penalty
+        if (aChosen.kind == ActionKind.EndTurn) r += _rt.endTurnPenalty;
+        // Move-toward-VP shaping based on planned geometry
+        if (_rt.moveTowardVpScale != 0f && distBefore < int.MaxValue / 8 && distAfterPlanned < int.MaxValue / 8)
+        {
+            int delta = distBefore - distAfterPlanned;
+            r += _rt.moveTowardVpScale * delta;
+        }
+        // Cost penalty
+        if (_rt.costPenaltyScale > 0f)
+            r += -_rt.costPenaltyScale * normalizedCost;
+        // Kind-specific rewards (simple proxy)
+        if (aChosen.kind == ActionKind.CaptureVP) r += _rt.rewardCaptureVP;
+        if (aChosen.kind == ActionKind.CoreDamage) r += _rt.rewardCoreDamage;
 
         AddReward(r);
 
         // Terminal handling
         if (_gs.IsGameOver)
         {
-            if (_gs.Winner == playerId) AddReward(+10f);
-            else                        AddReward(-10f);
+            if (_gs.Winner == playerId) AddReward(_rt.rewardWin);
+            else                        AddReward(_rt.rewardLoss);
             EndEpisode();
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private int DistanceBefore(ref Game.Core.Action a)
+    {
+        switch (a.kind)
+        {
+            case ActionKind.Move:
+                return _bm.DistToVictoryPoint(a.srcCell);
+            case ActionKind.CaptureVP:
+            case ActionKind.Create:
+                return _bm.DistToVictoryPoint(a.dstCell);
+            case ActionKind.Shoot:
+            case ActionKind.CoreDamage:
+                return _bm.DistToVictoryPoint(a.srcCell);
+            default:
+                return int.MaxValue / 4;
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private int DistanceAfter(ref Game.Core.Action a)
+    {
+        switch (a.kind)
+        {
+            case ActionKind.Move:
+            case ActionKind.CaptureVP:
+            case ActionKind.Create:
+                return _bm.DistToVictoryPoint(a.dstCell);
+            case ActionKind.Shoot:
+            case ActionKind.CoreDamage:
+                return _bm.DistToVictoryPoint(a.srcCell);
+            default:
+                return int.MaxValue / 4;
         }
     }
 

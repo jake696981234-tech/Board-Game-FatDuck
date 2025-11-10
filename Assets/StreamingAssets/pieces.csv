@@ -1,13 +1,4 @@
-buildCost,maxHP,digitsRequired,isBuilding,grantsDigit,move_enabled,move_rangeMin,move_rangeMax,botThinkSurcharge_move,shoot_enabled,shoot_rangeMin,shoot_rangeMax,shoot_damage,botThinkSurcharge_shoot,capture_enabled,botThinkSurcharge_capture,core_enabled,botThinkSurcharge_core,,faction,moveColor,shootColor,buildable,name,spritePath
-15,1,1,FALSE,,TRUE,1,1,2,FALSE,,,,,TRUE,2,TRUE,2,,Frog,#00AAFF,#FF5555,TRUE,Frog,FR
-23,1,1,FALSE,,TRUE,1,2,2,FALSE,,,,,TRUE,2,TRUE,2,,Frog,#00AAFF,#FF5555,TRUE,Frog Plus,SFR
-13,1,1,TRUE,,TRUE,1,1,2,FALSE,,,,,FALSE,,FALSE,,,Frog,#00AAFF,#FF5555,TRUE,Lily Pad,Pond
-40,1,,TRUE,1,FALSE,,,,FALSE,,,,,FALSE,,FALSE,,,Frog,#00AAFF,#FF5555,TRUE,Frog Key,Flower
-20,1,2,FALSE,,TRUE,1,1,2,TRUE,1,1,1,2,TRUE,2,TRUE,2,,Penguin,#00AAFF,#FF5555,TRUE,Penguin,PE
-25,1,2,FALSE,,TRUE,1,1,2,TRUE,1,2,1,2,TRUE,2,TRUE,2,,Penguin,#00AAFF,#FF5555,TRUE,Penguin Plus,SPE
-25,1,2,TRUE,,FALSE,1,1,2,TRUE,1,2,1,2,FALSE,2,FALSE,2,,Penguin,#00AAFF,#FF5555,TRUE,Ice Cube Launcher,abstract-007
-40,1,,TRUE,2,FALSE,,,,FALSE,,,,,FALSE,,FALSE,,,Penguin,#00AAFF,#FF5555,TRUE,Penguin Key,abstract-008
-20,2,3,FALSE,,TRUE,1,1,2,FALSE,,,,,TRUE,2,TRUE,2,,Bear,#00AAFF,#FF5555,TRUE,Bear,BE
-25,3,3,FALSE,,TRUE,1,1,2,FALSE,,,,,TRUE,2,TRUE,2,,Bear,#00AAFF,#FF5555,TRUE,Bear Plus,SBE
-13,2,3,TRUE,,FALSE,1,1,2,FALSE,,,,,FALSE,2,FALSE,2,,Bear,#00AAFF,#FF5555,TRUE,Tree Wall,abstract-001
-40,1,,TRUE,3,FALSE,,,,FALSE,,,,,FALSE,,FALSE,,,Bear,#00AAFF,#FF5555,TRUE,Bear Key,abstract-002
+name,buildCost,maxHP,digitsRequired,isBuilding,grantsDigit,move_enabled,move_rangeMin,move_rangeMax,botThinkSurcharge_move,shoot_enabled,shoot_rangeMin,shoot_rangeMax,shoot_damage,botThinkSurcharge_shoot,capture_enabled,botThinkSurcharge_capture,core_enabled,botThinkSurcharge_core,spritePath,faction,moveColor,shootColor,buildable,move_damage
+Soldier,15,1,,FALSE,,TRUE,1,1,2,FALSE,,,,,TRUE,2,TRUE,2,FR,Frog,#00AAFF,#FF5555,TRUE,1
+Ranger,20,1,,FALSE,,TRUE,1,1,2,TRUE,1,1,1,2,TRUE,2,TRUE,2,PE,Penguin,#00AAFF,#FF5555,TRUE,
+Tree Wall,25,3,,TRUE,,FALSE,,,,FALSE,,,,,FALSE,2,FALSE,2,BE,Bear,#00AAFF,#FF5555,TRUE,
