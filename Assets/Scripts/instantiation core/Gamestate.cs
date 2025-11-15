@@ -12,7 +12,6 @@ namespace Game.Core
     public sealed partial class GameState
     {
         // === Phase B: notify views when the world actually changed ===
-        public event System.Action OnActionExecuted;
 
         private GameConfigHub hub;
 
@@ -103,9 +102,6 @@ namespace Game.Core
             BeginTurn();
         }
 
-
-
-
         public bool Perform(in Action a)
         {
             ref var cur = ref ps[currentPlayer];
@@ -121,43 +117,12 @@ namespace Game.Core
             }
 
 
-            // logging stuff
-            int loggedplayer = currentPlayer;
-            int loggedType = a.kind;
-            byte? pieceTypeForLog = null;
-
-            if (a.kind == Create)
-            {
-                pieceTypeForLog = a.pieceType;           // which piece we're creating
-            }
-            else if (a.kind != EndTurn)
-            {
-                int actorPid = bm.GetCellOccupant(a.srcCell);
-                if (actorPid >= 0)
-                    pieceTypeForLog = bm.GetPieceType(actorPid);
-            }
-
             // Special-case EndTurn: log it against the current turn before handoff
             if (a.kind == EndTurn)
             {
-                DbLoggingConfig.logAction(
-                    loggedType,
-                    null,               // no piece for EndTurn
-                    null,               // no target for EndTurn
-                    loggedplayer,
-                    0m,                 // actionCost
-                    null,               // buildCost
-                    null                // surchargeCost
-                );
-
                 ApplyEndTurn();
-                OnActionExecuted?.Invoke();
                 return true;
             }
-
-            // Geometry-free "before" snapshot     
-            var beforeCounts = SnapshotOwnerTypeCounts(bm);
-            var coreBefore = SnapshotCoreHP(this);
 
 
             switch (a.kind)
@@ -181,45 +146,8 @@ namespace Game.Core
             decimal? buildCost = (decimal)quote.BuildCost;
             decimal? surchargeCost = (decimal)quote.AbilityCost;
 
-
-
-            // Geometry-free "after" snapshot and deltas
-            var afterCounts = SnapshotOwnerTypeCounts(bm);
-            var coreAfter = SnapshotCoreHP(this);
-            var losses = new Dictionary<(int owner, int type), int>(afterCounts.Count);
-            foreach (var kv in beforeCounts)
-            {
-                int after = afterCounts.TryGetValue(kv.Key, out var c) ? c : 0;
-                int lost = kv.Value - after;
-                if (lost > 0) losses[kv.Key] = lost;
-            }
-            int? targetPlayerForLog = PickTargetPlayer(losses, coreBefore, coreAfter);
-
-
-
-            DbLoggingConfig.logAction(
-                loggedType,
-                pieceTypeForLog,
-                targetPlayerForLog,
-                loggedplayer,
-                actionCost,
-                buildCost,
-                surchargeCost
-            );
-
-
-            //Debug log
-            if (GameEvents.enableDebugLogsFromPeform)
-            {
-                Debug.Log($"Player {currentPlayer} performed action {a.kind}.");
-            }
-
-            // Tell listeners (Bootstrapper/View) to refresh visuals
-            OnActionExecuted?.Invoke();
             return true;
-
         }
-
 
         // --- Current player read-only accessors (no duplication) ---
         public byte CurrentPlayerId => currentPlayer;
@@ -243,63 +171,6 @@ namespace Game.Core
         public int GetVP(byte player) => ps[player].vpTotal;
 
         public float GetBudget(byte player) => ps[player].budget;
-
-
-        // ------------------------ Counters for SQL logging ------------------------
-        //These counters are for SQL logging- remove this line if you want to use them gamelogic.
-        private int turnOrdinal = 0;
-
-        // Store all player ordinals in one array
-        private int[] playerTurnOrdinals = new int[4];  // automatically initialized to 0
-
-        private int getPlayerTurnOrdinal()
-        {
-            if (currentPlayer >= 0 && currentPlayer < playerTurnOrdinals.Length)
-                return playerTurnOrdinals[currentPlayer];
-
-            Debug.LogError("PlayerTurnOrdinal out of range");
-            return -1;
-        }
-
-        private void incrementPlayerTurnOrdinal()
-        {
-            if (currentPlayer >= 0 && currentPlayer < playerTurnOrdinals.Length)
-                playerTurnOrdinals[currentPlayer]++;
-            else
-                Debug.LogError("PlayerTurnOrdinal increment out of range");
-        }
-
-
-
-
-
-
-
-        private struct TurnStartSnap
-        {
-            public int digitsStart;
-            public int piecesStart;
-        }
-        private TurnStartSnap[] tStart = new TurnStartSnap[4];
-        private int CountDigits(byte p)
-        {
-            var drc = ps[p].digitRefCount;
-            if (drc == null) return 0;
-            int total = 0;
-            for (int i = 0; i < PlayerState.MAX_DIGITS; i++)
-                if (drc[i] > 0) total++;
-            return total;
-        }
-
-        private int CountPiecesOnBoard(byte p)
-        {
-            int count = 0;
-            for (int pid = 0; pid < bm.pieceCount; pid++)
-                if (bm.pieceOwner[pid] == p)
-                    count++;
-            return count;
-        }
-
 
         // ---- Geometry-free snapshots for analytics/logging ----
         private static Dictionary<(int owner, int type), int> SnapshotOwnerTypeCounts(BoardModel bm)
@@ -340,11 +211,6 @@ namespace Game.Core
             }
             return (bestLoss > 0) ? bestOwner : (int?)null;
         }
-
-
-
-
-
 
         // ------------------------ Legality recheck ------------------------
         private bool IsStillLegal(in Action a, byte p)
@@ -425,9 +291,6 @@ namespace Game.Core
         }
 
 
-
-
-
         private static bool ContainsFirstN(int[] xs, int count, int value)
         {
             int n = (xs != null) ? Math.Min(count, xs.Length) : 0;
@@ -457,11 +320,7 @@ namespace Game.Core
             {
                 bm.MovePieceRow(actorPid, a.dstCell);
             }
-            //Debug log
-            if (GameEvents.enableDebugLogs)
-            {
-                Debug.Log($"Player {p} is moving piece ID {actorPid} to cell {a.dstCell}.");
-            }
+
         }
 
         private void ApplyShoot(in Action a, byte p)
@@ -479,11 +338,6 @@ namespace Game.Core
                 if (g >= 0) ps[deadOwner].RevokeDigit(g);
                 bm.FreeRowSwapBack(targetPid);
             }
-            //Debug log
-            if (GameEvents.enableDebugLogs)
-            {
-                Debug.Log($"Player {p} is shooting piece ID {targetPid} for {dmg} damage. Killed: {killed}");
-            }
         }
 
         private void ApplyCreate(in Action a, byte p)
@@ -494,11 +348,6 @@ namespace Game.Core
             int g = pcs.GrantsDigit((byte)a.pieceType);
             if (g >= 0) ps[p].GrantDigit(g);
 
-            //Debug log
-            if (GameEvents.enableDebugLogs)
-            {
-                Debug.Log($"Player {p} is creating piece type {a.pieceType} at cell {a.dstCell}.");
-            }
         }
 
         private void ApplyCaptureVP(in Action a, byte p)
@@ -506,17 +355,8 @@ namespace Game.Core
             ps[p].OnCaptureVP();
             AddCenterVictoryPoints(-1);   // pool now lives in GameState
 
-            // debug log
-            if (GameEvents.enableDebugLogs)
-            {
-                Debug.Log($"Player {p} is capturing a victory point. Center VP pool is now {currentCenterVP}.");
-            }
+
         }
-
-
-
-
-
 
         private void ApplyCoreDamage(in Action a, byte p)
         {
@@ -539,30 +379,12 @@ namespace Game.Core
             SetCoreHealth(enemy, hp - dmg);
             TryEliminatePlayer(enemy);
 
-            //Debug log
-            if (GameEvents.enableDebugLogs)
-            {
-                Debug.Log($"Player {p} is damaging player {enemy}'s core for {dmg} damage.");
-            }
         }
-
-
-
-
-
-
-
 
         private void ApplyEndTurn()
         {
             // Player who just ended
             byte ended = currentPlayer;
-
-            //Debug log
-            if (GameEvents.enableDebugLogs)
-            {
-                Debug.Log($"Player ended their turn.");
-            }
 
             // Mark whether they ended without acting this turn
             ps[ended].endedWithoutActionThisCycle = ps[ended].actionIndexThisTurn == 0;
@@ -571,17 +393,6 @@ namespace Game.Core
             int coreEnd = GetCoreHealth(ended);
             int vpEnd = ps[ended].vpTotal;
             decimal budgetEnd = (decimal)ps[ended].budget;
-
-            int digitsStart = tStart[ended].digitsStart;
-            int piecesStart = tStart[ended].piecesStart;
-
-            int digitsEnd = CountDigits(ended);
-            int piecesEnd = CountPiecesOnBoard(ended);
-
-
-            incrementPlayerTurnOrdinal();
-            DbLoggingConfig.logturnVersion(ended, turnOrdinal, isPassOnly, coreEnd, vpEnd, budgetEnd, digitsStart, digitsEnd, piecesStart, piecesEnd, getPlayerTurnOrdinal());
-
 
             // Advance to next alive player
             currentPlayer = NextAlivePlayerAfter(ended);
@@ -596,6 +407,7 @@ namespace Game.Core
             {
                 BeginTurn();
             }
+
         }
 
 
@@ -643,17 +455,12 @@ namespace Game.Core
         }
 
 
-
-
         private void TryEliminatePlayer(byte p)
         {
             if (p >= 4) return;
             if (GetCoreHealth(p) <= 0 /* && !bm.PlayerHasAnyBuilding(p) */)
                 ps[p].isEliminated = true;
         }
-
-
-
 
 
         /// <summary>
@@ -695,13 +502,6 @@ namespace Game.Core
         }
 
 
-
-
-
-
-
-
-
         private void FinalWinCheckByVP()
         {
             // Last-standing shortcut
@@ -714,9 +514,9 @@ namespace Game.Core
             if (aliveCount == 1)
             {
                 isGameOver = true;
+                Debug.Log("Game Ended");
                 winner = lastAlive;
                 // Winner by elimination
-                DbLoggingConfig.logDimGame(DbLoggingConfig.wonByEliminationSK, winner);
                 return;
             }
 
@@ -737,20 +537,15 @@ namespace Game.Core
             }
 
             isGameOver = true;
+            Debug.Log("Game Ended");
             winner = tie ? (byte)255 : win; // 255 = draw/no single winner
-            Debug.Log($"Game over by VP. Winner: {winner} (tie={tie})");
-            DbLoggingConfig.logDimGame(DbLoggingConfig.wonByEliminationSK, winner);
             if (tie)
             {
                 winner = 255; // draw/no single winner
-                Debug.Log("Game over by VP. Result: TIE");
-                DbLoggingConfig.logDimGame(DbLoggingConfig.tieSK, null);
             }
             else
             {
                 winner = win;
-                Debug.Log($"Game over by VP. Winner: {winner}");
-                DbLoggingConfig.logDimGame(DbLoggingConfig.wonByEndVpSK, winner);
             }
         }
 
@@ -758,33 +553,17 @@ namespace Game.Core
 
         private void BeginTurn()
         {
-            DbLoggingConfig.prepTurn();
             ps[currentPlayer].BeginTurnReset();
 
-            turnOrdinal++;
-
-
-            tStart[currentPlayer].digitsStart = CountDigits(currentPlayer);
-            tStart[currentPlayer].piecesStart = CountPiecesOnBoard(currentPlayer);
 
             if (ps[currentPlayer].applyStartOfTurnBudgetDecrease)
                 ps[currentPlayer].AddBudget(-(float)hub.match_startOfTurnBudgetDecrease);
 
-            // Debug log
-            if (GameEvents.enableDebugLogs)
-            {
-                Debug.Log($"Begin turn for player {currentPlayer}");
-            }
         }
 
 
         private void EndRound()
         {
-            Debug.Log("End of round.");
-
-            turnOrdinal = 0;
-            Array.Clear(playerTurnOrdinals, 0, playerTurnOrdinals.Length);
-
             // 1) Purge temporary units (soldiers), keep buildings
             GameStateUtilities.RemoveAllSoldiers(bm, pcs);
 
@@ -793,8 +572,6 @@ namespace Game.Core
 
             // 3) Decrement rounds, clear counters and per-cycle flags
             roundsLeft = Math.Max(0, roundsLeft - 1);
-
-            DbLoggingConfig.logRoundVersion();
 
             for (int i = 0; i < 4; i++)
             {
