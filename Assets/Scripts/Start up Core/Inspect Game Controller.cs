@@ -2,7 +2,7 @@ using UnityEngine;
 using Game.Core;
 using System.IO;
 using System;
-// to do script-
+
 public class InspectGameController : MonoBehaviour
 {
     public Config config;     // assign in Inspector
@@ -115,10 +115,10 @@ public class InspectGameController : MonoBehaviour
                         }
                         else { policy = new HeuristicPolicy(); }
 
-                        //to do
-                        //agent.Init(in hub, gameState, board, GameBootstrapper.PiecesData, cost, offers, policy);
-                        //agent.BindSeat(seat); // (see tiny method below)
-                        //heuristicControllers[seat] = agent;
+
+                        agent.Init(in gameBootstrapper.hub, gameState, board, GameBootstrapper.PiecesData, gameBootstrapper.cost, gameBootstrapper.offers, policy);
+                        agent.BindSeat(seat); // (see tiny method below)
+                        heuristicControllers[seat] = agent;
                         break;
                     }
                 case GameConfigHub.ControlMode.ML:
@@ -150,11 +150,11 @@ public class InspectGameController : MonoBehaviour
 
                         paBridge.BindSeat(seat);
 
-                        //to do//paBridge.Init(in hub, gameState, board, GameBootstrapper.PiecesData, cost, offers);
+                        paBridge.Init(in gameBootstrapper.hub, gameState, board, GameBootstrapper.PiecesData, gameBootstrapper.cost, gameBootstrapper.offers);
 
                         // Wire everything into the ML controller
 
-                        //to do//ml.Init(hub, gameState, board, GameBootstrapper.PiecesData, cost, offers, paBridge, seat, in config.mlRewards);
+                        ml.Init(gameBootstrapper.hub, gameState, board, GameBootstrapper.PiecesData, gameBootstrapper.cost, gameBootstrapper.offers, paBridge, seat, in config.mlRewards);
                         break;
                     }
                 case GameConfigHub.ControlMode.Human:
@@ -188,7 +188,7 @@ public class InspectGameController : MonoBehaviour
             hic.SetHumanSeat(humanSeat);
         }
 
-        //to do
+
         // === Phase B: compose the initial snapshot & push to BoardView ===
         snapshotComposer = new GameSnapshotComposer(
             geometry,   // local variable from your builder call

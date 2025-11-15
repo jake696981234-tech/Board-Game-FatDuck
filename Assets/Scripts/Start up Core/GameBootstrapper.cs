@@ -12,6 +12,7 @@ public sealed class GameBootstrapper : MonoBehaviour
     public static Pieces PiecesData;
     public BoardViewController boardView;
 
+    [SerializeField] private GameObject uiRoot;
     [SerializeField] private GameObject gameController;
 
 
@@ -31,6 +32,8 @@ public sealed class GameBootstrapper : MonoBehaviour
 
     void Awake()
     {
+        uiRoot.SetActive(config.inspectGame);
+
         string csvPath = Path.Combine(Application.streamingAssetsPath, "pieces.csv");
         PiecesData = PiecesCsvImporter.Import(csvPath);
 
