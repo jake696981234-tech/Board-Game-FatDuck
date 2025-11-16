@@ -1,7 +1,8 @@
 using UnityEngine;
 using Game.Core;
-using System.IO;
 using System;
+using Unity.InferenceEngine;
+using Unity.MLAgents.Policies;
 
 public class GameController : MonoBehaviour
 {
@@ -122,6 +123,16 @@ public class GameController : MonoBehaviour
                         bp.TeamId = (seat < gameBootstrapper.hub.player_team.Length)
                             ? gameBootstrapper.hub.player_team[seat]
                             : seat;
+
+                        var behaviorOverride = (config != null && config.playerBehaviorOverrides != null && seat < config.playerBehaviorOverrides.Length)
+                            ? config.playerBehaviorOverrides[seat]
+                            : default;
+                        bp.BehaviorType = behaviorOverride.behaviorType;
+                        bp.DeterministicInference = behaviorOverride.deterministicInference;
+                        if (behaviorOverride.modelAsset != null)
+                        {
+                            bp.Model = behaviorOverride.modelAsset;
+                        }
                         // Now add the Agent so Awake() reads the configured BehaviorParameters
                         var ml = go.AddComponent<MLAgentController>();
                         mlControllers[seat] = ml;
@@ -215,5 +226,4 @@ public class GameController : MonoBehaviour
             _restartInProgress = false;
         }
     }
-
 }

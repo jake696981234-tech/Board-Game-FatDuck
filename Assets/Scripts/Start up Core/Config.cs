@@ -1,5 +1,7 @@
 // Assets/Scripts/Core/Config.cs
 using UnityEngine;
+using Unity.MLAgents.Policies;
+using Unity.InferenceEngine;
 
 
 [CreateAssetMenu(fileName = "Config", menuName = "Game/Config", order = 0)]
@@ -258,6 +260,23 @@ public sealed class Config : ScriptableObject
         [Min(1)] public int vectorObservationSize;
         [Min(1)] public int actionBranchSize;
     }
+
+    [System.Serializable]
+    public struct PlayerBehaviorConfig
+    {
+        public ModelAsset modelAsset;                  // Drag/drop imported ONNX (ModelAsset)
+        public bool deterministicInference;
+        public BehaviorType behaviorType;              // Default | HeuristicOnly | InferenceOnly
+    }
+
+    [Header("ML Behavior Overrides (per player)")]
+    public PlayerBehaviorConfig[] playerBehaviorOverrides = new PlayerBehaviorConfig[4]
+    {
+        new PlayerBehaviorConfig { modelAsset = null, deterministicInference = false, behaviorType = BehaviorType.Default },
+        new PlayerBehaviorConfig { modelAsset = null, deterministicInference = false, behaviorType = BehaviorType.Default },
+        new PlayerBehaviorConfig { modelAsset = null, deterministicInference = false, behaviorType = BehaviorType.Default },
+        new PlayerBehaviorConfig { modelAsset = null, deterministicInference = false, behaviorType = BehaviorType.Default }
+    };
 
 
 
