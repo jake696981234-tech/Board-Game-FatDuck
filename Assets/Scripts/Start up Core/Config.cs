@@ -137,8 +137,8 @@ public sealed class Config : ScriptableObject
         rewardDraw = 0f,
         rewardCaptureVP = 1.0f,
         rewardCoreDamage = 0.5f,
-        moveTowardVpScale = 0.1f,
-        costPenaltyScale = 0.05f,
+        moveTowardVpScale = 0.0f,
+        costPenaltyScale = 0.0f,
         stepPenalty = 0.0f,
         endTurnPenalty = 0.0f
     };
