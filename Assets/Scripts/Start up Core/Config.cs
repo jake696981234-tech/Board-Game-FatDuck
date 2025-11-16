@@ -120,6 +120,7 @@ public sealed class Config : ScriptableObject
     {
         public float rewardWin;
         public float rewardLoss;
+        public float rewardDraw;
         public float rewardCaptureVP;
         public float rewardCoreDamage;
         public float moveTowardVpScale;   // multiplied by (distBefore - distAfter)
@@ -133,6 +134,7 @@ public sealed class Config : ScriptableObject
     {
         rewardWin = 10f,
         rewardLoss = -10f,
+        rewardDraw = 0f,
         rewardCaptureVP = 1.0f,
         rewardCoreDamage = 0.5f,
         moveTowardVpScale = 0.1f,

@@ -1,7 +1,6 @@
 using UnityEngine;
 using Game.Core;
 using System;
-using Unity.InferenceEngine;
 using Unity.MLAgents.Policies;
 
 public class GameController : MonoBehaviour
@@ -13,6 +12,7 @@ public class GameController : MonoBehaviour
     private int _completedGamesCount = 0;
     private bool _restartInProgress = false;
     private bool _gameOverHandled = false;
+    private bool _resetPendingFromML = false;
 
 
     [Range(0, 3)] public byte startingPlayer = 0;
@@ -136,6 +136,7 @@ public class GameController : MonoBehaviour
                         // Now add the Agent so Awake() reads the configured BehaviorParameters
                         var ml = go.AddComponent<MLAgentController>();
                         mlControllers[seat] = ml;
+                        ml.SetEpisodeBeginCallback(OnAgentEpisodeBegin);
 
                         // Build a small PlayerAgent bridge for obs & offer building
                         var paBridge = new PlayerAgent();
@@ -166,11 +167,14 @@ public class GameController : MonoBehaviour
             {
                 _gameOverHandled = true;
                 _completedGamesCount++;
+                BroadcastTerminalRewards();
+                _resetPendingFromML = HasAnyMLControllers();
 
                 bool auto = (config != null && config.autoSim.autoRestartOnGameOver);
                 bool underCap = (config == null) || (config.autoSim.maxAutoGames <= 0) || (_completedGamesCount < config.autoSim.maxAutoGames);
 
-                if (auto && underCap && !_restartInProgress)
+                // If no ML seats, keep existing auto-restart flow
+                if (!_resetPendingFromML && auto && underCap && !_restartInProgress)
                 {
                     RestartMatch();
                     return; // let the new match tick next frame
@@ -225,5 +229,33 @@ public class GameController : MonoBehaviour
         {
             _restartInProgress = false;
         }
+    }
+
+    private void BroadcastTerminalRewards()
+    {
+        byte winner = gameState.Winner;
+        for (int i = 0; i < mlControllers.Length; i++)
+        {
+            var ml = mlControllers[i];
+            if (ml == null) continue;
+            ml.ApplyTerminal(winner);
+        }
+    }
+
+    private void OnAgentEpisodeBegin(byte seat)
+    {
+        if (!_resetPendingFromML || _restartInProgress) return;
+        _resetPendingFromML = false;
+        _gameOverHandled = false;
+        RestartMatch();
+    }
+
+    private bool HasAnyMLControllers()
+    {
+        for (int i = 0; i < mlControllers.Length; i++)
+        {
+            if (mlControllers[i] != null) return true;
+        }
+        return false;
     }
 }
