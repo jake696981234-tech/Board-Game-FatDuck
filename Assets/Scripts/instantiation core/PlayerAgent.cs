@@ -21,7 +21,7 @@ public sealed class PlayerAgent
     private GameConfigHub.AgentConfig _cfg;        // maxOffersToConsider, rolloutDepth, thinkBudgetMs
 
     // ----- Live systems (read-only handles) -----
-    private Game.Core.GameState _gs;               // reducers live here; single mutator authority
+    private IAgentGameState _gs;               // reducers live here; single mutator authority
     private BoardModel _bm;
     private Pieces _pcs;
     private CostEngine _cost;
@@ -37,7 +37,7 @@ public sealed class PlayerAgent
 
     /// <summary>Call once from GameBootstrapper after systems are constructed.</summary>
     public void Init(in GameConfigHub hub,
-                     Game.Core.GameState gs,
+                     IAgentGameState gs,
                      BoardModel bm,
                      Pieces pcs,
                      CostEngine cost,
@@ -62,7 +62,7 @@ public sealed class PlayerAgent
 
     // Overload allowing explicit policy
     public void Init(in GameConfigHub hub,
-                     Game.Core.GameState gs,
+                     IAgentGameState gs,
                      BoardModel bm,
                      Pieces pcs,
                      CostEngine cost,
@@ -88,7 +88,7 @@ public sealed class PlayerAgent
     public bool DecideAndAct()
     {
         // Build the query the OfferProvider expects: (bm, pcs, PlayerState snapshot, playerId, cost).
-        var q = new OfferQuery(_bm, _pcs, _gs.CurrentPlayerRef, _gs.CurrentPlayerId, _cost); // :contentReference[oaicite:3]{index=3}
+        var q = new OfferQuery(_bm, _pcs, _gs.CurrentPlayerRef, _gs.CurrentPlayerId, _cost, _hub.pieceLimitEnabled, _hub.pieceLimitPerPlayer); // :contentReference[oaicite:3]{index=3}
 
         var acts  = _actions.AsSpan();
         var costs = _quotedCosts.AsSpan();

@@ -23,47 +23,47 @@ public readonly struct GameConfigHub
         }
     }
 
-    
+
     // GameConfigHub.cs  (inside the struct)
-    public readonly int     player_count;
-    public readonly bool[]  player_applyBotSurcharges;             // len = player_count
-    public readonly bool[]  player_applyStartOfTurnBudgetDecrease; // len = player_count
+    public readonly int player_count;
+    public readonly bool[] player_applyBotSurcharges;             // len = player_count
+    public readonly bool[] player_applyStartOfTurnBudgetDecrease; // len = player_count
     public readonly float[] player_startingBudget;                 // len = player_count
 
     // Optional (handy for UI/AI wiring; also len = player_count)
-    public readonly bool[]  player_isAI;
-    public readonly int[]   player_team;
+    public readonly bool[] player_isAI;
+    public readonly int[] player_team;
     public readonly string[] player_name;
 
-    
-    
+
+
     // --- Board topology & anchors (cell IDs only; no hex at runtime) ---
-    public readonly byte  board_radius;            // R
+    public readonly byte board_radius;            // R
     public readonly short board_totalCells;        // 1 + 3R(R+1)
-    public readonly int   board_invalidCellId;     // usually -1
-    public readonly int   board_vpCellId;          // e.g., center cell id
+    public readonly int board_invalidCellId;     // usually -1
+    public readonly int board_vpCellId;          // e.g., center cell id
     public readonly int[] board_coreCellIdByPlayer;// len = playerCount
 
     // --- Match defaults (GameState uses these to seed live counters) ---
     public readonly float match_startingBudgetPerPlayer;
-    public readonly int   match_numberOfRounds;
-    public readonly int   match_startOfTurnBudgetDecrease;
-    public readonly int   match_startCenterVP;
-    public readonly int   match_startCoreHp;
+    public readonly int match_numberOfRounds;
+    public readonly int match_startOfTurnBudgetDecrease;
+    public readonly int match_startCenterVP;
+    public readonly int match_startCoreHp;
 
     // --- Cost tuning (CostEngine) ---
-    public readonly int   cost_baseActionCost;
+    public readonly int cost_baseActionCost;
     public readonly float cost_actionGrowthFactor;
 
     // --- Rewards/Economy (EndRound payout) ---
-    public readonly int   reward_budgetBonusForVP;
-    public readonly int   reward_budgetBonusForCoreDamage;
+    public readonly int reward_budgetBonusForVP;
+    public readonly int reward_budgetBonusForCoreDamage;
 
     // --- Caps (clamping + agent normalization) ---
-    public readonly int   cap_maxActionsPerTurn;
-    public readonly int   cap_maxVP;
+    public readonly int cap_maxActionsPerTurn;
+    public readonly int cap_maxVP;
     public readonly float cap_maxBudget;
-    public readonly int   cap_maxVPPool;
+    public readonly int cap_maxVPPool;
     public readonly int cap_maxCoreHealth;
     public readonly bool pieceLimitEnabled;
     public readonly int pieceLimitPerPlayer;
@@ -76,7 +76,7 @@ public readonly struct GameConfigHub
     // NEW: agent config (global, immutable)
     public readonly AgentConfig agent;
 
-       // ---- CONTROL & ML (NEW) ----
+    // ---- CONTROL & ML (NEW) ----
     public enum ControlMode : byte { Human = 0, Heuristic = 1, ML = 2 }
 
     // Bot policy kinds for heuristic seats
@@ -92,7 +92,7 @@ public readonly struct GameConfigHub
 
     // Fixed observation size for Phase A: 21 + 12 * obs_maxCells
     public readonly int mlObservationSize;
-    public readonly ModelConfig modelConfig;
+
 
     public readonly struct AgentConfig
     {
@@ -107,7 +107,7 @@ public readonly struct GameConfigHub
             this.thinkBudgetMs = thinkBudgetMs;
         }
     }
-    
+
 
 
 
@@ -149,8 +149,7 @@ public readonly struct GameConfigHub
         PolicyKind[] playerPolicy,
         bool enableMLAgents,
         int mlObservationSize,
-        BehaviorParametersConfig mlBehavior,
-        ModelConfig modelConfig
+        BehaviorParametersConfig mlBehavior
     )
     {
         this.board_radius = board_radius;
@@ -179,54 +178,25 @@ public readonly struct GameConfigHub
         this.pieceLimitEnabled = pieceLimitEnabled;
         this.pieceLimitPerPlayer = pieceLimitPerPlayer;
 
-        this.player_count                           = player_count;
-        this.player_applyBotSurcharges             = player_applyBotSurcharges;
+        this.player_count = player_count;
+        this.player_applyBotSurcharges = player_applyBotSurcharges;
         this.player_applyStartOfTurnBudgetDecrease = player_applyStartOfTurnBudgetDecrease;
-        this.player_startingBudget                 = player_startingBudget;
+        this.player_startingBudget = player_startingBudget;
 
-        this.player_isAI  = player_isAI;
-        this.player_team  = player_team;
+        this.player_isAI = player_isAI;
+        this.player_team = player_team;
         this.player_name = player_name;
 
         this.obs_maxCells = obs_maxCells;
         this.obs_maxDistance = obs_maxDistance;
 
         this.agent = agent;
-        
-        this.playerControl    = playerControl;
-        this.playerPolicy     = playerPolicy;
-        this.enableMLAgents   = enableMLAgents;
+
+        this.playerControl = playerControl;
+        this.playerPolicy = playerPolicy;
+        this.enableMLAgents = enableMLAgents;
         this.mlObservationSize = mlObservationSize;
         this.mlBehavior = mlBehavior;
-        this.modelConfig = modelConfig;
-    }
-
-    public readonly struct ModelConfig
-    {
-        public readonly bool useExternalModel;
-        public readonly Unity.MLAgents.Policies.InferenceDevice inferenceDevice;
-        public readonly ModelBinding[] bindings;
-
-        public ModelConfig(bool useExternalModel, Unity.MLAgents.Policies.InferenceDevice inferenceDevice, ModelBinding[] bindings)
-        {
-            this.useExternalModel = useExternalModel;
-            this.inferenceDevice = inferenceDevice;
-            this.bindings = bindings;
-        }
-    }
-
-    public readonly struct ModelBinding
-    {
-        public readonly string behaviorName;
-        public readonly int teamId;
-        public readonly string onnxPath;
-
-        public ModelBinding(string behaviorName, int teamId, string onnxPath)
-        {
-            this.behaviorName = behaviorName;
-            this.teamId = teamId;
-            this.onnxPath = onnxPath;
-        }
     }
 }
 

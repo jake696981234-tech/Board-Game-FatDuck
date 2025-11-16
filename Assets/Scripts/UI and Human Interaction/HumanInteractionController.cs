@@ -25,6 +25,14 @@ public sealed class HumanInteractionController : MonoBehaviour
     public BoardModel boardModel;        // assign the same model used by GameState
     public Pieces pieces;            // your registry (names, flags, etc.)
     public CostEngine costEngine;        // pricing engine used by GameState
+    private GameConfigHub _hub;
+    private bool _hasHubConfig;
+
+    public void SetHub(in GameConfigHub hub)
+    {
+        _hub = hub;
+        _hasHubConfig = true;
+    }
 
     [Header("Canvas/UI")]
     public Image backdrop;
@@ -522,7 +530,9 @@ public sealed class HumanInteractionController : MonoBehaviour
             pieces,
             gameState.CurrentPlayerRef,
             gameState.CurrentPlayerId,
-            costEngine
+            costEngine,
+            gameState is IAgentGameState && _hasHubConfig ? _hub.pieceLimitEnabled : false,
+            gameState is IAgentGameState && _hasHubConfig ? _hub.pieceLimitPerPlayer : 0
         );
 
         // Fill the spans (zero-alloc path in OfferProvider). Function returns TOTAL (may exceed cap). :contentReference[oaicite:7]{index=7}

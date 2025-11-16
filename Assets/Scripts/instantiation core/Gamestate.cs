@@ -9,7 +9,7 @@ namespace Game.Core
     // Deterministic, allocation-free mutation entrypoint for Phase A.
     // Aligns with Pieces.AbilityKind (incl. CoreDamage), pricing-only CostEngine,
     // and read-only OfferProvider. All state mutations happen here.
-    public sealed partial class GameState
+    public sealed partial class GameState : IAgentGameState
     {
         // === Phase B: notify views when the world actually changed ===
 
@@ -129,7 +129,12 @@ namespace Game.Core
             {
                 case Move: ApplyMove(in a, currentPlayer); break;
                 case Shoot: ApplyShoot(in a, currentPlayer); break;
-                case Create: ApplyCreate(in a, currentPlayer); break;
+                case Create:
+                    if (hub.pieceLimitEnabled && hub.pieceLimitPerPlayer > 0 &&
+                        bm.GetPieceCountForPlayer(currentPlayer) >= hub.pieceLimitPerPlayer)
+                        return false;
+                    ApplyCreate(in a, currentPlayer);
+                    break;
                 case CaptureVP: ApplyCaptureVP(in a, currentPlayer); break; // sets flags + VP counters + vpPool
                 case CoreDamage: ApplyCoreDamage(in a, currentPlayer); break; // sets flag + damages enemy core + elim check
                 case EndTurn: ApplyEndTurn(); break; // unreachable due to early return above
@@ -514,7 +519,6 @@ namespace Game.Core
             if (aliveCount == 1)
             {
                 isGameOver = true;
-                Debug.Log("Game Ended");
                 winner = lastAlive;
                 // Winner by elimination
                 return;
@@ -537,7 +541,6 @@ namespace Game.Core
             }
 
             isGameOver = true;
-            Debug.Log("Game Ended");
             winner = tie ? (byte)255 : win; // 255 = draw/no single winner
             if (tie)
             {

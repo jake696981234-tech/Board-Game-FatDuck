@@ -14,7 +14,6 @@ using UnityEngine;
 public static class DbLoggingConfig
 {
 
-
     //Values you must change for each simulation (can be overridden via Config)
     public static int inputSimID = 4;
     public static string inputSimName = "Does it work this way though?";

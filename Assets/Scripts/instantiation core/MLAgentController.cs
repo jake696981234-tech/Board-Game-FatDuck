@@ -21,7 +21,7 @@ public sealed class MLAgentController : Agent
 
     // Immutable config / shared systems (assigned by bootstrapper)
     private GameConfigHub _hub;
-    private GameState _gs;
+    private IAgentGameState _gs;
     private BoardModel _bm;
     private Pieces _pcs;
     private CostEngine _cost;      // can be null in structural-only runs
@@ -51,7 +51,7 @@ public sealed class MLAgentController : Agent
 
     // Call this from your GameBootstrapper after systems are constructed.
     public void Init(GameConfigHub hub,
-                     GameState gs,
+                     IAgentGameState gs,
                      BoardModel bm,
                      Pieces pcs,
                      CostEngine cost,
@@ -260,7 +260,7 @@ public sealed class MLAgentController : Agent
     private int BuildOffersForCurrentPlayer()
     {
         // Build OfferQuery: (bm, pcs, ps, playerId, cost)
-        var q = new OfferQuery(_bm, _pcs, _gs.CurrentPlayerRef, playerId, _cost);
+        var q = new OfferQuery(_bm, _pcs, _gs.CurrentPlayerRef, playerId, _cost, _hub.pieceLimitEnabled, _hub.pieceLimitPerPlayer);
 
         var acts = _actions.AsSpan();
         var costs = _quoted.AsSpan();

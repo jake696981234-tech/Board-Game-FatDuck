@@ -212,6 +212,17 @@ public void Init(in BoardGeometry geometry, in GameConfigHub hub, int playerCoun
     public bool IsPlayerCoreCell(int cellId, int playerIdx)
         => playerIdx >= 0 && playerIdx < _coreCellIdByPlayer.Length && _coreCellIdByPlayer[playerIdx] == cellId;
 
+    public int GetPieceCountForPlayer(int playerIdx)
+    {
+        if (playerIdx < 0) return 0;
+        int count = 0;
+        for (int pid = 0; pid < pieceCount; pid++)
+        {
+            if (pieceOwner[pid] == playerIdx) count++;
+        }
+        return count;
+    }
+
     public int PieceAt(int cellId) => IsValidCellId(cellId) ? occupantPieceId[cellId] : _invalidId;
 
     public bool IsAlive(int pieceId) => IsValidPieceId(pieceId);

@@ -112,29 +112,6 @@ public sealed class Config : ScriptableObject
     public bool inspectGame = false;
     public bool useMLAgents = false;
 
-    [System.Serializable]
-    public struct ModelBinding
-    {
-        public string behaviorName;
-        public int teamId;
-        public string onnxPath; // relative to StreamingAssets
-    }
-
-    [System.Serializable]
-    public struct ModelConfigAuthoring
-    {
-        public bool useExternalModel;
-        public Unity.MLAgents.Policies.InferenceDevice inferenceDevice;
-        public ModelBinding[] bindings;
-    }
-
-    [Header("ML Model Seeding")]
-    public ModelConfigAuthoring modelConfig = new ModelConfigAuthoring
-    {
-        useExternalModel = false,
-        inferenceDevice = Unity.MLAgents.Policies.InferenceDevice.CPU,
-        bindings = Array.Empty<ModelBinding>()
-    };
 
     [System.Serializable]
     public struct MLRewardsAuthoring
@@ -382,12 +359,7 @@ public sealed class Config : ScriptableObject
                 behaviorParams.useChildSensors,
                 mlObsSize,                       // 21 + 12 * observations.maxCells
                 agent.maxOffersToConsider        // single discrete branch size
- ),
-                modelConfig: new GameConfigHub.ModelConfig(
-                    modelConfig.useExternalModel,
-                    modelConfig.inferenceDevice,
-                    modelConfig.bindings != null ? modelConfig.bindings : Array.Empty<ModelBinding>()
-                )
+             )
         );
     }
 }

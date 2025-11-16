@@ -29,13 +29,18 @@ namespace Game.Core
         /// </summary>
         public readonly CostEngine cost;
 
-        public OfferQuery(BoardModel bm, Pieces pcs, PlayerState ps, byte playerId, CostEngine cost)
+        public readonly bool pieceLimitEnabled;
+        public readonly int pieceLimitPerPlayer;
+
+        public OfferQuery(BoardModel bm, Pieces pcs, PlayerState ps, byte playerId, CostEngine cost, bool pieceLimitEnabled, int pieceLimitPerPlayer)
         {
             this.bm       = bm;
             this.pcs      = pcs;
             this.ps       = ps;
             this.playerId = playerId;
             this.cost     = cost;
+            this.pieceLimitEnabled = pieceLimitEnabled;
+            this.pieceLimitPerPlayer = pieceLimitPerPlayer;
         }
     }
 }
