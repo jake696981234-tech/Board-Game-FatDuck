@@ -65,6 +65,8 @@ public readonly struct GameConfigHub
     public readonly float cap_maxBudget;
     public readonly int   cap_maxVPPool;
     public readonly int cap_maxCoreHealth;
+    public readonly bool pieceLimitEnabled;
+    public readonly int pieceLimitPerPlayer;
 
     // NEW: Observation schema constants (training-time or fixed per build)
     // Used for building fixed-length observation vectors with zero padding.
@@ -90,6 +92,7 @@ public readonly struct GameConfigHub
 
     // Fixed observation size for Phase A: 21 + 12 * obs_maxCells
     public readonly int mlObservationSize;
+    public readonly ModelConfig modelConfig;
 
     public readonly struct AgentConfig
     {
@@ -128,6 +131,8 @@ public readonly struct GameConfigHub
         float cap_maxBudget,
         int cap_maxVPPool,
         int cap_maxCoreHealth,
+        bool pieceLimitEnabled,
+        int pieceLimitPerPlayer,
         int player_count,
         bool[] player_applyBotSurcharges,             // len = player_count
         bool[] player_applyStartOfTurnBudgetDecrease, // len = player_count
@@ -144,7 +149,8 @@ public readonly struct GameConfigHub
         PolicyKind[] playerPolicy,
         bool enableMLAgents,
         int mlObservationSize,
-        BehaviorParametersConfig mlBehavior
+        BehaviorParametersConfig mlBehavior,
+        ModelConfig modelConfig
     )
     {
         this.board_radius = board_radius;
@@ -170,6 +176,8 @@ public readonly struct GameConfigHub
         this.cap_maxBudget = cap_maxBudget;
         this.cap_maxVPPool = cap_maxVPPool;
         this.cap_maxCoreHealth = cap_maxCoreHealth;
+        this.pieceLimitEnabled = pieceLimitEnabled;
+        this.pieceLimitPerPlayer = pieceLimitPerPlayer;
 
         this.player_count                           = player_count;
         this.player_applyBotSurcharges             = player_applyBotSurcharges;
@@ -190,6 +198,35 @@ public readonly struct GameConfigHub
         this.enableMLAgents   = enableMLAgents;
         this.mlObservationSize = mlObservationSize;
         this.mlBehavior = mlBehavior;
+        this.modelConfig = modelConfig;
+    }
+
+    public readonly struct ModelConfig
+    {
+        public readonly bool useExternalModel;
+        public readonly Unity.MLAgents.Policies.InferenceDevice inferenceDevice;
+        public readonly ModelBinding[] bindings;
+
+        public ModelConfig(bool useExternalModel, Unity.MLAgents.Policies.InferenceDevice inferenceDevice, ModelBinding[] bindings)
+        {
+            this.useExternalModel = useExternalModel;
+            this.inferenceDevice = inferenceDevice;
+            this.bindings = bindings;
+        }
+    }
+
+    public readonly struct ModelBinding
+    {
+        public readonly string behaviorName;
+        public readonly int teamId;
+        public readonly string onnxPath;
+
+        public ModelBinding(string behaviorName, int teamId, string onnxPath)
+        {
+            this.behaviorName = behaviorName;
+            this.teamId = teamId;
+            this.onnxPath = onnxPath;
+        }
     }
 }
 

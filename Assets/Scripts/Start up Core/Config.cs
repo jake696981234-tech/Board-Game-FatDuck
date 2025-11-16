@@ -113,6 +113,30 @@ public sealed class Config : ScriptableObject
     public bool useMLAgents = false;
 
     [System.Serializable]
+    public struct ModelBinding
+    {
+        public string behaviorName;
+        public int teamId;
+        public string onnxPath; // relative to StreamingAssets
+    }
+
+    [System.Serializable]
+    public struct ModelConfigAuthoring
+    {
+        public bool useExternalModel;
+        public Unity.MLAgents.Policies.InferenceDevice inferenceDevice;
+        public ModelBinding[] bindings;
+    }
+
+    [Header("ML Model Seeding")]
+    public ModelConfigAuthoring modelConfig = new ModelConfigAuthoring
+    {
+        useExternalModel = false,
+        inferenceDevice = Unity.MLAgents.Policies.InferenceDevice.CPU,
+        bindings = Array.Empty<ModelBinding>()
+    };
+
+    [System.Serializable]
     public struct MLRewardsAuthoring
     {
         public float rewardWin;
@@ -210,6 +234,16 @@ public sealed class Config : ScriptableObject
 
     [Header("Caps")]
     public CapsAuthoring caps = new CapsAuthoring { capMaxActionsPerTurn = 30, capMaxVP = 30, capMaxBudget = 150f, capMaxVPPool = 5, capMaxCoreHealth = 3 };
+
+    [System.Serializable]
+    public struct PieceLimitAuthoring
+    {
+        public bool enablePieceLimit;
+        [Min(1)] public int maxPiecesPerPlayer;
+    }
+
+    [Header("Piece Limits")]
+    public PieceLimitAuthoring pieceLimit = new PieceLimitAuthoring { enablePieceLimit = false, maxPiecesPerPlayer = 50 };
 
     // Config.cs  (inside the class)
     [System.Serializable]
@@ -319,6 +353,8 @@ public sealed class Config : ScriptableObject
             cap_maxBudget: caps.capMaxBudget,
             cap_maxVPPool: caps.capMaxVPPool,
             cap_maxCoreHealth: caps.capMaxCoreHealth,
+            pieceLimitEnabled: pieceLimit.enablePieceLimit,
+            pieceLimitPerPlayer: pieceLimit.maxPiecesPerPlayer,
             player_count: N,
                 player_applyBotSurcharges: p_applyBot,
                 player_applyStartOfTurnBudgetDecrease: p_applyDec,
@@ -346,7 +382,12 @@ public sealed class Config : ScriptableObject
                 behaviorParams.useChildSensors,
                 mlObsSize,                       // 21 + 12 * observations.maxCells
                 agent.maxOffersToConsider        // single discrete branch size
- )
+ ),
+                modelConfig: new GameConfigHub.ModelConfig(
+                    modelConfig.useExternalModel,
+                    modelConfig.inferenceDevice,
+                    modelConfig.bindings != null ? modelConfig.bindings : Array.Empty<ModelBinding>()
+                )
         );
     }
 }

@@ -119,6 +119,28 @@ public class GameController : MonoBehaviour
                         bp.BrainParameters.VectorObservationSize = gameBootstrapper.hub.mlBehavior.obsSize;
                         bp.BrainParameters.ActionSpec =
                             Unity.MLAgents.Actuators.ActionSpec.MakeDiscrete(gameBootstrapper.hub.mlBehavior.actionBranchSize);
+                        bp.TeamId = (seat < gameBootstrapper.hub.player_team.Length)
+                            ? gameBootstrapper.hub.player_team[seat]
+                            : seat;
+                        // Optional external model binding
+#if BARRACUDA_PRESENT
+                        if (gameBootstrapper.hub.modelConfig.useExternalModel && gameBootstrapper.hub.modelConfig.bindings != null)
+                        {
+                            foreach (var binding in gameBootstrapper.hub.modelConfig.bindings)
+                            {
+                                if (!string.IsNullOrEmpty(binding.behaviorName) && binding.behaviorName != bp.BehaviorName) continue;
+                                if (binding.teamId >= 0 && bp.TeamId != binding.teamId) continue;
+                                if (string.IsNullOrEmpty(binding.onnxPath)) continue;
+                        var nn = ModelLoaderUtil.LoadModelFromStreamingAssets(binding.onnxPath);
+                                if (nn != null)
+                                {
+                                    bp.Model = nn;
+                                    bp.InferenceDevice = gameBootstrapper.hub.modelConfig.inferenceDevice;
+                                }
+                                break;
+                            }
+                        }
+#endif
 
                         // Now add the Agent so Awake() reads the configured BehaviorParameters
                         var ml = go.AddComponent<MLAgentController>();
@@ -178,7 +200,6 @@ public class GameController : MonoBehaviour
 
     private void RestartMatch()
     {
-        DbLoggingConfig.prepDimGame();
         _restartInProgress = true;
         try
         {
