@@ -2,11 +2,13 @@ using UnityEngine;
 using Game.Core;
 using System;
 using Unity.MLAgents.Policies;
+using System.Collections.Generic;
 
 public class GameController : MonoBehaviour
 {
     public Config config;     // assign in Inspector
-    public CurriculumConfig curriculumConfig;
+
+    public PerGameConfig perGameConfig;
 
     public GameBootstrapper gameBootstrapper;
 
@@ -27,8 +29,25 @@ public class GameController : MonoBehaviour
     public Game.Core.GameState gameState;
 
 
+    public bool PieceLimitEnabled;
+
+    public int PieceLimitPerPlayer;
 
 
+    public int Goal = 0; //to do- set up this functionality
+    private void curriculumCheck()
+    {
+        if (perGameConfig.playerToTrain == whichPlayerToTrain.non) return;
+
+        foreach (var goal in perGameConfig.RestrictionGoal)
+        {
+            if (goal.goalRequirement <= Goal) continue;
+            if (goal.restriction == curriculumRestriction.onePiece)
+            {
+                PieceLimitEnabled = false;
+            }
+        }
+    }
 
 
     void Start()
@@ -38,6 +57,8 @@ public class GameController : MonoBehaviour
             Debug.LogError("GameController missing GameBootstrapper reference.");
             return;
         }
+
+        setGameConfigValues();
 
         var geometry = GeometryBuilder.Build(gameBootstrapper.hub.board_radius); // your existing builder call
         board = new BoardModel();
@@ -158,7 +179,7 @@ public class GameController : MonoBehaviour
             }
         }
 
-        gameState.Initialize(in gameBootstrapper.hub, board, GameBootstrapper.PiecesData, gameBootstrapper.cost, ps, startingPlayer);
+        gameState.Initialize(in gameBootstrapper.hub, board, GameBootstrapper.PiecesData, gameBootstrapper.cost, ps, startingPlayer, this);
 
     }
 
@@ -202,6 +223,8 @@ public class GameController : MonoBehaviour
         _restartInProgress = true;
         try
         {
+            curriculumCheck();
+
             var coreCells = BuildCoreCellsForNextMatch();
 
             // Clear the board and apply a new core mapping for the upcoming match
@@ -225,7 +248,7 @@ public class GameController : MonoBehaviour
             }
 
             // Reset GameState (reuse same instance so controllers keep references)
-            gameState.Initialize(in gameBootstrapper.hub, board, GameBootstrapper.PiecesData, gameBootstrapper.cost, ps, startingPlayer);
+            gameState.Initialize(in gameBootstrapper.hub, board, GameBootstrapper.PiecesData, gameBootstrapper.cost, ps, startingPlayer, this);
 
 
 
@@ -288,6 +311,15 @@ public class GameController : MonoBehaviour
         _matchIndex++;
         return baseIds;
     }
+
+    private void setGameConfigValues()
+    {
+        PieceLimitEnabled = perGameConfig.pieceLimitEnabled;
+
+        PieceLimitPerPlayer = perGameConfig.pieceLimit;
+    }
+
+
 }
 
 

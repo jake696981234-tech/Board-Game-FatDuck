@@ -3,12 +3,64 @@ using System.Collections.Generic;
 
 
 [CreateAssetMenu(fileName = "CurriculumConfig", menuName = "Game/CurriculumConfig", order = 2)]
-public class CurriculumConfig : ScriptableObject
+public class PerGameConfig : ScriptableObject
 {
-    
+
+    [Header("Curriculum Config")]
+    public List<restrictionGoal> RestrictionGoal = new();
+
+    public whichPlayerToTrain playerToTrain;
+
+
+
+    [Header("Game Authoring")]
+    public bool pieceLimitEnabled = false;
+
+    [Min(1)] public int pieceLimit = 50;
+
+
+
+    public void pieceLimitOverride() //to do- add me to boostrap
+    {
+        if (RestrictionGoal.Exists(r => r.restriction == curriculumRestriction.onePiece))
+        {
+            pieceLimitEnabled = true;
+            pieceLimit = 1;
+        }
+    }
+
+    [System.Serializable]
+    public struct PieceLimitAuthoring
+    {
+        public bool enablePieceLimit;
+        [Min(1)] public int maxPiecesPerPlayer;
+    }
+
+
 }
 
 
 
+public enum whichPlayerToTrain
+{
+    player0,
+    player1,
+    player2,
+    player3,
+    non
+}
 
+public enum curriculumRestriction
+{
+    onePiece,
+    twoPlayer,
+    oneAction, //this should just make the secound action mask out everything but endturn
+}
+
+[System.Serializable]
+public class restrictionGoal
+{
+    public curriculumRestriction restriction;
+    public int goalRequirement;
+}
 

@@ -65,8 +65,7 @@ public readonly struct GameConfigHub
     public readonly float cap_maxBudget;
     public readonly int cap_maxVPPool;
     public readonly int cap_maxCoreHealth;
-    public readonly bool pieceLimitEnabled;
-    public readonly int pieceLimitPerPlayer;
+
 
     // NEW: Observation schema constants (training-time or fixed per build)
     // Used for building fixed-length observation vectors with zero padding.
@@ -131,8 +130,6 @@ public readonly struct GameConfigHub
         float cap_maxBudget,
         int cap_maxVPPool,
         int cap_maxCoreHealth,
-        bool pieceLimitEnabled,
-        int pieceLimitPerPlayer,
         int player_count,
         bool[] player_applyBotSurcharges,             // len = player_count
         bool[] player_applyStartOfTurnBudgetDecrease, // len = player_count
@@ -175,8 +172,6 @@ public readonly struct GameConfigHub
         this.cap_maxBudget = cap_maxBudget;
         this.cap_maxVPPool = cap_maxVPPool;
         this.cap_maxCoreHealth = cap_maxCoreHealth;
-        this.pieceLimitEnabled = pieceLimitEnabled;
-        this.pieceLimitPerPlayer = pieceLimitPerPlayer;
 
         this.player_count = player_count;
         this.player_applyBotSurcharges = player_applyBotSurcharges;

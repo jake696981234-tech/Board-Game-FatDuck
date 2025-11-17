@@ -57,6 +57,8 @@ namespace Game.Core
         private Pieces pcs;
         private CostEngine cost;
 
+        private GameController gameController;
+
         // Match state
         private PlayerState[] ps;      // length 4
         private byte currentPlayer;    // 0..3
@@ -69,12 +71,14 @@ namespace Game.Core
                        Pieces pieces,
                        CostEngine pricing,
                        PlayerState[] players,
-                       byte startingPlayer)
+                       byte startingPlayer,
+                       GameController GameController)
         {
             this.hub = hub;
             bm = board;
             pcs = pieces;
             cost = pricing;
+            gameController = GameController;
 
             ps = players;
             currentPlayer = startingPlayer;
@@ -130,8 +134,8 @@ namespace Game.Core
                 case Move: ApplyMove(in a, currentPlayer); break;
                 case Shoot: ApplyShoot(in a, currentPlayer); break;
                 case Create:
-                    if (hub.pieceLimitEnabled && hub.pieceLimitPerPlayer > 0 &&
-                        bm.GetPieceCountForPlayer(currentPlayer) >= hub.pieceLimitPerPlayer)
+                    if (gameController.PieceLimitEnabled && gameController.PieceLimitPerPlayer > 0 &&
+                        bm.GetPieceCountForPlayer(currentPlayer) >= gameController.PieceLimitPerPlayer)
                         return false;
                     ApplyCreate(in a, currentPlayer);
                     break;

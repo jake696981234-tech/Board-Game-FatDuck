@@ -10,10 +10,7 @@ public sealed class Config : ScriptableObject
 {
 
 
-    [Header("Curriculum Config")]
-    public List<restrictionGoal> RestrictionGoal = new();
 
-    public whichPlayerToTrain playerToTrain;
 
 
     [Header("Agent (global)")]
@@ -227,30 +224,7 @@ public sealed class Config : ScriptableObject
     [Header("Caps")]
     public CapsAuthoring caps = new CapsAuthoring { capMaxActionsPerTurn = 30, capMaxVP = 30, capMaxBudget = 150f, capMaxVPPool = 5, capMaxCoreHealth = 3 };
 
-    [System.Serializable]
-    public struct PieceLimitAuthoring
-    {
-        public bool enablePieceLimit;
-        [Min(1)] public int maxPiecesPerPlayer;
-    }
 
-    [Header("Piece Limits")]
-    public PieceLimitAuthoring AuthorpieceLimit = new PieceLimitAuthoring { enablePieceLimit = false, maxPiecesPerPlayer = 50 };
-
-    private PieceLimitAuthoring TrainpieceLimit = new PieceLimitAuthoring { enablePieceLimit = true, maxPiecesPerPlayer = 1 };
-
-    private PieceLimitAuthoring pieceLimit = new PieceLimitAuthoring { enablePieceLimit = false, maxPiecesPerPlayer = 50 };
-    private void PieceLimitSet()
-    {
-        if (playerToTrain == whichPlayerToTrain.non)
-        {
-            pieceLimit = AuthorpieceLimit;
-        }
-        else
-        {
-            pieceLimit = TrainpieceLimit;
-        }
-    }
 
 
 
@@ -379,8 +353,6 @@ public sealed class Config : ScriptableObject
             cap_maxBudget: caps.capMaxBudget,
             cap_maxVPPool: caps.capMaxVPPool,
             cap_maxCoreHealth: caps.capMaxCoreHealth,
-            pieceLimitEnabled: pieceLimit.enablePieceLimit,
-            pieceLimitPerPlayer: pieceLimit.maxPiecesPerPlayer,
             player_count: N,
                 player_applyBotSurcharges: p_applyBot,
                 player_applyStartOfTurnBudgetDecrease: p_applyDec,
@@ -414,25 +386,3 @@ public sealed class Config : ScriptableObject
 }
 
 
-public enum whichPlayerToTrain
-{
-    player0,
-    player1,
-    player2,
-    player3,
-    non
-}
-
-public enum curriculumRestriction
-{
-    onePiece,
-    twoPlayer,
-    oneAction, //this should just make the secound action mask out everything but endturn
-}
-
-[System.Serializable]
-public class restrictionGoal
-{
-    public curriculumRestriction restriction;
-    public int goalRequirement;
-}
