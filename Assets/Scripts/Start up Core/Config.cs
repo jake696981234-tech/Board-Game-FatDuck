@@ -2,11 +2,18 @@
 using UnityEngine;
 using Unity.MLAgents.Policies;
 using Unity.InferenceEngine;
+using System.Collections.Generic;
 
 
 [CreateAssetMenu(fileName = "Config", menuName = "Game/Config", order = 0)]
 public sealed class Config : ScriptableObject
 {
+
+
+    [Header("Curriculum Config")]
+    public List<restrictionGoal> RestrictionGoal = new();
+
+    public whichPlayerToTrain playerToTrain;
 
 
     [Header("Agent (global)")]
@@ -228,7 +235,24 @@ public sealed class Config : ScriptableObject
     }
 
     [Header("Piece Limits")]
-    public PieceLimitAuthoring pieceLimit = new PieceLimitAuthoring { enablePieceLimit = false, maxPiecesPerPlayer = 50 };
+    public PieceLimitAuthoring AuthorpieceLimit = new PieceLimitAuthoring { enablePieceLimit = false, maxPiecesPerPlayer = 50 };
+
+    private PieceLimitAuthoring TrainpieceLimit = new PieceLimitAuthoring { enablePieceLimit = true, maxPiecesPerPlayer = 1 };
+
+    private PieceLimitAuthoring pieceLimit = new PieceLimitAuthoring { enablePieceLimit = false, maxPiecesPerPlayer = 50 };
+    private void PieceLimitSet()
+    {
+        if (playerToTrain == whichPlayerToTrain.non)
+        {
+            pieceLimit = AuthorpieceLimit;
+        }
+        else
+        {
+            pieceLimit = TrainpieceLimit;
+        }
+    }
+
+
 
     // Config.cs  (inside the class)
     [System.Serializable]
@@ -387,4 +411,28 @@ public sealed class Config : ScriptableObject
              )
         );
     }
+}
+
+
+public enum whichPlayerToTrain
+{
+    player0,
+    player1,
+    player2,
+    player3,
+    non
+}
+
+public enum curriculumRestriction
+{
+    onePiece,
+    twoPlayer,
+    oneAction, //this should just make the secound action mask out everything but endturn
+}
+
+[System.Serializable]
+public class restrictionGoal
+{
+    public curriculumRestriction restriction;
+    public int goalRequirement;
 }

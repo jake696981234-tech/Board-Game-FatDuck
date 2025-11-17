@@ -6,6 +6,7 @@ using Unity.MLAgents.Policies;
 public class GameController : MonoBehaviour
 {
     public Config config;     // assign in Inspector
+    public CurriculumConfig curriculumConfig;
 
     public GameBootstrapper gameBootstrapper;
 
@@ -24,6 +25,8 @@ public class GameController : MonoBehaviour
     public BoardModel board;
 
     public Game.Core.GameState gameState;
+
+
 
 
 
@@ -151,7 +154,6 @@ public class GameController : MonoBehaviour
                     }
                 case GameConfigHub.ControlMode.Human:
                 default:
-                    // No controller; human input not implemented in Phase A
                     break;
             }
         }
@@ -287,3 +289,7 @@ public class GameController : MonoBehaviour
         return baseIds;
     }
 }
+
+
+
+
