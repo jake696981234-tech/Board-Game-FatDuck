@@ -62,7 +62,7 @@ public sealed class GameSnapshotComposer
         snapshot.displayNameByType = pieces.displayNameByType;
 
         // default owner palette (can replace later)
-        snapshot.ownerTintByPlayer = new Color[4] { Color.red, Color.blue, Color.green, Color.yellow };
+        snapshot.ownerTintByPlayer = new Color[4] { Color.red, Color.blue, Color.green, Color.silver };
 
         snapshot.version++;
         return snapshot;

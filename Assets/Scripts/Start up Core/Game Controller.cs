@@ -13,6 +13,7 @@ public class GameController : MonoBehaviour
     private bool _restartInProgress = false;
     private bool _gameOverHandled = false;
     private bool _resetPendingFromML = false;
+    private int _matchIndex = 0;
 
 
     [Range(0, 3)] public byte startingPlayer = 0;
@@ -37,7 +38,8 @@ public class GameController : MonoBehaviour
 
         var geometry = GeometryBuilder.Build(gameBootstrapper.hub.board_radius); // your existing builder call
         board = new BoardModel();
-        board.Init(in geometry, in gameBootstrapper.hub, gameBootstrapper.hub.player_count);
+        var coreCells = BuildCoreCellsForNextMatch();
+        board.Init(in geometry, in gameBootstrapper.hub, gameBootstrapper.hub.player_count, coreCellIdOverride: coreCells);
 
         var ps = new PlayerState[4];
         for (byte i = 0; i < 4; i++)
@@ -167,8 +169,8 @@ public class GameController : MonoBehaviour
             {
                 _gameOverHandled = true;
                 _completedGamesCount++;
+                _resetPendingFromML = HasAnyMLControllers(); // set before broadcasting so agents see the flag
                 BroadcastTerminalRewards();
-                _resetPendingFromML = HasAnyMLControllers();
 
                 bool auto = (config != null && config.autoSim.autoRestartOnGameOver);
                 bool underCap = (config == null) || (config.autoSim.maxAutoGames <= 0) || (_completedGamesCount < config.autoSim.maxAutoGames);
@@ -198,9 +200,12 @@ public class GameController : MonoBehaviour
         _restartInProgress = true;
         try
         {
-            // Clear the board
+            var coreCells = BuildCoreCellsForNextMatch();
+
+            // Clear the board and apply a new core mapping for the upcoming match
             if (board != null)
             {
+                board.SetPlayerCoreCells(coreCells);
                 board.RemoveAllPieces();
             }
 
@@ -257,5 +262,28 @@ public class GameController : MonoBehaviour
             if (mlControllers[i] != null) return true;
         }
         return false;
+    }
+
+    private int[] BuildCoreCellsForNextMatch()
+    {
+        var baseIds = (int[])gameBootstrapper.hub.board_coreCellIdByPlayer.Clone();
+        if (config == null || !config.board.shuffleCoreCellsPerGame)
+        {
+            _matchIndex++;
+            return baseIds;
+        }
+
+        int seed = config.board.coreShuffleSeed;
+        int effectiveSeed = (seed != 0) ? seed + _matchIndex : Environment.TickCount ^ (_matchIndex * 397);
+        var rng = new System.Random(effectiveSeed);
+
+        for (int i = baseIds.Length - 1; i > 0; i--)
+        {
+            int j = rng.Next(i + 1);
+            (baseIds[i], baseIds[j]) = (baseIds[j], baseIds[i]);
+        }
+
+        _matchIndex++;
+        return baseIds;
     }
 }

@@ -19,11 +19,11 @@ MonoBehaviour:
   observations:
     maxCells: 217
     maxDistance: 16
-  playerControl: 02020202
+  playerControl: 01010201
   playerPolicy: 01010101
   dbLogging:
     enabled: 0
-    simID: 3
+    simID: 1
     simName: Test ML Agent Test
     ruleVersion: Mango
     notes: No notes
@@ -43,7 +43,7 @@ MonoBehaviour:
     seedBase: 12345
     seedBySeat: 1
   behaviorParams:
-    behaviorName: SillyDuckTeams
+    behaviorName: SillyMonkey
     useChildSensors: 1
     vectorObservationSize: 2625
     actionBranchSize: 64
@@ -53,8 +53,9 @@ MonoBehaviour:
   mlRewards:
     rewardWin: 10
     rewardLoss: -10
+    rewardDraw: 0
     rewardCaptureVP: 1
-    rewardCoreDamage: 0.5
+    rewardCoreDamage: 1
     moveTowardVpScale: 0
     costPenaltyScale: 0
     stepPenalty: 0
@@ -67,6 +68,8 @@ MonoBehaviour:
     invalidId: -1
     victoryPointCellId: 108
     coreCellIdByPlayer: 56000000be000000820000001a000000
+    shuffleCoreCellsPerGame: 1
+    coreShuffleSeed: 0
   match:
     startingBudgetPerPlayer: 500
     numberOfRounds: 5
@@ -88,6 +91,19 @@ MonoBehaviour:
   pieceLimit:
     enablePieceLimit: 0
     maxPiecesPerPlayer: 1
+  playerBehaviorOverrides:
+  - modelAsset: {fileID: 0}
+    deterministicInference: 0
+    behaviorType: 0
+  - modelAsset: {fileID: 0}
+    deterministicInference: 0
+    behaviorType: 0
+  - modelAsset: {fileID: 0}
+    deterministicInference: 0
+    behaviorType: 0
+  - modelAsset: {fileID: 0}
+    deterministicInference: 0
+    behaviorType: 0
   playerCount: 4
   players:
   - name: P0
@@ -101,16 +117,16 @@ MonoBehaviour:
     applyBotSurcharges: 1
     applyStartOfTurnBudgetDecrease: 1
     startingBudgetOverride: -1
-    team: 0
+    team: 2
   - name: P2
     isAI: 1
     applyBotSurcharges: 1
     applyStartOfTurnBudgetDecrease: 1
     startingBudgetOverride: -1
-    team: 1
+    team: 3
   - name: P3
     isAI: 1
     applyBotSurcharges: 1
     applyStartOfTurnBudgetDecrease: 1
     startingBudgetOverride: -1
-    team: 1
+    team: 4

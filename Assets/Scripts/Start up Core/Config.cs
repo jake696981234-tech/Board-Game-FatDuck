@@ -165,10 +165,14 @@ public sealed class Config : ScriptableObject
         public int invalidId;
         public int victoryPointCellId;      // e.g., center
         public int[] coreCellIdByPlayer; // set per map
+        [Tooltip("When enabled, shuffle the 4 core cell ids each game so seats spawn at different cores.")]
+        public bool shuffleCoreCellsPerGame;
+        [Tooltip("Optional seed for core shuffling. 0 = non-deterministic per match.")]
+        public int coreShuffleSeed;
     }
 
     [Header("Board")]
-    public BoardAuthoring board = new BoardAuthoring { radius = 8, invalidId = -1, victoryPointCellId = 108, coreCellIdByPlayer = new int[4] };
+    public BoardAuthoring board = new BoardAuthoring { radius = 8, invalidId = -1, victoryPointCellId = 108, coreCellIdByPlayer = new int[4], shuffleCoreCellsPerGame = false, coreShuffleSeed = 0 };
 
     [System.Serializable]
     public struct MatchAuthoring

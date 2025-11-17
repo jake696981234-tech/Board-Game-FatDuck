@@ -52,8 +52,8 @@ public sealed class BoardModel
     /// This allocates occupancy and piece columns, but does NOT set any VP/core HP.
     /// (GameState will seed/own live match counters.)
     /// </summary>
-    // BoardModel.cs
-public void Init(in BoardGeometry geometry, in GameConfigHub hub, int playerCount, int initialPieceCapacity = 8)
+// BoardModel.cs
+public void Init(in BoardGeometry geometry, in GameConfigHub hub, int playerCount, int initialPieceCapacity = 8, int[] coreCellIdOverride = null)
 {
     // store snapshots
     geo = geometry;
@@ -61,7 +61,9 @@ public void Init(in BoardGeometry geometry, in GameConfigHub hub, int playerCoun
     _cellCount = hub.board_totalCells;
     _invalidId = hub.board_invalidCellId;
     _vpCellId  = hub.board_vpCellId;
-    _coreCellIdByPlayer = (int[])hub.board_coreCellIdByPlayer.Clone();
+    _coreCellIdByPlayer = coreCellIdOverride != null
+        ? (int[])coreCellIdOverride.Clone()
+        : (int[])hub.board_coreCellIdByPlayer.Clone();
     
     occupantPieceId = new int[_cellCount];
     for (int i = 0; i < _cellCount; i++) occupantPieceId[i] = _invalidId;
@@ -118,6 +120,11 @@ public void Init(in BoardGeometry geometry, in GameConfigHub hub, int playerCoun
 
     public int GetPlayerCoreCellId(int owner)
         => (owner >= 0 && owner < _coreCellIdByPlayer.Length) ? _coreCellIdByPlayer[owner] : _invalidId;
+
+    public void SetPlayerCoreCells(int[] coreCellIds)
+    {
+        _coreCellIdByPlayer = coreCellIds != null ? (int[])coreCellIds.Clone() : Array.Empty<int>();
+    }
 
     /// <summary>True if cell belongs to any opponent core (owner != actorOwner).</summary>
     public bool IsEnemyCoreCell(int cellId, int actorOwner)
