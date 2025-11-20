@@ -85,7 +85,7 @@ namespace Game.Core
             pcs = pieces;
             cost = pricing;
             events = eventManager;
-            gameController = controller;
+            controller = gameController;
 
             ps = players;
             currentPlayer = startingPlayer;

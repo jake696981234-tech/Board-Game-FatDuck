@@ -65,7 +65,6 @@ public sealed class GameBootstrapper : MonoBehaviour
         //             if (inspectcontroller.boardView == null)
         //                 inspectcontroller.boardView = this.boardView;
         //         }
-        //      }
 
 
         for (int i = 0; i < config.gamesToRun; i++)

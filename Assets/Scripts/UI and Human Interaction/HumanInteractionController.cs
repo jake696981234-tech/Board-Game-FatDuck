@@ -25,14 +25,9 @@ public sealed class HumanInteractionController : MonoBehaviour
     public BoardModel boardModel;        // assign the same model used by GameState
     public Pieces pieces;            // your registry (names, flags, etc.)
     public CostEngine costEngine;        // pricing engine used by GameState
-    private GameConfigHub _hub;
-    private bool _hasHubConfig;
 
-    public void SetHub(in GameConfigHub hub)
-    {
-        _hub = hub;
-        _hasHubConfig = true;
-    }
+
+
 
     [Header("Canvas/UI")]
     public Image backdrop;

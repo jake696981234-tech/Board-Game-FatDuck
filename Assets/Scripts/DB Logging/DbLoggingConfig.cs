@@ -132,6 +132,7 @@ public static class DbLoggingConfig
         TurnBudgetDecrease = Hub.match_startOfTurnBudgetDecrease;
         startingBudget = Hub.match_startingBudgetPerPlayer;
         inputMaxRounds = Hub.match_numberOfRounds;
+        subscribeToGameState();
     }
 
     public static void ApplyConfig(in Config.DbLoggingAuthoring cfg)
@@ -532,7 +533,7 @@ public static class DbLoggingConfig
     }
 
 
-    // TO DO DimRound
+
     public static int roundVersion(
         int gameSK,
         int roundOrdinal)
@@ -579,7 +580,7 @@ public static class DbLoggingConfig
 
 
 
-    // TO DO DimTurn
+
     public static void turnVersion(
     int TurnSK,
     int playerSK,
@@ -616,7 +617,6 @@ public static class DbLoggingConfig
 
 
 
-    // TO DO FactAction
     public static long FactAction(
         int turnSK,
         int actionTypeSK,

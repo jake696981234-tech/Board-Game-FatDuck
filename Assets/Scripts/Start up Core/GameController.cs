@@ -109,22 +109,24 @@ public class GameController : MonoBehaviour
         gameState = new Game.Core.GameState();
 
 
-
-        DbLoggingConfig.InitializeLoggingValues(in gameBootstrapper.hub, eventManager);
-        // Apply runtime logging tuning from Config
-        DbLoggingConfig.ApplyConfig(in config.dbLogging);
-        if (config.dbLogging.enabled)
+        if (inspectGame)
         {
-            DbLoggingConfig.DeleteConflictingSimIdRows();
-            DbLoggingConfig.logDimSim();
-            DbLoggingConfig.logDimActionType();
-            DbLoggingConfig.logDimPiece();
-            DbLoggingConfig.logPlayerVersion();
-            DbLoggingConfig.logWinTypeVersion();
-            DbLoggingConfig.prepDimGame();
-            DbLoggingConfig.logRoundVersion();
-            if (config.dbLogging.useSharedSession)
-                DbLoggingConfig.StartLoggingSession(transactional: config.dbLogging.transactionalSession);
+            DbLoggingConfig.InitializeLoggingValues(in gameBootstrapper.hub, eventManager);
+            // Apply runtime logging tuning from Config
+            DbLoggingConfig.ApplyConfig(in config.dbLogging);
+            if (config.dbLogging.enabled)
+            {
+                DbLoggingConfig.DeleteConflictingSimIdRows();
+                DbLoggingConfig.logDimSim();
+                DbLoggingConfig.logDimActionType();
+                DbLoggingConfig.logDimPiece();
+                DbLoggingConfig.logPlayerVersion();
+                DbLoggingConfig.logWinTypeVersion();
+                DbLoggingConfig.prepDimGame();
+                DbLoggingConfig.logRoundVersion();
+                if (config.dbLogging.useSharedSession)
+                    DbLoggingConfig.StartLoggingSession(transactional: config.dbLogging.transactionalSession);
+            }
         }
 
         heuristicControllers = new PlayerAgent[4];
@@ -236,54 +238,59 @@ public class GameController : MonoBehaviour
         gameState.Initialize(in gameBootstrapper.hub, board, GameBootstrapper.PiecesData, gameBootstrapper.cost, ps, startingPlayer, eventManager, this);
 
 
-        var hic = FindFirstObjectByType<HumanInteractionController>();
-        if (hic != null)
+        if (inspectGame)
         {
-            // pick the first seat marked Human
-            byte humanSeat = 0;
-            for (byte s = 0; s < gameBootstrapper.hub.player_count; s++)
+            var hic = FindFirstObjectByType<HumanInteractionController>();
+            if (hic != null)
             {
-                if (gameBootstrapper.hub.playerControl[s] == GameConfigHub.ControlMode.Human) { humanSeat = s; break; }
+                // pick the first seat marked Human
+                byte humanSeat = 0;
+                for (byte s = 0; s < gameBootstrapper.hub.player_count; s++)
+                {
+                    if (gameBootstrapper.hub.playerControl[s] == GameConfigHub.ControlMode.Human) { humanSeat = s; break; }
+                }
+
+                // inject live systems (same ones agents/ML use)
+                hic.gameState = gameState;
+                hic.boardModel = board;
+                hic.pieces = GameBootstrapper.PiecesData;
+                hic.costEngine = gameBootstrapper.cost;
+                hic.offerProvider = gameBootstrapper.offers;
+                if (hic.boardView == null) hic.boardView = boardView;
+                hic.SetHumanSeat(humanSeat);
+            }
+        }
+
+
+        if (inspectGame)
+        {
+            // === Phase B: compose the initial snapshot & push to BoardView ===
+            snapshotComposer = new GameSnapshotComposer(
+                geometry,   // local variable from your builder call
+                board,      // BoardModel
+                 gameState,  // Game.Core.GameState
+                  GameBootstrapper.PiecesData      // Pieces (CSV-driven)
+             );
+
+            currentSnapshot = snapshotComposer.GetSnapshot();
+
+            if (boardView != null)
+            {
+                boardView.ApplySnapshot(currentSnapshot);
             }
 
-            // inject live systems (same ones agents/ML use)
-            hic.gameState = gameState;
-            hic.boardModel = board;
-            hic.pieces = GameBootstrapper.PiecesData;
-            hic.costEngine = gameBootstrapper.cost;
-            hic.offerProvider = gameBootstrapper.offers;
-            if (hic.boardView == null) hic.boardView = boardView;
-            hic.SetHub(in gameBootstrapper.hub);
-            hic.SetHumanSeat(humanSeat);
+            else
+            {
+                Debug.LogWarning("[׸] BoardView not assigned in Bootstrapper (Phase B).");
+            }
+
+
+            // Rebuild/push snapshot after every successful action
+            gameState.OnActionExecuted += () =>
+            {
+                currentSnapshot = snapshotComposer.GetSnapshot(); if (boardView != null) boardView.ApplySnapshot(currentSnapshot);
+            };
         }
-
-
-        // === Phase B: compose the initial snapshot & push to BoardView ===
-        snapshotComposer = new GameSnapshotComposer(
-            geometry,   // local variable from your builder call
-            board,      // BoardModel
-             gameState,  // Game.Core.GameState
-              GameBootstrapper.PiecesData      // Pieces (CSV-driven)
-         );
-
-        currentSnapshot = snapshotComposer.GetSnapshot();
-
-        if (boardView != null)
-        {
-            boardView.ApplySnapshot(currentSnapshot);
-        }
-
-        else
-        {
-            Debug.LogWarning("[׸] BoardView not assigned in Bootstrapper (Phase B).");
-        }
-
-
-        // Rebuild/push snapshot after every successful action
-        gameState.OnActionExecuted += () =>
-        {
-            currentSnapshot = snapshotComposer.GetSnapshot(); if (boardView != null) boardView.ApplySnapshot(currentSnapshot);
-        };
     }
 
     void Update()
@@ -329,7 +336,11 @@ public class GameController : MonoBehaviour
 
     private void RestartMatch()
     {
-        DbLoggingConfig.prepDimGame();
+        if (inspectGame && config.dbLogging.enabled)
+        {
+            DbLoggingConfig.prepDimGame();
+            DbLoggingConfig.logRoundVersion();
+        }
         _restartInProgress = true;
         try
         {
@@ -357,11 +368,14 @@ public class GameController : MonoBehaviour
             // Reset GameState (reuse same instance so controllers keep references)
             gameState.Initialize(in gameBootstrapper.hub, board, GameBootstrapper.PiecesData, gameBootstrapper.cost, ps, startingPlayer, eventManager, this);
 
-            // Push a fresh snapshot to the view
-            if (snapshotComposer != null)
+            if (inspectGame)
             {
-                currentSnapshot = snapshotComposer.GetSnapshot();
-                if (boardView != null) boardView.ApplySnapshot(currentSnapshot);
+                // Push a fresh snapshot to the view
+                if (snapshotComposer != null)
+                {
+                    currentSnapshot = snapshotComposer.GetSnapshot();
+                    if (boardView != null) boardView.ApplySnapshot(currentSnapshot);
+                }
             }
 
             // Reset game-over gate
