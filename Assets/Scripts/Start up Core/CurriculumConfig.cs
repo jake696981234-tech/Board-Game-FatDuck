@@ -7,7 +7,7 @@ public class PerGameConfig : ScriptableObject
 {
 
     [Header("Curriculum Config")]
-    public List<restrictionGoal> RestrictionGoal = new();
+    public List<restrictionGoal> Curriculum = new();
 
     public whichPlayerToTrain playerToTrain;
 
@@ -19,22 +19,6 @@ public class PerGameConfig : ScriptableObject
     [Min(1)] public int pieceLimit = 50;
 
 
-
-    public void pieceLimitOverride() //to do- add me to boostrap
-    {
-        if (RestrictionGoal.Exists(r => r.restriction == curriculumRestriction.onePiece))
-        {
-            pieceLimitEnabled = true;
-            pieceLimit = 1;
-        }
-    }
-
-    [System.Serializable]
-    public struct PieceLimitAuthoring
-    {
-        public bool enablePieceLimit;
-        [Min(1)] public int maxPiecesPerPlayer;
-    }
 
 
 }

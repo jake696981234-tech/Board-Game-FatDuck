@@ -899,4 +899,84 @@ public static class DbLoggingConfig
     }
 
 
+
+    private static bool _isSubscribedToGameState;
+
+    public static void subscribeToGameState()
+    {
+        if (_isSubscribedToGameState)
+            return;
+
+        EventManager.ActionLogRequested += OnActionLogRequested;
+        EventManager.TurnPrepRequested += OnTurnPrepRequested;
+        EventManager.TurnLogRequested += OnTurnLogRequested;
+        EventManager.RoundLogRequested += OnRoundLogRequested;
+        EventManager.GameResultLogged += OnGameResultLogged;
+        _isSubscribedToGameState = true;
+    }
+
+    public static void unsubscribeFromGameState()
+    {
+        if (!_isSubscribedToGameState)
+            return;
+
+        EventManager.ActionLogRequested -= OnActionLogRequested;
+        EventManager.TurnPrepRequested -= OnTurnPrepRequested;
+        EventManager.TurnLogRequested -= OnTurnLogRequested;
+        EventManager.RoundLogRequested -= OnRoundLogRequested;
+        EventManager.GameResultLogged -= OnGameResultLogged;
+        _isSubscribedToGameState = false;
+    }
+
+    private static void OnActionLogRequested(EventManager.ActionLogEvent payload)
+    {
+        logAction(
+            payload.ActionType,
+            payload.PieceId,
+            payload.TargetPlayerIndex,
+            payload.ActingPlayerIndex,
+            payload.ActionCost,
+            payload.BuildCost,
+            payload.SurchargeCost);
+    }
+
+    private static void OnTurnPrepRequested()
+    {
+        prepTurn();
+    }
+
+    private static void OnTurnLogRequested(EventManager.TurnLogEvent payload)
+    {
+        logturnVersion(
+            payload.PlayerIndex,
+            payload.TurnOrdinal,
+            payload.IsPassOnly,
+            payload.CoreHealthEnd,
+            payload.VictoryPointsEnd,
+            payload.ResourceTotalEnd,
+            payload.DigitsStart,
+            payload.DigitsEnd,
+            payload.PiecesOnBoardStart,
+            payload.PiecesOnBoardEnd,
+            payload.PlayerTurnOrdinal);
+    }
+
+    private static void OnRoundLogRequested()
+    {
+        logRoundVersion();
+    }
+
+    private static void OnGameResultLogged(EventManager.GameResultEvent payload)
+    {
+        int winTypeSk = payload.ResultType switch
+        {
+            EventManager.GameResultType.Elimination => wonByEliminationSK,
+            EventManager.GameResultType.EndOfTurnVictoryPoints => wonByEndVpSK,
+            EventManager.GameResultType.Tie => tieSK,
+            _ => throw new ArgumentOutOfRangeException(nameof(payload.ResultType))
+        };
+
+        logDimGame(winTypeSk, payload.WinnerPlayerIndex);
+    }
+
 }

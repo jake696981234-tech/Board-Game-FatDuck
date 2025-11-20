@@ -71,14 +71,12 @@ namespace Game.Core
                        Pieces pieces,
                        CostEngine pricing,
                        PlayerState[] players,
-                       byte startingPlayer,
-                       GameController GameController)
+                       byte startingPlayer)
         {
             this.hub = hub;
             bm = board;
             pcs = pieces;
             cost = pricing;
-            gameController = GameController;
 
             ps = players;
             currentPlayer = startingPlayer;
@@ -100,6 +98,12 @@ namespace Game.Core
                 ps[i].BeginTurnReset();
                 ps[i].endedWithoutActionThisCycle = false;
                 ps[i].budget = hub.match_startingBudgetPerPlayer;
+            }
+
+            if (gameController.twoPlayerHurdle)
+            {
+                currentCoreHealthByPlayer[3] = 0;
+                currentCoreHealthByPlayer[2] = 0;
             }
 
             // Start first player's turn
@@ -180,6 +184,9 @@ namespace Game.Core
         public int GetVP(byte player) => ps[player].vpTotal;
 
         public float GetBudget(byte player) => ps[player].budget;
+
+
+        
 
         // ---- Geometry-free snapshots for analytics/logging ----
         private static Dictionary<(int owner, int type), int> SnapshotOwnerTypeCounts(BoardModel bm)

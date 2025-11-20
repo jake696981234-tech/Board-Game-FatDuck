@@ -8,6 +8,8 @@ public class InspectGameController : MonoBehaviour
     public Config config;     // assign in Inspector
     public GameBootstrapper gameBootstrapper;
 
+    public PerGameConfig perGameConfig;
+
     public BoardViewController boardView;           // assign in Inspector
 
     private int _completedGamesCount = 0;
@@ -20,6 +22,49 @@ public class InspectGameController : MonoBehaviour
     private MLAgentController[] mlControllers;
     private bool _resetPendingFromML = false;
     private int _matchIndex = 0;
+
+
+    public bool PieceLimitEnabled;
+
+    public int PieceLimitPerPlayer;
+
+    public bool twoPlayerHurdle;
+
+    public int learningAim = 0; //to do- set up this functionality
+
+
+    private void curriculumCheck()
+    {
+        if (perGameConfig.Curriculum.Count == 0) return;
+
+        foreach (var hurdle in perGameConfig.Curriculum)
+        {
+            if (hurdle.restriction == curriculumRestriction.onePiece)
+            {
+                if (hurdle.goalRequirement >= learningAim)
+                {
+                    PieceLimitEnabled = true;
+                    PieceLimitPerPlayer = 1;
+                }
+                else
+                {
+                    PieceLimitEnabled = false;
+                }
+            }
+            if (hurdle.restriction == curriculumRestriction.twoPlayer)
+            {
+                if (hurdle.goalRequirement >= learningAim)
+                {
+                    twoPlayerHurdle = true;
+                }
+                else
+                {
+                    twoPlayerHurdle = false;
+                }
+            }
+        }
+
+    }
 
 
     public Game.Core.InspectGameState gameState;
@@ -37,6 +82,7 @@ public class InspectGameController : MonoBehaviour
             return;
         }
 
+        setGameConfigValues();
 
         var geometry = GeometryBuilder.Build(gameBootstrapper.hub.board_radius);
         board = new BoardModel();
@@ -56,6 +102,7 @@ public class InspectGameController : MonoBehaviour
         }
 
         gameState = new Game.Core.InspectGameState();
+
 
 
         DbLoggingConfig.InitializeLoggingValues(in gameBootstrapper.hub);
@@ -371,4 +418,13 @@ public class InspectGameController : MonoBehaviour
         _matchIndex++;
         return baseIds;
     }
+
+
+    private void setGameConfigValues()
+    {
+        PieceLimitEnabled = perGameConfig.pieceLimitEnabled;
+
+        PieceLimitPerPlayer = perGameConfig.pieceLimit;
+    }
+
 }

@@ -3,6 +3,7 @@ using Game.Core;
 using System;
 using Unity.MLAgents.Policies;
 using System.Collections.Generic;
+using System.Linq;
 
 public class GameController : MonoBehaviour
 {
@@ -33,21 +34,46 @@ public class GameController : MonoBehaviour
 
     public int PieceLimitPerPlayer;
 
+    public bool twoPlayerHurdle;
 
-    public int Goal = 0; //to do- set up this functionality
+    public int learningAim = 0; //to do- set up this functionality
+
     private void curriculumCheck()
     {
-        if (perGameConfig.playerToTrain == whichPlayerToTrain.non) return;
+        if (perGameConfig.Curriculum.Count == 0) return;
 
-        foreach (var goal in perGameConfig.RestrictionGoal)
+        foreach (var hurdle in perGameConfig.Curriculum)
         {
-            if (goal.goalRequirement <= Goal) continue;
-            if (goal.restriction == curriculumRestriction.onePiece)
+            if (hurdle.restriction == curriculumRestriction.onePiece)
             {
-                PieceLimitEnabled = false;
+                if (hurdle.goalRequirement >= learningAim)
+                {
+                    PieceLimitEnabled = true;
+                    PieceLimitPerPlayer = 1;
+                }
+                else
+                {
+                    PieceLimitEnabled = false;
+                }
+            }
+            if (hurdle.restriction == curriculumRestriction.twoPlayer)
+            {
+                if (hurdle.goalRequirement >= learningAim)
+                {
+                    twoPlayerHurdle = true;
+                }
+                else
+                {
+                    twoPlayerHurdle = false;
+                }
             }
         }
+
     }
+
+
+
+
 
 
     void Start()
@@ -179,7 +205,7 @@ public class GameController : MonoBehaviour
             }
         }
 
-        gameState.Initialize(in gameBootstrapper.hub, board, GameBootstrapper.PiecesData, gameBootstrapper.cost, ps, startingPlayer, this);
+        gameState.Initialize(in gameBootstrapper.hub, board, GameBootstrapper.PiecesData, gameBootstrapper.cost, ps, startingPlayer);
 
     }
 
@@ -248,7 +274,7 @@ public class GameController : MonoBehaviour
             }
 
             // Reset GameState (reuse same instance so controllers keep references)
-            gameState.Initialize(in gameBootstrapper.hub, board, GameBootstrapper.PiecesData, gameBootstrapper.cost, ps, startingPlayer, this);
+            gameState.Initialize(in gameBootstrapper.hub, board, GameBootstrapper.PiecesData, gameBootstrapper.cost, ps, startingPlayer);
 
 
 

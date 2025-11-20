@@ -9,7 +9,7 @@ namespace Game.Core
                         Pieces pieces,
                         CostEngine pricing,
                         PlayerState[] players,
-                        byte startingPlayer, GameController gameController);
+                        byte startingPlayer);
 
         bool Perform(in Action a);
 
