@@ -13,7 +13,6 @@ public sealed class GameBootstrapper : MonoBehaviour
     public BoardViewController boardView;
 
     [SerializeField] private GameObject uiRoot;
-    [SerializeField] private GameObject gameController;
 
 
     [SerializeField] private GameObject inspectGameController;
@@ -52,32 +51,38 @@ public sealed class GameBootstrapper : MonoBehaviour
         // 6) Shared offer provider
         offers = new OfferProvider();
 
-        if (config.inspectGame)
-        {
-
-            GameObject newInspectGameController = Instantiate(inspectGameController);
-            var inspectcontroller = newInspectGameController.GetComponent<InspectGameController>();
-            if (inspectcontroller != null)
-            {
-                inspectcontroller.gameBootstrapper = this;
-                if (inspectcontroller.config == null)
-                    inspectcontroller.config = this.config;
-
-                if (inspectcontroller.boardView == null)
-                    inspectcontroller.boardView = this.boardView;
-            }
-        }
+        //     if (config.inspectGame)
+        //     {
+        //
+        //         GameObject newInspectGameController = Instantiate(inspectGameController);
+        //        var inspectcontroller = newInspectGameController.GetComponent<InspectGameController>();
+        //         if (inspectcontroller != null)
+        //          {
+        //             inspectcontroller.gameBootstrapper = this;
+        //             if (inspectcontroller.config == null)
+        //                 inspectcontroller.config = this.config;
+        //
+        //             if (inspectcontroller.boardView == null)
+        //                 inspectcontroller.boardView = this.boardView;
+        //         }
+        //      }
 
 
         for (int i = 0; i < config.gamesToRun; i++)
         {
-            GameObject newGameController = Instantiate(gameController);
+            GameObject newGameController = Instantiate(inspectGameController);
             var controller = newGameController.GetComponent<GameController>();
             if (controller != null)
             {
                 controller.gameBootstrapper = this;
                 if (controller.config == null)
                     controller.config = this.config;
+            }
+            if (config.inspectGame && i == 0)
+            {
+                controller.inspectGame = true;
+                if (controller.boardView == null)
+                    controller.boardView = this.boardView;
             }
         }
 

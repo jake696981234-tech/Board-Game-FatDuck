@@ -5,13 +5,17 @@ using Unity.MLAgents.Policies;
 using System.Collections.Generic;
 using System.Linq;
 
-public class GameController : MonoBehaviour
+//to do- delete this script when i know theres no code in this one that the other gameController does not have. 
+public class GameControllerkillme : MonoBehaviour
 {
     public Config config;     // assign in Inspector
 
     public PerGameConfig perGameConfig;
 
     public GameBootstrapper gameBootstrapper;
+
+    public bool inspectGame = false;
+
 
     private int _completedGamesCount = 0;
     private bool _restartInProgress = false;
@@ -29,6 +33,7 @@ public class GameController : MonoBehaviour
 
     public Game.Core.GameState gameState;
 
+    public EventManager eventManager;
 
     public bool PieceLimitEnabled;
 
@@ -84,6 +89,7 @@ public class GameController : MonoBehaviour
             return;
         }
 
+        eventManager = new EventManager();
         setGameConfigValues();
 
         var geometry = GeometryBuilder.Build(gameBootstrapper.hub.board_radius); // your existing builder call
@@ -205,7 +211,7 @@ public class GameController : MonoBehaviour
             }
         }
 
-        gameState.Initialize(in gameBootstrapper.hub, board, GameBootstrapper.PiecesData, gameBootstrapper.cost, ps, startingPlayer);
+        gameState.Initialize(in gameBootstrapper.hub, board, GameBootstrapper.PiecesData, gameBootstrapper.cost, ps, startingPlayer, eventManager);
 
     }
 

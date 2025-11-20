@@ -3,7 +3,7 @@ using Game.Core;
 using System;
 using Unity.MLAgents.Policies;
 
-public class InspectGameController : MonoBehaviour
+public class GameController : MonoBehaviour
 {
     public Config config;     // assign in Inspector
     public GameBootstrapper gameBootstrapper;
@@ -11,6 +11,10 @@ public class InspectGameController : MonoBehaviour
     public PerGameConfig perGameConfig;
 
     public BoardViewController boardView;           // assign in Inspector
+
+    public EventManager eventManager;
+
+    public bool inspectGame = false;
 
     private int _completedGamesCount = 0;
     private bool _restartInProgress = false;
@@ -82,6 +86,7 @@ public class InspectGameController : MonoBehaviour
             return;
         }
 
+        eventManager = new EventManager();
         setGameConfigValues();
 
         var geometry = GeometryBuilder.Build(gameBootstrapper.hub.board_radius);
@@ -105,7 +110,7 @@ public class InspectGameController : MonoBehaviour
 
 
 
-        DbLoggingConfig.InitializeLoggingValues(in gameBootstrapper.hub);
+        DbLoggingConfig.InitializeLoggingValues(in gameBootstrapper.hub, eventManager);
         // Apply runtime logging tuning from Config
         DbLoggingConfig.ApplyConfig(in config.dbLogging);
         if (config.dbLogging.enabled)
@@ -228,7 +233,7 @@ public class InspectGameController : MonoBehaviour
 
         }
 
-        gameState.Initialize(in gameBootstrapper.hub, board, GameBootstrapper.PiecesData, gameBootstrapper.cost, ps, startingPlayer);
+        gameState.Initialize(in gameBootstrapper.hub, board, GameBootstrapper.PiecesData, gameBootstrapper.cost, ps, startingPlayer, eventManager);
 
 
         var hic = FindFirstObjectByType<HumanInteractionController>();
@@ -350,7 +355,7 @@ public class InspectGameController : MonoBehaviour
             }
 
             // Reset GameState (reuse same instance so controllers keep references)
-            gameState.Initialize(in gameBootstrapper.hub, board, GameBootstrapper.PiecesData, gameBootstrapper.cost, ps, startingPlayer);
+            gameState.Initialize(in gameBootstrapper.hub, board, GameBootstrapper.PiecesData, gameBootstrapper.cost, ps, startingPlayer, eventManager);
 
             // Push a fresh snapshot to the view
             if (snapshotComposer != null)

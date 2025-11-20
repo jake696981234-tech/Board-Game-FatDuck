@@ -123,8 +123,11 @@ public static class DbLoggingConfig
 
     private static float TurnBudgetDecrease;
 
-    public static void InitializeLoggingValues(in GameConfigHub hub)
+
+    private static EventManager events;
+    public static void InitializeLoggingValues(in GameConfigHub hub, EventManager eventManager)
     {
+        events = eventManager;
         Hub = hub;
         TurnBudgetDecrease = Hub.match_startOfTurnBudgetDecrease;
         startingBudget = Hub.match_startingBudgetPerPlayer;
@@ -907,11 +910,11 @@ public static class DbLoggingConfig
         if (_isSubscribedToGameState)
             return;
 
-        EventManager.ActionLogRequested += OnActionLogRequested;
-        EventManager.TurnPrepRequested += OnTurnPrepRequested;
-        EventManager.TurnLogRequested += OnTurnLogRequested;
-        EventManager.RoundLogRequested += OnRoundLogRequested;
-        EventManager.GameResultLogged += OnGameResultLogged;
+        events.ActionLogRequested += OnActionLogRequested;
+        events.TurnPrepRequested += OnTurnPrepRequested;
+        events.TurnLogRequested += OnTurnLogRequested;
+        events.RoundLogRequested += OnRoundLogRequested;
+        events.GameResultLogged += OnGameResultLogged;
         _isSubscribedToGameState = true;
     }
 
@@ -920,11 +923,11 @@ public static class DbLoggingConfig
         if (!_isSubscribedToGameState)
             return;
 
-        EventManager.ActionLogRequested -= OnActionLogRequested;
-        EventManager.TurnPrepRequested -= OnTurnPrepRequested;
-        EventManager.TurnLogRequested -= OnTurnLogRequested;
-        EventManager.RoundLogRequested -= OnRoundLogRequested;
-        EventManager.GameResultLogged -= OnGameResultLogged;
+        events.ActionLogRequested -= OnActionLogRequested;
+        events.TurnPrepRequested -= OnTurnPrepRequested;
+        events.TurnLogRequested -= OnTurnLogRequested;
+        events.RoundLogRequested -= OnRoundLogRequested;
+        events.GameResultLogged -= OnGameResultLogged;
         _isSubscribedToGameState = false;
     }
 

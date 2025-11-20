@@ -9,7 +9,10 @@ namespace Game.Core
     // Deterministic, allocation-free mutation entrypoint for Phase A.
     // Aligns with Pieces.AbilityKind (incl. CoreDamage), pricing-only CostEngine,
     // and read-only OfferProvider. All state mutations happen here.
-    public sealed partial class InspectGameState : IAgentGameState
+
+
+    //to do- Delete this gamestate
+    public sealed partial class InspectGameStatekillme : IAgentGameState
     {
         // === Phase B: notify views when the world actually changed ===
         public event System.Action OnActionExecuted;
@@ -58,6 +61,8 @@ namespace Game.Core
         private Pieces pcs;
         private CostEngine cost;
 
+        private EventManager events;
+
         // Match state
         private PlayerState[] ps;      // length 4
         private byte currentPlayer;    // 0..3
@@ -70,12 +75,13 @@ namespace Game.Core
                        Pieces pieces,
                        CostEngine pricing,
                        PlayerState[] players,
-                       byte startingPlayer)
+                       byte startingPlayer, EventManager eventManager)
         {
             this.hub = hub;
             bm = board;
             pcs = pieces;
             cost = pricing;
+            events = eventManager;
 
             ps = players;
             currentPlayer = startingPlayer;
@@ -147,7 +153,7 @@ namespace Game.Core
             // Special-case EndTurn: log it against the current turn before handoff
             if (a.kind == EndTurn)
             {
-                EventManager.RaiseActionLog(new EventManager.ActionLogEvent(
+                events.RaiseActionLog(new EventManager.ActionLogEvent(
                     loggedType,
                     null,               // no piece for EndTurn
                     null,               // no target for EndTurn
@@ -209,7 +215,7 @@ namespace Game.Core
 
 
 
-            EventManager.RaiseActionLog(new EventManager.ActionLogEvent(
+            events.RaiseActionLog(new EventManager.ActionLogEvent(
                 loggedType,
                 pieceTypeForLog,
                 targetPlayerForLog,
@@ -592,7 +598,7 @@ namespace Game.Core
 
 
             incrementPlayerTurnOrdinal();
-            EventManager.RaiseTurnLog(new EventManager.TurnLogEvent(
+            events.RaiseTurnLog(new EventManager.TurnLogEvent(
                 ended,
                 turnOrdinal,
                 isPassOnly,
@@ -739,7 +745,7 @@ namespace Game.Core
                 isGameOver = true;
                 winner = lastAlive;
                 // Winner by elimination
-                EventManager.RaiseGameResult(new EventManager.GameResultEvent(EventManager.GameResultType.Elimination, winner));
+                events.RaiseGameResult(new EventManager.GameResultEvent(EventManager.GameResultType.Elimination, winner));
                 return;
             }
 
@@ -762,18 +768,18 @@ namespace Game.Core
             isGameOver = true;
             winner = tie ? (byte)255 : win; // 255 = draw/no single winner
             Debug.Log($"Game over by VP. Winner: {winner} (tie={tie})");
-            EventManager.RaiseGameResult(new EventManager.GameResultEvent(EventManager.GameResultType.Elimination, winner));
+            events.RaiseGameResult(new EventManager.GameResultEvent(EventManager.GameResultType.Elimination, winner));
             if (tie)
             {
                 winner = 255; // draw/no single winner
                 Debug.Log("Game over by VP. Result: TIE");
-                EventManager.RaiseGameResult(new EventManager.GameResultEvent(EventManager.GameResultType.Tie, null));
+                events.RaiseGameResult(new EventManager.GameResultEvent(EventManager.GameResultType.Tie, null));
             }
             else
             {
                 winner = win;
                 Debug.Log($"Game over by VP. Winner: {winner}");
-                EventManager.RaiseGameResult(new EventManager.GameResultEvent(EventManager.GameResultType.EndOfTurnVictoryPoints, winner));
+                events.RaiseGameResult(new EventManager.GameResultEvent(EventManager.GameResultType.EndOfTurnVictoryPoints, winner));
             }
         }
 
@@ -781,7 +787,7 @@ namespace Game.Core
 
         private void BeginTurn()
         {
-            EventManager.RaiseTurnPrep();
+            events.RaiseTurnPrep();
             ps[currentPlayer].BeginTurnReset();
 
             turnOrdinal++;
@@ -817,7 +823,7 @@ namespace Game.Core
             // 3) Decrement rounds, clear counters and per-cycle flags
             roundsLeft = Math.Max(0, roundsLeft - 1);
 
-            EventManager.RaiseRoundLog();
+            events.RaiseRoundLog();
 
             for (int i = 0; i < 4; i++)
             {

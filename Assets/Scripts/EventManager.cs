@@ -1,7 +1,7 @@
 using UnityEngine;
 using System;
 
-public static class EventManager
+public class EventManager
 {
     public readonly struct ActionLogEvent
     {
@@ -32,9 +32,9 @@ public static class EventManager
         public decimal? SurchargeCost { get; }
     }
 
-    public static event Action<ActionLogEvent> ActionLogRequested;
+    public event Action<ActionLogEvent> ActionLogRequested;
 
-    public static void RaiseActionLog(ActionLogEvent payload)
+    public void RaiseActionLog(ActionLogEvent payload)
     {
         ActionLogRequested?.Invoke(payload);
     }
@@ -99,27 +99,27 @@ public static class EventManager
         public int? WinnerPlayerIndex { get; }
     }
 
-    public static event Action TurnPrepRequested;
-    public static event Action<TurnLogEvent> TurnLogRequested;
-    public static event Action RoundLogRequested;
-    public static event Action<GameResultEvent> GameResultLogged;
+    public event Action TurnPrepRequested;
+    public event Action<TurnLogEvent> TurnLogRequested;
+    public event Action RoundLogRequested;
+    public event Action<GameResultEvent> GameResultLogged;
 
-    public static void RaiseTurnPrep()
+    public void RaiseTurnPrep()
     {
         TurnPrepRequested?.Invoke();
     }
 
-    public static void RaiseTurnLog(TurnLogEvent payload)
+    public void RaiseTurnLog(TurnLogEvent payload)
     {
         TurnLogRequested?.Invoke(payload);
     }
 
-    public static void RaiseRoundLog()
+    public void RaiseRoundLog()
     {
         RoundLogRequested?.Invoke();
     }
 
-    public static void RaiseGameResult(GameResultEvent payload)
+    public void RaiseGameResult(GameResultEvent payload)
     {
         GameResultLogged?.Invoke(payload);
     }
