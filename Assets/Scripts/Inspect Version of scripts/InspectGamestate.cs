@@ -11,8 +11,8 @@ namespace Game.Core
     // and read-only OfferProvider. All state mutations happen here.
 
 
-    //to do- Delete this gamestate
-    public sealed partial class InspectGameStatekillme : IAgentGameState
+
+    public sealed partial class GameState
     {
         // === Phase B: notify views when the world actually changed ===
         public event System.Action OnActionExecuted;
@@ -60,6 +60,7 @@ namespace Game.Core
         private BoardModel bm;
         private Pieces pcs;
         private CostEngine cost;
+        private GameController controller;
 
         private EventManager events;
 
@@ -68,6 +69,8 @@ namespace Game.Core
         private byte currentPlayer;    // 0..3
         private int roundsLeft;
 
+
+
         /// start
 
         public void Initialize(in GameConfigHub hub,
@@ -75,13 +78,14 @@ namespace Game.Core
                        Pieces pieces,
                        CostEngine pricing,
                        PlayerState[] players,
-                       byte startingPlayer, EventManager eventManager)
+                       byte startingPlayer, EventManager eventManager, GameController gameController)
         {
             this.hub = hub;
             bm = board;
             pcs = pieces;
             cost = pricing;
             events = eventManager;
+            gameController = controller;
 
             ps = players;
             currentPlayer = startingPlayer;
@@ -105,12 +109,12 @@ namespace Game.Core
                 ps[i].budget = hub.match_startingBudgetPerPlayer;
             }
 
-            //todo
-            // if (inspectgameController.twoPlayerHurdle)
-            //  {
-            //       currentCoreHealthByPlayer[3] = 0;
-            //       currentCoreHealthByPlayer[2] = 0;
-            //   }
+
+            if (controller.twoPlayerHurdle)
+            {
+                currentCoreHealthByPlayer[3] = 0;
+                currentCoreHealthByPlayer[2] = 0;
+            }
 
             // Start first player's turn
             BeginTurn();
@@ -178,9 +182,9 @@ namespace Game.Core
                 case Move: ApplyMove(in a, currentPlayer); break;
                 case Shoot: ApplyShoot(in a, currentPlayer); break;
                 case Create:
-                    //            if (inspectgameController.PieceLimitEnabled && inspectgameController.PieceLimitPerPlayer > 0 &&
-                    //                bm.GetPieceCountForPlayer(currentPlayer) >= inspectgameController.PieceLimitPerPlayer)
-                    //                return false;
+                    if (controller.PieceLimitEnabled && controller.PieceLimitPerPlayer > 0 &&
+                        bm.GetPieceCountForPlayer(currentPlayer) >= controller.PieceLimitPerPlayer)
+                        return false;
                     ApplyCreate(in a, currentPlayer);
                     break;
                 case CaptureVP: ApplyCaptureVP(in a, currentPlayer); break; // sets flags + VP counters + vpPool
@@ -263,6 +267,11 @@ namespace Game.Core
         public float GetBudget(byte player) => ps[player].budget;
 
 
+        public bool PieceLimitEnabled => controller.PieceLimitEnabled;
+
+        public int pieceLimitPerPlayer => controller.PieceLimitPerPlayer;
+
+
         // ------------------------ Counters for SQL logging ------------------------
         //These counters are for SQL logging- remove this line if you want to use them gamelogic.
         private int turnOrdinal = 0;
@@ -334,7 +343,7 @@ namespace Game.Core
             return map;
         }
 
-        private static int[] SnapshotCoreHP(InspectGameState gs)
+        private static int[] SnapshotCoreHP(GameState gs)
         {
             var hp = new int[4];
             for (byte p = 0; p < 4; p++) hp[p] = gs.GetCoreHealth(p);

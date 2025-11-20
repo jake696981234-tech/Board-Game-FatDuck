@@ -4,12 +4,12 @@ public sealed class GameSnapshotComposer
 {
     private readonly BoardGeometry geometry;
     private readonly BoardModel board;
-    private readonly Game.Core.InspectGameState state;
+    private readonly Game.Core.GameState state;
     private readonly Pieces pieces;
 
     private readonly GameSnapshot snapshot = new();
 
-    public GameSnapshotComposer(BoardGeometry g, BoardModel b, Game.Core.InspectGameState s, Pieces p)
+    public GameSnapshotComposer(BoardGeometry g, BoardModel b, Game.Core.GameState s, Pieces p)
     {
         geometry = g;
         board = b;

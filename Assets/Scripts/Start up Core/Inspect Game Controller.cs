@@ -71,7 +71,7 @@ public class GameController : MonoBehaviour
     }
 
 
-    public Game.Core.InspectGameState gameState;
+    public Game.Core.GameState gameState;
 
 
     public GameSnapshot currentSnapshot;   // latest snapshot (read-only for views)
@@ -106,7 +106,7 @@ public class GameController : MonoBehaviour
             ps[i].name = active ? gameBootstrapper.hub.player_name[i] : $"P{i}";
         }
 
-        gameState = new Game.Core.InspectGameState();
+        gameState = new Game.Core.GameState();
 
 
 
@@ -233,7 +233,7 @@ public class GameController : MonoBehaviour
 
         }
 
-        gameState.Initialize(in gameBootstrapper.hub, board, GameBootstrapper.PiecesData, gameBootstrapper.cost, ps, startingPlayer, eventManager);
+        gameState.Initialize(in gameBootstrapper.hub, board, GameBootstrapper.PiecesData, gameBootstrapper.cost, ps, startingPlayer, eventManager, this);
 
 
         var hic = FindFirstObjectByType<HumanInteractionController>();
@@ -355,7 +355,7 @@ public class GameController : MonoBehaviour
             }
 
             // Reset GameState (reuse same instance so controllers keep references)
-            gameState.Initialize(in gameBootstrapper.hub, board, GameBootstrapper.PiecesData, gameBootstrapper.cost, ps, startingPlayer, eventManager);
+            gameState.Initialize(in gameBootstrapper.hub, board, GameBootstrapper.PiecesData, gameBootstrapper.cost, ps, startingPlayer, eventManager, this);
 
             // Push a fresh snapshot to the view
             if (snapshotComposer != null)

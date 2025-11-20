@@ -16,7 +16,7 @@ public sealed class HumanInteractionController : MonoBehaviour
     [Header("Config & Refs")]
     public InteractionConfig config;
     public BoardViewController boardView;   // emits CellClicked(int)
-    public InspectGameState gameState;             // your core state (read-only in this skeleton)
+    public GameState gameState;             // your core state (read-only in this skeleton)
     // public OfferProvider offerProvider;  // we'll integrate next pass with your existing OfferProvider API :contentReference[oaicite:7]{index=7}
     // public Pieces pieces;                // for names/icons/costs (aligns with your Pieces registry) :contentReference[oaicite:8]{index=8}
 
@@ -531,8 +531,8 @@ public sealed class HumanInteractionController : MonoBehaviour
             gameState.CurrentPlayerRef,
             gameState.CurrentPlayerId,
             costEngine,
-            gameState is IAgentGameState && _hasHubConfig ? _hub.pieceLimitEnabled : false,
-            gameState is IAgentGameState && _hasHubConfig ? _hub.pieceLimitPerPlayer : 0
+            gameState.PieceLimitEnabled,
+            gameState.pieceLimitPerPlayer
         );
 
         // Fill the spans (zero-alloc path in OfferProvider). Function returns TOTAL (may exceed cap). :contentReference[oaicite:7]{index=7}
