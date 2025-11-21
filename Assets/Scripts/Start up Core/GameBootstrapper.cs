@@ -12,6 +12,8 @@ public sealed class GameBootstrapper : MonoBehaviour
     public static Pieces PiecesData;
     public BoardViewController boardView;
 
+    public PerGameConfig perGameConfig;
+
     [SerializeField] private GameObject uiRoot;
 
 
@@ -71,12 +73,20 @@ public sealed class GameBootstrapper : MonoBehaviour
         {
             GameObject newGameController = Instantiate(inspectGameController);
             var controller = newGameController.GetComponent<GameController>();
+
             if (controller != null)
             {
                 controller.gameBootstrapper = this;
                 if (controller.config == null)
                     controller.config = this.config;
             }
+            if (perGameConfig != null)
+            {
+                if (controller.perGameConfig == null)
+                    controller.perGameConfig = this.perGameConfig;
+            }
+
+
             if (config.inspectGame && i == 0)
             {
                 controller.inspectGame = true;

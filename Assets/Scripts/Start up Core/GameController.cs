@@ -34,12 +34,13 @@ public class GameController : MonoBehaviour
 
     public bool twoPlayerHurdle;
 
-    public int learningAim = 0; //to do- set up this functionality
+    public int learningAim = 50; //to do- set up this functionality
 
 
     private void curriculumCheck()
     {
         if (perGameConfig.Curriculum.Count == 0) return;
+        Debug.Log(perGameConfig.Curriculum.Count);
 
         foreach (var hurdle in perGameConfig.Curriculum)
         {
@@ -85,7 +86,7 @@ public class GameController : MonoBehaviour
             Debug.LogError("GameController missing GameBootstrapper reference.");
             return;
         }
-
+        curriculumCheck();
         eventManager = new EventManager();
         setGameConfigValues();
 
@@ -109,24 +110,21 @@ public class GameController : MonoBehaviour
         gameState = new Game.Core.GameState();
 
 
-        if (inspectGame)
+        if (inspectGame && config.dbLogging.enabled)
         {
             DbLoggingConfig.InitializeLoggingValues(in gameBootstrapper.hub, eventManager);
             // Apply runtime logging tuning from Config
             DbLoggingConfig.ApplyConfig(in config.dbLogging);
-            if (config.dbLogging.enabled)
-            {
-                DbLoggingConfig.DeleteConflictingSimIdRows();
-                DbLoggingConfig.logDimSim();
-                DbLoggingConfig.logDimActionType();
-                DbLoggingConfig.logDimPiece();
-                DbLoggingConfig.logPlayerVersion();
-                DbLoggingConfig.logWinTypeVersion();
-                DbLoggingConfig.prepDimGame();
-                DbLoggingConfig.logRoundVersion();
-                if (config.dbLogging.useSharedSession)
-                    DbLoggingConfig.StartLoggingSession(transactional: config.dbLogging.transactionalSession);
-            }
+            DbLoggingConfig.DeleteConflictingSimIdRows();
+            DbLoggingConfig.logDimSim();
+            DbLoggingConfig.logDimActionType();
+            DbLoggingConfig.logDimPiece();
+            DbLoggingConfig.logPlayerVersion();
+            DbLoggingConfig.logWinTypeVersion();
+            DbLoggingConfig.prepDimGame();
+            DbLoggingConfig.logRoundVersion();
+            if (config.dbLogging.useSharedSession)
+                DbLoggingConfig.StartLoggingSession(transactional: config.dbLogging.transactionalSession);
         }
 
         heuristicControllers = new PlayerAgent[4];
@@ -336,6 +334,7 @@ public class GameController : MonoBehaviour
 
     private void RestartMatch()
     {
+        curriculumCheck();
         if (inspectGame && config.dbLogging.enabled)
         {
             DbLoggingConfig.prepDimGame();

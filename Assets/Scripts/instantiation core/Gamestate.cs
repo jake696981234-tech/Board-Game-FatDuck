@@ -65,7 +65,7 @@ namespace Game.Core
         private EventManager events;
 
         // Match state
-        private PlayerState[] ps;      // length 4
+        public PlayerState[] ps;      // length 4
         private byte currentPlayer;    // 0..3
         private int roundsLeft;
 
@@ -638,7 +638,7 @@ namespace Game.Core
 
 
         // --------------------------- Reducer helpers ---------------------------
-        private void ResolveMelee(int actorPid, int defenderPid, in Action a)
+        public void ResolveMelee(int actorPid, int defenderPid, in Action a)
         {
             short dmg = GetAbilityDamage(in a);
             bool killed = bm.DamagePieceRow(defenderPid, dmg);
@@ -661,7 +661,10 @@ namespace Game.Core
         }
 
 
-        private short GetAbilityDamage(in Action a)
+
+
+
+        public short GetAbilityDamage(in Action a)
         {
             int pid = bm.GetCellOccupant(a.srcCell);
             byte typ = bm.GetPieceType(pid);
@@ -683,7 +686,7 @@ namespace Game.Core
 
 
 
-        private void TryEliminatePlayer(byte p)
+        public void TryEliminatePlayer(byte p)
         {
             if (p >= 4) return;
             if (GetCoreHealth(p) <= 0 /* && !bm.PlayerHasAnyBuilding(p) */)
@@ -818,7 +821,6 @@ namespace Game.Core
 
         private void EndRound()
         {
-            Debug.Log("End of round.");
 
             turnOrdinal = 0;
             Array.Clear(playerTurnOrdinals, 0, playerTurnOrdinals.Length);
@@ -854,6 +856,19 @@ namespace Game.Core
             if (!isGameOver)
                 BeginTurn();
         }
+
+
+
+
+        // Exprimental helper methods for action
+
+        //this can replace the if(killed) line in both ResolveMelee and ResolveShoot
+      
+
+
+
+
+
 
     }
 }

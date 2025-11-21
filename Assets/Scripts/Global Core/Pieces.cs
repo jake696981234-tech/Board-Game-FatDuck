@@ -308,12 +308,7 @@ public sealed class Pieces
         return bm.IsEnemyCoreCell(originCell, owner);
     }
 
-    // ====== Legacy kernel kept as a stub for compatibility (Create is enumerated by OfferProvider in Plan B) ======
-    [Obsolete("Create legality is handled by OfferProvider (Plan B). This kernel is a stub returning 0.")]
-    public int GetLegalTargets_Create(BoardModel bm, int actorPieceId, int abilityId, int[] outTargets)
-    {
-        return 0;
-    }
+
 
     // ====== Minimal validation (call after CSV compile) ======
     public string ValidateBasic()
