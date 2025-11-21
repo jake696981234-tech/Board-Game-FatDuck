@@ -9,6 +9,9 @@ namespace Game.Core
     // Deterministic, allocation-free mutation entrypoint for Phase A.
     // Aligns with Pieces.AbilityKind (incl. CoreDamage), pricing-only CostEngine,
     // and read-only OfferProvider. All state mutations happen here.
+
+
+
     public sealed partial class GameState
     {
         // === Phase B: notify views when the world actually changed ===
@@ -57,11 +60,16 @@ namespace Game.Core
         private BoardModel bm;
         private Pieces pcs;
         private CostEngine cost;
+        private GameController controller;
+
+        private EventManager events;
 
         // Match state
         private PlayerState[] ps;      // length 4
         private byte currentPlayer;    // 0..3
         private int roundsLeft;
+
+
 
         /// start
 
@@ -70,12 +78,14 @@ namespace Game.Core
                        Pieces pieces,
                        CostEngine pricing,
                        PlayerState[] players,
-                       byte startingPlayer)
+                       byte startingPlayer, EventManager eventManager, GameController gameController)
         {
             this.hub = hub;
             bm = board;
             pcs = pieces;
             cost = pricing;
+            events = eventManager;
+            controller = gameController;
 
             ps = players;
             currentPlayer = startingPlayer;
@@ -97,6 +107,13 @@ namespace Game.Core
                 ps[i].BeginTurnReset();
                 ps[i].endedWithoutActionThisCycle = false;
                 ps[i].budget = hub.match_startingBudgetPerPlayer;
+            }
+
+
+            if (controller.twoPlayerHurdle)
+            {
+                currentCoreHealthByPlayer[3] = 0;
+                currentCoreHealthByPlayer[2] = 0;
             }
 
             // Start first player's turn
@@ -124,7 +141,7 @@ namespace Game.Core
             // logging stuff
             int loggedplayer = currentPlayer;
             int loggedType = a.kind;
-            byte? pieceTypeForLog = null;
+            int? pieceTypeForLog = null;
 
             if (a.kind == Create)
             {
@@ -140,7 +157,7 @@ namespace Game.Core
             // Special-case EndTurn: log it against the current turn before handoff
             if (a.kind == EndTurn)
             {
-                DbLoggingConfig.logAction(
+                events.RaiseActionLog(new EventManager.ActionLogEvent(
                     loggedType,
                     null,               // no piece for EndTurn
                     null,               // no target for EndTurn
@@ -148,7 +165,7 @@ namespace Game.Core
                     0m,                 // actionCost
                     null,               // buildCost
                     null                // surchargeCost
-                );
+                ));
 
                 ApplyEndTurn();
                 OnActionExecuted?.Invoke();
@@ -164,7 +181,12 @@ namespace Game.Core
             {
                 case Move: ApplyMove(in a, currentPlayer); break;
                 case Shoot: ApplyShoot(in a, currentPlayer); break;
-                case Create: ApplyCreate(in a, currentPlayer); break;
+                case Create:
+                    if (controller.PieceLimitEnabled && controller.PieceLimitPerPlayer > 0 &&
+                        bm.GetPieceCountForPlayer(currentPlayer) >= controller.PieceLimitPerPlayer)
+                        return false;
+                    ApplyCreate(in a, currentPlayer);
+                    break;
                 case CaptureVP: ApplyCaptureVP(in a, currentPlayer); break; // sets flags + VP counters + vpPool
                 case CoreDamage: ApplyCoreDamage(in a, currentPlayer); break; // sets flag + damages enemy core + elim check
                 case EndTurn: ApplyEndTurn(); break; // unreachable due to early return above
@@ -197,7 +219,7 @@ namespace Game.Core
 
 
 
-            DbLoggingConfig.logAction(
+            events.RaiseActionLog(new EventManager.ActionLogEvent(
                 loggedType,
                 pieceTypeForLog,
                 targetPlayerForLog,
@@ -205,7 +227,7 @@ namespace Game.Core
                 actionCost,
                 buildCost,
                 surchargeCost
-            );
+            ));
 
 
             //Debug log
@@ -243,6 +265,11 @@ namespace Game.Core
         public int GetVP(byte player) => ps[player].vpTotal;
 
         public float GetBudget(byte player) => ps[player].budget;
+
+
+        public bool PieceLimitEnabled => controller.PieceLimitEnabled;
+
+        public int pieceLimitPerPlayer => controller.PieceLimitPerPlayer;
 
 
         // ------------------------ Counters for SQL logging ------------------------
@@ -580,7 +607,18 @@ namespace Game.Core
 
 
             incrementPlayerTurnOrdinal();
-            DbLoggingConfig.logturnVersion(ended, turnOrdinal, isPassOnly, coreEnd, vpEnd, budgetEnd, digitsStart, digitsEnd, piecesStart, piecesEnd, getPlayerTurnOrdinal());
+            events.RaiseTurnLog(new EventManager.TurnLogEvent(
+                ended,
+                turnOrdinal,
+                isPassOnly,
+                coreEnd,
+                vpEnd,
+                budgetEnd,
+                digitsStart,
+                digitsEnd,
+                piecesStart,
+                piecesEnd,
+                getPlayerTurnOrdinal()));
 
 
             // Advance to next alive player
@@ -716,7 +754,7 @@ namespace Game.Core
                 isGameOver = true;
                 winner = lastAlive;
                 // Winner by elimination
-                DbLoggingConfig.logDimGame(DbLoggingConfig.wonByEliminationSK, winner);
+                events.RaiseGameResult(new EventManager.GameResultEvent(EventManager.GameResultType.Elimination, winner));
                 return;
             }
 
@@ -739,18 +777,18 @@ namespace Game.Core
             isGameOver = true;
             winner = tie ? (byte)255 : win; // 255 = draw/no single winner
             Debug.Log($"Game over by VP. Winner: {winner} (tie={tie})");
-            DbLoggingConfig.logDimGame(DbLoggingConfig.wonByEliminationSK, winner);
+            events.RaiseGameResult(new EventManager.GameResultEvent(EventManager.GameResultType.Elimination, winner));
             if (tie)
             {
                 winner = 255; // draw/no single winner
                 Debug.Log("Game over by VP. Result: TIE");
-                DbLoggingConfig.logDimGame(DbLoggingConfig.tieSK, null);
+                events.RaiseGameResult(new EventManager.GameResultEvent(EventManager.GameResultType.Tie, null));
             }
             else
             {
                 winner = win;
                 Debug.Log($"Game over by VP. Winner: {winner}");
-                DbLoggingConfig.logDimGame(DbLoggingConfig.wonByEndVpSK, winner);
+                events.RaiseGameResult(new EventManager.GameResultEvent(EventManager.GameResultType.EndOfTurnVictoryPoints, winner));
             }
         }
 
@@ -758,7 +796,7 @@ namespace Game.Core
 
         private void BeginTurn()
         {
-            DbLoggingConfig.prepTurn();
+            events.RaiseTurnPrep();
             ps[currentPlayer].BeginTurnReset();
 
             turnOrdinal++;
@@ -794,7 +832,7 @@ namespace Game.Core
             // 3) Decrement rounds, clear counters and per-cycle flags
             roundsLeft = Math.Max(0, roundsLeft - 1);
 
-            DbLoggingConfig.logRoundVersion();
+            events.RaiseRoundLog();
 
             for (int i = 0; i < 4; i++)
             {

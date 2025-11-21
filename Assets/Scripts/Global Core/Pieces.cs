@@ -157,11 +157,7 @@ public sealed class Pieces
         return (abilityId >= 0 && abilityId < botThinkSurcharge.Length) ? botThinkSurcharge[abilityId] : 0;
     }
 
-    /// <summary>
-    /// Obsolete: Create cost now comes from GetBuildCost(pieceType) (Plan B).
-    /// </summary>
-    [Obsolete("Create cost now comes from GetBuildCost(pieceType); no Create ability required.")]
-    public int BuildCostOfCreate(int abilityId) => 0;
+    
 
     // ====== Metadata helpers ======
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

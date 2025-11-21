@@ -21,7 +21,7 @@ public sealed class PlayerAgent
     private GameConfigHub.AgentConfig _cfg;        // maxOffersToConsider, rolloutDepth, thinkBudgetMs
 
     // ----- Live systems (read-only handles) -----
-    private Game.Core.GameState _gs;               // reducers live here; single mutator authority
+    private GameState _gs;               // reducers live here; single mutator authority
     private BoardModel _bm;
     private Pieces _pcs;
     private CostEngine _cost;
@@ -37,7 +37,7 @@ public sealed class PlayerAgent
 
     /// <summary>Call once from GameBootstrapper after systems are constructed.</summary>
     public void Init(in GameConfigHub hub,
-                     Game.Core.GameState gs,
+                     GameState gs,
                      BoardModel bm,
                      Pieces pcs,
                      CostEngine cost,
@@ -55,14 +55,14 @@ public sealed class PlayerAgent
         _policy = new HeuristicPolicy();
 
         int cap = Math.Max(1, _cfg.maxOffersToConsider);   // allocate once, no mid-episode growth
-        _actions     = new Game.Core.Action[cap];
+        _actions = new Game.Core.Action[cap];
         _quotedCosts = new float[cap];
-        _mask        = new byte[cap];
+        _mask = new byte[cap];
     }
 
     // Overload allowing explicit policy
     public void Init(in GameConfigHub hub,
-                     Game.Core.GameState gs,
+                     GameState gs,
                      BoardModel bm,
                      Pieces pcs,
                      CostEngine cost,
@@ -72,8 +72,8 @@ public sealed class PlayerAgent
         Init(in hub, gs, bm, pcs, cost, offers);
         _policy = policy ?? new HeuristicPolicy();
     }
-    
-     public void BindSeat(byte seat) => _mySeat = seat;
+
+    public void BindSeat(byte seat) => _mySeat = seat;
 
     public void Tick()
     {
@@ -88,19 +88,19 @@ public sealed class PlayerAgent
     public bool DecideAndAct()
     {
         // Build the query the OfferProvider expects: (bm, pcs, PlayerState snapshot, playerId, cost).
-        var q = new OfferQuery(_bm, _pcs, _gs.CurrentPlayerRef, _gs.CurrentPlayerId, _cost); // :contentReference[oaicite:3]{index=3}
+        var q = new OfferQuery(_bm, _pcs, _gs.CurrentPlayerRef, _gs.CurrentPlayerId, _cost, _gs.PieceLimitEnabled, _gs.pieceLimitPerPlayer); // :contentReference[oaicite:3]{index=3}
 
-        var acts  = _actions.AsSpan();
+        var acts = _actions.AsSpan();
         var costs = _quotedCosts.AsSpan();
-        var mask  = _mask.AsSpan();
+        var mask = _mask.AsSpan();
 
         int total = _offers.BuildActionList(in q, acts, costs, mask);
         if (total <= 0) return false;
 
         int n = Math.Min(total, _cfg.maxOffersToConsider);
-        var actsN  = acts.Slice(0, n);
+        var actsN = acts.Slice(0, n);
         var costsN = costs.Slice(0, Math.Min(n, costs.Length));
-        var maskN  = mask.Slice(0, Math.Min(n, mask.Length));
+        var maskN = mask.Slice(0, Math.Min(n, mask.Length));
 
         int chosen = _policy?.PickAction(in q, actsN, costsN, maskN) ?? -1;
         if (chosen < 0) chosen = FindEndTurn(actsN);
@@ -118,9 +118,9 @@ public sealed class PlayerAgent
     {
         const int MAX_PLAYERS = 4;
         const int C_GLOBAL = 21;
-        const int C_CELL   = 12;
+        const int C_CELL = 12;
 
-        int MAX_CELLS    = _hub.obs_maxCells;
+        int MAX_CELLS = _hub.obs_maxCells;
         int MAX_DISTANCE = _hub.obs_maxDistance; // e.g., 2 * board_radius (or training-time constant)
 
         int expectedLen = C_GLOBAL + C_CELL * MAX_CELLS;
@@ -168,8 +168,8 @@ public sealed class PlayerAgent
 
         // --- Per-cell channels (12), channel-major, zero-padded to MAX_CELLS ---
         int cellCount = _bm.GetCellCount();
-        int vpCell    = _bm.GetVictoryPointCellId();
-        int myCore    = _bm.GetPlayerCoreCellId(_gs.CurrentPlayerId);
+        int vpCell = _bm.GetVictoryPointCellId();
+        int myCore = _bm.GetPlayerCoreCellId(_gs.CurrentPlayerId);
 
         // ch0: occupancy
         for (int id = 0; id < MAX_CELLS; id++)
@@ -207,8 +207,8 @@ public sealed class PlayerAgent
             int pid = BM_PieceAt(id);
             if (pid < 0) { obs[w++] = 0f; continue; }
             byte typ = _bm.GetPieceType(pid);
-            int  hp  = BM_PieceHP(pid);
-            int  mh  = _pcs.maxHPByType[typ];
+            int hp = BM_PieceHP(pid);
+            int mh = _pcs.maxHPByType[typ];
             obs[w++] = Safe01(hp, mh);
         }
 

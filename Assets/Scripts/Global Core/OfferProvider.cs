@@ -148,52 +148,57 @@ public sealed class OfferProvider
         // Global Create actions (decoupled from abilities)
         // Determinism: cells↑ then pieceType↑
         // =============================
-        int coreCell = GetPlayerCoreCellId(q.bm, q.playerId);
-        for (int cell = 0; cell < cellCount; cell++)
+        bool limitActive = q.pieceLimitEnabled && q.pieceLimitPerPlayer > 0;
+        bool limitReached = limitActive && q.bm.GetPieceCountForPlayer(q.playerId) >= q.pieceLimitPerPlayer;
+        if (!limitReached)
         {
-            if (!IsEmpty(q.bm, cell)) continue; // only empties
-
-            bool legal = (cell == coreCell); // NEW: allow 'on core'
-            if (!legal)
+            int coreCell = GetPlayerCoreCellId(q.bm, q.playerId);
+            for (int cell = 0; cell < cellCount; cell++)
             {
-                int nCore = GetNeighbors(q.bm, coreCell, scratch);
-                for (int i = 0; i < nCore; i++) { if (scratch[i] == cell) { legal = true; break; } }
-            }
+                if (!IsEmpty(q.bm, cell)) continue; // only empties
 
-            if (!legal)
-            {
-                int nNbrs = GetNeighbors(q.bm, cell, scratch);
-                for (int i = 0; i < nNbrs && !legal; i++)
+                bool legal = (cell == coreCell); // NEW: allow 'on core'
+                if (!legal)
                 {
-                    int nbCell = scratch[i];
-                    int nbPid = GetPieceAt(q.bm, nbCell);
-                    if (IsInvalid(q.bm, nbPid)) continue;
-                    if (GetPieceOwner(q.bm, nbPid) != q.playerId) continue;
-                    byte nbType = GetPieceType(q.bm, nbPid);
-                    if (IsBuilding(q.pcs, nbType)) legal = true;
+                    int nCore = GetNeighbors(q.bm, coreCell, scratch);
+                    for (int i = 0; i < nCore; i++) { if (scratch[i] == cell) { legal = true; break; } }
                 }
-            }
 
-            if (!legal) continue;
-
-            // For each buildable type (default: all types 0..TypeCount-1)
-            int typeCount = GetPieceTypeCount(q.pcs);
-            for (int t = 0; t < typeCount; t++)
-            {
-                if (!IsBuildable(q.pcs, (byte)t)) continue; // buildable gate (CSV flag)
-                                                            // digitsRequired gate (Plan-B): skip if requirement exists and player lacks it
-                int req = q.pcs.GetRequiredDigit((byte)t);
-                if (req >= 0 && !q.ps.HasDigit(req)) continue;
-                var a = new Action
+                if (!legal)
                 {
-                    kind = Create,
-                    abilitySlot = 0,
-                    pieceType = (byte)t,
-                    srcCell = (ushort)0xFFFF, // sentinel no-actor
-                    dstCell = (ushort)cell,
-                    aux = 0
-                };
-                Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask);
+                    int nNbrs = GetNeighbors(q.bm, cell, scratch);
+                    for (int i = 0; i < nNbrs && !legal; i++)
+                    {
+                        int nbCell = scratch[i];
+                        int nbPid = GetPieceAt(q.bm, nbCell);
+                        if (IsInvalid(q.bm, nbPid)) continue;
+                        if (GetPieceOwner(q.bm, nbPid) != q.playerId) continue;
+                        byte nbType = GetPieceType(q.bm, nbPid);
+                        if (IsBuilding(q.pcs, nbType)) legal = true;
+                    }
+                }
+
+                if (!legal) continue;
+
+                // For each buildable type (default: all types 0..TypeCount-1)
+                int typeCount = GetPieceTypeCount(q.pcs);
+                for (int t = 0; t < typeCount; t++)
+                {
+                    if (!IsBuildable(q.pcs, (byte)t)) continue; // buildable gate (CSV flag)
+                                                                // digitsRequired gate (Plan-B): skip if requirement exists and player lacks it
+                    int req = q.pcs.GetRequiredDigit((byte)t);
+                    if (req >= 0 && !q.ps.HasDigit(req)) continue;
+                    var a = new Action
+                    {
+                        kind = Create,
+                        abilitySlot = 0,
+                        pieceType = (byte)t,
+                        srcCell = (ushort)0xFFFF, // sentinel no-actor
+                        dstCell = (ushort)cell,
+                        aux = 0
+                    };
+                    Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask);
+                }
             }
         }
 

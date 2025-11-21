@@ -1,10 +1,16 @@
 // Assets/Scripts/Core/Config.cs
 using UnityEngine;
+using Unity.MLAgents.Policies;
+using Unity.InferenceEngine;
+using System.Collections.Generic;
 
 
 [CreateAssetMenu(fileName = "Config", menuName = "Game/Config", order = 0)]
 public sealed class Config : ScriptableObject
 {
+
+
+
 
 
     [Header("Agent (global)")]
@@ -14,7 +20,6 @@ public sealed class Config : ScriptableObject
         rolloutDepth = 0,
         thinkBudgetMs = 5
     };
-
 
     [Header("Observations (Phase A schema)")]
     public ObservationAuthoring observations = new ObservationAuthoring
@@ -78,11 +83,11 @@ public sealed class Config : ScriptableObject
     [System.Serializable]
     public struct DumbGregAuthoring
     {
-        [Range(0f,1f)] public float endTurnAfterFirstPct; // chance to end turn after first action
-        [Range(0f,1f)] public float shootInsteadPct;       // chance to shoot instead within tiers
-        [Range(0f,1f)] public float moveAnotherPct;        // chance to pick second-best move
-        [Range(0f,1f)] public float moveBuildingPct;       // chance to move building instead
-        [Range(0f,1f)] public float createInsteadPct;      // chance to create instead within tiers
+        [Range(0f, 1f)] public float endTurnAfterFirstPct; // chance to end turn after first action
+        [Range(0f, 1f)] public float shootInsteadPct;       // chance to shoot instead within tiers
+        [Range(0f, 1f)] public float moveAnotherPct;        // chance to pick second-best move
+        [Range(0f, 1f)] public float moveBuildingPct;       // chance to move building instead
+        [Range(0f, 1f)] public float createInsteadPct;      // chance to create instead within tiers
 
         public int seedBase;          // base seed used for RNG (combine with seat)
         public bool seedBySeat;       // if true, actual seed = seedBase + seat
@@ -92,12 +97,12 @@ public sealed class Config : ScriptableObject
     public DumbGregAuthoring dumbGreg = new DumbGregAuthoring
     {
         endTurnAfterFirstPct = 0.08f,
-        shootInsteadPct      = 0.12f,
-        moveAnotherPct       = 0.10f,
-        moveBuildingPct      = 0.05f,
-        createInsteadPct     = 0.10f,
-        seedBase             = 12345,
-        seedBySeat           = true
+        shootInsteadPct = 0.12f,
+        moveAnotherPct = 0.10f,
+        moveBuildingPct = 0.05f,
+        createInsteadPct = 0.10f,
+        seedBase = 12345,
+        seedBySeat = true
     };
 
     [Header("ML Behavior Parameters (auto-injected)")]
@@ -108,15 +113,18 @@ public sealed class Config : ScriptableObject
         vectorObservationSize = 21 + 12 * 217, // default for 217-cell board
         actionBranchSize = 64
     };
-    
 
+    public int gamesToRun;
+    public bool inspectGame = false;
     public bool useMLAgents = false;
+
 
     [System.Serializable]
     public struct MLRewardsAuthoring
     {
         public float rewardWin;
         public float rewardLoss;
+        public float rewardDraw;
         public float rewardCaptureVP;
         public float rewardCoreDamage;
         public float moveTowardVpScale;   // multiplied by (distBefore - distAfter)
@@ -130,10 +138,11 @@ public sealed class Config : ScriptableObject
     {
         rewardWin = 10f,
         rewardLoss = -10f,
+        rewardDraw = 0f,
         rewardCaptureVP = 1.0f,
         rewardCoreDamage = 0.5f,
-        moveTowardVpScale = 0.1f,
-        costPenaltyScale = 0.05f,
+        moveTowardVpScale = 0.0f,
+        costPenaltyScale = 0.0f,
         stepPenalty = 0.0f,
         endTurnPenalty = 0.0f
     };
@@ -160,10 +169,14 @@ public sealed class Config : ScriptableObject
         public int invalidId;
         public int victoryPointCellId;      // e.g., center
         public int[] coreCellIdByPlayer; // set per map
+        [Tooltip("When enabled, shuffle the 4 core cell ids each game so seats spawn at different cores.")]
+        public bool shuffleCoreCellsPerGame;
+        [Tooltip("Optional seed for core shuffling. 0 = non-deterministic per match.")]
+        public int coreShuffleSeed;
     }
 
     [Header("Board")]
-    public BoardAuthoring board = new BoardAuthoring { radius = 8, invalidId = -1, victoryPointCellId = 108, coreCellIdByPlayer = new int[4] };
+    public BoardAuthoring board = new BoardAuthoring { radius = 8, invalidId = -1, victoryPointCellId = 108, coreCellIdByPlayer = new int[4], shuffleCoreCellsPerGame = false, coreShuffleSeed = 0 };
 
     [System.Serializable]
     public struct MatchAuthoring
@@ -211,6 +224,10 @@ public sealed class Config : ScriptableObject
     [Header("Caps")]
     public CapsAuthoring caps = new CapsAuthoring { capMaxActionsPerTurn = 30, capMaxVP = 30, capMaxBudget = 150f, capMaxVPPool = 5, capMaxCoreHealth = 3 };
 
+
+
+
+
     // Config.cs  (inside the class)
     [System.Serializable]
     public struct PlayerConfig
@@ -248,14 +265,31 @@ public sealed class Config : ScriptableObject
         [Min(1)] public int actionBranchSize;
     }
 
-    
+    [System.Serializable]
+    public struct PlayerBehaviorConfig
+    {
+        public ModelAsset modelAsset;                  // Drag/drop imported ONNX (ModelAsset)
+        public bool deterministicInference;
+        public BehaviorType behaviorType;              // Default | HeuristicOnly | InferenceOnly
+    }
+
+    [Header("ML Behavior Overrides (per player)")]
+    public PlayerBehaviorConfig[] playerBehaviorOverrides = new PlayerBehaviorConfig[4]
+    {
+        new PlayerBehaviorConfig { modelAsset = null, deterministicInference = false, behaviorType = BehaviorType.Default },
+        new PlayerBehaviorConfig { modelAsset = null, deterministicInference = false, behaviorType = BehaviorType.Default },
+        new PlayerBehaviorConfig { modelAsset = null, deterministicInference = false, behaviorType = BehaviorType.Default },
+        new PlayerBehaviorConfig { modelAsset = null, deterministicInference = false, behaviorType = BehaviorType.Default }
+    };
+
+
 
 
 
 
 
     [Header("Players")]
-    [Range(1,4)] public int playerCount = 4;
+    [Range(1, 4)] public int playerCount = 4;
     public PlayerConfig[] players = new PlayerConfig[4] {
     new PlayerConfig{ name="P0", isAI=false, applyBotSurcharges=false, applyStartOfTurnBudgetDecrease=false, startingBudgetOverride=-1, team=0 },
     new PlayerConfig{ name="P1", isAI=false, applyBotSurcharges=false, applyStartOfTurnBudgetDecrease=false, startingBudgetOverride=-1, team=1 },
@@ -271,13 +305,13 @@ public sealed class Config : ScriptableObject
 
         int N = Mathf.Clamp(playerCount, 1, 4);
 
-        var p_applyBot  = new bool[N];
-        var p_applyDec  = new bool[N];
-        var p_budget    = new float[N];
-        var p_isAI      = new bool[N];
-        var p_team      = new int[N];
+        var p_applyBot = new bool[N];
+        var p_applyDec = new bool[N];
+        var p_budget = new float[N];
+        var p_isAI = new bool[N];
+        var p_team = new int[N];
         var p_name = new string[N];
-        
+
         int mlObsSize = 21 + 12 * observations.maxCells;
 
         for (int i = 0; i < N; i++)
@@ -346,7 +380,9 @@ public sealed class Config : ScriptableObject
                 behaviorParams.useChildSensors,
                 mlObsSize,                       // 21 + 12 * observations.maxCells
                 agent.maxOffersToConsider        // single discrete branch size
- )
+             )
         );
     }
 }
+
+

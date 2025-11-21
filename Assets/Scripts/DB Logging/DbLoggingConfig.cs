@@ -14,7 +14,6 @@ using UnityEngine;
 public static class DbLoggingConfig
 {
 
-
     //Values you must change for each simulation (can be overridden via Config)
     public static int inputSimID = 4;
     public static string inputSimName = "Does it work this way though?";
@@ -124,12 +123,16 @@ public static class DbLoggingConfig
 
     private static float TurnBudgetDecrease;
 
-    public static void InitializeLoggingValues(in GameConfigHub hub)
+
+    private static EventManager events;
+    public static void InitializeLoggingValues(in GameConfigHub hub, EventManager eventManager)
     {
+        events = eventManager;
         Hub = hub;
         TurnBudgetDecrease = Hub.match_startOfTurnBudgetDecrease;
         startingBudget = Hub.match_startingBudgetPerPlayer;
         inputMaxRounds = Hub.match_numberOfRounds;
+        subscribeToGameState();
     }
 
     public static void ApplyConfig(in Config.DbLoggingAuthoring cfg)
@@ -530,7 +533,7 @@ public static class DbLoggingConfig
     }
 
 
-    // TO DO DimRound
+
     public static int roundVersion(
         int gameSK,
         int roundOrdinal)
@@ -577,7 +580,7 @@ public static class DbLoggingConfig
 
 
 
-    // TO DO DimTurn
+
     public static void turnVersion(
     int TurnSK,
     int playerSK,
@@ -614,7 +617,6 @@ public static class DbLoggingConfig
 
 
 
-    // TO DO FactAction
     public static long FactAction(
         int turnSK,
         int actionTypeSK,
@@ -899,5 +901,85 @@ public static class DbLoggingConfig
         }
     }
 
+
+
+    private static bool _isSubscribedToGameState;
+
+    public static void subscribeToGameState()
+    {
+        if (_isSubscribedToGameState)
+            return;
+
+        events.ActionLogRequested += OnActionLogRequested;
+        events.TurnPrepRequested += OnTurnPrepRequested;
+        events.TurnLogRequested += OnTurnLogRequested;
+        events.RoundLogRequested += OnRoundLogRequested;
+        events.GameResultLogged += OnGameResultLogged;
+        _isSubscribedToGameState = true;
+    }
+
+    public static void unsubscribeFromGameState()
+    {
+        if (!_isSubscribedToGameState)
+            return;
+
+        events.ActionLogRequested -= OnActionLogRequested;
+        events.TurnPrepRequested -= OnTurnPrepRequested;
+        events.TurnLogRequested -= OnTurnLogRequested;
+        events.RoundLogRequested -= OnRoundLogRequested;
+        events.GameResultLogged -= OnGameResultLogged;
+        _isSubscribedToGameState = false;
+    }
+
+    private static void OnActionLogRequested(EventManager.ActionLogEvent payload)
+    {
+        logAction(
+            payload.ActionType,
+            payload.PieceId,
+            payload.TargetPlayerIndex,
+            payload.ActingPlayerIndex,
+            payload.ActionCost,
+            payload.BuildCost,
+            payload.SurchargeCost);
+    }
+
+    private static void OnTurnPrepRequested()
+    {
+        prepTurn();
+    }
+
+    private static void OnTurnLogRequested(EventManager.TurnLogEvent payload)
+    {
+        logturnVersion(
+            payload.PlayerIndex,
+            payload.TurnOrdinal,
+            payload.IsPassOnly,
+            payload.CoreHealthEnd,
+            payload.VictoryPointsEnd,
+            payload.ResourceTotalEnd,
+            payload.DigitsStart,
+            payload.DigitsEnd,
+            payload.PiecesOnBoardStart,
+            payload.PiecesOnBoardEnd,
+            payload.PlayerTurnOrdinal);
+    }
+
+    private static void OnRoundLogRequested()
+    {
+        logRoundVersion();
+    }
+
+    private static void OnGameResultLogged(EventManager.GameResultEvent payload)
+    {
+        int winTypeSk = payload.ResultType switch
+        {
+            EventManager.GameResultType.Elimination => wonByEliminationSK,
+            EventManager.GameResultType.EndOfTurnVictoryPoints => wonByEndVpSK,
+            EventManager.GameResultType.Tie => tieSK,
+            _ => throw new ArgumentOutOfRangeException(nameof(payload.ResultType))
+        };
+
+        logDimGame(winTypeSk, payload.WinnerPlayerIndex);
+    }
 
 }

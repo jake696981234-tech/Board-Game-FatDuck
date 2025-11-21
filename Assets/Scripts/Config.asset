@@ -19,57 +19,114 @@ MonoBehaviour:
   observations:
     maxCells: 217
     maxDistance: 16
-  playerControl: 01010101
-  playerPolicy: 00010101
+  playerControl: 01010201
+  playerPolicy: 01010101
+  dbLogging:
+    enabled: 0
+    simID: 1
+    simName: Test ML Agent Test
+    ruleVersion: Mango
+    notes: No notes
+    useSharedSession: 1
+    transactionalSession: 0
+    batchSize: 200
+    flushIntervalMs: 250
+    maxQueue: 10000
+    maxRetries: 3
+    retryBackoffMs: 250
+  dumbGreg:
+    endTurnAfterFirstPct: 0.497
+    shootInsteadPct: 0.387
+    moveAnotherPct: 0.343
+    moveBuildingPct: 0.05
+    createInsteadPct: 0.347
+    seedBase: 12345
+    seedBySeat: 1
   behaviorParams:
-    behaviorName: OmegaPPO
+    behaviorName: SillyMonkey
     useChildSensors: 1
     vectorObservationSize: 2625
     actionBranchSize: 64
+  gamesToRun: 32
+  inspectGame: 0
   useMLAgents: 1
-  autoRestartOnGameOver: 1
-  maxAutoGames: 20
-  boardRadius: 8
-  boardInvalidId: -1
-  victoryPointCellId: 108
-  coreCellIdByPlayer: 46000000c9000000920000000f000000
-  startingBudgetPerPlayer: 1000
-  numberOfRounds: 5
-  startOfTurnBudgetDecrease: 5
-  startCenterVP: 5
-  startCoreHp: 3
-  baseActionCost: 5
-  actionGrowthFactor: 1.5
-  budgetBonusForVP: 5
-  budgetBonusForCoreDamage: 5
-  capMaxActionsPerTurn: 30
-  capMaxVP: 30
-  capMaxBudget: 150
-  capMaxVPPool: 5
-  capMaxCoreHealth: 3
+  mlRewards:
+    rewardWin: 10
+    rewardLoss: -10
+    rewardDraw: 0
+    rewardCaptureVP: 1
+    rewardCoreDamage: 1
+    moveTowardVpScale: 0
+    costPenaltyScale: 0
+    stepPenalty: 0
+    endTurnPenalty: 0
+  autoSim:
+    autoRestartOnGameOver: 1
+    maxAutoGames: 10000000
+  board:
+    radius: 8
+    invalidId: -1
+    victoryPointCellId: 108
+    coreCellIdByPlayer: 56000000be000000820000001a000000
+    shuffleCoreCellsPerGame: 1
+    coreShuffleSeed: 0
+  match:
+    startingBudgetPerPlayer: 500
+    numberOfRounds: 5
+    startOfTurnBudgetDecrease: 5
+    startCenterVP: 5
+    startCoreHp: 3
+  costs:
+    baseActionCost: 10
+    actionGrowthFactor: 0.5
+  rewards:
+    budgetBonusForVP: 5
+    budgetBonusForCoreDamage: 5
+  caps:
+    capMaxActionsPerTurn: 300
+    capMaxVP: 30
+    capMaxBudget: 600
+    capMaxVPPool: 5
+    capMaxCoreHealth: 3
+  pieceLimit:
+    enablePieceLimit: 0
+    maxPiecesPerPlayer: 1
+  playerBehaviorOverrides:
+  - modelAsset: {fileID: 0}
+    deterministicInference: 0
+    behaviorType: 0
+  - modelAsset: {fileID: 0}
+    deterministicInference: 0
+    behaviorType: 0
+  - modelAsset: {fileID: 0}
+    deterministicInference: 0
+    behaviorType: 0
+  - modelAsset: {fileID: 0}
+    deterministicInference: 0
+    behaviorType: 0
   playerCount: 4
   players:
   - name: P0
-    isAI: 0
+    isAI: 1
     applyBotSurcharges: 1
     applyStartOfTurnBudgetDecrease: 1
     startingBudgetOverride: -1
     team: 0
   - name: P1
-    isAI: 0
-    applyBotSurcharges: 1
-    applyStartOfTurnBudgetDecrease: 1
-    startingBudgetOverride: -1
-    team: 1
-  - name: P2
-    isAI: 0
+    isAI: 1
     applyBotSurcharges: 1
     applyStartOfTurnBudgetDecrease: 1
     startingBudgetOverride: -1
     team: 2
-  - name: P3
-    isAI: 0
+  - name: P2
+    isAI: 1
     applyBotSurcharges: 1
     applyStartOfTurnBudgetDecrease: 1
     startingBudgetOverride: -1
     team: 3
+  - name: P3
+    isAI: 1
+    applyBotSurcharges: 1
+    applyStartOfTurnBudgetDecrease: 1
+    startingBudgetOverride: -1
+    team: 4

@@ -26,6 +26,9 @@ public sealed class HumanInteractionController : MonoBehaviour
     public Pieces pieces;            // your registry (names, flags, etc.)
     public CostEngine costEngine;        // pricing engine used by GameState
 
+
+
+
     [Header("Canvas/UI")]
     public Image backdrop;
     public Image panelBackDrop;
@@ -63,13 +66,13 @@ public sealed class HumanInteractionController : MonoBehaviour
     public TMP_Text Personal_BudgetText;
     public TMP_Text Personal_VPText;
     public TMP_Text Personal_CoreHPText;
-    public Image    Personal_TintSwatch; // optional
+    public Image Personal_TintSwatch; // optional
 
     [Header("HUD / Player Panel - All Players")]
     public RectTransform AllPlayers_ListRoot; // container to hold rows
-    public GameObject    PlayerRowPrefab;     // prefab with child names:
-                                              // PlayerRow_NameText, PlayerRow_TintSwatch,
-                                             // PlayerRow_BudgetText, PlayerRow_VPText, PlayerRow_CoreHPText
+    public GameObject PlayerRowPrefab;     // prefab with child names:
+                                           // PlayerRow_NameText, PlayerRow_TintSwatch,
+                                           // PlayerRow_BudgetText, PlayerRow_VPText, PlayerRow_CoreHPText
 
     [Header("HUD / Debug Box")]
     public TMP_Text Debug_OffersText;
@@ -99,7 +102,7 @@ public sealed class HumanInteractionController : MonoBehaviour
     private int _total;   // total actions returned by provider (may exceed cap)
     private int _count;   // displayed = min(total, cap)
 
-     private string _lastActionLabel = string.Empty; // for Debug HUD
+    private string _lastActionLabel = string.Empty; // for Debug HUD
 
 
     private void Awake()
@@ -146,14 +149,14 @@ public sealed class HumanInteractionController : MonoBehaviour
     private void EnterBuildMode()
     {
         boardView.ClearHighlights();
-         if (config && boardView) boardView.ApplyDefaultCellColor(config.defaultCellColor);
+        if (config && boardView) boardView.ApplyDefaultCellColor(config.defaultCellColor);
         _mode = Mode.Build;
         _selectedPieceId = null;
         _selectedAction = null;
 
         SetBackdropColor(config ? config.buildModeBackground : new Color(0, 0, 0, 0.8f));
         SetPanelBackdropColor(config ? config.buildModePanelBackground : new Color(0, 0, 0, 0.8f));
-        
+
         TogglePanels(build: true, create: false, action: true, pieceFull: false, execute: false);
         PushBuildMenu();
         PushNonPieceActionList();   // NEW: default action list = non-piece actions (e.g., End Turn)
@@ -205,7 +208,7 @@ public sealed class HumanInteractionController : MonoBehaviour
 
         SetBackdropColor(config ? config.pieceActionBackground : new Color(0, 0, 0, 0.8f));
         SetPanelBackdropColor(config ? config.pieceActionPanelBackground : new Color(0, 0, 0, 0.8f));
-        
+
         TogglePanels(build: false, create: false, action: false, pieceFull: true, execute: false);
         // Immediately fill the full panel so it shows on the first click:
         PushPieceActionListForSelection();
@@ -221,7 +224,7 @@ public sealed class HumanInteractionController : MonoBehaviour
 
         SetBackdropColor(config ? config.actionExecuteBackground : new Color(0, 0, 0, 0.8f));
         SetPanelBackdropColor(config ? config.actionExecutePanelBackground : new Color(0, 0, 0, 0.8f));
-        
+
         TogglePanels(build: false, create: false, action: false, pieceFull: false, execute: true);
         // (Re)apply legal-target highlights for clarity while in execute mode
         if (_selectedActionIndex >= 0)
@@ -252,7 +255,8 @@ public sealed class HumanInteractionController : MonoBehaviour
             case Mode.Build:
                 _selectedCellId = cellId;
                 // Selection/hover feedback: show selected cell using config colour
-                if (config && boardView) {
+                if (config && boardView)
+                {
                     boardView.ClearHighlights();
                     boardView.HighlightSelection(cellId, config.selectionHighlight);
                 }
@@ -381,12 +385,12 @@ public sealed class HumanInteractionController : MonoBehaviour
 
         // --- Match header ---
         if (Header_TurnOwnerText) Header_TurnOwnerText.text = $"Player {gameState.CurrentPlayerId}";
-        if (Header_ModeText)      Header_ModeText.text      = _mode.ToString();
+        if (Header_ModeText) Header_ModeText.text = _mode.ToString();
 
         // --- Personal stats (your seat) ---
-        if (Personal_BudgetText)  Personal_BudgetText.text  = $"{Mathf.RoundToInt(gameState.GetBudget(_humanPlayer))}";
-        if (Personal_VPText)      Personal_VPText.text      = $"{gameState.GetVP(_humanPlayer)}";
-        if (Personal_CoreHPText)  Personal_CoreHPText.text  = $"{gameState.GetCoreHealth(_humanPlayer)}";
+        if (Personal_BudgetText) Personal_BudgetText.text = $"{Mathf.RoundToInt(gameState.GetBudget(_humanPlayer))}";
+        if (Personal_VPText) Personal_VPText.text = $"{gameState.GetVP(_humanPlayer)}";
+        if (Personal_CoreHPText) Personal_CoreHPText.text = $"{gameState.GetCoreHealth(_humanPlayer)}";
         // Tint swatch optional; if you have a palette somewhere you can assign it here.
 
         // --- All players list ---
@@ -412,7 +416,7 @@ public sealed class HumanInteractionController : MonoBehaviour
             int masked = 0; for (int i = 0; i < _count; i++) if (_mask[i] == 0) masked++;
             Debug_OffersText.text = $"Shown: {_count}  /  Total: {_total}  (Masked: {masked})";
         }
-        if (Debug_LastActionText)   Debug_LastActionText.text = string.IsNullOrEmpty(_lastActionLabel) ? "—" : _lastActionLabel;
+        if (Debug_LastActionText) Debug_LastActionText.text = string.IsNullOrEmpty(_lastActionLabel) ? "—" : _lastActionLabel;
         if (Debug_SnapshotText)
         {
             // We don't hold a snapshot here; show some quick match counters instead.
@@ -423,19 +427,19 @@ public sealed class HumanInteractionController : MonoBehaviour
     {
         if (!row) return;
         // Find children by the agreed names
-        var nameText   = row.Find("PlayerRow_NameText")?.GetComponent<TMP_Text>();
-        var tintImg    = row.Find("PlayerRow_TintSwatch")?.GetComponent<Image>();
+        var nameText = row.Find("PlayerRow_NameText")?.GetComponent<TMP_Text>();
+        var tintImg = row.Find("PlayerRow_TintSwatch")?.GetComponent<Image>();
         var budgetText = row.Find("PlayerRow_BudgetText")?.GetComponent<TMP_Text>();
-        var vpText     = row.Find("PlayerRow_VPText")?.GetComponent<TMP_Text>();
-        var hpText     = row.Find("PlayerRow_CoreHPText")?.GetComponent<TMP_Text>();
+        var vpText = row.Find("PlayerRow_VPText")?.GetComponent<TMP_Text>();
+        var hpText = row.Find("PlayerRow_CoreHPText")?.GetComponent<TMP_Text>();
 
-        if (nameText)   nameText.text   = (playerId == gameState.CurrentPlayerId) ? $"▶ Player {playerId}" : $"Player {playerId}";
+        if (nameText) nameText.text = (playerId == gameState.CurrentPlayerId) ? $"▶ Player {playerId}" : $"Player {playerId}";
         if (budgetText) budgetText.text = $"{Mathf.RoundToInt(gameState.GetBudget((byte)playerId))}";
-        if (vpText)     vpText.text     = $"{gameState.GetVP((byte)playerId)}";
-        if (hpText)     hpText.text     = $"{gameState.GetCoreHealth((byte)playerId)}";
+        if (vpText) vpText.text = $"{gameState.GetVP((byte)playerId)}";
+        if (hpText) hpText.text = $"{gameState.GetCoreHealth((byte)playerId)}";
 
         // Optional tint swatch: if you have a palette elsewhere, assign it here (left blank by default)
-        if (tintImg)    tintImg.enabled = false;
+        if (tintImg) tintImg.enabled = false;
     }
 
     // Called by bootstrapper
@@ -479,7 +483,7 @@ public sealed class HumanInteractionController : MonoBehaviour
             return;
         }
 
-       // Piece-derived action: highlight all legal target cells right away
+        // Piece-derived action: highlight all legal target cells right away
         var col = (config ? config.actionLegalTargetHighlight : new Color(0.6f, 0.35f, 0.9f, 0.65f));
         _selectedAction = item;
         _selectedActionIndex = idx; // seed used for target resolution
@@ -521,7 +525,9 @@ public sealed class HumanInteractionController : MonoBehaviour
             pieces,
             gameState.CurrentPlayerRef,
             gameState.CurrentPlayerId,
-            costEngine
+            costEngine,
+            gameState.PieceLimitEnabled,
+            gameState.pieceLimitPerPlayer
         );
 
         // Fill the spans (zero-alloc path in OfferProvider). Function returns TOTAL (may exceed cap). :contentReference[oaicite:7]{index=7}
@@ -585,7 +591,7 @@ public sealed class HumanInteractionController : MonoBehaviour
         buildMenu.Show(items);
     }
 
-     // Default layout (right-side 40%): Non-piece actions only (e.g., End Turn)
+    // Default layout (right-side 40%): Non-piece actions only (e.g., End Turn)
     private void PushNonPieceActionList()
     {
         var items = new List<ActionItem>();
@@ -610,7 +616,7 @@ public sealed class HumanInteractionController : MonoBehaviour
             for (int i = 0; i < _count; i++)
             {
                 var a = _offers[i];
-               if (a.kind == Game.Core.ActionKind.EndTurn) continue; // exclude non-piece actions
+                if (a.kind == Game.Core.ActionKind.EndTurn) continue; // exclude non-piece actions
                 if (a.srcCell != (ushort)cell) continue;               // only actions from this piece
 
                 string label = PrettyAction(a);
@@ -645,7 +651,7 @@ public sealed class HumanInteractionController : MonoBehaviour
     }
 
 
-// --- Create helpers ---
+    // --- Create helpers ---
     private int FindFirstCreateIndexForType(byte type)
     {
         for (int i = 0; i < _count; i++)

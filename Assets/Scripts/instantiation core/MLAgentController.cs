@@ -21,17 +21,17 @@ public sealed class MLAgentController : Agent
 
     // Immutable config / shared systems (assigned by bootstrapper)
     private GameConfigHub _hub;
-    private GameState     _gs;
-    private BoardModel    _bm;
-    private Pieces        _pcs;
-    private CostEngine    _cost;      // can be null in structural-only runs
+    private GameState _gs;
+    private BoardModel _bm;
+    private Pieces _pcs;
+    private CostEngine _cost;      // can be null in structural-only runs
     private OfferProvider _offers;
-    private PlayerAgent   _pa;        // reused for obs + offer build bridge
+    private PlayerAgent _pa;        // reused for obs + offer build bridge
 
     // Offer buffers (capacity = hub.agent.maxOffersToConsider)
     private Game.Core.Action[] _actions;
-    private float[]            _quoted;
-    private byte[]             _mask;
+    private float[] _quoted;
+    private byte[] _mask;
 
     // Observation buffer (21 + 12*obs_maxCells)
     private float[] _obs;
@@ -42,10 +42,12 @@ public sealed class MLAgentController : Agent
     // Rewards tuning (set by bootstrapper)
     public struct RewardsTuning
     {
-        public float rewardWin, rewardLoss, rewardCaptureVP, rewardCoreDamage;
+        public float rewardWin, rewardLoss, rewardDraw, rewardCaptureVP, rewardCoreDamage;
         public float moveTowardVpScale, costPenaltyScale, stepPenalty, endTurnPenalty;
     }
     private RewardsTuning _rt;
+    private bool _episodeTerminated;
+    private Action<byte> _onEpisodeBegin;
 
     // -------------------- Bootstrap wiring --------------------
 
@@ -60,19 +62,20 @@ public sealed class MLAgentController : Agent
                      byte myPlayerId,
                      in Config.MLRewardsAuthoring rewards)
     {
-        _hub    = hub;
-        _gs     = gs;
-        _bm     = bm;
-        _pcs    = pcs;
-        _cost   = cost;
+        _hub = hub;
+        _gs = gs;
+        _bm = bm;
+        _pcs = pcs;
+        _cost = cost;
         _offers = offers;
-        _pa     = pa;
+        _pa = pa;
         playerId = myPlayerId;
 
         _rt = new RewardsTuning
         {
             rewardWin = rewards.rewardWin,
             rewardLoss = rewards.rewardLoss,
+            rewardDraw = rewards.rewardDraw,
             rewardCaptureVP = rewards.rewardCaptureVP,
             rewardCoreDamage = rewards.rewardCoreDamage,
             moveTowardVpScale = rewards.moveTowardVpScale,
@@ -83,19 +86,20 @@ public sealed class MLAgentController : Agent
 
         int cap = Math.Max(1, _hub.agent.maxOffersToConsider);
         _actions = new Game.Core.Action[cap];
-        _quoted  = new float[cap];
-        _mask    = new byte[cap];
+        _quoted = new float[cap];
+        _mask = new byte[cap];
 
         _obs = new float[21 + 12 * _hub.obs_maxCells];
     }
+
+    public void SetEpisodeBeginCallback(Action<byte> callback) => _onEpisodeBegin = callback;
 
     // -------------------- ML-Agents lifecycle --------------------
 
     public override void OnEpisodeBegin()
     {
-        // Your bootstrapper should reset the match externally.
-        // This method can remain empty if resets are managed outside ML-Agents.
-        // (If you want internal resets, call a GameState.ResetMatch(hub, bm, pcs) here.)
+        _episodeTerminated = false;
+        _onEpisodeBegin?.Invoke(playerId);
     }
 
     public override void CollectObservations(VectorSensor sensor)
@@ -139,6 +143,7 @@ public sealed class MLAgentController : Agent
 
     public override void OnActionReceived(ActionBuffers actions)
     {
+        if (_episodeTerminated) return;
         // Only act on our turn
         if (_gs.CurrentPlayerId != playerId) return;
 
@@ -188,12 +193,28 @@ public sealed class MLAgentController : Agent
         AddReward(r);
 
         // Terminal handling
-        if (_gs.IsGameOver)
+        // Terminal handling moved to controller broadcast so all seats end together.
+    }
+
+    public void ApplyTerminal(byte winner)
+    {
+        if (_episodeTerminated) return;
+
+        if (winner == 255 || winner >= _hub.player_count)
         {
-            if (_gs.Winner == playerId) AddReward(_rt.rewardWin);
-            else                        AddReward(_rt.rewardLoss);
-            EndEpisode();
+            AddReward(_rt.rewardDraw);
         }
+        else if (winner == playerId)
+        {
+            AddReward(_rt.rewardWin);
+        }
+        else
+        {
+            AddReward(_rt.rewardLoss);
+        }
+
+        _episodeTerminated = true;
+        EndEpisode();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -247,6 +268,7 @@ public sealed class MLAgentController : Agent
 
     private void FixedUpdate()
     {
+        if (_episodeTerminated) return;
         // Drive decisions only on this player's turn.
         if (_gs != null && _gs.CurrentPlayerId == playerId)
         {
@@ -260,11 +282,11 @@ public sealed class MLAgentController : Agent
     private int BuildOffersForCurrentPlayer()
     {
         // Build OfferQuery: (bm, pcs, ps, playerId, cost)
-        var q = new OfferQuery(_bm, _pcs, _gs.CurrentPlayerRef, playerId, _cost);
+        var q = new OfferQuery(_bm, _pcs, _gs.CurrentPlayerRef, playerId, _cost, _gs.PieceLimitEnabled, _gs.pieceLimitPerPlayer);
 
-        var acts  = _actions.AsSpan();
+        var acts = _actions.AsSpan();
         var costs = _quoted.AsSpan();
-        var mask  = _mask.AsSpan();
+        var mask = _mask.AsSpan();
 
         int total = _offers.BuildActionList(in q, acts, costs, mask);
         // We only allow the emitted prefix to be selectable by the policy
@@ -274,7 +296,7 @@ public sealed class MLAgentController : Agent
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private int PickCheapestAffordableNonEndTurn(ReadOnlySpan<Game.Core.Action> acts,
                                                  ReadOnlySpan<float> costs,
-                                                 ReadOnlySpan<byte>  mask)
+                                                 ReadOnlySpan<byte> mask)
     {
         const float EPS = 1e-4f;
         float bestCost = float.PositiveInfinity;
