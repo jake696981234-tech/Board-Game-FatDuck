@@ -860,15 +860,6 @@ namespace Game.Core
 
 
 
-        // Exprimental helper methods for action
-
-        //this can replace the if(killed) line in both ResolveMelee and ResolveShoot
-      
-
-
-
-
-
 
     }
 }

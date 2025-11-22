@@ -19,7 +19,7 @@ MonoBehaviour:
   observations:
     maxCells: 217
     maxDistance: 16
-  playerControl: 01010201
+  playerControl: 01010101
   playerPolicy: 01010101
   dbLogging:
     enabled: 0
@@ -48,8 +48,8 @@ MonoBehaviour:
     vectorObservationSize: 2625
     actionBranchSize: 64
   gamesToRun: 32
-  inspectGame: 0
-  useMLAgents: 1
+  inspectGame: 1
+  useMLAgents: 0
   mlRewards:
     rewardWin: 10
     rewardLoss: -10
@@ -88,9 +88,6 @@ MonoBehaviour:
     capMaxBudget: 600
     capMaxVPPool: 5
     capMaxCoreHealth: 3
-  pieceLimit:
-    enablePieceLimit: 0
-    maxPiecesPerPlayer: 1
   playerBehaviorOverrides:
   - modelAsset: {fileID: 0}
     deterministicInference: 0
@@ -113,7 +110,7 @@ MonoBehaviour:
     startingBudgetOverride: -1
     team: 0
   - name: P1
-    isAI: 1
+    isAI: 0
     applyBotSurcharges: 1
     applyStartOfTurnBudgetDecrease: 1
     startingBudgetOverride: -1

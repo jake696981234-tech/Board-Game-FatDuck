@@ -3,6 +3,16 @@ using System;
 
 public class EventManager
 {
+    #region GameActions 
+    //experimental new event system
+
+    public event Action<pieceKilled> ActionLogRequested;
+
+
+
+
+
+    #region DBLogging Events
     public readonly struct ActionLogEvent
     {
         public ActionLogEvent(
@@ -123,4 +133,14 @@ public class EventManager
     {
         GameResultLogged?.Invoke(payload);
     }
+
+
+    #endregion
+
+
+
+
+
+
+
 }

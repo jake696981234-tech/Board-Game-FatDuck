@@ -314,6 +314,9 @@ public void Init(in BoardGeometry geometry, in GameConfigHub hub, int playerCoun
     {
         int hp = pieceHP[pieceId] - delta;
         if (hp > 0) { pieceHP[pieceId] = (short)hp; return false; }
+
+
+
         pieceHP[pieceId] = 0;
         return true;
     }

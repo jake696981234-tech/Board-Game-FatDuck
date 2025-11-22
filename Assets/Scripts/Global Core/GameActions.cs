@@ -26,55 +26,55 @@ namespace Game.Core
 
         #region Gamestate
 
-        private void ApplyMove(in Action a, byte p)
+        private void ApplyMove(in Action theAction, byte player)
         {
-            int actorPid = bm.GetCellOccupant(a.srcCell);
+            int actorPid = bm.GetCellOccupant(theAction.srcCell);
             if (actorPid < 0) return;
-            int dstOcc = bm.GetCellOccupant(a.dstCell);
+            int dstOcc = bm.GetCellOccupant(theAction.dstCell);
             if (dstOcc >= 0)
             {
-                gamestate.ResolveMelee(actorPid, dstOcc, in a);
+                gamestate.ResolveMelee(actorPid, dstOcc, in theAction);
             }
             else
             {
-                bm.MovePieceRow(actorPid, a.dstCell);
+                bm.MovePieceRow(actorPid, theAction.dstCell);
             }
 
         }
 
-        private void ApplyShoot(in Action a, byte p)
+        private void ApplyShoot(in Action theAction, byte player)
         {
-            int targetPid = a.aux;
+            int targetPid = theAction.aux;
             if (targetPid < 0) return;
-            short dmg = gamestate.GetAbilityDamage(in a);
+            short dmg = gamestate.GetAbilityDamage(in theAction);
             bool killed = bm.DamagePieceRow(targetPid, dmg);
             if (killed)
             {
                 // Revoke digit from the defender's owner if this type granted one
-                pieceKilled(targetPid, 0, a);
+                pieceKilled(targetPid, 0, theAction);
             }
         }
 
-        private void ApplyCreate(in Action a, byte p)
+        private void ApplyCreate(in Action theAction, byte player)
         {
             int pid = bm.AllocateRow();
-            bm.PlacePieceRow(pid, p, (byte)a.pieceType, a.dstCell, pcs.maxHPByType[a.pieceType]);
+            bm.PlacePieceRow(pid, player, (byte)theAction.pieceType, theAction.dstCell, pcs.maxHPByType[theAction.pieceType]);
             // Grant digit if this type provides one
-            int g = pcs.GrantsDigit((byte)a.pieceType);
-            if (g >= 0) ps[p].GrantDigit(g);
+            int g = pcs.GrantsDigit((byte)theAction.pieceType);
+            if (g >= 0) ps[player].GrantDigit(g);
         }
 
-        private void ApplyCaptureVP(in Action a, byte p)
+        private void ApplyCaptureVP(in Action theAction, byte player)
         {
-            ps[p].OnCaptureVP();
+            ps[player].OnCaptureVP();
             gamestate.AddCenterVictoryPoints(-1);   // pool now lives in GameState
         }
 
-        private void ApplyCoreDamage(in Action a, byte p)
+        private void ApplyCoreDamage(in Action theAction, byte player)
         {
-            ps[p].OnCoreDamage();
+            ps[player].OnCoreDamage();
 
-            int actorPid = bm.GetCellOccupant(a.srcCell);
+            int actorPid = bm.GetCellOccupant(theAction.srcCell);
             if (actorPid < 0) return;
 
             int actorCell = bm.GetPieceCell(actorPid);
@@ -82,7 +82,7 @@ namespace Game.Core
             if (enemy >= 4) return;
 
             byte typ = bm.GetPieceType(actorPid);
-            int abi = pcs.AbilityIdAtSlot(typ, a.abilitySlot);
+            int abi = pcs.AbilityIdAtSlot(typ, theAction.abilitySlot);
             short dmg = (short)((abi >= 0 && abi < pcs.damage.Length) ? pcs.damage[abi] : 0);
 
             int hp = gamestate.GetCoreHealth(enemy);
@@ -91,13 +91,41 @@ namespace Game.Core
         }
 
         #endregion
+        #region to do ApplyActions / helpers
+        private void ApplyPush(in Action theAction, byte player)
+        {
+            int targetPid = theAction.aux;
+            if (targetPid < 0) return;
+            short dmg = gamestate.GetAbilityDamage(in theAction);
+            bool killed = bm.DamagePieceRow(targetPid, dmg);
+            if (killed)
+            {
+                // Revoke digit from the defender's owner if this type granted one
+                pieceKilled(targetPid, 0, theAction);
+            }
+            else
+            {
+                // to do- There are 6 cells an enemy can be on. Enumarate the 3 cells furthest away from the ActorPiece, that are empty && if they exist. if there is non, return. Pick the middle cell for pushedCellID. if not legal, pick the cell closet to the target Pieces base. if not legal, move to the last remaining cell.
+                int pushedCellID = 0; //replace this with the method described above.
+                bm.MovePieceRow(targetPid, pushedCellID);
+            }
+        }
+
+
+        private void multiPartAction()
+        {
+            //If an action has multple parts 
+        }
+
+
+        #endregion
         #region ApplyHelpers
 
 
-        private void ifonKillAction(in Action theAction);
-        {   
-                
-        }
+        //private void ifOnKillAction(in Action theAction);
+        // {   
+
+        // }
 
         //this can replace the if(killed) line in both ResolveMelee and ResolveShoot
         public void pieceKilled(int victim, int pieceActor, in Action theAction)

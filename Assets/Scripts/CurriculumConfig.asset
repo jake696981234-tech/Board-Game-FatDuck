@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ac5a79adcddbf14cb0339eb95e2bf34, type: 3}
   m_Name: CurriculumConfig
   m_EditorClassIdentifier: Assembly-CSharp::CurriculumConfig
-  RestrictionGoal:
-  - restriction: 0
-    goalRequirement: 0
-  WhichPlayerToTrain: 0
+  Curriculum: []
+  playerToTrain: 4
+  pieceLimitEnabled: 0
+  pieceLimit: 50
