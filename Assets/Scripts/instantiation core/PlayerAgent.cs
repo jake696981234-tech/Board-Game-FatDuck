@@ -35,13 +35,16 @@ public sealed class PlayerAgent
     private float[] _quotedCosts;
     private byte[] _mask;
 
+    private GameActions gameActions;
+
     /// <summary>Call once from GameBootstrapper after systems are constructed.</summary>
     public void Init(in GameConfigHub hub,
                      GameState gs,
                      BoardModel bm,
                      Pieces pcs,
                      CostEngine cost,
-                     OfferProvider offers)
+                     OfferProvider offers,
+                     GameActions theGameActions)
     {
         _hub = hub;
         _cfg = hub.agent;
@@ -50,6 +53,7 @@ public sealed class PlayerAgent
         _pcs = pcs;
         _cost = cost;
         _offers = offers;
+        gameActions = theGameActions;
 
         // default policy
         _policy = new HeuristicPolicy();
@@ -67,9 +71,10 @@ public sealed class PlayerAgent
                      Pieces pcs,
                      CostEngine cost,
                      OfferProvider offers,
+                     GameActions gameActions,
                      IBotPolicy policy)
     {
-        Init(in hub, gs, bm, pcs, cost, offers);
+        Init(in hub, gs, bm, pcs, cost, offers, gameActions);
         _policy = policy ?? new HeuristicPolicy();
     }
 
@@ -88,7 +93,9 @@ public sealed class PlayerAgent
     public bool DecideAndAct()
     {
         // Build the query the OfferProvider expects: (bm, pcs, PlayerState snapshot, playerId, cost).
-        var q = new OfferQuery(_bm, _pcs, _gs.CurrentPlayerRef, _gs.CurrentPlayerId, _cost, _gs.PieceLimitEnabled, _gs.pieceLimitPerPlayer); // :contentReference[oaicite:3]{index=3}
+        gameActions.GetMultiCreateState(out bool mcActive, out byte mcType, out bool mcBorder, out int mcRemaining, out int[] mcCells, out int mcCellCount);
+        var q = new OfferQuery(_bm, _pcs, _gs.CurrentPlayerRef, _gs.CurrentPlayerId, _cost, _gs.PieceLimitEnabled, _gs.pieceLimitPerPlayer,
+            mcActive, mcType, mcBorder, mcRemaining, mcCells, mcCellCount); // :contentReference[oaicite:3]{index=3}
 
         var acts = _actions.AsSpan();
         var costs = _quotedCosts.AsSpan();

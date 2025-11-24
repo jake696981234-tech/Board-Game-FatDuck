@@ -16,7 +16,7 @@ namespace Game.Core
     public struct Action
     {
         /// <summary>Action family. See <see cref=""/> for stable codes.</summary>
-        public byte kind;        // 0..5
+        public byte kind;        // 0..6
 
         /// <summary>Ability slot index on the actor's piece type (0..MaxSlots-1). 0 for EndTurn.</summary>
         public byte abilitySlot;
@@ -71,5 +71,10 @@ namespace Game.Core
         public const byte CoreDamage = 3;
         public const byte Create = 4;
         public const byte EndTurn = 5;
+        public const byte Push = 6;
+        public const byte GroupBuild = 7;
+        public const byte Upgrade = 8;
+        public const byte Launcher = 9;
+        public const byte Spawner = 10;
     }
 }

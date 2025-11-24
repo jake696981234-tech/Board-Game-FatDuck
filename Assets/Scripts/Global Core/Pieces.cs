@@ -10,25 +10,25 @@ using System.Runtime.CompilerServices;
 /// - Parameters used by legality kernels and cost calculation.
 /// - Plan B: Create is NOT an ability; OfferProvider enumerates Create structurally.
 /// </summary>
-public sealed class Pieces
+public partial class Pieces
 {
     // ====== Public enums (compact; persist order once you ship) ======
-    public enum AbilityKind : byte { Move = 0, Shoot = 1, CaptureVP = 2, CoreDamage = 3, Create = 4, Custom0 = 5, Custom1 = 6, Custom2 = 7 }
-    public enum TargetKind  : byte { None = 0, Cell = 1, Piece = 2 }
+    public enum AbilityKind : byte { Move = 0, Shoot = 1, CaptureVP = 2, CoreDamage = 3, Create = 4, GroupBuild = 5, Push = 6, Upgrade = 7, Launcher = 8, Spawner = 9, Factory = 10, Custom0 = 11, Custom1 = 12, Custom2 = 13 }
+    public enum TargetKind : byte { None = 0, Cell = 1, Piece = 2 }
 
     // ====== Type registry (dense indices 0..typeCount-1) ======
     public int typeCount;
 
     // Per-type fields
-    public bool[]  isBuildingByType;      // [type] -> true => Building, false => Soldier (kept as bool for existing callers)
-    public byte[]  buildableByType;       // [type] -> 0/1 flag; default 1
-    public int[]   buildCostByType;       // [type] -> cost to Create this type
+    public bool[] isBuildingByType;      // [type] -> true => Building, false => Soldier (kept as bool for existing callers)
+    public byte[] buildableByType;       // [type] -> 0/1 flag; default 1
+    public int[] buildCostByType;       // [type] -> cost to Create this type
     public short[] maxHPByType;           // [type] -> max HP
     public int[][] codeDigitsByType;      // [type] -> prerequisite digits (optional)
 
     // --- Digits (Plan B): per-type grant; per-type requirement already lives in codeDigitsByType ---
     public sbyte[] grantsDigitByType; // [type] -> -1 = none, else 0..9
-    
+
     // Human-only (UI/debug/tooling)
     public string[] idByType;             // [type] -> stable id (tooling)
     public string[] displayNameByType;
@@ -36,16 +36,49 @@ public sealed class Pieces
     public string[] spritePathByType;
     public string[] moveUIColorHexByType;
     public string[] shootUIColorHexByType;
+    public bool[]  hasConnectorsByType;      // [type] -> true if this type uses connector/wall sides
+    public bool[]  connectorNeedsCapital;    // [type] -> true if placement requires capital connectivity
+    public bool[]  connectorIsCapital;       // [type] -> true if this type counts as a capital
+    public int[]   connectorCapitalHealth;   // [type] -> capital health contribution for connected component
+    public ulong[] connectorAllowedMasks;    // [type] -> bitmask of allowed 6-bit side configs (bit i -> config i allowed)
+    public bool[]  groupBuildEnabled;        // [type] -> can this type perform group build
+    public int[]   groupBuildTargetType;     // [type] -> type id to create
+    public int[]   groupBuildRequireNumber;  // [type] -> required count in cluster
+    public bool[]  groupBuildDeletion;       // [type] -> delete contributors on build
+    public bool[]  upgradeEnabled;           // [type] -> can perform upgrade
+    public int[]   upgradeTargetType;        // [type] -> replace with this type
+    public int[]   launcher_inputRange;      // [ability] -> range to pick a piece
+    public int[]   launcher_outputRange;     // [ability] -> range from launcher to drop target
+    public bool[]  launcher_friendlyFire;    // [ability] -> can launch friendlies
+    public bool[]  launcher_enemyFire;       // [ability] -> can launch enemies
+    public bool[]  push_TargetsBuildings;    // [ability] -> push can target buildings
+    public bool[]  push_TargetsSoldiers;     // [ability] -> push can target soldiers
+    public int[]   push_rangeMax;            // [ability] -> input range for push
+    public int[]   push_PushAmount;          // [ability] -> displacement distance
+    public bool[]  push_pull;                // [ability] -> invert direction
+    public bool[]  push_FriendlyFire;        // [ability] -> allow friendlies
+    public int[]   push_damage;              // [ability] -> damage on push
+    public int[]   spawn_pieceAmount;        // [ability] -> how many pieces to create
+    public int[]   spawn_targetType;         // [ability] -> type to create
+    public int[]   spawn_range;              // [ability] -> spawn range
+    public bool[]  spawn_onlyOncePerTurn;    // [ability] -> once-per-turn gate
+    public bool[]  multiCreate_enabledByType; // [type] -> multi-create hook
+    public int[]   multiCreate_amountByType;  // [type] -> how many total (including primary)
+    public bool[]  multiCreate_boarderingByType; // [type] -> require new pieces to border each other
+    public int[]   factory_amount;           // [ability] -> payout amount
+    public bool[]  factory_roundMultiplier;  // [ability] -> multiply by round number
+    public bool[]  factory_group;            // [ability] -> requires groups
+    public int[]   factory_groupAmount;      // [ability] -> size of each group
 
     // Name maps (optional)
-    public Dictionary<string,int> typeIndexByName;
-    public string[]                typeNameByIndex;
+    public Dictionary<string, int> typeIndexByName;
+    public string[] typeNameByIndex;
 
     // ====== Ability catalog (dense indices 0..abilityCount-1) ======
     public int abilityCount;
 
     public AbilityKind[] abilityKind;     // [abilityId]
-    public TargetKind[]  targetKind;      // [abilityId]
+    public TargetKind[] targetKind;      // [abilityId]
 
     // Generic params (unused = 0)
     public int[] rangeMin;                // [abilityId]
@@ -63,11 +96,11 @@ public sealed class Pieces
     public int[] botThinkSurcharge;       // [abilityId] -> bot-only surcharge
 
     // Ability name maps (optional)
-    public Dictionary<string,int> abilityIndexByName;
-    public string[]                abilityNameByIndex;
+    public Dictionary<string, int> abilityIndexByName;
+    public string[] abilityNameByIndex;
 
     // ====== Fixed-width ability slots per TYPE ======
-    public int maxAbilitySlots = 4;       // slot 0: Move, 1: Shoot, 2: CaptureVP, 3: CoreDamage (no slot for Create)
+    public int maxAbilitySlots = 7;       // slot 0: Move, 1: Shoot, 2: CaptureVP, 3: CoreDamage, others for custom
     public int[] abilityIdByTypeSlot;     // [type * maxAbilitySlots + slot] -> abilityId or -1
     public int[] abilitySlotCount;        // [type] -> # valid slots (0..maxAbilitySlots)
 
@@ -157,13 +190,51 @@ public sealed class Pieces
         return (abilityId >= 0 && abilityId < botThinkSurcharge.Length) ? botThinkSurcharge[abilityId] : 0;
     }
 
-    
+
 
     // ====== Metadata helpers ======
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool IsBuilding(byte type)
     {
         return type >= 0 && type < isBuildingByType.Length && isBuildingByType[type];
+    }
+
+    // ====== Connector helpers ======
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool HasConnectors(byte type)
+    {
+        return type < hasConnectorsByType.Length && hasConnectorsByType[type];
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool ConnectorNeedsCapital(byte type)
+    {
+        return type < connectorNeedsCapital.Length && connectorNeedsCapital[type];
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool ConnectorIsCapital(byte type)
+    {
+        return type < connectorIsCapital.Length && connectorIsCapital[type];
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public int ConnectorCapitalHealth(byte type)
+    {
+        return type < connectorCapitalHealth.Length ? connectorCapitalHealth[type] : 0;
+    }
+
+    /// <summary>
+    /// Returns true if the given 0..63 configuration index is allowed for this type.
+    /// If mask is 0 and the type has connectors, treat it as "no configs allowed".
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool IsConnectorConfigAllowed(byte type, int configIndex)
+    {
+        if (configIndex < 0 || configIndex >= 64) return false;
+        if (type >= connectorAllowedMasks.Length) return false;
+        ulong mask = connectorAllowedMasks[type];
+        return (mask & (1UL << configIndex)) != 0;
     }
 
     // =====================================================================
@@ -318,6 +389,41 @@ public sealed class Pieces
         if (abilityIdByTypeSlot == null || abilityIdByTypeSlot.Length != typeCount * maxAbilitySlots)
             return "abilityIdByTypeSlot not allocated or wrong size.";
         if (buildableByType == null || buildableByType.Length != typeCount) return "buildableByType not allocated or wrong size.";
+        if (hasConnectorsByType == null || hasConnectorsByType.Length != typeCount) return "hasConnectorsByType not allocated or wrong size.";
+        if (connectorNeedsCapital == null || connectorNeedsCapital.Length != typeCount) return "connectorNeedsCapital not allocated or wrong size.";
+        if (connectorIsCapital == null || connectorIsCapital.Length != typeCount) return "connectorIsCapital not allocated or wrong size.";
+        if (connectorCapitalHealth == null || connectorCapitalHealth.Length != typeCount) return "connectorCapitalHealth not allocated or wrong size.";
+        if (connectorAllowedMasks == null || connectorAllowedMasks.Length != typeCount) return "connectorAllowedMasks not allocated or wrong size.";
+        if (groupBuildEnabled == null || groupBuildEnabled.Length != typeCount) return "groupBuildEnabled not allocated or wrong size.";
+        if (groupBuildTargetType == null || groupBuildTargetType.Length != typeCount) return "groupBuildTargetType not allocated or wrong size.";
+        if (groupBuildRequireNumber == null || groupBuildRequireNumber.Length != typeCount) return "groupBuildRequireNumber not allocated or wrong size.";
+        if (groupBuildDeletion == null || groupBuildDeletion.Length != typeCount) return "groupBuildDeletion not allocated or wrong size.";
+        if (upgradeEnabled == null || upgradeEnabled.Length != typeCount) return "upgradeEnabled not allocated or wrong size.";
+        if (upgradeTargetType == null || upgradeTargetType.Length != typeCount) return "upgradeTargetType not allocated or wrong size.";
+        if (spawn_pieceAmount == null || spawn_pieceAmount.Length != abilityCount) return "spawn_pieceAmount not allocated or wrong size.";
+        if (spawn_targetType == null || spawn_targetType.Length != abilityCount) return "spawn_targetType not allocated or wrong size.";
+        if (spawn_range == null || spawn_range.Length != abilityCount) return "spawn_range not allocated or wrong size.";
+        if (spawn_onlyOncePerTurn == null || spawn_onlyOncePerTurn.Length != abilityCount) return "spawn_onlyOncePerTurn not allocated or wrong size.";
+        if (factory_amount == null || factory_amount.Length != abilityCount) return "factory_amount not allocated or wrong size.";
+        if (factory_roundMultiplier == null || factory_roundMultiplier.Length != abilityCount) return "factory_roundMultiplier not allocated or wrong size.";
+        if (factory_group == null || factory_group.Length != abilityCount) return "factory_group not allocated or wrong size.";
+        if (factory_groupAmount == null || factory_groupAmount.Length != abilityCount) return "factory_groupAmount not allocated or wrong size.";
+        if (push_TargetsBuildings == null || push_TargetsBuildings.Length != abilityCount) return "push_TargetsBuildings not allocated or wrong size.";
+        if (push_TargetsSoldiers == null || push_TargetsSoldiers.Length != abilityCount) return "push_TargetsSoldiers not allocated or wrong size.";
+        if (push_rangeMax == null || push_rangeMax.Length != abilityCount) return "push_rangeMax not allocated or wrong size.";
+        if (push_PushAmount == null || push_PushAmount.Length != abilityCount) return "push_PushAmount not allocated or wrong size.";
+        if (push_pull == null || push_pull.Length != abilityCount) return "push_pull not allocated or wrong size.";
+        if (push_FriendlyFire == null || push_FriendlyFire.Length != abilityCount) return "push_FriendlyFire not allocated or wrong size.";
+        if (push_damage == null || push_damage.Length != abilityCount) return "push_damage not allocated or wrong size.";
+        if (multiCreate_enabledByType == null || multiCreate_enabledByType.Length != typeCount) return "multiCreate_enabledByType not allocated or wrong size.";
+        if (multiCreate_amountByType == null || multiCreate_amountByType.Length != typeCount) return "multiCreate_amountByType not allocated or wrong size.";
+        if (multiCreate_boarderingByType == null || multiCreate_boarderingByType.Length != typeCount) return "multiCreate_boarderingByType not allocated or wrong size.";
+        if (spawn_pieceAmount == null || spawn_pieceAmount.Length != abilityCount) return "spawn_pieceAmount not allocated or wrong size.";
+        if (spawn_targetType == null || spawn_targetType.Length != abilityCount) return "spawn_targetType not allocated or wrong size.";
+        if (spawn_range == null || spawn_range.Length != abilityCount) return "spawn_range not allocated or wrong size.";
+        if (spawn_onlyOncePerTurn == null || spawn_onlyOncePerTurn.Length != abilityCount) return "spawn_onlyOncePerTurn not allocated or wrong size.";
+        if (upgradeEnabled == null || upgradeEnabled.Length != typeCount) return "upgradeEnabled not allocated or wrong size.";
+        if (upgradeTargetType == null || upgradeTargetType.Length != typeCount) return "upgradeTargetType not allocated or wrong size.";
         for (int t = 0; t < typeCount; t++)
         {
             int sc = abilitySlotCount[t];
@@ -339,37 +445,81 @@ public sealed class Pieces
         this.maxAbilitySlots = Math.Max(1, maxSlots);
 
         // per-type
-        isBuildingByType   = new bool[typeCount];
-        buildableByType    = new byte[typeCount];              // default 0; we'll set 1 below
-        buildCostByType    = new int[typeCount];
-        maxHPByType        = new short[typeCount];
-        codeDigitsByType   = new int[typeCount][];
+        isBuildingByType = new bool[typeCount];
+        buildableByType = new byte[typeCount];              // default 0; we'll set 1 below
+        buildCostByType = new int[typeCount];
+        maxHPByType = new short[typeCount];
+        codeDigitsByType = new int[typeCount][];
 
         for (int i = 0; i < typeCount; i++) buildableByType[i] = 1; // default buildable
 
-        idByType           = new string[typeCount];
-        displayNameByType  = new string[typeCount];
-        factionNameByType  = new string[typeCount];
-        spritePathByType   = new string[typeCount];
-        moveUIColorHexByType  = new string[typeCount];
+        idByType = new string[typeCount];
+        displayNameByType = new string[typeCount];
+        factionNameByType = new string[typeCount];
+        spritePathByType = new string[typeCount];
+        moveUIColorHexByType = new string[typeCount];
         shootUIColorHexByType = new string[typeCount];
+        hasConnectorsByType = new bool[typeCount];
+        connectorNeedsCapital = new bool[typeCount];
+        connectorIsCapital = new bool[typeCount];
+        connectorCapitalHealth = new int[typeCount];
+        connectorAllowedMasks = new ulong[typeCount];
+        groupBuildEnabled = new bool[typeCount];
+        groupBuildTargetType = new int[typeCount];
+        groupBuildRequireNumber = new int[typeCount];
+        groupBuildDeletion = new bool[typeCount];
+        upgradeEnabled = new bool[typeCount];
+        upgradeTargetType = new int[typeCount];
+        spawn_pieceAmount = new int[abilityCount];
+        spawn_targetType = new int[abilityCount];
+        spawn_range = new int[abilityCount];
+        spawn_onlyOncePerTurn = new bool[abilityCount];
+        for (int i = 0; i < spawn_targetType.Length; i++) spawn_targetType[i] = -1;
 
-        typeIndexByName = new Dictionary<string,int>(typeCount, StringComparer.OrdinalIgnoreCase);
+        typeIndexByName = new Dictionary<string, int>(typeCount, StringComparer.OrdinalIgnoreCase);
         typeNameByIndex = new string[typeCount];
 
         // per-ability (non-Create kinds)
-        abilityKind       = new AbilityKind[abilityCount];
-        targetKind        = new TargetKind[abilityCount];
-        rangeMin          = new int[abilityCount];
-        rangeMax          = new int[abilityCount];
-        areaRadius        = new int[abilityCount];
-        damage            = new int[abilityCount];
-        customParam       = new int[abilityCount];
-        buildTypeId       = new int[abilityCount];    // legacy; may be left -1 for most abilities
-        baseSurcharge     = new int[abilityCount];    // legacy; ignored in pricing
+        abilityKind = new AbilityKind[abilityCount];
+        targetKind = new TargetKind[abilityCount];
+        rangeMin = new int[abilityCount];
+        rangeMax = new int[abilityCount];
+        areaRadius = new int[abilityCount];
+        damage = new int[abilityCount];
+        customParam = new int[abilityCount];
+        buildTypeId = new int[abilityCount];    // legacy; may be left -1 for most abilities
+        baseSurcharge = new int[abilityCount];    // legacy; ignored in pricing
         botThinkSurcharge = new int[abilityCount];
+        launcher_inputRange = new int[abilityCount];
+        launcher_outputRange = new int[abilityCount];
+        launcher_friendlyFire = new bool[abilityCount];
+        launcher_enemyFire = new bool[abilityCount];
+        push_TargetsBuildings = new bool[abilityCount];
+        push_TargetsSoldiers = new bool[abilityCount];
+        push_rangeMax = new int[abilityCount];
+        push_PushAmount = new int[abilityCount];
+        push_pull = new bool[abilityCount];
+        push_FriendlyFire = new bool[abilityCount];
+        push_damage = new int[abilityCount];
+        spawn_pieceAmount = new int[abilityCount];
+        spawn_targetType = new int[abilityCount];
+        spawn_range = new int[abilityCount];
+        spawn_onlyOncePerTurn = new bool[abilityCount];
+        factory_amount = new int[abilityCount];
+        factory_roundMultiplier = new bool[abilityCount];
+        factory_group = new bool[abilityCount];
+        factory_groupAmount = new int[abilityCount];
+        multiCreate_enabledByType = new bool[typeCount];
+        multiCreate_amountByType = new int[typeCount];
+        multiCreate_boarderingByType = new bool[typeCount];
+        groupBuildEnabled = new bool[typeCount];
+        groupBuildTargetType = new int[typeCount];
+        groupBuildRequireNumber = new int[typeCount];
+        groupBuildDeletion = new bool[typeCount];
+        upgradeEnabled = new bool[typeCount];
+        upgradeTargetType = new int[typeCount];
 
-        abilityIndexByName = new Dictionary<string,int>(abilityCount, StringComparer.OrdinalIgnoreCase);
+        abilityIndexByName = new Dictionary<string, int>(abilityCount, StringComparer.OrdinalIgnoreCase);
         abilityNameByIndex = new string[abilityCount];
 
         // slots

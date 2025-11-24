@@ -28,6 +28,8 @@ public sealed class MLAgentController : Agent
     private OfferProvider _offers;
     private PlayerAgent _pa;        // reused for obs + offer build bridge
 
+    GameActions gameActions => _gs.gameActions;
+
     // Offer buffers (capacity = hub.agent.maxOffersToConsider)
     private Game.Core.Action[] _actions;
     private float[] _quoted;
@@ -226,9 +228,12 @@ public sealed class MLAgentController : Agent
                 return _bm.DistToVictoryPoint(a.srcCell);
             case ActionKind.CaptureVP:
             case ActionKind.Create:
+            case ActionKind.GroupBuild:
+            case ActionKind.Upgrade:
                 return _bm.DistToVictoryPoint(a.dstCell);
             case ActionKind.Shoot:
             case ActionKind.CoreDamage:
+            case ActionKind.Push:
                 return _bm.DistToVictoryPoint(a.srcCell);
             default:
                 return int.MaxValue / 4;
@@ -243,9 +248,14 @@ public sealed class MLAgentController : Agent
             case ActionKind.Move:
             case ActionKind.CaptureVP:
             case ActionKind.Create:
+            case ActionKind.GroupBuild:
+            case ActionKind.Upgrade:
+            case ActionKind.Spawner:
                 return _bm.DistToVictoryPoint(a.dstCell);
             case ActionKind.Shoot:
             case ActionKind.CoreDamage:
+            case ActionKind.Push:
+            case ActionKind.Launcher:
                 return _bm.DistToVictoryPoint(a.srcCell);
             default:
                 return int.MaxValue / 4;
@@ -282,7 +292,9 @@ public sealed class MLAgentController : Agent
     private int BuildOffersForCurrentPlayer()
     {
         // Build OfferQuery: (bm, pcs, ps, playerId, cost)
-        var q = new OfferQuery(_bm, _pcs, _gs.CurrentPlayerRef, playerId, _cost, _gs.PieceLimitEnabled, _gs.pieceLimitPerPlayer);
+        gameActions.GetMultiCreateState(out bool mcActive, out byte mcType, out bool mcBorder, out int mcRemaining, out int[] mcCells, out int mcCellCount);
+        var q = new OfferQuery(_bm, _pcs, _gs.CurrentPlayerRef, playerId, _cost, _gs.PieceLimitEnabled, _gs.pieceLimitPerPlayer,
+            mcActive, mcType, mcBorder, mcRemaining, mcCells, mcCellCount);
 
         var acts = _actions.AsSpan();
         var costs = _quoted.AsSpan();
@@ -326,9 +338,12 @@ public sealed class MLAgentController : Agent
             case ActionKind.Move:
             case ActionKind.CaptureVP:
             case ActionKind.Create:
+            case ActionKind.GroupBuild:
+            case ActionKind.Upgrade:
                 return _bm.DistToVictoryPoint(a.dstCell);
             case ActionKind.Shoot:
             case ActionKind.CoreDamage:
+            case ActionKind.Push:
                 return _bm.DistToVictoryPoint(a.srcCell);
             default:
                 return int.MaxValue / 4;

@@ -41,11 +41,18 @@ public sealed class CostEngine
         }
 
 
-        // Build cost: only for Create actions.
+        // Build cost: Create or Spawner actions.
         int buildCost = 0;
         if (a.kind == ActionKind.Create)
         {
             buildCost = pcs.GetBuildCost(a.pieceType); // new accessor on Pieces
+        }
+        else if (a.kind == ActionKind.Spawner && abilityId >= 0)
+        {
+            int targetType = (abilityId < pcs.spawn_targetType.Length) ? pcs.spawn_targetType[abilityId] : -1;
+            int amount = (abilityId < pcs.spawn_pieceAmount.Length) ? pcs.spawn_pieceAmount[abilityId] : 0;
+            if (targetType >= 0 && amount > 0)
+                buildCost = pcs.GetBuildCost((byte)targetType) * amount;
         }
 
 
@@ -59,12 +66,6 @@ public sealed class CostEngine
     public bool IsAffordable(in PlayerState cur, in Action a, in BoardModel b, in Pieces pcs, out float quoted)
     {
         // EndTurn is always free & affordable (never blocked)
-        if (a.kind == ActionKind.EndTurn)
-        {
-            quoted = 0;
-            return true;
-        }
-
         if (a.kind == ActionKind.EndTurn)
         {
             quoted = 0;
@@ -128,6 +129,12 @@ public sealed class CostEngine
             abilityCost = pcs.AbilitySurcharge(abilityId, applyBotSurcharges: cur.applyBotSurcharges);
         // Build cost (Create only)
         int buildCost = (a.kind == ActionKind.Create) ? pcs.GetBuildCost(a.pieceType) : 0;
+        if (a.kind == ActionKind.Spawner && abilityId >= 0)
+        {
+            int targetType = (abilityId < pcs.spawn_targetType.Length) ? pcs.spawn_targetType[abilityId] : -1;
+            int amount = (abilityId < pcs.spawn_pieceAmount.Length) ? pcs.spawn_pieceAmount[abilityId] : 0;
+            if (targetType >= 0 && amount > 0) buildCost = pcs.GetBuildCost((byte)targetType) * amount;
+        }
         return new CostBreakdown(turnFee, abilityCost, buildCost);
     }
 

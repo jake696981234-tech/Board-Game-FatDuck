@@ -1,17 +1,24 @@
 using UnityEngine;
 using System;
+using static Game.Core.ActionKind;
+
 
 public class EventManager
 {
     #region GameActions 
     //experimental new event system
 
-    public event Action<pieceKilled> ActionLogRequested;
+    public event Action<int> PieceKilled;
+
+    public void RaisePieceKilled(int victimID)
+    {
+        PieceKilled?.Invoke(victimID);
+    }
 
 
 
 
-
+    #endregion
     #region DBLogging Events
     public readonly struct ActionLogEvent
     {
@@ -144,3 +151,4 @@ public class EventManager
 
 
 }
+

@@ -86,6 +86,14 @@ public sealed class DumbGregBotPolicy : IBotPolicy
             return bestShootIdx;
         }
 
+        // ===== Tier 5: Push (gated) =====
+        int pushIdx = FindBestByCost(acts, costs, mask, ActionKind.Push);
+        if (pushIdx >= 0)
+        {
+            if (!firstAction && Chance(_pctEndTurnAfterFirst) && endIdx >= 0) return endIdx;
+            return pushIdx;
+        }
+
         // ===== Tier 5: Create (gated) =====
         int createPick = PickCreateBiased(q, acts, costs, mask, preferNonBuilding: true);
         if (createPick >= 0)

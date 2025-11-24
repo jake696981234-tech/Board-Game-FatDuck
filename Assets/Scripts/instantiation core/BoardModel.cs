@@ -10,7 +10,7 @@ using System.Runtime.CompilerServices;
 /// - Stores only anchors (VP cell, per-player core cells), occupancy, and dense piece tables.
 /// - Geometry is injected (BoardGeometry) for zero-alloc neighbors/distance/LOS. 
 /// </summary>
-public sealed class BoardModel
+public partial class BoardModel
 {
     // ---------- Immutable board constants (set once at Init) ----------
     private int _radius;
@@ -39,6 +39,8 @@ public sealed class BoardModel
     public int[] pieceCellId;  // [pieceId] -> cellId
     public byte[] pieceType;    // [pieceId] -> type index (semantics live in Pieces.cs)
     public short[] pieceHP;      // [pieceId] -> hp (unit/building maxHP comes from Pieces.cs)
+    public byte[] pieceConnectorConfig; // [pieceId] -> connector configuration index (0-63) if hasConnectors, else 0
+    public int[]  pieceCapitalHP;       // [pieceId] -> current capital HP buff (0 if none)
 
     // ---------- Optional hook from Pieces (perf helper) ----------
     public Func<byte, bool> IsBuildingType;
@@ -52,34 +54,34 @@ public sealed class BoardModel
     /// This allocates occupancy and piece columns, but does NOT set any VP/core HP.
     /// (GameState will seed/own live match counters.)
     /// </summary>
-// BoardModel.cs
-public void Init(in BoardGeometry geometry, in GameConfigHub hub, int playerCount, int initialPieceCapacity = 8, int[] coreCellIdOverride = null)
-{
-    // store snapshots
-    geo = geometry;
-    _radius    = hub.board_radius;
-    _cellCount = hub.board_totalCells;
-    _invalidId = hub.board_invalidCellId;
-    _vpCellId  = hub.board_vpCellId;
-    _coreCellIdByPlayer = coreCellIdOverride != null
-        ? (int[])coreCellIdOverride.Clone()
-        : (int[])hub.board_coreCellIdByPlayer.Clone();
-    
-    occupantPieceId = new int[_cellCount];
-    for (int i = 0; i < _cellCount; i++) occupantPieceId[i] = _invalidId;
+    // BoardModel.cs
+    public void Init(in BoardGeometry geometry, in GameConfigHub hub, int playerCount, int initialPieceCapacity = 8, int[] coreCellIdOverride = null)
+    {
+        // store snapshots
+        geo = geometry;
+        _radius = hub.board_radius;
+        _cellCount = hub.board_totalCells;
+        _invalidId = hub.board_invalidCellId;
+        _vpCellId = hub.board_vpCellId;
+        _coreCellIdByPlayer = coreCellIdOverride != null
+            ? (int[])coreCellIdOverride.Clone()
+            : (int[])hub.board_coreCellIdByPlayer.Clone();
 
-    // inside BoardModel.Init(...)
-    occupantPieceId = new int[_cellCount];
-    for (int i = 0; i < _cellCount; i++) occupantPieceId[i] = _invalidId;
+        occupantPieceId = new int[_cellCount];
+        for (int i = 0; i < _cellCount; i++) occupantPieceId[i] = _invalidId;
+
+        // inside BoardModel.Init(...)
+        occupantPieceId = new int[_cellCount];
+        for (int i = 0; i < _cellCount; i++) occupantPieceId[i] = _invalidId;
 
 
         // allocate occupancy & pieces as before, using initialPieceCapacity
         EnsurePieceCapacity(Math.Max(1, initialPieceCapacity));
-    EnsureScratchAllocated();
+        EnsureScratchAllocated();
 
-    // Precompute distance map from the configured VP cell for fast lookups
-    _distFromVP = ComputeDistFromCell(_vpCellId);
-}
+        // Precompute distance map from the configured VP cell for fast lookups
+        _distFromVP = ComputeDistFromCell(_vpCellId);
+    }
 
 
     // =====================================================================
@@ -115,6 +117,12 @@ public void Init(in BoardGeometry geometry, in GameConfigHub hub, int playerCoun
 
     public byte GetPieceType(int pieceId)
         => (IsValidPieceId(pieceId) && pieceType != null) ? pieceType[pieceId] : (byte)0;
+
+    public int GetNeighborCell(int cellId, int dir)
+    {
+        if (!IsValidCellId(cellId) || (uint)dir >= 6) return _invalidId;
+        return geo.neighborsById[cellId][dir];
+    }
 
     public int GetVictoryPointCellId() => _vpCellId; // The Places that refrence this can should refrence the struct directly
 
@@ -251,6 +259,8 @@ public void Init(in BoardGeometry geometry, in GameConfigHub hub, int playerCoun
         Array.Resize(ref pieceCellId, newCap);
         Array.Resize(ref pieceType, newCap);
         Array.Resize(ref pieceHP, newCap);
+        Array.Resize(ref pieceConnectorConfig, newCap);
+        Array.Resize(ref pieceCapitalHP, newCap);
         pieceCapacity = newCap;
     }
 
@@ -281,6 +291,8 @@ public void Init(in BoardGeometry geometry, in GameConfigHub hub, int playerCoun
             pieceCellId[pieceId] = pieceCellId[last];
             pieceType[pieceId] = pieceType[last];
             pieceHP[pieceId] = pieceHP[last];
+            pieceConnectorConfig[pieceId] = pieceConnectorConfig[last];
+            pieceCapitalHP[pieceId] = pieceCapitalHP[last];
 
             int movedCell = pieceCellId[pieceId];
             if (IsValidCellId(movedCell)) occupantPieceId[movedCell] = pieceId;
@@ -297,6 +309,8 @@ public void Init(in BoardGeometry geometry, in GameConfigHub hub, int playerCoun
         pieceCellId[pieceId] = cellId;
         if (hp < 0) hp = 0;
         pieceHP[pieceId] = hp; // clamp to type maxHP happens in GameState via Pieces metadata, if needed
+        pieceConnectorConfig[pieceId] = 0;
+        pieceCapitalHP[pieceId] = 0;
         if (IsValidCellId(cellId)) occupantPieceId[cellId] = pieceId;
     }
 
@@ -470,7 +484,7 @@ public void Init(in BoardGeometry geometry, in GameConfigHub hub, int playerCoun
         return true;
     }
 
-    
+
     /// <summary>
     /// Among the 6 neighbors of <paramref name="centerCell"/>, returns the empty cell that is
     /// closest (by hex distance) to <paramref name="originCell"/>. Ties break by smaller cellId.
@@ -580,9 +594,10 @@ public void Init(in BoardGeometry geometry, in GameConfigHub hub, int playerCoun
     }
 
 
+
 }
-    public static class GameStateUtilities
-    {
+public static class GameStateUtilities
+{
     /// <summary>
     /// Removes all Soldiers (i.e., pieces where Pieces.IsBuilding(type) == false).
     /// Returns the number of rows removed. Uses swap-back to stay O(n).

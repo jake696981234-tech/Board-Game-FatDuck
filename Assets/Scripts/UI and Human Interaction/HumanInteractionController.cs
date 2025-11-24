@@ -530,12 +530,12 @@ public sealed class HumanInteractionController : MonoBehaviour
             costEngine,
             gameState.PieceLimitEnabled,
             gameState.pieceLimitPerPlayer,
-            gameState.MultiCreateActive,
-            gameState.MultiCreateType,
-            gameState.MultiCreateRequireBorder,
-            gameState.MultiCreateRemaining,
-            gameState.MultiCreateCells,
-            gameState.MultiCreateCellCount
+            gameActions.multiCreateActive,
+            gameActions.multiCreateType,
+            gameActions.multiCreateBorder,
+            gameActions.multiCreateRemaining,
+            gameActions.multiCreateCells.ToArray(),
+            gameActions.MultiCreateCellCount
         );
 
         // Fill the spans (zero-alloc path in OfferProvider). Function returns TOTAL (may exceed cap). :contentReference[oaicite:7]{index=7}

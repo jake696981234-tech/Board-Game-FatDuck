@@ -14,6 +14,8 @@ public class GameController : MonoBehaviour
 
     public EventManager eventManager;
 
+    public GameActions gameActions;
+
     public bool inspectGame = false;
 
     private int _completedGamesCount = 0;
@@ -108,6 +110,7 @@ public class GameController : MonoBehaviour
         }
 
         gameState = new Game.Core.GameState();
+        gameActions = new GameActions();
 
 
         if (inspectGame && config.dbLogging.enabled)
@@ -170,7 +173,7 @@ public class GameController : MonoBehaviour
                         else { policy = new HeuristicPolicy(); }
 
 
-                        agent.Init(in gameBootstrapper.hub, gameState, board, GameBootstrapper.PiecesData, gameBootstrapper.cost, gameBootstrapper.offers, policy);
+                        agent.Init(in gameBootstrapper.hub, gameState, board, GameBootstrapper.PiecesData, gameBootstrapper.cost, gameBootstrapper.offers, gameActions, policy);
                         agent.BindSeat(seat); // (see tiny method below)
                         heuristicControllers[seat] = agent;
                         break;
@@ -217,7 +220,7 @@ public class GameController : MonoBehaviour
 
                         paBridge.BindSeat(seat);
 
-                        paBridge.Init(in gameBootstrapper.hub, gameState, board, GameBootstrapper.PiecesData, gameBootstrapper.cost, gameBootstrapper.offers);
+                        paBridge.Init(in gameBootstrapper.hub, gameState, board, GameBootstrapper.PiecesData, gameBootstrapper.cost, gameBootstrapper.offers, gameActions);
 
                         // Wire everything into the ML controller
 
@@ -233,8 +236,8 @@ public class GameController : MonoBehaviour
 
         }
 
-        gameState.Initialize(in gameBootstrapper.hub, board, GameBootstrapper.PiecesData, gameBootstrapper.cost, ps, startingPlayer, eventManager, this);
-
+                gameActions.Initialize(board, GameBootstrapper.PiecesData, gameState, eventManager, this);
+        gameState.Initialize(in gameBootstrapper.hub, board, GameBootstrapper.PiecesData, gameBootstrapper.cost, ps, startingPlayer, eventManager, this, gameActions);
 
         if (inspectGame)
         {
@@ -365,7 +368,8 @@ public class GameController : MonoBehaviour
             }
 
             // Reset GameState (reuse same instance so controllers keep references)
-            gameState.Initialize(in gameBootstrapper.hub, board, GameBootstrapper.PiecesData, gameBootstrapper.cost, ps, startingPlayer, eventManager, this);
+            gameState.Initialize(in gameBootstrapper.hub, board, GameBootstrapper.PiecesData, gameBootstrapper.cost, ps, startingPlayer, eventManager, this, gameActions);
+            gameActions.Initialize(board, GameBootstrapper.PiecesData, gameState, eventManager, this);
 
             if (inspectGame)
             {

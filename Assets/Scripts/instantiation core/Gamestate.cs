@@ -5,80 +5,49 @@ using System.Collections.Generic;
 
 namespace Game.Core
 {
-
     // Deterministic, allocation-free mutation entrypoint for Phase A.
     // Aligns with Pieces.AbilityKind (incl. CoreDamage), pricing-only CostEngine,
-    // and read-only OfferProvider. All state mutations happen here.
-
-
-
+    // and read-only OfferProvider. All state mutations happen through here.
     public sealed partial class GameState
     {
-        // === Phase B: notify views when the world actually changed ===
+        #region Class's Refrences
         public event System.Action OnActionExecuted;
 
         private GameConfigHub hub;
 
-        private int currentCenterVP;             // was BM.currentCenterCellVictoryPointAmount
-        private int[] currentCoreHealthByPlayer;   // was BM.currentCoreHealthByPlayer
-
-        // simple accessors (optional)
-
-
-        public void SetCoreHealth(byte player, int hp) // clamps by hub caps
-        {
-            if (hp < 0) hp = 0;
-            if (hp > hub.cap_maxCoreHealth) hp = hub.cap_maxCoreHealth;
-            currentCoreHealthByPlayer[player] = hp;
-        }
-
-        public void AddCenterVictoryPoints(int delta)
-        {
-            int v = currentCenterVP + delta;
-            if (v < 0) v = 0;
-            if (v > hub.cap_maxVPPool) v = hub.cap_maxVPPool;
-            currentCenterVP = v;
-        }
-
-        public void ResetCenterVictoryPointsToStart() => currentCenterVP = hub.match_startCenterVP;
-
-        public void ResetAllCoreHealthToStart()
-        {
-            for (byte p = 0; p < currentCoreHealthByPlayer.Length; p++)
-                currentCoreHealthByPlayer[p] = hub.match_startCoreHp;
-        }
-
-
-
-
-
-        // --- Match result (Phase A) ---
-        private bool isGameOver;
-        private byte winner; // 0..3; 255 = none/draw
-
-        // Injected
         private BoardModel bm;
         private Pieces pcs;
         private CostEngine cost;
         private GameController controller;
 
+        public GameActions gameActions;
+
         private EventManager events;
 
-        // Match state
+
+        #endregion
+
+
+        #region Match state values
         public PlayerState[] ps;      // length 4
-        private byte currentPlayer;    // 0..3
+        public byte currentPlayer;    // 0..3
         private int roundsLeft;
+        private bool isGameOver;
+        private byte winner; // 0..3; 255 = none/draw
+        public int currentRoundNumber = 1;
 
+        private int currentCenterVP;             // was BM.currentCenterCellVictoryPointAmount
+        private int[] currentCoreHealthByPlayer;   // was BM.currentCoreHealthByPlayer
 
-
-        /// start
+        #endregion
+        #region Initialize Method
 
         public void Initialize(in GameConfigHub hub,
                        BoardModel board,
                        Pieces pieces,
                        CostEngine pricing,
                        PlayerState[] players,
-                       byte startingPlayer, EventManager eventManager, GameController gameController)
+                       byte startingPlayer, EventManager eventManager, GameController gameController, GameActions theGameActions)
         {
             this.hub = hub;
             bm = board;
@@ -86,6 +55,7 @@ namespace Game.Core
             cost = pricing;
             events = eventManager;
             controller = gameController;
+            gameActions = theGameActions;
 
             ps = players;
             currentPlayer = startingPlayer;
@@ -120,21 +90,26 @@ namespace Game.Core
             BeginTurn();
         }
 
-
-
-
+        #endregion
+        #region The Action method
         public bool Perform(in Action a)
         {
             ref var cur = ref ps[currentPlayer];
 
             if (!FastCheck(a)) return false;
-            if (!IsStillLegal(in a, currentPlayer)) return false;
+            if (!gameActions.IsStillLegal(in a, currentPlayer)) return false;
 
             CostEngine.CostBreakdown quote = default;
-            if (a.kind != EndTurn)
+            bool isMultiPlacement = gameActions.multiCreateActive && a.kind == Create && a.pieceType == gameActions.multiCreateType;
+
+            if (a.kind != EndTurn && !isMultiPlacement)
             {
                 if (!cost.IsAffordable(cur, a, bm, pcs, out quote))
                     return false;
+            }
+            else
+            {
+                quote = default;
             }
 
 
@@ -179,23 +154,39 @@ namespace Game.Core
 
             switch (a.kind)
             {
-                case Move: ApplyMove(in a, currentPlayer); break;
-                case Shoot: ApplyShoot(in a, currentPlayer); break;
+                case Move: gameActions.ApplyMove(in a, currentPlayer); break;
+                case Shoot: gameActions.ApplyShoot(in a, currentPlayer); break;
                 case Create:
-                    if (controller.PieceLimitEnabled && controller.PieceLimitPerPlayer > 0 &&
-                        bm.GetPieceCountForPlayer(currentPlayer) >= controller.PieceLimitPerPlayer)
-                        return false;
-                    ApplyCreate(in a, currentPlayer);
+                    if (gameActions.multiCreateActive && a.pieceType == gameActions.multiCreateType)
+                    {
+                        gameActions.ApplyMultiCreatePlacement(in a, currentPlayer);
+                    }
+                    else
+                    {
+                        if (controller.PieceLimitEnabled && controller.PieceLimitPerPlayer > 0 &&
+                            bm.GetPieceCountForPlayer(currentPlayer) >= controller.PieceLimitPerPlayer)
+                            return false;
+                        gameActions.ApplyCreate(in a, currentPlayer);
+                    }
                     break;
-                case CaptureVP: ApplyCaptureVP(in a, currentPlayer); break; // sets flags + VP counters + vpPool
-                case CoreDamage: ApplyCoreDamage(in a, currentPlayer); break; // sets flag + damages enemy core + elim check
+                case Push: gameActions.ApplyPush(in a, currentPlayer); break;
+                case Upgrade: gameActions.ApplyUpgrade(in a, currentPlayer); break;
+                case Launcher: gameActions.ApplyLauncher(in a, currentPlayer); break;
+                case Spawner: gameActions.ApplySpawner(in a, currentPlayer); break;
+                case GroupBuild: gameActions.ApplyGroupBuild(in a, currentPlayer); break;
+                case CaptureVP: gameActions.ApplyCaptureVP(in a, currentPlayer); break; // sets flags + VP counters + vpPool
+                case CoreDamage: gameActions.ApplyCoreDamage(in a, currentPlayer); break; // sets flag + damages enemy core + elim check
                 case EndTurn: ApplyEndTurn(); break; // unreachable due to early return above
                 default: return false;
             }
 
             // For non-EndTurn actions, apply costs and advance index
-            cur.AddBudget(-(float)quote.Total);
-            cur.AdvanceActionIndex();
+            bool skipCost = gameActions.multiCreateActive && a.kind == Create && a.pieceType == gameActions.multiCreateType;
+            if (!skipCost)
+            {
+                cur.AddBudget(-(float)quote.Total);
+                cur.AdvanceActionIndex();
+            }
 
 
             // Map DB fields so that actionCost == growth-based turn fee (from actionGrowthFactor)
@@ -243,347 +234,53 @@ namespace Game.Core
         }
 
 
-        // --- Current player read-only accessors (no duplication) ---
-        public byte CurrentPlayerId => currentPlayer;
-        public float CurrentBudget => ps[currentPlayer].budget;
-        public byte CurrentActionIndex => ps[currentPlayer].actionIndexThisTurn;
-        public bool CurrentDidCaptureVP => ps[currentPlayer].didCaptureVP;
-        public bool CurrentDidCoreDamage => ps[currentPlayer].didCoreDamage;
-        public ref readonly PlayerState CurrentPlayerRef => ref ps[currentPlayer];
-        public bool CanCurrentAfford(in Action a, out float quoted)
-            => cost.IsAffordable(ps[currentPlayer], a, bm, pcs, out quoted);
-
-        // --- Minimal read-only surface for agents/UI ---
-        public int RoundsLeft => roundsLeft;
-        public bool IsGameOver => isGameOver;   // requires fields existing in your GameState
-        public byte Winner => winner;       // 0..3 or 255 for draw/no winner
-
-        public int GetCenterVP() => currentCenterVP;
-
-        public int GetCoreHealth(byte player) => currentCoreHealthByPlayer[player];
-
-        public int GetVP(byte player) => ps[player].vpTotal;
-
-        public float GetBudget(byte player) => ps[player].budget;
-
-
-        public bool PieceLimitEnabled => controller.PieceLimitEnabled;
-
-        public int pieceLimitPerPlayer => controller.PieceLimitPerPlayer;
-
-
-        // ------------------------ Counters for SQL logging ------------------------
-        //These counters are for SQL logging- remove this line if you want to use them gamelogic.
-        private int turnOrdinal = 0;
-
-        // Store all player ordinals in one array
-        private int[] playerTurnOrdinals = new int[4];  // automatically initialized to 0
-
-        private int getPlayerTurnOrdinal()
-        {
-            if (currentPlayer >= 0 && currentPlayer < playerTurnOrdinals.Length)
-                return playerTurnOrdinals[currentPlayer];
-
-            Debug.LogError("PlayerTurnOrdinal out of range");
-            return -1;
-        }
-
-        private void incrementPlayerTurnOrdinal()
-        {
-            if (currentPlayer >= 0 && currentPlayer < playerTurnOrdinals.Length)
-                playerTurnOrdinals[currentPlayer]++;
-            else
-                Debug.LogError("PlayerTurnOrdinal increment out of range");
-        }
-
-
-
-
-
-
-
-        private struct TurnStartSnap
-        {
-            public int digitsStart;
-            public int piecesStart;
-        }
-        private TurnStartSnap[] tStart = new TurnStartSnap[4];
-        private int CountDigits(byte p)
-        {
-            var drc = ps[p].digitRefCount;
-            if (drc == null) return 0;
-            int total = 0;
-            for (int i = 0; i < PlayerState.MAX_DIGITS; i++)
-                if (drc[i] > 0) total++;
-            return total;
-        }
-
-        private int CountPiecesOnBoard(byte p)
-        {
-            int count = 0;
-            for (int pid = 0; pid < bm.pieceCount; pid++)
-                if (bm.pieceOwner[pid] == p)
-                    count++;
-            return count;
-        }
-
-
-        // ---- Geometry-free snapshots for analytics/logging ----
-        private static Dictionary<(int owner, int type), int> SnapshotOwnerTypeCounts(BoardModel bm)
-        {
-            var map = new Dictionary<(int, int), int>(32);
-            for (int pid = 0; pid < bm.pieceCount; pid++)
-            {
-                int owner = bm.pieceOwner[pid];
-                int type = bm.pieceType[pid];
-                var key = (owner, type);
-                map.TryGetValue(key, out var c);
-                map[key] = c + 1;
-            }
-            return map;
-        }
-
-        private static int[] SnapshotCoreHP(GameState gs)
-        {
-            var hp = new int[4];
-            for (byte p = 0; p < 4; p++) hp[p] = gs.GetCoreHealth(p);
-            return hp;
-        }
-
-        private static int? PickTargetPlayer(Dictionary<(int owner, int type), int> losses, int[] coreBefore, int[] coreAfter)
-        {
-            // Prefer any player whose core HP dropped
-            if (coreBefore != null && coreAfter != null)
-            {
-                int n = System.Math.Min(coreBefore.Length, coreAfter.Length);
-                for (int p = 0; p < n; p++) if (coreAfter[p] < coreBefore[p]) return p;
-            }
-            // Else owner with max piece losses
-            int bestOwner = -1, bestLoss = 0;
-            if (losses != null)
-            {
-                foreach (var kv in losses)
-                    if (kv.Value > bestLoss) { bestLoss = kv.Value; bestOwner = kv.Key.owner; }
-            }
-            return (bestLoss > 0) ? bestOwner : (int?)null;
-        }
-
-
-
-
-
-
-        // ------------------------ Legality recheck ------------------------
-        private bool IsStillLegal(in Action a, byte p)
-        {
-            // EndTurn: always structurally legal
-            if (a.kind == EndTurn) return true;
-
-            // Plan-B: Create has no actor/slot/ability; structural rule only
-            if (a.kind == Create)
-            {
-                // cell must be empty
-                if (bm.GetCellOccupant(a.dstCell) >= 0) return false;
-
-                // geometry: on core OR adjacent to core OR adjacent to any of your buildings
-                bool geomOk = false;
-                int core = bm.GetPlayerCoreCellId(p);
-                if (a.dstCell == core) { geomOk = true; }
-                if (!geomOk)
-                {
-                    var scratch = bm.GetScratchCellBuffer();
-                    int n = bm.GetNeighbors(core, scratch);
-                    for (int i = 0; i < n; i++) { if (scratch[i] == a.dstCell) { geomOk = true; break; } }
-                }
-                if (!geomOk)
-                {
-                    var scratch2 = bm.GetScratchCellBuffer();
-                    int n2 = bm.GetNeighbors(a.dstCell, scratch2);
-                    for (int i = 0; i < n2; i++)
-                    {
-                        int nb = scratch2[i];
-                        int pid = bm.GetCellOccupant(nb);
-                        if (pid < 0) continue;
-                        if (bm.GetPieceOwner(pid) != p) continue;
-                        byte t = bm.GetPieceType(pid);
-                        if (pcs.IsBuilding(t)) { geomOk = true; break; }
-                    }
-                }
-                if (!geomOk) return false;
-
-                // parity with OfferProvider: buildable flag + required digit gate
-                if (!pcs.IsBuildable(a.pieceType)) return false;
-                int req = pcs.GetRequiredDigit(a.pieceType);
-                if (req >= 0 && !ps[p].HasDigit(req)) return false;
-                return true;
-            }
-
-            // Non-Create actions (Move/Shoot/CaptureVP/CoreDamage) – old path:
-            int actorPid = bm.GetCellOccupant(a.srcCell);
-            if (actorPid < 0) return false;
-            if (bm.GetPieceOwner(actorPid) != p) return false;
-
-            byte type = bm.GetPieceType(actorPid);
-            if (a.abilitySlot >= pcs.AbilitySlotCount(type)) return false;
-
-            int abilityId = pcs.AbilityIdAtSlot(type, a.abilitySlot);
-            if (abilityId < 0) return false;
-
-            byte kind = pcs.GetAbilityKind(type, a.abilitySlot);
-            if (kind != a.kind) return false; // slot-kind drift guard
-
-            int[] targets = bm.GetScratchCellBuffer();
-            int count;
-            switch (a.kind)
-            {
-                case Move:
-                    count = pcs.GetLegalTargets_Move(bm, actorPid, abilityId, targets);
-                    return ContainsFirstN(targets, count, a.dstCell);
-                case Shoot:
-                    count = pcs.GetLegalTargets_Shoot(bm, actorPid, abilityId, targets);
-                    return ContainsFirstN(targets, count, a.aux /* targetPieceId */);
-                case CaptureVP:
-                    return pcs.IsLegal_CaptureVP(bm, actorPid, abilityId);
-                case CoreDamage:
-                    return pcs.IsLegal_CoreDamage(bm, actorPid, abilityId);
-                default:
-                    return false;
-            }
-        }
-
-
-
-
-
-        private static bool ContainsFirstN(int[] xs, int count, int value)
-        {
-            int n = (xs != null) ? Math.Min(count, xs.Length) : 0;
-            for (int i = 0; i < n; i++) if (xs[i] == value) return true;
-            return false;
-        }
-
 
         private bool FastCheck(in Action a)
         {
-            if (a.kind > EndTurn) return false;
+            if (a.kind > Spawner) return false;
             if (currentPlayer >= 4) return false;
             return true;
         }
 
-        // ----------------------------- Reducers -----------------------------
-        private void ApplyMove(in Action a, byte p)
+        #endregion
+        #region Game Loop
+
+        private void BeginTurn()
         {
-            int actorPid = bm.GetCellOccupant(a.srcCell);
-            if (actorPid < 0) return;
-            int dstOcc = bm.GetCellOccupant(a.dstCell);
-            if (dstOcc >= 0)
+            events.RaiseTurnPrep();
+            ps[currentPlayer].BeginTurnReset();
+            gameActions.spawnerUsedThisTurn.Clear();
+            gameActions.ResetMultiCreate();
+
+            turnOrdinal++;
+
+            if (turnOrdinal == 1)
             {
-                ResolveMelee(actorPid, dstOcc, in a);
+                gameActions.ApplyFactoryIncome();
+                currentRoundNumber++;
             }
-            else
-            {
-                bm.MovePieceRow(actorPid, a.dstCell);
-            }
-            //Debug log
+
+            tStart[currentPlayer].digitsStart = CountDigits(currentPlayer);
+            tStart[currentPlayer].piecesStart = CountPiecesOnBoard(currentPlayer);
+
+            if (ps[currentPlayer].applyStartOfTurnBudgetDecrease)
+                ps[currentPlayer].AddBudget(-(float)hub.match_startOfTurnBudgetDecrease);
+
+            // Refresh connector capital HP/state at start of turn
+            PiecesSides.RecomputeConnectorComponents(bm, pcs);
+
+            // Debug log
             if (GameEvents.enableDebugLogs)
             {
-                Debug.Log($"Player {p} is moving piece ID {actorPid} to cell {a.dstCell}.");
+                Debug.Log($"Begin turn for player {currentPlayer}");
             }
         }
-
-        private void ApplyShoot(in Action a, byte p)
-        {
-            int targetPid = a.aux;
-            if (targetPid < 0) return;
-            short dmg = GetAbilityDamage(in a);
-            bool killed = bm.DamagePieceRow(targetPid, dmg);
-            if (killed)
-            {
-                // Revoke digit from the defender's owner if this type granted one
-                int deadOwner = bm.GetPieceOwner(targetPid);
-                byte deadType = bm.GetPieceType(targetPid);
-                int g = pcs.GrantsDigit(deadType);
-                if (g >= 0) ps[deadOwner].RevokeDigit(g);
-                bm.FreeRowSwapBack(targetPid);
-            }
-            //Debug log
-            if (GameEvents.enableDebugLogs)
-            {
-                Debug.Log($"Player {p} is shooting piece ID {targetPid} for {dmg} damage. Killed: {killed}");
-            }
-        }
-
-        private void ApplyCreate(in Action a, byte p)
-        {
-            int pid = bm.AllocateRow();
-            bm.PlacePieceRow(pid, p, (byte)a.pieceType, a.dstCell, pcs.maxHPByType[a.pieceType]);
-            // Grant digit if this type provides one
-            int g = pcs.GrantsDigit((byte)a.pieceType);
-            if (g >= 0) ps[p].GrantDigit(g);
-
-            //Debug log
-            if (GameEvents.enableDebugLogs)
-            {
-                Debug.Log($"Player {p} is creating piece type {a.pieceType} at cell {a.dstCell}.");
-            }
-        }
-
-        private void ApplyCaptureVP(in Action a, byte p)
-        {
-            ps[p].OnCaptureVP();
-            AddCenterVictoryPoints(-1);   // pool now lives in GameState
-
-            // debug log
-            if (GameEvents.enableDebugLogs)
-            {
-                Debug.Log($"Player {p} is capturing a victory point. Center VP pool is now {currentCenterVP}.");
-            }
-        }
-
-
-
-
-
-
-        private void ApplyCoreDamage(in Action a, byte p)
-        {
-            ps[p].OnCoreDamage();
-
-
-
-            int actorPid = bm.GetCellOccupant(a.srcCell);
-            if (actorPid < 0) return;
-
-            int actorCell = bm.GetPieceCell(actorPid);
-            byte enemy = bm.OwnerOfCoreCell(actorCell);
-            if (enemy >= 4) return;
-
-            byte typ = bm.GetPieceType(actorPid);
-            int abi = pcs.AbilityIdAtSlot(typ, a.abilitySlot);
-            short dmg = (short)((abi >= 0 && abi < pcs.damage.Length) ? pcs.damage[abi] : 0);
-
-            int hp = GetCoreHealth(enemy);
-            SetCoreHealth(enemy, hp - dmg);
-            TryEliminatePlayer(enemy);
-
-            //Debug log
-            if (GameEvents.enableDebugLogs)
-            {
-                Debug.Log($"Player {p} is damaging player {enemy}'s core for {dmg} damage.");
-            }
-        }
-
-
-
-
-
-
-
 
         private void ApplyEndTurn()
         {
             // Player who just ended
             byte ended = currentPlayer;
+            gameActions.ResetMultiCreate();
 
             //Debug log
             if (GameEvents.enableDebugLogs)
@@ -636,42 +333,47 @@ namespace Game.Core
             }
         }
 
-
-        // --------------------------- Reducer helpers ---------------------------
-        public void ResolveMelee(int actorPid, int defenderPid, in Action a)
+        private void EndRound()
         {
-            short dmg = GetAbilityDamage(in a);
-            bool killed = bm.DamagePieceRow(defenderPid, dmg);
-            if (killed)
+
+            turnOrdinal = 0;
+            Array.Clear(playerTurnOrdinals, 0, playerTurnOrdinals.Length);
+            currentRoundNumber = Math.Max(1, currentRoundNumber); // ensure non-zero for next cycle
+
+            // 1) Purge temporary units (soldiers), keep buildings
+            GameStateUtilities.RemoveAllSoldiers(bm, pcs);
+
+            // 2) Refill center VP pool
+            ResetCenterVictoryPointsToStart();
+
+            // 3) Decrement rounds, clear counters and per-cycle flags
+            roundsLeft = Math.Max(0, roundsLeft - 1);
+
+            events.RaiseRoundLog();
+
+            for (int i = 0; i < 4; i++)
             {
-                // Revoke digit from the defender's owner if this type granted one
-                int deadOwner = bm.GetPieceOwner(defenderPid);
-                byte deadType = bm.GetPieceType(defenderPid);
-                int g = pcs.GrantsDigit(deadType);
-                if (g >= 0) ps[deadOwner].RevokeDigit(g);
-                bm.FreeRowSwapBack(defenderPid);
-                bm.MovePieceRow(actorPid, a.dstCell);
+                // payout uses each player's own round stats, not currentPlayer's
+                float payout =
+                    ps[i].vpGainedThisRound * hub.reward_budgetBonusForVP +
+                    ps[i].coreHitsThisRound * hub.reward_budgetBonusForCoreDamage +
+                    hub.match_startingBudgetPerPlayer;
+
+                ps[i].budget = payout;   // clamp if you wish via hub.cap_maxBudget
+                ps[i].ClearRoundCounters();
+                ps[i].endedWithoutActionThisCycle = false;
             }
-            else
-            {
-                int origin = a.srcCell;
-                int best = bm.FindNearestEmptyAdjacent(origin, bm.GetPieceCell(defenderPid));
-                if (best >= 0) bm.MovePieceRow(actorPid, best);
-            }
+
+            // 4) Victory check
+            FinalWinCheckByVP();
+
+            // 5) If game continues, begin next round on the already-selected currentPlayer
+            if (!isGameOver)
+                BeginTurn();
         }
 
-
-
-
-
-        public short GetAbilityDamage(in Action a)
-        {
-            int pid = bm.GetCellOccupant(a.srcCell);
-            byte typ = bm.GetPieceType(pid);
-            int abi = pcs.AbilityIdAtSlot(typ, a.abilitySlot);
-            return (short)((abi >= 0 && abi < pcs.damage.Length) ? pcs.damage[abi] : 0);
-        }
-
+        #endregion
+        #region Game Loop Helpers
 
         private byte NextAlivePlayerAfter(byte p)
         {
@@ -684,16 +386,12 @@ namespace Game.Core
         }
 
 
-
-
         public void TryEliminatePlayer(byte p)
         {
             if (p >= 4) return;
             if (GetCoreHealth(p) <= 0 /* && !bm.PlayerHasAnyBuilding(p) */)
                 ps[p].isEliminated = true;
         }
-
-
 
 
 
@@ -734,14 +432,6 @@ namespace Game.Core
 
             return allBudgetsZero || allEndedWithoutAction || othersRoundComplete;
         }
-
-
-
-
-
-
-
-
 
         private void FinalWinCheckByVP()
         {
@@ -795,71 +485,158 @@ namespace Game.Core
             }
         }
 
+        #endregion
+        #region Accessors
+        // --- Current player read-only accessors ---
+        public byte CurrentPlayerId => currentPlayer;
+        public float CurrentBudget => ps[currentPlayer].budget;
+        public byte CurrentActionIndex => ps[currentPlayer].actionIndexThisTurn;
+        public bool CurrentDidCaptureVP => ps[currentPlayer].didCaptureVP;
+        public bool CurrentDidCoreDamage => ps[currentPlayer].didCoreDamage;
+        public ref readonly PlayerState CurrentPlayerRef => ref ps[currentPlayer];
+        public bool CanCurrentAfford(in Action a, out float quoted)
+            => cost.IsAffordable(ps[currentPlayer], a, bm, pcs, out quoted);
 
 
-        private void BeginTurn()
+        // --- simple Accesors ---
+        public void SetCoreHealth(byte player, int hp) // clamps by hub caps
         {
-            events.RaiseTurnPrep();
-            ps[currentPlayer].BeginTurnReset();
+            if (hp < 0) hp = 0;
+            if (hp > hub.cap_maxCoreHealth) hp = hub.cap_maxCoreHealth;
+            currentCoreHealthByPlayer[player] = hp;
+        }
 
-            turnOrdinal++;
+        public void AddCenterVictoryPoints(int delta)
+        {
+            int v = currentCenterVP + delta;
+            if (v < 0) v = 0;
+            if (v > hub.cap_maxVPPool) v = hub.cap_maxVPPool;
+            currentCenterVP = v;
+        }
+
+        public void ResetCenterVictoryPointsToStart() => currentCenterVP = hub.match_startCenterVP;
+
+        public void ResetAllCoreHealthToStart()
+        {
+            for (byte p = 0; p < currentCoreHealthByPlayer.Length; p++)
+                currentCoreHealthByPlayer[p] = hub.match_startCoreHp;
+        }
+
+        // --- Minimal read-only surface for agents/UI ---
+        public int RoundsLeft => roundsLeft;
+        public bool IsGameOver => isGameOver;   // requires fields existing in your GameState
+        public byte Winner => winner;       // 0..3 or 255 for draw/no winner
+
+        public int GetCenterVP() => currentCenterVP;
+
+        public int GetCoreHealth(byte player) => currentCoreHealthByPlayer[player];
+
+        public int GetVP(byte player) => ps[player].vpTotal;
+
+        public float GetBudget(byte player) => ps[player].budget;
 
 
-            tStart[currentPlayer].digitsStart = CountDigits(currentPlayer);
-            tStart[currentPlayer].piecesStart = CountPiecesOnBoard(currentPlayer);
+        public bool PieceLimitEnabled => controller.PieceLimitEnabled;
 
-            if (ps[currentPlayer].applyStartOfTurnBudgetDecrease)
-                ps[currentPlayer].AddBudget(-(float)hub.match_startOfTurnBudgetDecrease);
+        public int pieceLimitPerPlayer => controller.PieceLimitPerPlayer;
 
-            // Debug log
-            if (GameEvents.enableDebugLogs)
-            {
-                Debug.Log($"Begin turn for player {currentPlayer}");
-            }
+
+        #endregion
+
+        #region SQL Logging and UI
+
+        // ------------------------ Counters for SQL logging ------------------------
+        //These counters are for SQL logging- remove this line if you want to use them gamelogic.
+        private int turnOrdinal = 0;
+
+        // Store all player ordinals in one array
+        private int[] playerTurnOrdinals = new int[4];  // automatically initialized to 0
+
+        private int getPlayerTurnOrdinal()
+        {
+            if (currentPlayer >= 0 && currentPlayer < playerTurnOrdinals.Length)
+                return playerTurnOrdinals[currentPlayer];
+
+            Debug.LogError("PlayerTurnOrdinal out of range");
+            return -1;
+        }
+
+        private void incrementPlayerTurnOrdinal()
+        {
+            if (currentPlayer >= 0 && currentPlayer < playerTurnOrdinals.Length)
+                playerTurnOrdinals[currentPlayer]++;
+            else
+                Debug.LogError("PlayerTurnOrdinal increment out of range");
         }
 
 
-        private void EndRound()
+        private struct TurnStartSnap
         {
+            public int digitsStart;
+            public int piecesStart;
+        }
+        private TurnStartSnap[] tStart = new TurnStartSnap[4];
+        private int CountDigits(byte p)
+        {
+            var drc = ps[p].digitRefCount;
+            if (drc == null) return 0;
+            int total = 0;
+            for (int i = 0; i < PlayerState.MAX_DIGITS; i++)
+                if (drc[i] > 0) total++;
+            return total;
+        }
 
-            turnOrdinal = 0;
-            Array.Clear(playerTurnOrdinals, 0, playerTurnOrdinals.Length);
-
-            // 1) Purge temporary units (soldiers), keep buildings
-            GameStateUtilities.RemoveAllSoldiers(bm, pcs);
-
-            // 2) Refill center VP pool
-            ResetCenterVictoryPointsToStart();
-
-            // 3) Decrement rounds, clear counters and per-cycle flags
-            roundsLeft = Math.Max(0, roundsLeft - 1);
-
-            events.RaiseRoundLog();
-
-            for (int i = 0; i < 4; i++)
-            {
-                // payout uses each player's own round stats, not currentPlayer's
-                float payout =
-                    ps[i].vpGainedThisRound * hub.reward_budgetBonusForVP +
-                    ps[i].coreHitsThisRound * hub.reward_budgetBonusForCoreDamage +
-                    hub.match_startingBudgetPerPlayer;
-
-                ps[i].budget = payout;   // clamp if you wish via hub.cap_maxBudget
-                ps[i].ClearRoundCounters();
-                ps[i].endedWithoutActionThisCycle = false;
-            }
-
-            // 4) Victory check
-            FinalWinCheckByVP();
-
-            // 5) If game continues, begin next round on the already-selected currentPlayer
-            if (!isGameOver)
-                BeginTurn();
+        private int CountPiecesOnBoard(byte p)
+        {
+            int count = 0;
+            for (int pid = 0; pid < bm.pieceCount; pid++)
+                if (bm.pieceOwner[pid] == p)
+                    count++;
+            return count;
         }
 
 
+        // ---- Geometry-free snapshots for analytics/logging ----
+        public static Dictionary<(int owner, int type), int> SnapshotOwnerTypeCounts(BoardModel bm)
+        {
+            var map = new Dictionary<(int, int), int>(32);
+            for (int pid = 0; pid < bm.pieceCount; pid++)
+            {
+                int owner = bm.pieceOwner[pid];
+                int type = bm.pieceType[pid];
+                var key = (owner, type);
+                map.TryGetValue(key, out var c);
+                map[key] = c + 1;
+            }
+            return map;
+        }
+
+        private static int[] SnapshotCoreHP(GameState gs)
+        {
+            var hp = new int[4];
+            for (byte p = 0; p < 4; p++) hp[p] = gs.GetCoreHealth(p);
+            return hp;
+        }
+
+        private static int? PickTargetPlayer(Dictionary<(int owner, int type), int> losses, int[] coreBefore, int[] coreAfter)
+        {
+            // Prefer any player whose core HP dropped
+            if (coreBefore != null && coreAfter != null)
+            {
+                int n = System.Math.Min(coreBefore.Length, coreAfter.Length);
+                for (int p = 0; p < n; p++) if (coreAfter[p] < coreBefore[p]) return p;
+            }
+            // Else owner with max piece losses
+            int bestOwner = -1, bestLoss = 0;
+            if (losses != null)
+            {
+                foreach (var kv in losses)
+                    if (kv.Value > bestLoss) { bestLoss = kv.Value; bestOwner = kv.Key.owner; }
+            }
+            return (bestLoss > 0) ? bestOwner : (int?)null;
+        }
 
 
-
+        #endregion
     }
 }

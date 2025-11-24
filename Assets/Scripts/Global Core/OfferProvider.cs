@@ -28,6 +28,32 @@ public sealed class OfferProvider
         int write = 0;
         int total = 0;
 
+        // Multi-create pending: emit only placement actions
+        if (q.multiCreateActive && q.multiCreateRemaining > 0)
+        {
+            EmitMultiCreatePlacements(q, outActions, outCosts, outMask, ref write, ref total);
+            // Always offer EndTurn as escape hatch
+            var end = new Action
+            {
+                kind = EndTurn,
+                abilitySlot = 0,
+                pieceType = 0,
+                srcCell = 0xFFFF,
+                dstCell = 0,
+                aux = 0
+            };
+            if (write < outActions.Length)
+            {
+                outActions[write] = end;
+                outCosts[write] = 0f;
+                outMask[write] = 1;
+                write++;
+            }
+            total++;
+            ZeroTail(write, outCosts, outMask);
+            return total;
+        }
+
         int[] scratch = GetScratchCells(q.bm); // neighbor buffer, etc. (no allocs)
         int cellCount = GetCellCount(q.bm);
 
@@ -138,6 +164,99 @@ public sealed class OfferProvider
                     case Create:
                         // NOTE: Create via ability is intentionally ignored in favor of the global Create path below.
                         break;
+                    case Push:
+                        {
+                            int n = GetLegalTargets_Push(q.pcs, abilityId, q.bm, pieceId, scratch);
+                            for (int i = 0; i < n; i++)
+                            {
+                                int tgtPid = scratch[i];
+                                ushort dst = GetPieceCell(q.bm, tgtPid);
+                                var a = new Action
+                                {
+                                    kind = Push,
+                                    abilitySlot = (byte)slot,
+                                    pieceType = 0,
+                                    srcCell = (ushort)cell,
+                                    dstCell = dst,
+                                    aux = (ushort)tgtPid
+                                };
+                                Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask);
+                            }
+                            break;
+                        }
+                    case GroupBuild:
+                        {
+                            int tgtType = q.pcs.groupBuildTargetType[actorType];
+                            if (tgtType >= 0 && tgtType < q.pcs.typeCount)
+                            {
+                                int require = q.pcs.groupBuildRequireNumber[actorType];
+                                if (require > 1)
+                                {
+                                    // Cluster check
+                                    int clusterSize = CountClusterOfType(q.bm, actorType, cell);
+                                    if (clusterSize >= require)
+                                    {
+                                        // Enumerate legal create destinations for target type
+                                        EnumerateGroupBuildCreates(q, (byte)tgtType, cell, actorType, ref write, ref total, cap, outActions, outCosts, outMask);
+                                    }
+                                }
+                            }
+                            break;
+                        }
+                    case Upgrade:
+                        {
+                            if (q.pcs.upgradeEnabled[actorType])
+                            {
+                                int targetType = q.pcs.upgradeTargetType[actorType];
+                                if (targetType >= 0 && targetType < q.pcs.typeCount)
+                                {
+                                    // Digit/buildable gate for target type
+                                    if (q.pcs.IsBuildable((byte)targetType))
+                                    {
+                                        int reqDigit = q.pcs.GetRequiredDigit((byte)targetType);
+                                        if (reqDigit < 0 || q.ps.HasDigit(reqDigit))
+                                        {
+                                            var a = new Action
+                                            {
+                                                kind = Upgrade,
+                                                abilitySlot = (byte)slot,
+                                                pieceType = (byte)targetType,
+                                                srcCell = (ushort)cell,
+                                                dstCell = (ushort)cell,
+                                                aux = 0
+                                            };
+                                            Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask);
+                                        }
+                                    }
+                                }
+                            }
+                            break;
+                        }
+                    case Launcher:
+                        {
+                            int n = GetLegalTargets_Launcher(q.pcs, abilityId, q.bm, pieceId, scratch);
+                            for (int i = 0; i < n; i += 2)
+                            {
+                                int tgtPid = scratch[i];
+                                int dst = scratch[i + 1];
+                                var a = new Action
+                                {
+                                    kind = Launcher,
+                                    abilitySlot = (byte)slot,
+                                    pieceType = 0,
+                                    srcCell = (ushort)cell,
+                                    dstCell = (ushort)dst,
+                                    aux = (ushort)tgtPid
+                                };
+                                Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask);
+                            }
+                            break;
+                        }
+                    case Spawner:
+                        {
+                            EmitSpawnerActions(q, abilityId, pieceId, cell, slot, ref write, ref total, cap, outActions, outCosts, outMask);
+                            break;
+                        }
                     default:
                         break;
                 }
@@ -188,16 +307,43 @@ public sealed class OfferProvider
                                                                 // digitsRequired gate (Plan-B): skip if requirement exists and player lacks it
                     int req = q.pcs.GetRequiredDigit((byte)t);
                     if (req >= 0 && !q.ps.HasDigit(req)) continue;
-                    var a = new Action
+                    bool hasConn = q.pcs.HasConnectors((byte)t);
+                    ulong allowedMask = hasConn ? q.pcs.connectorAllowedMasks[t] : 0UL;
+                    if (hasConn && allowedMask == 0UL) continue;
+
+                    if (!hasConn)
                     {
-                        kind = Create,
-                        abilitySlot = 0,
-                        pieceType = (byte)t,
-                        srcCell = (ushort)0xFFFF, // sentinel no-actor
-                        dstCell = (ushort)cell,
-                        aux = 0
-                    };
-                    Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask);
+                        var a = new Action
+                        {
+                            kind = Create,
+                            abilitySlot = 0,
+                            pieceType = (byte)t,
+                            srcCell = (ushort)0xFFFF, // sentinel no-actor
+                            dstCell = (ushort)cell,
+                            aux = 0
+                        };
+                        Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask);
+                    }
+                    else
+                    {
+                        for (int cfg = 0; cfg < 64; cfg++)
+                        {
+                            if ((allowedMask & (1UL << cfg)) == 0) continue;
+                            if (!PiecesSides.IsConnectorPlacementLegal(q.bm, q.pcs, cell, (byte)t, cfg, q.playerId))
+                                continue;
+
+                            var a = new Action
+                            {
+                                kind = Create,
+                                abilitySlot = 0,
+                                pieceType = (byte)t,
+                                srcCell = (ushort)0xFFFF,
+                                dstCell = (ushort)cell,
+                                aux = (ushort)cfg // carry config index
+                            };
+                            Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask);
+                        }
+                    }
                 }
             }
         }
@@ -334,4 +480,436 @@ public sealed class OfferProvider
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int GetLegalTargets_Shoot(Pieces pcs, int abilityId, BoardModel bm, int actorPid, int[] outPieceIds)
         => pcs.GetLegalTargets_Shoot(bm, actorPid, abilityId, outPieceIds);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int GetLegalTargets_Push(Pieces pcs, int abilityId, BoardModel bm, int actorPid, int[] outPieceIds)
+    {
+        // Inline minimal legality similar to GameActions.GetLegalTargets_Push
+        int originCell = GetPieceCell(bm, actorPid);
+        if (originCell < 0) return 0;
+        if (abilityId < 0 ||
+            pcs.push_TargetsBuildings == null || pcs.push_TargetsSoldiers == null ||
+            pcs.push_rangeMax == null || pcs.push_FriendlyFire == null ||
+            abilityId >= pcs.push_TargetsBuildings.Length ||
+            abilityId >= pcs.push_TargetsSoldiers.Length ||
+            abilityId >= pcs.push_rangeMax.Length ||
+            abilityId >= pcs.push_FriendlyFire.Length)
+            return 0;
+
+        int actorOwner = GetPieceOwner(bm, actorPid);
+
+        bool allowBuildings = pcs.push_TargetsBuildings[abilityId];
+        bool allowSoldiers = pcs.push_TargetsSoldiers[abilityId];
+        int rangeMax = pcs.push_rangeMax[abilityId];
+        bool allowFriendly = pcs.push_FriendlyFire[abilityId];
+
+        int cap = outPieceIds != null ? outPieceIds.Length : 0;
+        int count = 0;
+        int cellCount = GetCellCount(bm);
+
+        for (int c = 0; c < cellCount; c++)
+        {
+            int pid = GetPieceAt(bm, c);
+            if (pid < 0) continue;
+
+            if (!allowFriendly && GetPieceOwner(bm, pid) == actorOwner) continue;
+
+            byte type = GetPieceType(bm, pid);
+            bool isBuilding = IsBuilding(pcs, type);
+            if (isBuilding && !allowBuildings) continue;
+            if (!isBuilding && !allowSoldiers) continue;
+
+            int dist = bm.Distance(originCell, c);
+            if (dist < 1 || dist > rangeMax) continue;
+            if (!bm.LineOfSightClear(originCell, c)) continue;
+
+            int pushDest = ComputePushDestination(bm, pcs, actorPid, pid, abilityId);
+            if (pushDest < 0 || !bm.IsValidCellId(pushDest)) continue;
+
+            if (count < cap) outPieceIds[count] = pid;
+            count++;
+        }
+
+        return count;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int GetLegalTargets_Launcher(Pieces pcs, int abilityId, BoardModel bm, int actorPid, int[] outPairs)
+    {
+        if (abilityId < 0 ||
+            pcs.launcher_inputRange == null || pcs.launcher_outputRange == null ||
+            pcs.launcher_friendlyFire == null || pcs.launcher_enemyFire == null)
+            return 0;
+
+        int inputRange = pcs.launcher_inputRange[abilityId];
+        int outputRange = pcs.launcher_outputRange[abilityId];
+        bool allowFriendly = pcs.launcher_friendlyFire[abilityId];
+        bool allowEnemy = pcs.launcher_enemyFire[abilityId];
+
+        int originCell = GetPieceCell(bm, actorPid);
+        if (originCell < 0) return 0;
+
+        int cap = outPairs != null ? outPairs.Length : 0;
+        int write = 0;
+
+        int cellCount = GetCellCount(bm);
+        int actorOwner = GetPieceOwner(bm, actorPid);
+
+        // Find candidate pieces
+        for (int c = 0; c < cellCount; c++)
+        {
+            int pid = GetPieceAt(bm, c);
+            if (pid < 0) continue;
+            byte owner = GetPieceOwner(bm, pid);
+            if (owner == actorOwner && !allowFriendly) continue;
+            if (owner != actorOwner && !allowEnemy) continue;
+
+            int distIn = bm.Distance(originCell, c);
+            if (distIn < 1 || distIn > inputRange) continue;
+            if (!bm.LineOfSightClear(originCell, c)) continue;
+
+            // For each candidate destination within outputRange from launcher
+            for (int dst = 0; dst < cellCount; dst++)
+            {
+                if (!bm.IsEmpty(dst)) continue;
+                int distOut = bm.Distance(originCell, dst);
+                if (distOut < 1 || distOut > outputRange) continue;
+                if (!bm.LineOfSightClear(originCell, dst)) continue;
+
+                if (write + 1 < cap)
+                {
+                    outPairs[write] = pid;
+                    outPairs[write + 1] = dst;
+                }
+                write += 2;
+            }
+        }
+
+        return write; // count of ints (pairs pid,dst)
+    }
+
+    private void EmitSpawnerActions(
+        in OfferQuery q,
+        int abilityId,
+        int actorPid,
+        int actorCell,
+        int abilitySlot,
+        ref int write,
+        ref int total,
+        int cap,
+        Span<Action> outActions,
+        Span<float> outCosts,
+        Span<byte> outMask)
+    {
+        if (abilityId < 0 ||
+            q.pcs.spawn_pieceAmount == null || q.pcs.spawn_range == null || q.pcs.spawn_targetType == null || q.pcs.spawn_onlyOncePerTurn == null)
+            return;
+
+        int amount = q.pcs.spawn_pieceAmount[abilityId];
+        int range = q.pcs.spawn_range[abilityId];
+        int targetType = q.pcs.spawn_targetType[abilityId];
+        bool once = q.pcs.spawn_onlyOncePerTurn[abilityId];
+        if (amount <= 0 || targetType < 0 || targetType >= q.pcs.typeCount) return;
+
+        // Digit gate; buildable override allowed
+        int reqDigit = q.pcs.GetRequiredDigit((byte)targetType);
+        if (reqDigit >= 0 && !q.ps.HasDigit(reqDigit)) return;
+
+        // Collect empty, LOS-valid cells within range from launcher
+        int[] empties = q.bm.GetScratchCellBuffer();
+        int eCount = 0;
+        int cellCount = GetCellCount(q.bm);
+        for (int c = 0; c < cellCount; c++)
+        {
+            if (!IsEmpty(q.bm, c)) continue;
+            int dist = q.bm.Distance(actorCell, c);
+            if (dist < 1 || dist > range) continue;
+            if (!q.bm.LineOfSightClear(actorCell, c)) continue;
+            empties[eCount++] = c;
+        }
+        if (eCount <= 0) return;
+        Array.Sort(empties, 0, eCount);
+
+        // Piece limit: allow as many as possible
+        int availableLimit = int.MaxValue;
+        if (q.pieceLimitEnabled && q.pieceLimitPerPlayer > 0)
+            availableLimit = q.pieceLimitPerPlayer - q.bm.GetPieceCountForPlayer(q.playerId);
+        int possible = Math.Min(amount, Math.Min(eCount, Math.Max(0, availableLimit)));
+        if (possible <= 0) return;
+
+        // Once-per-turn flag cannot be observed here; Perform will reject if already used.
+
+        var a = new Action
+        {
+            kind = Spawner,
+            abilitySlot = (byte)abilitySlot,
+            pieceType = (byte)targetType,
+            srcCell = (ushort)actorCell,
+            dstCell = (ushort)empties[0],
+            aux = 0
+        };
+        Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask);
+    }
+
+    private void EmitMultiCreatePlacements(
+        in OfferQuery q,
+        Span<Action> outActions,
+        Span<float> outCosts,
+        Span<byte> outMask,
+        ref int write,
+        ref int total)
+    {
+        int cap = outActions.Length;
+        int type = q.multiCreateType;
+        int remaining = q.multiCreateRemaining;
+        if (remaining <= 0) { ZeroTail(write, outCosts, outMask); return; }
+        var bm = q.bm;
+        var pcs = q.pcs;
+        int cellCount = GetCellCount(bm);
+        var placed = q.multiCreateCells;
+        int placedCount = q.multiCreateCellCount;
+
+        for (int cell = 0; cell < cellCount; cell++)
+        {
+            if (!IsEmpty(bm, cell)) continue;
+            if (q.pieceLimitEnabled && q.pieceLimitPerPlayer > 0 &&
+                bm.GetPieceCountForPlayer(q.playerId) + (write + 1) > q.pieceLimitPerPlayer)
+                break;
+
+            if (q.multiCreateBorder && placedCount > 0)
+            {
+                bool adjacent = false;
+                int[] neigh = GetScratchCells(bm);
+                int n = GetNeighbors(bm, cell, neigh);
+                for (int i = 0; i < n; i++)
+                {
+                    int nb = neigh[i];
+                    for (int j = 0; j < placedCount; j++)
+                    {
+                        if (placed != null && j < placed.Length && placed[j] == nb) { adjacent = true; break; }
+                    }
+                    if (adjacent) break;
+                }
+                if (!adjacent) continue;
+            }
+            else
+            {
+                if (!IsCreateGeometryLegal(bm, pcs, cell, q.playerId)) continue;
+            }
+            var a = new Action
+            {
+                kind = Create,
+                abilitySlot = 0,
+                pieceType = (byte)type,
+                srcCell = (ushort)0xFFFF,
+                dstCell = (ushort)cell,
+                aux = 0
+            };
+            Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask);
+            if (write >= remaining) break;
+        }
+    }
+
+    // ---- Push helpers (local copy of GameActions.ComputePushDestination) ----
+    private static int ComputePushDestination(
+        BoardModel bm,
+        Pieces pcs,
+        int actorPieceId,
+        int targetPieceId,
+        int abilityId)
+    {
+        int actorCell = GetPieceCell(bm, actorPieceId);
+        int targetCell = GetPieceCell(bm, targetPieceId);
+
+        if (actorCell < 0 || targetCell < 0)
+            return bm.InvalidId;
+
+        if (abilityId < 0 ||
+            pcs.push_PushAmount == null || pcs.push_pull == null ||
+            abilityId >= pcs.push_PushAmount.Length || abilityId >= pcs.push_pull.Length)
+            return bm.InvalidId;
+
+        int pushAmount = pcs.push_PushAmount[abilityId];
+        if (pushAmount <= 0)
+            return bm.InvalidId;
+
+        bool isPull = pcs.push_pull[abilityId];
+
+        int dir = isPull
+            ? bm.GetDirectionIndex(targetCell, actorCell)
+            : bm.GetDirectionIndex(actorCell, targetCell);
+        if (dir < 0)
+            return bm.InvalidId;
+
+        int targetOwner = GetPieceOwner(bm, targetPieceId);
+        int ownerCoreCell = GetPlayerCoreCellId(bm, (byte)targetOwner);
+
+        const int MaxRingCells = 256;
+        Span<int> ringCells = stackalloc int[MaxRingCells];
+        Span<int> farCells = stackalloc int[MaxRingCells];
+
+        for (int dist = pushAmount; dist > 0; dist--)
+        {
+            int totalOnRing = bm.cellIdsRingAroundCell(
+                originCell: targetCell,
+                ringSize: dist,
+                requireEmpty: true,
+                outCells: ringCells);
+
+            if (totalOnRing <= 0)
+                continue;
+
+            int ringCount = Math.Min(totalOnRing, MaxRingCells);
+
+            int extremeDistFromActor = isPull ? int.MaxValue : -1;
+            for (int i = 0; i < ringCount; i++)
+            {
+                int cell = ringCells[i];
+                int dAct = bm.Distance(actorCell, cell);
+                if (isPull)
+                {
+                    if (dAct < extremeDistFromActor)
+                        extremeDistFromActor = dAct;
+                }
+                else
+                {
+                    if (dAct > extremeDistFromActor)
+                        extremeDistFromActor = dAct;
+                }
+            }
+            if ((!isPull && extremeDistFromActor < 0) || (isPull && extremeDistFromActor == int.MaxValue))
+                continue;
+
+            int farCount = 0;
+            for (int i = 0; i < ringCount; i++)
+            {
+                int cell = ringCells[i];
+                int dAct = bm.Distance(actorCell, cell);
+                if (dAct == extremeDistFromActor)
+                    farCells[farCount++] = cell;
+            }
+            if (farCount == 0)
+                continue;
+
+            int idealBehindCell = bm.StepInDirection(targetCell, dir, dist);
+
+            if (idealBehindCell >= 0 && bm.IsValidCellId(idealBehindCell) && bm.IsEmpty(idealBehindCell))
+            {
+                for (int i = 0; i < farCount; i++)
+                {
+                    if (farCells[i] == idealBehindCell)
+                        return idealBehindCell;
+                }
+            }
+
+            int bestCell = bm.InvalidId;
+            int bestScore = int.MaxValue;
+
+            for (int i = 0; i < farCount; i++)
+            {
+                int cell = farCells[i];
+
+                if (!bm.IsValidCellId(cell) || !bm.IsEmpty(cell))
+                    continue;
+
+                int dCore = ownerCoreCell >= 0 ? bm.Distance(cell, ownerCoreCell) : 0;
+                if (dCore < bestScore)
+                {
+                    bestScore = dCore;
+                    bestCell = cell;
+                }
+            }
+
+            if (bestCell >= 0)
+                return bestCell;
+        }
+
+        return bm.InvalidId;
+    }
+
+    // ---- GroupBuild helpers ----
+    private static int CountClusterOfType(BoardModel bm, byte type, int startCell)
+    {
+        if (startCell < 0) return 0;
+        var visited = bm.GetScratchCellBuffer();
+        Array.Clear(visited, 0, visited.Length);
+        int[] queue = bm.GetScratchCellBuffer();
+        int head = 0, tail = 0;
+        queue[tail++] = startCell;
+        visited[startCell] = 1;
+        int count = 0;
+        while (head < tail)
+        {
+            int cell = queue[head++];
+            int pid = GetPieceAt(bm, cell);
+            if (pid >= 0 && GetPieceType(bm, pid) == type) count++;
+            int[] neigh = bm.GetScratchNeighborBuffer();
+            int n = bm.GetNeighbors(cell, neigh);
+            for (int i = 0; i < n; i++)
+            {
+                int nb = neigh[i];
+                if (nb < 0 || nb >= visited.Length) continue;
+                if (visited[nb] != 0) continue;
+                int nbPid = GetPieceAt(bm, nb);
+                if (nbPid < 0 || GetPieceType(bm, nbPid) != type) continue;
+                visited[nb] = 1;
+                queue[tail++] = nb;
+            }
+        }
+        return count;
+    }
+
+    private void EnumerateGroupBuildCreates(
+        in OfferQuery q,
+        byte targetType,
+        int clusterRepresentativeCell,
+        byte actorType,
+        ref int write,
+        ref int total,
+        int cap,
+        Span<Action> outActions,
+        Span<float> outCosts,
+        Span<byte> outMask)
+    {
+        int cellCount = GetCellCount(q.bm);
+        for (int cell = 0; cell < cellCount; cell++)
+        {
+            if (!IsEmpty(q.bm, cell)) continue;
+            if (!IsCreateGeometryLegal(q.bm, q.pcs, cell, q.playerId)) continue;
+            int reqDigit = q.pcs.GetRequiredDigit(targetType);
+            if (reqDigit >= 0 && !q.ps.HasDigit(reqDigit)) continue;
+            if (!q.pcs.IsBuildable(targetType)) continue;
+            var a = new Action
+            {
+                kind = GroupBuild,
+                abilitySlot = 0,
+                pieceType = targetType,
+                srcCell = (ushort)clusterRepresentativeCell,
+                dstCell = (ushort)cell,
+                aux = 0
+            };
+            Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask);
+        }
+    }
+
+    private static bool IsCreateGeometryLegal(BoardModel bm, Pieces pcs, int cell, byte player)
+    {
+        if (!bm.IsEmpty(cell)) return false;
+        int core = GetPlayerCoreCellId(bm, player);
+        if (cell == core) return true;
+        var scratch = GetScratchCells(bm);
+        int n = GetNeighbors(bm, core, scratch);
+        for (int i = 0; i < n; i++) if (scratch[i] == cell) return true;
+        int n2 = GetNeighbors(bm, cell, scratch);
+        for (int i = 0; i < n2; i++)
+        {
+            int nb = scratch[i];
+            int pid = GetPieceAt(bm, nb);
+            if (IsInvalid(bm, pid)) continue;
+            if (GetPieceOwner(bm, pid) != player) continue;
+            byte t = GetPieceType(bm, pid);
+            if (IsBuilding(pcs, t)) return true;
+        }
+        return false;
+    }
 }
