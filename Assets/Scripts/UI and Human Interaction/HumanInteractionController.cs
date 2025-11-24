@@ -24,7 +24,9 @@ public sealed class HumanInteractionController : MonoBehaviour
     public OfferProvider offerProvider;     // assign in inspector
     public BoardModel boardModel;        // assign the same model used by GameState
     public Pieces pieces;            // your registry (names, flags, etc.)
-    public CostEngine costEngine;        // pricing engine used by GameState
+    public CostEngine costEngine;        // pricing engine used by GameState'
+
+    public GameActions gameActions;
 
 
 
@@ -527,7 +529,13 @@ public sealed class HumanInteractionController : MonoBehaviour
             gameState.CurrentPlayerId,
             costEngine,
             gameState.PieceLimitEnabled,
-            gameState.pieceLimitPerPlayer
+            gameState.pieceLimitPerPlayer,
+            gameState.MultiCreateActive,
+            gameState.MultiCreateType,
+            gameState.MultiCreateRequireBorder,
+            gameState.MultiCreateRemaining,
+            gameState.MultiCreateCells,
+            gameState.MultiCreateCellCount
         );
 
         // Fill the spans (zero-alloc path in OfferProvider). Function returns TOTAL (may exceed cap). :contentReference[oaicite:7]{index=7}
@@ -561,6 +569,11 @@ public sealed class HumanInteractionController : MonoBehaviour
             case Game.Core.ActionKind.Create: return $"Create {a.pieceType} @ {a.dstCell}";
             case Game.Core.ActionKind.CaptureVP: return $"Capture VP @ {a.dstCell}";
             case Game.Core.ActionKind.CoreDamage: return $"Core Damage @ {a.dstCell}";
+            case Game.Core.ActionKind.Push: return $"Push target @ {a.dstCell}";
+            case Game.Core.ActionKind.GroupBuild: return $"Group Build {a.pieceType} @ {a.dstCell}";
+            case Game.Core.ActionKind.Upgrade: return $"Upgrade → {a.pieceType} @ {a.dstCell}";
+            case Game.Core.ActionKind.Launcher: return $"Launch {a.aux} → {a.dstCell}";
+            case Game.Core.ActionKind.Spawner: return $"Spawn x? {a.pieceType} @ {a.dstCell}";
             case Game.Core.ActionKind.EndTurn: return "End Turn";
             default: return $"{a.kind} [{a.srcCell}->{a.dstCell}]";
         }
