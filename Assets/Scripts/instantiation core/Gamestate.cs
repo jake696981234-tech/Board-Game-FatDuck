@@ -611,6 +611,8 @@ namespace Game.Core
             return map;
         }
 
+        
+
         private static int[] SnapshotCoreHP(GameState gs)
         {
             var hp = new int[4];

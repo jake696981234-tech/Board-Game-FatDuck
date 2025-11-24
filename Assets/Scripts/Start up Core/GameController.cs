@@ -111,6 +111,8 @@ public class GameController : MonoBehaviour
 
         gameState = new Game.Core.GameState();
         gameActions = new GameActions();
+        gameActions.Initialize(board, GameBootstrapper.PiecesData, gameState, ps, eventManager, this);
+        gameState.Initialize(in gameBootstrapper.hub, board, GameBootstrapper.PiecesData, gameBootstrapper.cost, ps, startingPlayer, eventManager, this, gameActions);
 
 
         if (inspectGame && config.dbLogging.enabled)
@@ -236,30 +238,26 @@ public class GameController : MonoBehaviour
 
         }
 
-                gameActions.Initialize(board, GameBootstrapper.PiecesData, gameState, eventManager, this);
-        gameState.Initialize(in gameBootstrapper.hub, board, GameBootstrapper.PiecesData, gameBootstrapper.cost, ps, startingPlayer, eventManager, this, gameActions);
 
-        if (inspectGame)
+        var hic = FindFirstObjectByType<HumanInteractionController>();
+        if (hic != null)
         {
-            var hic = FindFirstObjectByType<HumanInteractionController>();
-            if (hic != null)
+            // pick the first seat marked Human
+            byte humanSeat = 0;
+            for (byte s = 0; s < gameBootstrapper.hub.player_count; s++)
             {
-                // pick the first seat marked Human
-                byte humanSeat = 0;
-                for (byte s = 0; s < gameBootstrapper.hub.player_count; s++)
-                {
-                    if (gameBootstrapper.hub.playerControl[s] == GameConfigHub.ControlMode.Human) { humanSeat = s; break; }
-                }
-
-                // inject live systems (same ones agents/ML use)
-                hic.gameState = gameState;
-                hic.boardModel = board;
-                hic.pieces = GameBootstrapper.PiecesData;
-                hic.costEngine = gameBootstrapper.cost;
-                hic.offerProvider = gameBootstrapper.offers;
-                if (hic.boardView == null) hic.boardView = boardView;
-                hic.SetHumanSeat(humanSeat);
+                if (gameBootstrapper.hub.playerControl[s] == GameConfigHub.ControlMode.Human) { humanSeat = s; break; }
             }
+
+            // inject live systems (same ones agents/ML use)
+            hic.gameState = gameState;
+            hic.boardModel = board;
+            hic.pieces = GameBootstrapper.PiecesData;
+            hic.costEngine = gameBootstrapper.cost;
+            hic.offerProvider = gameBootstrapper.offers;
+            hic.gameActions = gameActions;
+            if (hic.boardView == null) hic.boardView = boardView;
+            hic.SetHumanSeat(humanSeat);
         }
 
 
@@ -368,8 +366,9 @@ public class GameController : MonoBehaviour
             }
 
             // Reset GameState (reuse same instance so controllers keep references)
+            gameActions.Initialize(board, GameBootstrapper.PiecesData, gameState, ps, eventManager, this);
             gameState.Initialize(in gameBootstrapper.hub, board, GameBootstrapper.PiecesData, gameBootstrapper.cost, ps, startingPlayer, eventManager, this, gameActions);
-            gameActions.Initialize(board, GameBootstrapper.PiecesData, gameState, eventManager, this);
+
 
             if (inspectGame)
             {

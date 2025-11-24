@@ -20,15 +20,14 @@ namespace Game.Core
         GameController controller;
 
 
-        public void Initialize(BoardModel board, Pieces pieces, GameState _gamestate, EventManager eventManager, GameController gamecontroller)
+        public void Initialize(BoardModel board, Pieces pieces, GameState _gamestate, PlayerState[] players, EventManager eventManager, GameController gamecontroller)
         {
             bm = board;
             pcs = pieces;
             gamestate = _gamestate;
+            ps = players;
             events = eventManager;
             controller = gamecontroller;
-
-            gamestate.ps = ps;
 
             subscribe();
         }
@@ -50,7 +49,7 @@ namespace Game.Core
 
         public int MultiCreateCellCount => multiCreateCells.Count;
 
-  
+
 
 
         public HashSet<int> spawnerUsedThisTurn = new HashSet<int>();
@@ -99,7 +98,7 @@ namespace Game.Core
             bm.pieceConnectorConfig[pid] = (byte)theAction.aux;
             // Grant digit if this type provides one
             int g = pcs.GrantsDigit((byte)theAction.pieceType);
-            if (g >= 0) ps[player].GrantDigit(g);
+            if (g >= 0) gamestate.ps[player].GrantDigit(g);
 
             if (pcs.multiCreate_enabledByType[theAction.pieceType])
             {
@@ -128,7 +127,7 @@ namespace Game.Core
             int pid = bm.AllocateRow();
             bm.PlacePieceRow(pid, p, (byte)a.pieceType, cell, pcs.maxHPByType[a.pieceType]);
             int g = pcs.GrantsDigit((byte)a.pieceType);
-            if (g >= 0) ps[p].GrantDigit(g);
+            if (g >= 0) gamestate.ps[p].GrantDigit(g);
             // Reuse connector config from the initial piece if the type has connectors
             if (pcs.HasConnectors(a.pieceType) && multiCreateCells.Count > 0)
             {
@@ -156,7 +155,7 @@ namespace Game.Core
             int pid = bm.AllocateRow();
             bm.PlacePieceRow(pid, p, (byte)targetType, dst, pcs.maxHPByType[targetType]);
             int g = pcs.GrantsDigit((byte)targetType);
-            if (g >= 0) ps[p].GrantDigit(g);
+            if (g >= 0) gamestate.ps[p].GrantDigit(g);
 
             int srcCell = a.srcCell;
             int actorPid = bm.GetCellOccupant(srcCell);
@@ -219,7 +218,7 @@ namespace Game.Core
                 int pid = bm.AllocateRow();
                 bm.PlacePieceRow(pid, p, (byte)targetType, cell, pcs.maxHPByType[targetType]);
                 int g = pcs.GrantsDigit((byte)targetType);
-                if (g >= 0) ps[p].GrantDigit(g);
+                if (g >= 0) gamestate.ps[p].GrantDigit(g);
             }
 
             // Mark once-per-turn flag
@@ -243,7 +242,7 @@ namespace Game.Core
 
             // Revoke digit from old type if it granted one
             int gOld = pcs.GrantsDigit(actorType);
-            if (gOld >= 0) ps[p].RevokeDigit(gOld);
+            if (gOld >= 0) gamestate.ps[p].RevokeDigit(gOld);
 
             // Replace type and reset HP
             bm.pieceType[actorPid] = (byte)targetType;
@@ -252,7 +251,7 @@ namespace Game.Core
 
             // Grant digit for new type
             int gNew = pcs.GrantsDigit((byte)targetType);
-            if (gNew >= 0) ps[p].GrantDigit(gNew);
+            if (gNew >= 0) gamestate.ps[p].GrantDigit(gNew);
 
             // No connector refresh per requirement
         }
@@ -270,13 +269,13 @@ namespace Game.Core
 
         public void ApplyCaptureVP(in Action theAction, byte player)
         {
-            ps[player].OnCaptureVP();
+            gamestate.ps[player].OnCaptureVP();
             gamestate.AddCenterVictoryPoints(-1);
         }
 
         public void ApplyCoreDamage(in Action theAction, byte player)
         {
-            ps[player].OnCoreDamage();
+            gamestate.ps[player].OnCoreDamage();
 
             int actorPid = bm.GetCellOccupant(theAction.srcCell);
             if (actorPid < 0) return;
@@ -321,26 +320,13 @@ namespace Game.Core
             RefreshConnectorState();
         }
 
-        //warning- this is a duplicate method from gamestate
-        public static Dictionary<(int owner, int type), int> SnapshotOwnerTypeCounts(BoardModel bm)
-        {
-            var map = new Dictionary<(int, int), int>(32);
-            for (int pid = 0; pid < bm.pieceCount; pid++)
-            {
-                int owner = bm.pieceOwner[pid];
-                int type = bm.pieceType[pid];
-                var key = (owner, type);
-                map.TryGetValue(key, out var c);
-                map[key] = c + 1;
-            }
-            return map;
-        }
+
 
         public void ApplyFactoryIncome()
         {
             // Ensure round number is at least 1
             int roundNum = Math.Max(1, gamestate.currentRoundNumber);
-            var counts = SnapshotOwnerTypeCounts(bm);
+            var counts = GameState.SnapshotOwnerTypeCounts(bm);
             foreach (var kv in counts)
             {
                 int owner = kv.Key.owner;
@@ -981,7 +967,7 @@ namespace Game.Core
                 // parity with OfferProvider: buildable flag + required digit gate
                 if (!pcs.IsBuildable(a.pieceType)) return false;
                 int req = pcs.GetRequiredDigit(a.pieceType);
-                if (req >= 0 && !ps[p].HasDigit(req)) return false;
+                if (req >= 0 && !gamestate.ps[p].HasDigit(req)) return false;
 
                 // Connector legality: config index is carried in aux
                 if (pcs.HasConnectors(a.pieceType))
