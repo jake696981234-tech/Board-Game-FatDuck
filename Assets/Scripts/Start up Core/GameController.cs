@@ -239,30 +239,29 @@ public class GameController : MonoBehaviour
         }
 
 
-        var hic = FindFirstObjectByType<HumanInteractionController>();
-        if (hic != null)
-        {
-            // pick the first seat marked Human
-            byte humanSeat = 0;
-            for (byte s = 0; s < gameBootstrapper.hub.player_count; s++)
-            {
-                if (gameBootstrapper.hub.playerControl[s] == GameConfigHub.ControlMode.Human) { humanSeat = s; break; }
-            }
-
-            // inject live systems (same ones agents/ML use)
-            hic.gameState = gameState;
-            hic.boardModel = board;
-            hic.pieces = GameBootstrapper.PiecesData;
-            hic.costEngine = gameBootstrapper.cost;
-            hic.offerProvider = gameBootstrapper.offers;
-            hic.gameActions = gameActions;
-            if (hic.boardView == null) hic.boardView = boardView;
-            hic.SetHumanSeat(humanSeat);
-        }
-
-
         if (inspectGame)
         {
+            var hic = FindFirstObjectByType<HumanInteractionController>();
+            if (hic != null)
+            {
+                // pick the first seat marked Human
+                byte humanSeat = 0;
+                for (byte s = 0; s < gameBootstrapper.hub.player_count; s++)
+                {
+                    if (gameBootstrapper.hub.playerControl[s] == GameConfigHub.ControlMode.Human) { humanSeat = s; break; }
+                }
+
+                // inject live systems (same ones agents/ML use)
+                hic.gameState = gameState;
+                hic.boardModel = board;
+                hic.pieces = GameBootstrapper.PiecesData;
+                hic.costEngine = gameBootstrapper.cost;
+                hic.offerProvider = gameBootstrapper.offers;
+                if (hic.boardView == null) hic.boardView = boardView;
+                hic.SetHumanSeat(humanSeat);
+            }
+
+
             // === Phase B: compose the initial snapshot & push to BoardView ===
             snapshotComposer = new GameSnapshotComposer(
                 geometry,   // local variable from your builder call
@@ -272,6 +271,8 @@ public class GameController : MonoBehaviour
              );
 
             currentSnapshot = snapshotComposer.GetSnapshot();
+
+
 
             if (boardView != null)
             {
@@ -289,6 +290,9 @@ public class GameController : MonoBehaviour
             {
                 currentSnapshot = snapshotComposer.GetSnapshot(); if (boardView != null) boardView.ApplySnapshot(currentSnapshot);
             };
+
+            hic.ManualAwake(gameActions, eventManager);
+            hic.ManualEnable();
         }
     }
 

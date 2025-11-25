@@ -53,21 +53,6 @@ public sealed class GameBootstrapper : MonoBehaviour
         // 6) Shared offer provider
         offers = new OfferProvider();
 
-        //     if (config.inspectGame)
-        //     {
-        //
-        //         GameObject newInspectGameController = Instantiate(inspectGameController);
-        //        var inspectcontroller = newInspectGameController.GetComponent<InspectGameController>();
-        //         if (inspectcontroller != null)
-        //          {
-        //             inspectcontroller.gameBootstrapper = this;
-        //             if (inspectcontroller.config == null)
-        //                 inspectcontroller.config = this.config;
-        //
-        //             if (inspectcontroller.boardView == null)
-        //                 inspectcontroller.boardView = this.boardView;
-        //         }
-
 
         for (int i = 0; i < config.gamesToRun; i++)
         {

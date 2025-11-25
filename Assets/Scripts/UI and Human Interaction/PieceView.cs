@@ -6,15 +6,22 @@ public sealed class PieceView : MonoBehaviour
     [Header("Highlights (optional)")]
     public GameObject ownerHighlight;     // e.g., a child ring
     public GameObject selectedHighlight;  // toggled when selected
-    
-    public int  pieceIndex;
-    public int  cellId;
-    public int  owner;
+
+    public GameObject TopLeft;
+    public GameObject TopRight;
+    public GameObject MiddleRight;
+    public GameObject BottomRight;
+    public GameObject BottomLeft;
+    public GameObject MiddleLeft;
+
+    public int pieceIndex;
+    public int cellId;
+    public int owner;
     public byte type;
 
     public SpriteRenderer spriteRenderer;
-    public TextMeshPro       hpLabel;
-    public GameObject     teamMarkGO;
+    public TextMeshPro hpLabel;
+    public GameObject teamMarkGO;
 
 
     public void Init() { }
@@ -42,4 +49,18 @@ public sealed class PieceView : MonoBehaviour
         hpLabel.text = hp.ToString();
     }
     public void SetVisible(bool on) { gameObject.SetActive(on); }
+
+
+
+    public void setWalls(byte[] mask)
+    {
+        if (mask[0] is 0) TopLeft.SetActive(true);
+        if (mask[1] is 0) TopRight.SetActive(true);
+        if (mask[2] is 0) MiddleRight.SetActive(true);
+        if (mask[3] is 0) BottomRight.SetActive(true);
+        if (mask[4] is 0) BottomLeft.SetActive(true);
+        if (mask[5] is 0) MiddleLeft.SetActive(true);
+    }
+
+
 }

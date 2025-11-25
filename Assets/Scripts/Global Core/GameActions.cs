@@ -54,9 +54,25 @@ namespace Game.Core
 
         public HashSet<int> spawnerUsedThisTurn = new HashSet<int>();
 
+        private bool _isGameActionSubscribe = false;
+        public void gameActionSubscribe()
+        {
+            if (_isGameActionSubscribe)
+                return;
 
+            events.TurnBegin += whenTurnBegins;
+            _isGameActionSubscribe = true;
+        }
 
+        #region GameLoop
 
+        private void whenTurnBegins(TurnContext _)
+        {
+            spawnerUsedThisTurn.Clear();
+            ResetMultiCreate();
+        }
+
+        #endregion
         #region Apply Actions
 
         public void ApplyMove(in Action theAction, byte player)

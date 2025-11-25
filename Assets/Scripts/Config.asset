@@ -19,7 +19,7 @@ MonoBehaviour:
   observations:
     maxCells: 217
     maxDistance: 16
-  playerControl: 01010101
+  playerControl: 01000101
   playerPolicy: 01010101
   dbLogging:
     enabled: 0
@@ -47,7 +47,7 @@ MonoBehaviour:
     useChildSensors: 1
     vectorObservationSize: 2625
     actionBranchSize: 64
-  gamesToRun: 32
+  gamesToRun: 1
   inspectGame: 1
   useMLAgents: 0
   mlRewards:

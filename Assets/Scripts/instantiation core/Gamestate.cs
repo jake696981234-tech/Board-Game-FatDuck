@@ -98,6 +98,7 @@ namespace Game.Core
 
             if (!FastCheck(a)) return false;
             if (!gameActions.IsStillLegal(in a, currentPlayer)) return false;
+            events.actionBegin(new ActionContext { ThePlayer = currentPlayer });
 
             CostEngine.CostBreakdown quote = default;
             bool isMultiPlacement = gameActions.multiCreateActive && a.kind == Create && a.pieceType == gameActions.multiCreateType;
@@ -247,10 +248,9 @@ namespace Game.Core
 
         private void BeginTurn()
         {
-            events.RaiseTurnPrep();
+            events.turnBegin(new TurnContext { ThePlayer = currentPlayer });
             ps[currentPlayer].BeginTurnReset();
-            gameActions.spawnerUsedThisTurn.Clear();
-            gameActions.ResetMultiCreate();
+
 
             turnOrdinal++;
 
@@ -335,7 +335,7 @@ namespace Game.Core
 
         private void EndRound()
         {
-
+            events.roundBegin();
             turnOrdinal = 0;
             Array.Clear(playerTurnOrdinals, 0, playerTurnOrdinals.Length);
             currentRoundNumber = Math.Max(1, currentRoundNumber); // ensure non-zero for next cycle
@@ -445,6 +445,7 @@ namespace Game.Core
             if (aliveCount == 1)
             {
                 isGameOver = true;
+                events.gameEnd();
                 winner = lastAlive;
                 // Winner by elimination
                 events.RaiseGameResult(new EventManager.GameResultEvent(EventManager.GameResultType.Elimination, winner));
@@ -468,6 +469,7 @@ namespace Game.Core
             }
 
             isGameOver = true;
+            events.gameEnd();
             winner = tie ? (byte)255 : win; // 255 = draw/no single winner
             Debug.Log($"Game over by VP. Winner: {winner} (tie={tie})");
             events.RaiseGameResult(new EventManager.GameResultEvent(EventManager.GameResultType.Elimination, winner));
@@ -611,7 +613,7 @@ namespace Game.Core
             return map;
         }
 
-        
+
 
         private static int[] SnapshotCoreHP(GameState gs)
         {

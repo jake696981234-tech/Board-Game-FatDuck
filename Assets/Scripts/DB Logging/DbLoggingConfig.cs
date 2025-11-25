@@ -911,7 +911,7 @@ public static class DbLoggingConfig
             return;
 
         events.ActionLogRequested += OnActionLogRequested;
-        events.TurnPrepRequested += OnTurnPrepRequested;
+        events.TurnBegin += OnTurnPrepRequested;
         events.TurnLogRequested += OnTurnLogRequested;
         events.RoundLogRequested += OnRoundLogRequested;
         events.GameResultLogged += OnGameResultLogged;
@@ -924,7 +924,7 @@ public static class DbLoggingConfig
             return;
 
         events.ActionLogRequested -= OnActionLogRequested;
-        events.TurnPrepRequested -= OnTurnPrepRequested;
+        events.TurnBegin -= OnTurnPrepRequested;
         events.TurnLogRequested -= OnTurnLogRequested;
         events.RoundLogRequested -= OnRoundLogRequested;
         events.GameResultLogged -= OnGameResultLogged;
@@ -943,7 +943,7 @@ public static class DbLoggingConfig
             payload.SurchargeCost);
     }
 
-    private static void OnTurnPrepRequested()
+    private static void OnTurnPrepRequested(TurnContext _)
     {
         prepTurn();
     }

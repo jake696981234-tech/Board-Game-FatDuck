@@ -97,6 +97,8 @@ public sealed class BoardViewController : MonoBehaviour
             v.SetSprite(sprite);
             v.SetTint(SafeOwnerTint(v.owner, _snapshot.ownerTintByPlayer));
 
+            v.setWalls(_snapshot.connector);
+
             v.SetHP(_snapshot.pieceHP[i], showPieceHP);
             v.SetVisible(true);
         }
@@ -233,7 +235,7 @@ public sealed class BoardViewController : MonoBehaviour
         }
     }
 
-// --- NEW: apply default cell colour everywhere (respecting highlights) ---
+    // --- NEW: apply default cell colour everywhere (respecting highlights) ---
     public void ApplyDefaultCellColor(Color c)
     {
         if (_cellById == null) return;

@@ -15,6 +15,9 @@ public sealed class HumanInteractionController : MonoBehaviour
 
     [Header("Config & Refs")]
     public InteractionConfig config;
+
+    private GameActions gameActions;
+
     public BoardViewController boardView;   // emits CellClicked(int)
     public GameState gameState;             // your core state (read-only in this skeleton)
     // public OfferProvider offerProvider;  // we'll integrate next pass with your existing OfferProvider API :contentReference[oaicite:7]{index=7}
@@ -25,11 +28,6 @@ public sealed class HumanInteractionController : MonoBehaviour
     public BoardModel boardModel;        // assign the same model used by GameState
     public Pieces pieces;            // your registry (names, flags, etc.)
     public CostEngine costEngine;        // pricing engine used by GameState'
-
-    public GameActions gameActions;
-
-
-
 
     [Header("Canvas/UI")]
     public Image backdrop;
@@ -63,6 +61,11 @@ public sealed class HumanInteractionController : MonoBehaviour
     [Header("HUD / Match Header")]
     public TMP_Text Header_TurnOwnerText;
     public TMP_Text Header_ModeText;
+
+    //my own little additon- New Event Manager system, might update everything to go through that script
+    public TMP_Text turnNumberText;
+    public TMP_Text roundNumberText;
+    public TMP_Text gameNumberText;
 
     [Header("HUD / Player Panel - Personal")]
     public TMP_Text Personal_BudgetText;
@@ -106,14 +109,19 @@ public sealed class HumanInteractionController : MonoBehaviour
 
     private string _lastActionLabel = string.Empty; // for Debug HUD
 
-
-    private void Awake()
+    private EventManager events;
+    public void ManualAwake(GameActions theGameActions,
+    EventManager eventManager)
     {
+        gameActions = theGameActions;
+        events = eventManager;
+
+        subscribeMe();
         if (boardView) boardView.CellClicked += OnCellClicked;   // from your BoardViewController
         if (endTurnButton) endTurnButton.onClick.AddListener(OnEndTurnClicked);
     }
 
-    private void OnEnable()
+    public void ManualEnable()
     {
         if (gameState != null) gameState.OnActionExecuted += HandleActionExecuted; // refresh on every mutation
         RebuildOffersForCurrentPlayer();
@@ -390,9 +398,9 @@ public sealed class HumanInteractionController : MonoBehaviour
         if (Header_ModeText) Header_ModeText.text = _mode.ToString();
 
         // --- Personal stats (your seat) ---
-        if (Personal_BudgetText) Personal_BudgetText.text = $"{Mathf.RoundToInt(gameState.GetBudget(_humanPlayer))}";
-        if (Personal_VPText) Personal_VPText.text = $"{gameState.GetVP(_humanPlayer)}";
-        if (Personal_CoreHPText) Personal_CoreHPText.text = $"{gameState.GetCoreHealth(_humanPlayer)}";
+        if (Personal_BudgetText) Personal_BudgetText.text = "Budget: " + $"{Mathf.RoundToInt(gameState.GetBudget(_humanPlayer))}";
+        if (Personal_VPText) Personal_VPText.text = "VP: " + $"{gameState.GetVP(_humanPlayer)}";
+        if (Personal_CoreHPText) Personal_CoreHPText.text = "Core Hp: " + $"{gameState.GetCoreHealth(_humanPlayer)}";
         // Tint swatch optional; if you have a palette somewhere you can assign it here.
 
         // --- All players list ---
@@ -434,11 +442,15 @@ public sealed class HumanInteractionController : MonoBehaviour
         var budgetText = row.Find("PlayerRow_BudgetText")?.GetComponent<TMP_Text>();
         var vpText = row.Find("PlayerRow_VPText")?.GetComponent<TMP_Text>();
         var hpText = row.Find("PlayerRow_CoreHPText")?.GetComponent<TMP_Text>();
+        var turn = row.Find("PlayerRow_TurnText")?.GetComponent<TMP_Text>();
+        var action = row.Find("PlayerRow_ActionText")?.GetComponent<TMP_Text>();
 
-        if (nameText) nameText.text = (playerId == gameState.CurrentPlayerId) ? $"▶ Player {playerId}" : $"Player {playerId}";
+        if (nameText) nameText.text = (playerId == gameState.CurrentPlayerId) ? $">Player {playerId}" : $"Player {playerId}";
         if (budgetText) budgetText.text = $"{Mathf.RoundToInt(gameState.GetBudget((byte)playerId))}";
         if (vpText) vpText.text = $"{gameState.GetVP((byte)playerId)}";
         if (hpText) hpText.text = $"{gameState.GetCoreHealth((byte)playerId)}";
+        if (turn) turn.text = $"{playerTurn[playerId]}";
+        if (action) action.text = $"{playerAction[playerId]}";
 
         // Optional tint swatch: if you have a palette elsewhere, assign it here (left blank by default)
         if (tintImg) tintImg.enabled = false;
@@ -619,16 +631,29 @@ public sealed class HumanInteractionController : MonoBehaviour
         nonPieceActionList.Show(items);
     }
 
+
+
+
+
+
     // PieceAction mode (full coverage panel): Only actions originating at the selected cell
     private void PushPieceActionListForSelection()
     {
         var items = new List<ActionItem>();
+        int onlyOneMove = 0;
         if (_selectedCellId.HasValue)
         {
             int cell = _selectedCellId.Value;
             for (int i = 0; i < _count; i++)
             {
                 var a = _offers[i];
+                if (a.kind == Game.Core.ActionKind.Move && !config.GiveRawActionOffers)
+                {
+                    onlyOneMove++;
+                }
+                if (a.kind == Game.Core.ActionKind.Move && onlyOneMove >= 2) continue;
+
+
                 if (a.kind == Game.Core.ActionKind.EndTurn) continue; // exclude non-piece actions
                 if (a.srcCell != (ushort)cell) continue;               // only actions from this piece
 
@@ -706,5 +731,55 @@ public sealed class HumanInteractionController : MonoBehaviour
         }
         return false;
     }
+
+
+    #region new Subscription system
+
+    private int[] playerTurn = new int[4];
+    private int[] playerAction = new int[4];
+
+    private int roundNumber = 1;
+    private int turnNumber;
+    private int gameNumber = 1;
+    private void subscribeMe()
+    {
+        events.TurnBegin += whenTurnBegins;
+        events.ActionBegin += whenActionHappens;
+        events.RoundBegin += whenRoundEnds; //this exludes the first round
+        events.GameEnd += whenGameEnds;
+    }
+
+    private void whenActionHappens(ActionContext actionContext)
+    {
+        playerAction[actionContext.ThePlayer]++;
+    }
+
+    private void whenTurnBegins(TurnContext turnContext)
+    {
+        playerTurn[turnContext.ThePlayer]++;
+        playerAction[turnContext.ThePlayer] = 0;
+        turnNumber++;
+
+        if (turnNumberText) turnNumberText.text = turnNumber.ToString();
+    }
+
+    private void whenRoundEnds()
+    {
+        roundNumber++;
+        turnNumber = 0;
+        Array.Clear(playerTurn, 0, playerTurn.Length);
+        if (roundNumberText) roundNumberText.text = $"{roundNumber}";
+    }
+
+    private void whenGameEnds()
+    {
+        roundNumber = 1;
+        gameNumber++;
+        if (gameNumberText) gameNumberText.text = $"{gameNumber}";
+    }
+
+
+
+    #endregion
 
 }

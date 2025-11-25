@@ -5,6 +5,33 @@ using static Game.Core.ActionKind;
 
 public class EventManager
 {
+    #region GameLoop
+
+    public event Action<TurnContext> TurnBegin;
+    public void turnBegin(TurnContext turncontext)
+    {
+        TurnBegin?.Invoke(turncontext);
+    }
+
+    public event Action<ActionContext> ActionBegin;
+    public void actionBegin(ActionContext actionContext)
+    {
+        ActionBegin?.Invoke(actionContext);
+    }
+
+    public event Action RoundBegin;
+    public void roundBegin()
+    {
+        RoundBegin?.Invoke();
+    }
+
+    public event Action GameEnd;
+    public void gameEnd()
+    {
+        GameEnd?.Invoke();
+    }
+
+    #endregion
     #region GameActions 
     //experimental new event system
 
@@ -116,15 +143,12 @@ public class EventManager
         public int? WinnerPlayerIndex { get; }
     }
 
-    public event Action TurnPrepRequested;
+
     public event Action<TurnLogEvent> TurnLogRequested;
     public event Action RoundLogRequested;
     public event Action<GameResultEvent> GameResultLogged;
 
-    public void RaiseTurnPrep()
-    {
-        TurnPrepRequested?.Invoke();
-    }
+
 
     public void RaiseTurnLog(TurnLogEvent payload)
     {
@@ -144,11 +168,21 @@ public class EventManager
 
     #endregion
 
-
-
-
-
-
-
 }
+
+#region Context Structs
+
+public struct TurnContext
+{
+    public int ThePlayer;
+}
+
+public struct ActionContext
+{
+    public int ThePlayer;
+}
+
+
+
+#endregion
 

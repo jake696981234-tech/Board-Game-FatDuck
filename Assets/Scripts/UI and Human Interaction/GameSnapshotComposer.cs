@@ -45,6 +45,7 @@ public sealed class GameSnapshotComposer
         snapshot.pieceOwner = board.pieceOwner;
         snapshot.pieceType = board.pieceType;
         snapshot.pieceHP = board.pieceHP;
+        snapshot.connector = board.pieceConnectorConfig;
 
         // live counters
         snapshot.centerVP = state.GetCenterVP();
