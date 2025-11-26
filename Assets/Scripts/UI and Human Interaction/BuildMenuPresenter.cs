@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 public sealed class BuildMenuPresenter : MonoBehaviour
 {
@@ -13,8 +14,18 @@ public sealed class BuildMenuPresenter : MonoBehaviour
 
     private readonly List<BuildMenuItemView> _pool = new();
 
-    public void Show(IEnumerable<BuildItem> items)
+    public void Show(IEnumerable<BuildItem> rawItems, InteractionConfig config)
     {
+        IEnumerable<BuildItem> items;
+        if (config.GiveRawActionOffers)
+        {
+            items = rawItems;
+        }
+        else
+        {
+            items = filteredBuildOptions(rawItems);
+        }
+
         gameObject.SetActive(true);
         int i = 0;
         foreach (var it in items)
@@ -24,6 +35,21 @@ public sealed class BuildMenuPresenter : MonoBehaviour
             view.gameObject.SetActive(true);
         }
         for (; i < _pool.Count; i++) _pool[i].gameObject.SetActive(false);
+    }
+
+    private IEnumerable<BuildItem> filteredBuildOptions(IEnumerable<BuildItem> items)
+    {
+        var filteredItems = new List<BuildItem>();
+        var iHaveAlreadySeenYou = new HashSet<byte>();
+
+        foreach (var item in items)
+        {
+            if (iHaveAlreadySeenYou.Add(item.pieceType))
+            {
+                filteredItems.Add(item);
+            }
+        }
+        return filteredItems;
     }
 
     public void Hide() => gameObject.SetActive(false);

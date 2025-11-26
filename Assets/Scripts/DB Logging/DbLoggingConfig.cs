@@ -672,15 +672,6 @@ public static class DbLoggingConfig
 
     // FactRoundPlayer logging removed for now (unused)
 
-
-
-
-
-
-
-
-
-
     //Logging in Order of grain
 
     public static void DeleteConflictingSimIdRows()
@@ -943,7 +934,7 @@ public static class DbLoggingConfig
             payload.SurchargeCost);
     }
 
-    private static void OnTurnPrepRequested(TurnContext _)
+    private static void OnTurnPrepRequested(TurnContext _K)
     {
         prepTurn();
     }

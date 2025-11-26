@@ -100,7 +100,7 @@ public sealed class HumanInteractionController : MonoBehaviour
     private bool _createArmed = false;      // in Create mode and seeded
 
     // Offers built from core (capacity big enough to hold a full turn's options)
-    const int kCap = 256;
+    const int kCap = 1500;
     private Game.Core.Action[] _offers = new Game.Core.Action[kCap];
     private float[] _quoted = new float[kCap];
     private byte[] _mask = new byte[kCap];
@@ -115,6 +115,8 @@ public sealed class HumanInteractionController : MonoBehaviour
     {
         gameActions = theGameActions;
         events = eventManager;
+
+
 
         subscribeMe();
         if (boardView) boardView.CellClicked += OnCellClicked;   // from your BoardViewController
@@ -174,6 +176,7 @@ public sealed class HumanInteractionController : MonoBehaviour
         HudRefresh();
     }
 
+    #region Temp //delete me
     private void EnterCreateMode(BuildItem build)
     {
         boardView.ClearHighlights();
@@ -207,6 +210,17 @@ public sealed class HumanInteractionController : MonoBehaviour
         // NOTE: We haven't added highlight APIs to BoardViewController yet, so no highlight calls here.
         HudRefresh();
     }
+
+    public void EnterConnectingMode(BuildItem item)
+    {
+        _selectedActionIndex = FindFirstCreateIndexForType(_selectedCreateType);
+        var wallOptions = WallOptionsForPieceType(_selectedCreateType);
+
+
+    }
+
+
+    #endregion
 
     private void EnterPieceActionMode(int? pieceId = null)
     {
@@ -479,6 +493,8 @@ public sealed class HumanInteractionController : MonoBehaviour
 
     private void OnBuildItemClicked(BuildItem item)
     {
+        if (item.Auxiliary > 0) EnterConnectingMode(item);
+
         EnterCreateMode(item);
     }
 
@@ -523,6 +539,21 @@ public sealed class HumanInteractionController : MonoBehaviour
             _createTargetsBuffer.Add(a.dstCell);
         }
         return _createTargetsBuffer;
+    }
+
+    readonly List<ushort> wallConfigs = new List<ushort>(64);
+    IEnumerable<ushort> WallOptionsForPieceType(byte pieceType)
+    {
+        wallConfigs.Clear();
+        for (int i = 0; i < _count; i++)
+        {
+            var offer = _offers[i];
+            if (offer.kind != ActionKind.Create) continue;   // byte code
+            if (offer.pieceType != pieceType) continue;
+            if (_mask[i] == 0) continue; // masked out = illegal/unaffordable
+            wallConfigs.Add(offer.aux);
+        }
+        return wallConfigs;
     }
 
 
@@ -610,10 +641,14 @@ public sealed class HumanInteractionController : MonoBehaviour
                 string path = (t < paths.Length) ? paths[t] : null;
                 int cost = Mathf.RoundToInt(_quoted[i]);
                 bool legal = _mask[i] != 0;           // 1 = affordable+legal; 0 = masked out by cost, etc. :contentReference[oaicite:8]{index=8}
-                items.Add(new BuildItem(t, name, path, cost, legal));
+
+                //Adding the Connector Field
+                ushort auxiliary = a.aux;
+
+                items.Add(new BuildItem(t, name, path, cost, legal, auxiliary));
             }
         }
-        buildMenu.Show(items);
+        buildMenu.Show(items, config);
     }
 
     // Default layout (right-side 40%): Non-piece actions only (e.g., End Turn)
@@ -741,6 +776,13 @@ public sealed class HumanInteractionController : MonoBehaviour
     private int roundNumber = 1;
     private int turnNumber;
     private int gameNumber = 1;
+
+    public event System.Action HowManyWallSelected;
+    public void howManyWallSelected()
+    {
+        HowManyWallSelected?.Invoke();
+    }
+
     private void subscribeMe()
     {
         events.TurnBegin += whenTurnBegins;

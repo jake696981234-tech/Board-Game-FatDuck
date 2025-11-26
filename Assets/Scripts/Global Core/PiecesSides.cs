@@ -189,4 +189,15 @@ public static class PiecesSides
 
         return toDestroy;
     }
+
+
+    // config: 0..63 (aux), returns how many sides are walls.
+    public static int CountWalls(int config) //config = Aux
+    {
+        int connectors = 0;
+        for (int d = 0; d < 6; d++)
+            connectors += (config >> d) & 1;
+        return 6 - connectors;
+    }
+
 }
