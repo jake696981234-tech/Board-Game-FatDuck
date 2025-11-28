@@ -8,10 +8,19 @@ public sealed class WallOptionPrefab : MonoBehaviour
 {
     public GameObject[] wallObjects;
 
+    private ushort CachedWall;
+
     public Button button;
+
+    public void WhenButtonPressed()
+    {
+        
+        HumanInteractionController.howManyWallSelected(CachedWall);
+    }
 
     public void SeedData(ushort wall)
     {
+        CachedWall = wall;
         for (int i = 0; i < 5; i++)
         {
             wallObjects[i].SetActive(!PiecesSides.IsConnectorSide(wall, i));

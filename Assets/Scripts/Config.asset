@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Config
   m_EditorClassIdentifier: Assembly-CSharp::Config
   agent:
-    maxOffersToConsider: 64
+    maxOffersToConsider: 1500
     rolloutDepth: 0
     thinkBudgetMs: 5
   observations:

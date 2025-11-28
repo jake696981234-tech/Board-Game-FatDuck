@@ -7,12 +7,7 @@ public sealed class PieceView : MonoBehaviour
     public GameObject ownerHighlight;     // e.g., a child ring
     public GameObject selectedHighlight;  // toggled when selected
 
-    public GameObject TopLeft;
-    public GameObject TopRight;
-    public GameObject MiddleRight;
-    public GameObject BottomRight;
-    public GameObject BottomLeft;
-    public GameObject MiddleLeft;
+    public GameObject[] Walls;
 
     public int pieceIndex;
     public int cellId;
@@ -52,15 +47,15 @@ public sealed class PieceView : MonoBehaviour
 
 
 
-    public void setWalls(byte[] mask)
+    public void setWalls(byte mask)
     {
-        if (mask[0] is 0) TopLeft.SetActive(true);
-        if (mask[1] is 0) TopRight.SetActive(true);
-        if (mask[2] is 0) MiddleRight.SetActive(true);
-        if (mask[3] is 0) BottomRight.SetActive(true);
-        if (mask[4] is 0) BottomLeft.SetActive(true);
-        if (mask[5] is 0) MiddleLeft.SetActive(true);
+
+       for (int i = 0; i < 5; i++)
+        {
+            Walls[i].SetActive(((mask >> i) & 1) != 0;);
     }
+}
 
 
 }
+(int configIndex, int dir)

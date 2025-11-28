@@ -9,9 +9,11 @@ using Game.Core; // for GameState
 
 public sealed class HumanInteractionController : MonoBehaviour
 {
-    public enum Mode { Build, Create, PieceAction, ActionExecute }
+    public enum Mode { Build, Create, PieceAction, ActionExecute, WallOptionsSecoundPanel }
 
     List<int> _targetsBuffer = new List<int>(128);
+
+    #region Refrences
 
     [Header("Config & Refs")]
     public InteractionConfig config;
@@ -45,6 +47,9 @@ public sealed class HumanInteractionController : MonoBehaviour
     public TMP_Text createCostText;
     public Image createSprite;
 
+    public GameObject WallOptionPanelObject;
+    public WallOptionPanel wallOptionPanel;
+
     // Right side (default layout): Build (60%) + Action (non-piece actions) (40%)
     public RectTransform actionPanel;                // 40% panel for non-piece actions
     public ActionListPresenter nonPieceActionList;   // presenter on actionPanel
@@ -56,6 +61,7 @@ public sealed class HumanInteractionController : MonoBehaviour
 
     public RectTransform actionExecutePanel; // ActionExecutePanel
     public TMP_Text actionTitleText, actionPieceText, actionCostText;
+
 
     // ---------------- HUD (Left) ----------------
     [Header("HUD / Match Header")]
@@ -83,10 +89,41 @@ public sealed class HumanInteractionController : MonoBehaviour
     public TMP_Text Debug_OffersText;
     public TMP_Text Debug_LastActionText;
     public TMP_Text Debug_SnapshotText;
+    private EventManager events;
 
+    public static bool giveRawActionOffers;
 
+    #endregion
+    #region Boostrap
+    public void ManualAwake(GameActions theGameActions,
+    EventManager eventManager)
+    {
+        gameActions = theGameActions;
+        events = eventManager;
+        subscribeMe();
+        if (boardView) boardView.CellClicked += OnCellClicked;   // from your BoardViewController
+        if (endTurnButton) endTurnButton.onClick.AddListener(OnEndTurnClicked);
+
+        HowManyWallSelected += EnterCreateModeWithWallChosen;
+        giveRawActionOffers = config.GiveRawActionOffers;
+
+        ChangetoSecondPanelMode += SetWallOptionsSecondPanelMode;
+    }
+
+    public void ManualEnable()
+    {
+        if (gameState != null) gameState.OnActionExecuted += HandleActionExecuted; // refresh on every mutation
+        RebuildOffersForCurrentPlayer();
+        EnterBuildMode(); // will push menus from offers
+        HookPresenters();
+        HudRefresh();
+    }
+
+    #endregion
 
     // ---------- runtime state ----------
+
+    #region Alloc Runtime Data
     private Mode _mode = Mode.Build;
 
     [SerializeField, Range(0, 3)] private byte _humanPlayer = 0; // bound by bootstrapper
@@ -107,35 +144,31 @@ public sealed class HumanInteractionController : MonoBehaviour
     private int _total;   // total actions returned by provider (may exceed cap)
     private int _count;   // displayed = min(total, cap)
 
+    private ushort? cachedChosenWall;
+
+    private BuildItem CachedBuildItemForCreateConnector;
+
     private string _lastActionLabel = string.Empty; // for Debug HUD
 
-    private EventManager events;
-    public void ManualAwake(GameActions theGameActions,
-    EventManager eventManager)
-    {
-        gameActions = theGameActions;
-        events = eventManager;
-
-
-
-        subscribeMe();
-        if (boardView) boardView.CellClicked += OnCellClicked;   // from your BoardViewController
-        if (endTurnButton) endTurnButton.onClick.AddListener(OnEndTurnClicked);
-    }
-
-    public void ManualEnable()
-    {
-        if (gameState != null) gameState.OnActionExecuted += HandleActionExecuted; // refresh on every mutation
-        RebuildOffersForCurrentPlayer();
-        EnterBuildMode(); // will push menus from offers
-        HookPresenters();
-        HudRefresh();
-    }
 
     private void OnDisable()
     {
         if (gameState != null) gameState.OnActionExecuted -= HandleActionExecuted;
         UnhookPresenters();
+    }
+
+
+    public void SetWallOptionsSecondPanelMode()
+    {
+
+        _mode = Mode.WallOptionsSecoundPanel;
+    }
+
+    private void enterWallOptionsSecondPanelMode()
+    {
+        TogglePanels(build: false, create: false, action: false, pieceFull: false, execute: false, walls: true);
+        boardView.ClearHighlights();
+        _mode = Mode.Create;
     }
 
     private void Update()
@@ -150,14 +183,16 @@ public sealed class HumanInteractionController : MonoBehaviour
         {
             switch (_mode)
             {
+                case Mode.WallOptionsSecoundPanel: enterWallOptionsSecondPanelMode(); break; //this is dumb lazy code i added
                 case Mode.Create: EnterBuildMode(); break;
                 case Mode.PieceAction: EnterBuildMode(); break;
                 case Mode.ActionExecute: EnterPieceActionMode(); break;
             }
         }
     }
-
+    #endregion
     // ===================== Mode transitions =====================
+    #region Mode Transitions
     private void EnterBuildMode()
     {
         boardView.ClearHighlights();
@@ -169,15 +204,14 @@ public sealed class HumanInteractionController : MonoBehaviour
         SetBackdropColor(config ? config.buildModeBackground : new Color(0, 0, 0, 0.8f));
         SetPanelBackdropColor(config ? config.buildModePanelBackground : new Color(0, 0, 0, 0.8f));
 
-        TogglePanels(build: true, create: false, action: true, pieceFull: false, execute: false);
+        TogglePanels(build: true, create: false, action: true, pieceFull: false, execute: false, walls: false);
         PushBuildMenu();
         PushNonPieceActionList();   // NEW: default action list = non-piece actions (e.g., End Turn)
 
         HudRefresh();
     }
 
-    #region Temp //delete me
-    private void EnterCreateMode(BuildItem build)
+    private void EnterCreateMode(BuildItem build, ushort? ChosenWall = null)
     {
         boardView.ClearHighlights();
         if (config && boardView) boardView.ApplyDefaultCellColor(config.defaultCellColor);
@@ -185,10 +219,27 @@ public sealed class HumanInteractionController : MonoBehaviour
         _selectedCreateType = build.pieceType;
         _selectedActionIndex = FindFirstCreateIndexForType(_selectedCreateType); // seed (can be -1 if none)
         _createArmed = (_selectedActionIndex >= 0);
-        boardView.HighlightCells(
-            ComputeCreateTargetsForPieceType(_selectedCreateType),
-            config ? config.createModeCellHighlight : new Color(0.25f, 0.75f, 0.25f, 0.6f)
-        );
+
+        if (ChosenWall == null)
+        {
+            boardView.HighlightCells(
+                ComputeCreateTargetsForPieceType(_selectedCreateType),
+                config ? config.createModeCellHighlight : new Color(0.25f, 0.75f, 0.25f, 0.6f)
+            );
+
+            cachedChosenWall = null;
+        }
+        else
+        {
+            boardView.HighlightCells(
+                ComputeCreateTargetsForPieceType(_selectedCreateType, ChosenWall),
+                config ? config.createModeCellHighlight : new Color(0.25f, 0.75f, 0.25f, 0.6f)
+            );
+
+            cachedChosenWall = ChosenWall;
+        }
+
+
         _mode = Mode.Create;
         _selectedPieceId = null;
         _selectedCellId = null;
@@ -196,7 +247,7 @@ public sealed class HumanInteractionController : MonoBehaviour
 
         SetBackdropColor(config ? config.createModeBackground : new Color(0, 0, 0, 0.8f));
         SetPanelBackdropColor(config ? config.createModePanelBackground : new Color(0, 0, 0, 0.8f));
-        TogglePanels(build: false, create: true, action: false, pieceFull: false, execute: false);
+        TogglePanels(build: false, create: true, action: false, pieceFull: false, execute: false, walls: false);
 
         if (createTitleText) createTitleText.text = $"Create: {build.name}";
         if (createCostText) createCostText.text = $"Cost: {build.cost}";
@@ -213,14 +264,17 @@ public sealed class HumanInteractionController : MonoBehaviour
 
     public void EnterConnectingMode(BuildItem item)
     {
+        // Ensure we query offers for the piece type the user just picked
+
+        _mode = Mode.Create;
+        _selectedCreateType = item.pieceType;
         _selectedActionIndex = FindFirstCreateIndexForType(_selectedCreateType);
         var wallOptions = WallOptionsForPieceType(_selectedCreateType);
 
+        TogglePanels(build: false, create: false, action: false, pieceFull: false, execute: false, walls: true);
 
+        wallOptionPanel.ShowSideOptions(wallOptions);
     }
-
-
-    #endregion
 
     private void EnterPieceActionMode(int? pieceId = null)
     {
@@ -233,7 +287,7 @@ public sealed class HumanInteractionController : MonoBehaviour
         SetBackdropColor(config ? config.pieceActionBackground : new Color(0, 0, 0, 0.8f));
         SetPanelBackdropColor(config ? config.pieceActionPanelBackground : new Color(0, 0, 0, 0.8f));
 
-        TogglePanels(build: false, create: false, action: false, pieceFull: true, execute: false);
+        TogglePanels(build: false, create: false, action: false, pieceFull: true, execute: false, walls: false);
         // Immediately fill the full panel so it shows on the first click:
         PushPieceActionListForSelection();
 
@@ -249,7 +303,7 @@ public sealed class HumanInteractionController : MonoBehaviour
         SetBackdropColor(config ? config.actionExecuteBackground : new Color(0, 0, 0, 0.8f));
         SetPanelBackdropColor(config ? config.actionExecutePanelBackground : new Color(0, 0, 0, 0.8f));
 
-        TogglePanels(build: false, create: false, action: false, pieceFull: false, execute: true);
+        TogglePanels(build: false, create: false, action: false, pieceFull: false, execute: true, walls: false);
         // (Re)apply legal-target highlights for clarity while in execute mode
         if (_selectedActionIndex >= 0)
         {
@@ -265,7 +319,10 @@ public sealed class HumanInteractionController : MonoBehaviour
         HudRefresh();
     }
 
+    #endregion
+
     // ===================== Input (from board) =====================
+    #region input from Board
     private void OnCellClicked(int cellId)
     {
         if (config && config.blockInputWhenNotYourTurn && gameState != null)
@@ -295,11 +352,20 @@ public sealed class HumanInteractionController : MonoBehaviour
                 break;
 
             case Mode.Create:
+            case Mode.WallOptionsSecoundPanel:
                 // Click on a highlighted target → perform the concrete Create action
                 if (_createArmed)
                 {
-                    int idx = FindConcreteCreateAction(_selectedCreateType, (ushort)cellId);
-                    if (idx >= 0) PerformActionIndex(idx);
+                    if (cachedChosenWall == null)
+                    {
+                        int idx = FindConcreteCreateAction(_selectedCreateType, (ushort)cellId);
+                        if (idx >= 0) PerformActionIndex(idx);
+                    }
+                    else
+                    {
+                        int idx = FindConcreteCreateAction(_selectedCreateType, (ushort)cellId, cachedChosenWall);
+                        if (idx >= 0) PerformActionIndex(idx);
+                    }
                 }
                 // Clear either way and return to Build
                 boardView.ClearHighlights();
@@ -341,16 +407,11 @@ public sealed class HumanInteractionController : MonoBehaviour
         return -1;
     }
 
+    #endregion
 
     // ===================== Buttons =====================
-    private void OnEndTurnClicked()
-    {
-        // find EndTurn in the current offers and perform it
-        int idx = FindEndTurnIndex();
-        if (idx >= 0) PerformActionIndex(idx);
-    }
 
-
+    #region Out Point To core
     private void PerformActionIndex(int idx)
     {
         if (gameState == null) return;
@@ -366,6 +427,15 @@ public sealed class HumanInteractionController : MonoBehaviour
         }
         // UI refresh happens via HandleActionExecuted()
     }
+    #endregion
+
+    #region Buttons
+    private void OnEndTurnClicked()
+    {
+        // find EndTurn in the current offers and perform it
+        int idx = FindEndTurnIndex();
+        if (idx >= 0) PerformActionIndex(idx);
+    }
 
     private int FindEndTurnIndex()
     {
@@ -373,14 +443,18 @@ public sealed class HumanInteractionController : MonoBehaviour
         return -1;
     }
 
+    #endregion
     // ===================== UI helpers =====================
-    private void TogglePanels(bool build, bool create, bool action, bool pieceFull, bool execute)
+
+    #region UI Helpers
+    private void TogglePanels(bool build, bool create, bool action, bool pieceFull, bool execute, bool walls)
     {
         if (buildMenu) buildMenu.gameObject.SetActive(build);
         if (createPanel) createPanel.gameObject.SetActive(create);
         if (actionPanel) actionPanel.gameObject.SetActive(action);
         if (pieceActionPanelFull) pieceActionPanelFull.gameObject.SetActive(pieceFull);
         if (actionExecutePanel) actionExecutePanel.gameObject.SetActive(execute);
+        if (WallOptionPanelObject) WallOptionPanelObject.gameObject.SetActive(walls);
     }
 
     private void SetBackdropColor(Color c)
@@ -493,9 +567,27 @@ public sealed class HumanInteractionController : MonoBehaviour
 
     private void OnBuildItemClicked(BuildItem item)
     {
-        if (item.Auxiliary > 0) EnterConnectingMode(item);
+        bool EnterConnectorMode = false;
+        for (int i = 0; i < _count; i++)
+        {
+            var a = _offers[i];
+            if (a.kind != Game.Core.ActionKind.Create) continue;
+            if (a.pieceType != item.pieceType) continue;
+            if (_mask[i] == 0) continue;
+            if (a.aux < 0) continue;
+            EnterConnectorMode = true;
+            break;
+        }
 
-        EnterCreateMode(item);
+        if (EnterConnectorMode)
+        {
+            CachedBuildItemForCreateConnector = item;
+            EnterConnectingMode(item);
+        }
+        else
+        {
+            EnterCreateMode(item);
+        }
     }
 
     private void OnActionItemClicked(ActionItem item)
@@ -527,13 +619,19 @@ public sealed class HumanInteractionController : MonoBehaviour
 
 
     // Collect all legal dst cells for "Create <pieceType>"
-    IEnumerable<int> ComputeCreateTargetsForPieceType(byte pieceType)
+    IEnumerable<int> ComputeCreateTargetsForPieceType(byte pieceType, ushort? chosenWall = null)
     {
         _createTargetsBuffer.Clear();
         for (int i = 0; i < _count; i++)
         {
             var a = _offers[i];
             if (a.kind != Game.Core.ActionKind.Create) continue;   // byte code
+
+            if (chosenWall != null)
+            {
+                if (a.aux != chosenWall) continue;
+            }
+
             if (a.pieceType != pieceType) continue;
             if (_mask[i] == 0) continue; // masked out = illegal/unaffordable
             _createTargetsBuffer.Add(a.dstCell);
@@ -556,8 +654,9 @@ public sealed class HumanInteractionController : MonoBehaviour
         return wallConfigs;
     }
 
-
+    #endregion
     // ===================== Offer plumbing (real) =====================
+    #region Offer Plumbing
     private void RebuildOffersForCurrentPlayer()
     {
         _total = _count = 0;
@@ -667,10 +766,6 @@ public sealed class HumanInteractionController : MonoBehaviour
     }
 
 
-
-
-
-
     // PieceAction mode (full coverage panel): Only actions originating at the selected cell
     private void PushPieceActionListForSelection()
     {
@@ -738,13 +833,20 @@ public sealed class HumanInteractionController : MonoBehaviour
         return -1;
     }
 
-    private int FindConcreteCreateAction(byte type, ushort dst)
+    private int FindConcreteCreateAction(byte type, ushort dst, ushort? Aux = null)
     {
         // In OfferProvider, Create uses srcCell = 0xFFFF sentinel and kind=Create. We only match type+dst+mask. :contentReference[oaicite:1]{index=1}
         for (int i = 0; i < _count; i++)
         {
             var a = _offers[i];
             if (a.kind != Game.Core.ActionKind.Create) continue;
+
+            //myAddtion for Connectors: I dont know if this will work
+            if (Aux != null)
+            {
+                if (a.kind != Game.Core.ActionKind.Create && a.aux != Aux) continue;
+            }
+
             if (a.pieceType != type) continue;
             if (a.dstCell != dst) continue;
             if (_mask[i] == 0) continue;
@@ -767,7 +869,7 @@ public sealed class HumanInteractionController : MonoBehaviour
         return false;
     }
 
-
+    #endregion
     #region new Subscription system
 
     private int[] playerTurn = new int[4];
@@ -777,10 +879,20 @@ public sealed class HumanInteractionController : MonoBehaviour
     private int turnNumber;
     private int gameNumber = 1;
 
-    public event System.Action HowManyWallSelected;
-    public void howManyWallSelected()
+    public static event System.Action<ushort> HowManyWallSelected;
+
+    public static event System.Action ChangetoSecondPanelMode;
+
+    public static void howManyWallSelected(ushort ChosenWall)
     {
-        HowManyWallSelected?.Invoke();
+        HowManyWallSelected?.Invoke(ChosenWall);
+
+        ChangetoSecondPanelMode?.Invoke();
+    }
+
+    public void EnterCreateModeWithWallChosen(ushort chosenWall)
+    {
+        EnterCreateMode(CachedBuildItemForCreateConnector, chosenWall);
     }
 
     private void subscribeMe()
