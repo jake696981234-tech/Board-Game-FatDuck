@@ -16,7 +16,7 @@ public sealed class GameSnapshot
     public int[] pieceOwner;
     public byte[] pieceType;
     public short[] pieceHP;
-    public byte[] connector;
+    public byte?[] connector;
 
     // --- Match counters ---
     public int centerVP;

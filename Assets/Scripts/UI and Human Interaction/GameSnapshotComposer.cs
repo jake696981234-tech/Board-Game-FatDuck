@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 public sealed class GameSnapshotComposer
 {
@@ -37,6 +38,27 @@ public sealed class GameSnapshotComposer
             snapshot.coreCellIdByPlayer[p] = board.GetPlayerCoreCellId(p);
     }
 
+    private List<byte?> PiecesWithConnectors()
+    {
+        List<byte?> FilteredPieces = new List<byte?>();
+        int i = 0;
+        foreach (byte Piece in board.pieceType)
+        {
+            if (pieces.HasConnectors(Piece))
+            {
+                FilteredPieces.Add(board.pieceConnectorConfig[i]);
+            }
+            else
+            {
+                FilteredPieces.Add(null);
+            }
+            i++;
+        }
+        return FilteredPieces;
+    }
+
+
+
     public GameSnapshot GetSnapshot()
     {
         // pieces
@@ -45,7 +67,9 @@ public sealed class GameSnapshotComposer
         snapshot.pieceOwner = board.pieceOwner;
         snapshot.pieceType = board.pieceType;
         snapshot.pieceHP = board.pieceHP;
-        snapshot.connector = board.pieceConnectorConfig;
+        snapshot.connector = PiecesWithConnectors().ToArray();
+
+
 
         // live counters
         snapshot.centerVP = state.GetCenterVP();

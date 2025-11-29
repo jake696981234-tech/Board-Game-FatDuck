@@ -40,7 +40,7 @@ public sealed class WallOptionPanel : MonoBehaviour
         {
             bool existsWithThisCount = wallOptions.Any(w => PiecesSides.CountWalls(w) == i);
 
-            // Active if at least one *doesn't* match
+            
             blockOption[i].SetActive(!existsWithThisCount);
         }
     }
@@ -50,7 +50,7 @@ public sealed class WallOptionPanel : MonoBehaviour
     public void showWallOptions(IEnumerable<ushort> wallOptions, int howMany)
     {
         WallCreatePanel2.SetActive(true);
-        DestoryAllWallOptions();       // assuming this is your own method
+        DestoryAllWallOptions();       
         wallConfigOption.Clear();
 
         

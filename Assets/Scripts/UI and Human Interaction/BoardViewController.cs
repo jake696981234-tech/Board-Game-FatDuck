@@ -15,6 +15,8 @@ public sealed class BoardViewController : MonoBehaviour
     [Header("Toggles")]
     public bool showCellIds = false;
     public bool showPieceHP = true;
+    [Tooltip("When enabled, logs connector masks for each piece as snapshots are applied.")]
+    public bool logConnectorMasks = false;
 
     private readonly Dictionary<int, CellView> _cellById = new();
     private readonly List<PieceView> _piecePool = new();
@@ -89,6 +91,7 @@ public sealed class BoardViewController : MonoBehaviour
             v.cellId = _snapshot.pieceCellId[i];
             v.owner = _snapshot.pieceOwner[i];
             v.type = _snapshot.pieceType[i];
+            v.wallConfig = _snapshot.connector[i];
 
             var pos = GetCellWorldPos(v.cellId);
             v.SetWorldPosition(pos);
@@ -97,10 +100,18 @@ public sealed class BoardViewController : MonoBehaviour
             v.SetSprite(sprite);
             v.SetTint(SafeOwnerTint(v.owner, _snapshot.ownerTintByPlayer));
 
-            v.setWalls(_snapshot.connector);
+            v.setWalls();
 
             v.SetHP(_snapshot.pieceHP[i], showPieceHP);
             v.SetVisible(true);
+
+            if (logConnectorMasks)
+            {
+                string mask = v.wallConfig.HasValue
+                    ? Convert.ToString(v.wallConfig.Value, 2).PadLeft(6, '0')
+                    : "null";
+                Debug.Log($"[BoardView] Piece #{i} type={v.type} owner={v.owner} cell={v.cellId} connectorMask={mask}");
+            }
         }
         for (int i = _snapshot.pieceCount; i < _piecePool.Count; i++)
             _piecePool[i].SetVisible(false);

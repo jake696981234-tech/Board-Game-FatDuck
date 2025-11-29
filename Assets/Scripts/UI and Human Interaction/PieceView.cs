@@ -14,6 +14,8 @@ public sealed class PieceView : MonoBehaviour
     public int owner;
     public byte type;
 
+    public byte? wallConfig;
+
     public SpriteRenderer spriteRenderer;
     public TextMeshPro hpLabel;
     public GameObject teamMarkGO;
@@ -47,15 +49,22 @@ public sealed class PieceView : MonoBehaviour
 
 
 
-    public void setWalls(byte mask)
+    public void setWalls()
     {
-
-       for (int i = 0; i < 5; i++)
+        if (wallConfig != null)
         {
-            Walls[i].SetActive(((mask >> i) & 1) != 0;);
+            for (int i = 0; i < 6; i++)
+            {
+                Walls[i].SetActive(((wallConfig >> i) & 1) == 0);
+                // Walls[i].SetActive(PiecesSides.IsConnectorSide()
+            }
+        }
+        else
+        {
+            for (int i = 0; i < 6; i++)
+            {
+                Walls[i].SetActive(false);
+            }
+        }
     }
 }
-
-
-}
-(int configIndex, int dir)

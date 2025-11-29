@@ -567,19 +567,7 @@ public sealed class HumanInteractionController : MonoBehaviour
 
     private void OnBuildItemClicked(BuildItem item)
     {
-        bool EnterConnectorMode = false;
-        for (int i = 0; i < _count; i++)
-        {
-            var a = _offers[i];
-            if (a.kind != Game.Core.ActionKind.Create) continue;
-            if (a.pieceType != item.pieceType) continue;
-            if (_mask[i] == 0) continue;
-            if (a.aux < 0) continue;
-            EnterConnectorMode = true;
-            break;
-        }
-
-        if (EnterConnectorMode)
+        if (pieces.HasConnectors(item.pieceType))
         {
             CachedBuildItemForCreateConnector = item;
             EnterConnectingMode(item);
@@ -841,11 +829,8 @@ public sealed class HumanInteractionController : MonoBehaviour
             var a = _offers[i];
             if (a.kind != Game.Core.ActionKind.Create) continue;
 
-            //myAddtion for Connectors: I dont know if this will work
-            if (Aux != null)
-            {
-                if (a.kind != Game.Core.ActionKind.Create && a.aux != Aux) continue;
-            }
+            // When a wall/config was chosen, only accept the matching aux value
+            if (Aux != null && a.aux != Aux) continue;
 
             if (a.pieceType != type) continue;
             if (a.dstCell != dst) continue;
