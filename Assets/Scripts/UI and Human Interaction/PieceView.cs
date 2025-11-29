@@ -56,7 +56,6 @@ public sealed class PieceView : MonoBehaviour
             for (int i = 0; i < 6; i++)
             {
                 Walls[i].SetActive(((wallConfig >> i) & 1) == 0);
-                // Walls[i].SetActive(PiecesSides.IsConnectorSide()
             }
         }
         else

@@ -72,11 +72,11 @@ public sealed class OfferProvider
             for (int slot = 0; slot < slotCount; slot++)
             {
                 int abilityId = q.pcs.AbilityIdAtSlot(actorType, slot);
-                byte kind = q.pcs.GetAbilityKind(actorType, slot);
+                var abilityKind = (Pieces.AbilityKind)q.pcs.GetAbilityKind(actorType, slot);
 
-                switch (kind)
+                switch (abilityKind)
                 {
-                    case Move:
+                    case Pieces.AbilityKind.Move:
                         {
                             int n = GetLegalTargets_Move(q.pcs, abilityId, q.bm, pieceId, scratch);
                             for (int i = 0; i < n; i++)
@@ -95,7 +95,7 @@ public sealed class OfferProvider
                             }
                             break;
                         }
-                    case Shoot:
+                    case Pieces.AbilityKind.Shoot:
                         {
                             int n = GetLegalTargets_Shoot(q.pcs, abilityId, q.bm, pieceId, scratch);
                             for (int i = 0; i < n; i++)
@@ -115,7 +115,7 @@ public sealed class OfferProvider
                             }
                             break;
                         }
-                    case CaptureVP:
+                    case Pieces.AbilityKind.CaptureVP:
                         {
                             if (q.pcs.IsLegal_CaptureVP(q.bm, pieceId, abilityId))
                             {
@@ -133,7 +133,7 @@ public sealed class OfferProvider
                             }
                             break;
                         }
-                    case CoreDamage:
+                    case Pieces.AbilityKind.CoreDamage:
                         {
                             if (q.pcs.IsLegal_CoreDamage(q.bm, pieceId, abilityId))
                             {
@@ -161,10 +161,10 @@ public sealed class OfferProvider
                             }
                             break;
                         }
-                    case Create:
+                    case Pieces.AbilityKind.Create:
                         // NOTE: Create via ability is intentionally ignored in favor of the global Create path below.
                         break;
-                    case Push:
+                    case Pieces.AbilityKind.Push:
                         {
                             int n = GetLegalTargets_Push(q.pcs, abilityId, q.bm, pieceId, scratch);
                             for (int i = 0; i < n; i++)
@@ -184,7 +184,7 @@ public sealed class OfferProvider
                             }
                             break;
                         }
-                    case GroupBuild:
+                    case Pieces.AbilityKind.GroupBuild:
                         {
                             int tgtType = q.pcs.groupBuildTargetType[actorType];
                             if (tgtType >= 0 && tgtType < q.pcs.typeCount)
@@ -203,7 +203,7 @@ public sealed class OfferProvider
                             }
                             break;
                         }
-                    case Upgrade:
+                    case Pieces.AbilityKind.Upgrade:
                         {
                             if (q.pcs.upgradeEnabled[actorType])
                             {
@@ -232,7 +232,7 @@ public sealed class OfferProvider
                             }
                             break;
                         }
-                    case Launcher:
+                    case Pieces.AbilityKind.Launcher:
                         {
                             int n = GetLegalTargets_Launcher(q.pcs, abilityId, q.bm, pieceId, scratch);
                             for (int i = 0; i < n; i += 2)
@@ -252,7 +252,7 @@ public sealed class OfferProvider
                             }
                             break;
                         }
-                    case Spawner:
+                    case Pieces.AbilityKind.Spawner:
                         {
                             EmitSpawnerActions(q, abilityId, pieceId, cell, slot, ref write, ref total, cap, outActions, outCosts, outMask);
                             break;
