@@ -29,3 +29,6 @@ MonoBehaviour:
   selectionHighlight: {r: 0.85, g: 0.85, b: 0.1, a: 0.8}
   blockInputWhenNotYourTurn: 1
   GiveRawActionOffers: 0
+  ManualStepThroughSnapShots: 0
+  DelayOnActions: 1
+  TimeDelayOnActions: 0.31

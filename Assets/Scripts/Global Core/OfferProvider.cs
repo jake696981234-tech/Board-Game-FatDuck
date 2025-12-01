@@ -639,16 +639,20 @@ public sealed class OfferProvider
 
         // Once-per-turn flag cannot be observed here; Perform will reject if already used.
 
-        var a = new Action
+        // Emit one action per legal empty cell (deterministic order)
+        for (int i = 0; i < eCount; i++)
         {
-            kind = Spawner,
-            abilitySlot = (byte)abilitySlot,
-            pieceType = (byte)targetType,
-            srcCell = (ushort)actorCell,
-            dstCell = (ushort)empties[0],
-            aux = 0
-        };
-        Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask);
+            var a = new Action
+            {
+                kind = Spawner,
+                abilitySlot = (byte)abilitySlot,
+                pieceType = (byte)targetType,
+                srcCell = (ushort)actorCell,
+                dstCell = (ushort)empties[i],
+                aux = 0
+            };
+            Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask);
+        }
     }
 
     private void EmitMultiCreatePlacements(

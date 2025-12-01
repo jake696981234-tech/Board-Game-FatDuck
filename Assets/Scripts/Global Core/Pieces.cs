@@ -13,7 +13,26 @@ using System.Runtime.CompilerServices;
 public partial class Pieces
 {
     // ====== Public enums (compact; persist order once you ship) ======
-    public enum AbilityKind : byte { Move = 0, Shoot = 1, CaptureVP = 2, CoreDamage = 3, Create = 4, GroupBuild = 5, Push = 6, Upgrade = 7, Launcher = 8, Spawner = 9, Factory = 10, Custom0 = 11, Custom1 = 12, Custom2 = 13 }
+    // Align numeric order with ActionKind (0..10). Extras appended after.
+    // Note: EndTurn is included only to keep indices aligned; do not assign it to ability slots.
+    public enum AbilityKind : byte
+    {
+        Move = 0,
+        Shoot = 1,
+        CaptureVP = 2,
+        CoreDamage = 3,
+        Create = 4,
+        EndTurn = 5, // placeholder for alignment with ActionKind
+        Push = 6,
+        GroupBuild = 7,
+        Upgrade = 8,
+        Launcher = 9,
+        Spawner = 10,
+        Factory = 11,
+        Custom0 = 12,
+        Custom1 = 13,
+        Custom2 = 14
+    }
     public enum TargetKind : byte { None = 0, Cell = 1, Piece = 2 }
 
     // ====== Type registry (dense indices 0..typeCount-1) ======

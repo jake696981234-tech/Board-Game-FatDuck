@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
+using System.Collections;
 
 public sealed class BoardViewController : MonoBehaviour
 {
@@ -12,6 +14,12 @@ public sealed class BoardViewController : MonoBehaviour
     [Header("Prefabs")]
     public PieceView piecePrefab;
 
+
+    [Header("References")]
+    public InteractionConfig inConfig;
+
+    public HumanInteractionController hic;
+
     [Header("Toggles")]
     public bool showCellIds = false;
     public bool showPieceHP = true;
@@ -21,13 +29,22 @@ public sealed class BoardViewController : MonoBehaviour
     private readonly Dictionary<int, CellView> _cellById = new();
     private readonly List<PieceView> _piecePool = new();
     private readonly Dictionary<int, Sprite> _spriteCache = new();
+    private readonly Queue<GameSnapshot> _pendingSnapshots = new();
 
     private GameSnapshot _snapshot;
+    private Coroutine _applyQueueRoutine;
 
     public event Action<int> CellClicked;
     public event Action<bool> ViewRefreshed;
 
-    private void Awake() { IndexCellViews(); }
+    private void Awake()
+    {
+        snapShotHistory.Clear();
+        snapShotNumber = 0;
+        _pendingSnapshots.Clear();
+        _applyQueueRoutine = null;
+        IndexCellViews();
+    }
     private void OnEnable() { ApplyCellIdVisibility(showCellIds); }
 
     private void IndexCellViews()
@@ -46,9 +63,97 @@ public sealed class BoardViewController : MonoBehaviour
         }
     }
 
+    public void SnapShotUpdate()
+    {
+        if (!inConfig.ManualStepThroughSnapShots) return;
+        if (snapShotHistory.Count == 0) return;
+
+        var kb = Keyboard.current;
+        if (kb == null) return;
+
+        if (kb.rightArrowKey.wasPressedThisFrame && snapShotNumber < snapShotHistory.Count - 1)
+        {
+            snapShotNumber++;
+            Debug.Log($"snapShotNumber is: {snapShotNumber} / {snapShotHistory.Count - 1}");
+            actuallyApplySnapshot();
+        }
+
+        if (kb.leftArrowKey.wasPressedThisFrame && snapShotNumber > 0)
+        {
+            snapShotNumber--;
+            Debug.Log($"snapShotNumber is: {snapShotNumber} / {snapShotHistory.Count - 1}");
+            actuallyApplySnapshot();
+        }
+    }
+
+
+
     public void ApplySnapshot(GameSnapshot s)
     {
-        _snapshot = s;
+        snapShotHistory.Add(s);
+
+        snapShotNumber = Mathf.Clamp(snapShotNumber, 0, snapShotHistory.Count - 1);
+
+        if (!inConfig.ManualStepThroughSnapShots || snapShotHistory.Count == 1 || (!hic.IsCurrentPlayer && snapShotNumber < snapShotHistory.Count))
+        {
+            if (inConfig.DelayOnActions && !hic.IsCurrentPlayer)
+            {
+                EnqueueSnapshotForDelayedApply(s);
+            }
+            else
+            {
+                ApplySnapshotData(s);
+            }
+        }
+    }
+
+    private void EnqueueSnapshotForDelayedApply(GameSnapshot s)
+    {
+        _pendingSnapshots.Enqueue(s);
+        if (_applyQueueRoutine == null)
+        {
+            _applyQueueRoutine = StartCoroutine(ApplyQueueRoutine());
+        }
+    }
+
+    private IEnumerator ApplyQueueRoutine()
+    {
+        while (_pendingSnapshots.Count > 0)
+        {
+            var next = _pendingSnapshots.Dequeue();
+            ApplySnapshotData(next);
+            yield return new WaitForSeconds(inConfig.TimeDelayOnActions);
+        }
+        _applyQueueRoutine = null;
+    }
+
+
+
+    private int snapShotNumber = 0;
+
+    private static List<GameSnapshot> snapShotHistory = new List<GameSnapshot>();
+
+    private void actuallyApplySnapshot()
+    {
+        if (snapShotHistory.Count == 0) { ViewRefreshed?.Invoke(false); return; }
+
+        snapShotNumber = Mathf.Clamp(snapShotNumber, 0, snapShotHistory.Count - 1);
+
+        if (!inConfig.ManualStepThroughSnapShots)
+        {
+            snapShotNumber = snapShotHistory.Count - 1;
+            ApplySnapshotData(snapShotHistory[snapShotNumber]);
+        }
+        else
+        {
+            ApplySnapshotData(snapShotHistory[snapShotNumber]);
+        }
+    }
+
+    private void ApplySnapshotData(GameSnapshot snapshot)
+    {
+        _snapshot = snapshot;
+
         if (!isActiveAndEnabled || _snapshot == null) { ViewRefreshed?.Invoke(false); return; }
 
         // IDs

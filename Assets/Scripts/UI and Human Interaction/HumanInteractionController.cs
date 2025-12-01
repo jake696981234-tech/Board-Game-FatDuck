@@ -93,6 +93,8 @@ public sealed class HumanInteractionController : MonoBehaviour
 
     public static bool giveRawActionOffers;
 
+    public bool IsCurrentPlayer = false;
+
     #endregion
     #region Boostrap
     public void ManualAwake(GameActions theGameActions,
@@ -108,6 +110,8 @@ public sealed class HumanInteractionController : MonoBehaviour
         giveRawActionOffers = config.GiveRawActionOffers;
 
         ChangetoSecondPanelMode += SetWallOptionsSecondPanelMode;
+
+        IsCurrentPlayer = gameState.CurrentPlayerId == _humanPlayer;
     }
 
     public void ManualEnable()
@@ -173,6 +177,7 @@ public sealed class HumanInteractionController : MonoBehaviour
 
     private void Update()
     {
+        boardView.SnapShotUpdate();
         // Global cancel (New Input System)
         // Esc key OR Right Mouse Button pressed this frame
         bool cancel =
@@ -641,6 +646,8 @@ public sealed class HumanInteractionController : MonoBehaviour
         }
         return wallConfigs;
     }
+
+
 
     #endregion
     // ===================== Offer plumbing (real) =====================

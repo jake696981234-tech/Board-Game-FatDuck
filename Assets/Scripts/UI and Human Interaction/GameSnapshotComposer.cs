@@ -8,7 +8,8 @@ public sealed class GameSnapshotComposer
     private readonly Game.Core.GameState state;
     private readonly Pieces pieces;
 
-    private readonly GameSnapshot snapshot = new();
+    private readonly GameSnapshot staticSnapshot = new();
+    private uint versionCounter = 0;
 
     public GameSnapshotComposer(BoardGeometry g, BoardModel b, Game.Core.GameState s, Pieces p)
     {
@@ -21,21 +22,21 @@ public sealed class GameSnapshotComposer
 
     private void BuildStaticGeometry()
     {
-        snapshot.cellCount = board.GetCellCount();
-        snapshot.worldPosById = new Vector3[snapshot.cellCount];
+        staticSnapshot.cellCount = board.GetCellCount();
+        staticSnapshot.worldPosById = new Vector3[staticSnapshot.cellCount];
 
         // axial -> world (pointy-top)
-        for (int id = 0; id < snapshot.cellCount; id++)
+        for (int id = 0; id < staticSnapshot.cellCount; id++)
         {
             var (q, r) = geometry.coordById[id];
-            snapshot.worldPosById[id] = AxialToWorld(q, r, board.Radius);
+            staticSnapshot.worldPosById[id] = AxialToWorld(q, r, board.Radius);
         }
 
-        snapshot.victoryPointCellId = board.GetVictoryPointCellId();
+        staticSnapshot.victoryPointCellId = board.GetVictoryPointCellId();
 
-        snapshot.coreCellIdByPlayer = new int[4];
+        staticSnapshot.coreCellIdByPlayer = new int[4];
         for (byte p = 0; p < 4; p++)
-            snapshot.coreCellIdByPlayer[p] = board.GetPlayerCoreCellId(p);
+            staticSnapshot.coreCellIdByPlayer[p] = board.GetPlayerCoreCellId(p);
     }
 
     private List<byte?> PiecesWithConnectors()
@@ -61,15 +62,28 @@ public sealed class GameSnapshotComposer
 
     public GameSnapshot GetSnapshot()
     {
-        // pieces
+        var snapshot = new GameSnapshot();
+
+        // Static geometry (share references; immutable)
+        snapshot.cellCount = staticSnapshot.cellCount;
+        snapshot.worldPosById = staticSnapshot.worldPosById;
+        snapshot.victoryPointCellId = staticSnapshot.victoryPointCellId;
+        snapshot.coreCellIdByPlayer = staticSnapshot.coreCellIdByPlayer;
+
+        // Pieces (deep copy mutable arrays so history is immutable)
         snapshot.pieceCount = board.pieceCount;
-        snapshot.pieceCellId = board.pieceCellId;
-        snapshot.pieceOwner = board.pieceOwner;
-        snapshot.pieceType = board.pieceType;
-        snapshot.pieceHP = board.pieceHP;
-        snapshot.connector = PiecesWithConnectors().ToArray();
-
-
+        if (snapshot.pieceCount > 0)
+        {
+            snapshot.pieceCellId = new int[snapshot.pieceCount];
+            snapshot.pieceOwner = new int[snapshot.pieceCount];
+            snapshot.pieceType = new byte[snapshot.pieceCount];
+            snapshot.pieceHP = new short[snapshot.pieceCount];
+            System.Array.Copy(board.pieceCellId, snapshot.pieceCellId, snapshot.pieceCount);
+            System.Array.Copy(board.pieceOwner, snapshot.pieceOwner, snapshot.pieceCount);
+            System.Array.Copy(board.pieceType, snapshot.pieceType, snapshot.pieceCount);
+            System.Array.Copy(board.pieceHP, snapshot.pieceHP, snapshot.pieceCount);
+        }
+        snapshot.connector = PiecesWithConnectors().ToArray(); // already allocates a new array
 
         // live counters
         snapshot.centerVP = state.GetCenterVP();
@@ -82,14 +96,14 @@ public sealed class GameSnapshotComposer
             snapshot.vpByPlayer[p] = state.GetVP(p);
         }
 
-        // per-type UI metadata
+        // per-type UI metadata (safe to share)
         snapshot.spritePathByType = pieces.spritePathByType;
         snapshot.displayNameByType = pieces.displayNameByType;
 
         // default owner palette (can replace later)
         snapshot.ownerTintByPlayer = new Color[4] { Color.red, Color.blue, Color.green, Color.silver };
 
-        snapshot.version++;
+        snapshot.version = ++versionCounter;
         return snapshot;
     }
 

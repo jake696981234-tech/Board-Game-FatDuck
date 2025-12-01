@@ -60,13 +60,13 @@ public class CameraController2D_NewInput : MonoBehaviour
 
         Vector2 input = Vector2.zero;
 
-        if (Keyboard.current.wKey.isPressed || Keyboard.current.upArrowKey.isPressed)
+        if (Keyboard.current.wKey.isPressed)
             input.y += 1f;
-        if (Keyboard.current.sKey.isPressed || Keyboard.current.downArrowKey.isPressed)
+        if (Keyboard.current.sKey.isPressed)
             input.y -= 1f;
-        if (Keyboard.current.aKey.isPressed || Keyboard.current.leftArrowKey.isPressed)
+        if (Keyboard.current.aKey.isPressed)
             input.x -= 1f;
-        if (Keyboard.current.dKey.isPressed || Keyboard.current.rightArrowKey.isPressed)
+        if (Keyboard.current.dKey.isPressed)
             input.x += 1f;
 
         if (input.sqrMagnitude > 0f)

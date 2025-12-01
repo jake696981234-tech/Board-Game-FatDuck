@@ -228,13 +228,37 @@ namespace Game.Core
             int canCreate = Math.Min(amount, Math.Min(eCount, Math.Max(0, availableLimit)));
             if (canCreate <= 0) return;
 
-            for (int i = 0; i < canCreate; i++)
+            // Prefer the chosen cell (a.dstCell) if still legal; then fill remaining
+            int spawned = 0;
+
+            bool ChosenCellIsLegal = false;
+            for (int i = 0; i < eCount; i++)
+            {
+                if (empties[i] == a.dstCell)
+                {
+                    ChosenCellIsLegal = true;
+                    break;
+                }
+            }
+
+            if (ChosenCellIsLegal && spawned < canCreate)
+            {
+                int pid = bm.AllocateRow();
+                bm.PlacePieceRow(pid, p, (byte)targetType, a.dstCell, pcs.maxHPByType[targetType]);
+                int g = pcs.GrantsDigit((byte)targetType);
+                if (g >= 0) gamestate.ps[p].GrantDigit(g);
+                spawned++;
+            }
+
+            for (int i = 0; i < eCount && spawned < canCreate; i++)
             {
                 int cell = empties[i];
+                if (cell == a.dstCell) continue; // already used chosen cell
                 int pid = bm.AllocateRow();
                 bm.PlacePieceRow(pid, p, (byte)targetType, cell, pcs.maxHPByType[targetType]);
                 int g = pcs.GrantsDigit((byte)targetType);
                 if (g >= 0) gamestate.ps[p].GrantDigit(g);
+                spawned++;
             }
 
             // Mark once-per-turn flag

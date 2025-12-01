@@ -37,4 +37,9 @@ public class InteractionConfig : ScriptableObject
     public bool blockInputWhenNotYourTurn = true;
 
     public bool GiveRawActionOffers = true;
+
+    public bool ManualStepThroughSnapShots = false;
+
+    public bool DelayOnActions = false;
+    public float TimeDelayOnActions = 0.1f;
 }
