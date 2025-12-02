@@ -6,16 +6,30 @@ using UnityEngine.UI;
 
 public sealed class BuildMenuItemView : MonoBehaviour
 {
-    public Button  button;
-    public Image   icon;
+    public Button button;
+    public Image icon;
     public TMP_Text nameText;
     public TMP_Text costText;
     public GameObject illegalBadge;
 
+    public Image FactionColourSet;
+    public Image BuildingColourSet;
+
     private BuildItem _data;
 
-    public void Bind(BuildItem data, Action<BuildItem> onClick)
+    public void Bind(BuildItem data, Action<BuildItem> onClick, bool isBuilding, string factionName)
     {
+        FactionColourSet.color = FactionColorUtil.ColorFromString(factionName);
+
+        if (isBuilding)
+        {
+            BuildingColourSet.color = Color.darkCyan;
+        }
+        else
+        {
+            BuildingColourSet.color = Color.darkGoldenRod;
+        }
+
         _data = data;
         if (nameText) nameText.text = data.name;
         if (costText) costText.text = data.cost.ToString();

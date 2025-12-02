@@ -742,8 +742,11 @@ public sealed class HumanInteractionController : MonoBehaviour
                 items.Add(new BuildItem(t, name, path, cost, legal, auxiliary));
             }
         }
-        buildMenu.Show(items, config);
+        buildMenu.Show(items, config, pieces);
     }
+
+
+
 
     // Default layout (right-side 40%): Non-piece actions only (e.g., End Turn)
     private void PushNonPieceActionList()

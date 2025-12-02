@@ -14,7 +14,8 @@ public sealed class BuildMenuPresenter : MonoBehaviour
 
     private readonly List<BuildMenuItemView> _pool = new();
 
-    public void Show(IEnumerable<BuildItem> rawItems, InteractionConfig config)
+
+    public void Show(IEnumerable<BuildItem> rawItems, InteractionConfig config, Pieces pieces)
     {
         IEnumerable<BuildItem> items;
         if (config.GiveRawActionOffers)
@@ -31,7 +32,7 @@ public sealed class BuildMenuPresenter : MonoBehaviour
         foreach (var it in items)
         {
             var view = Ensure(i++);
-            view.Bind(it, OnItemClicked);
+            view.Bind(it, OnItemClicked, pieces.isBuildingByType[it.pieceType], pieces.factionNameByType[it.pieceType]);
             view.gameObject.SetActive(true);
         }
         for (; i < _pool.Count; i++) _pool[i].gameObject.SetActive(false);
@@ -52,6 +53,8 @@ public sealed class BuildMenuPresenter : MonoBehaviour
         return filteredItems;
     }
 
+
+
     public void Hide() => gameObject.SetActive(false);
 
     private BuildMenuItemView Ensure(int index)
@@ -63,4 +66,13 @@ public sealed class BuildMenuPresenter : MonoBehaviour
         }
         return _pool[index];
     }
+}
+
+public struct FilterForBuildItems
+{
+    bool onlyBuildings;
+
+    bool faction1;
+    bool faction2;
+    bool faction3;
 }

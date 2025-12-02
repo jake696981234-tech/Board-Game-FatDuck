@@ -6,7 +6,7 @@ Frog Key,,,,,,,,,,,,,,,,,,TRUE,FALSE,TRUE,3,,40,1,,TRUE,1,FALSE,,,,,FALSE,,,,,FA
 Penguin,,,,,,,,,,,,,,,,,,,,,,,20,1,2,FALSE,,TRUE,1,1,1,2,TRUE,1,1,1,2,TRUE,2,TRUE,2,PE,Penguin,#00AAFF,#FF5555,TRUE
 Penguin Plus,,,,,,,,,,,,,,,,,,,,,,,25,1,2,FALSE,,TRUE,1,1,1,2,TRUE,1,2,1,2,TRUE,2,TRUE,2,SPE,Penguin,#00AAFF,#FF5555,TRUE
 Ice Cube Launcher,,,,,,,,,,,,,,,,,,TRUE,TRUE,,,,25,1,2,TRUE,,FALSE,1,1,1,2,TRUE,1,2,1,2,FALSE,2,FALSE,2,abstract-007,Penguin,#00AAFF,#FF5555,TRUE
-Penguin Key,,,,,,,,,,,,,,,,,,TRUE,FALSE,TRUE,2,,40,1,,TRUE,2,FALSE,,,,,FALSE,,,,,FALSE,,FALSE,,abstract-008,Penguin,#00AAFF,#FF5555,TRUE
+Penguin Key,,,,,,,,,,,,,,,,,,TRUE,FALSE,TRUE,2,,40,1,,TRUE,2,FALSE,,,,,FALSE,,,,,FALSE,,FALSE,,Igloo,Penguin,#00AAFF,#FF5555,TRUE
 Bear,,,,,,,,,,,,,,,,,,,,,,,20,2,3,FALSE,,TRUE,1,1,1,2,FALSE,,,,,TRUE,2,TRUE,2,BE,Bear,#00AAFF,#FF5555,TRUE
 Bear Plus,,,,,,,,,,,,,,,,,,,,,,,25,3,3,FALSE,,TRUE,1,1,1,2,FALSE,,,,,TRUE,2,TRUE,2,SBE,Bear,#00AAFF,#FF5555,TRUE
 Tree Wall,,,,,,,,,,,,,,,,,,TRUE,TRUE,,,,13,2,3,TRUE,,FALSE,1,1,1,2,FALSE,,,,,FALSE,2,FALSE,2,abstract-001,Bear,#00AAFF,#FF5555,TRUE
