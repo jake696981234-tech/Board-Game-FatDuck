@@ -99,12 +99,14 @@ public sealed class HumanInteractionController : MonoBehaviour
     [Header("Player End Round Totals")]
 
     public GameObject Payout_Panel1;
+    public GameObject Payout_Panel2;
     public TMP_Text TotalPayoutText;
     public TMP_Text VpBonusText;
     public TMP_Text CoreBonusText;
     public TMP_Text TotalFactoryTotalText;
-
     public GameSnapshot snapshot;
+    public GameObject PerTypeFactoryPayOutPrefab;
+    public RectTransform PerTypeFactoryPayOutRoot;
 
     public static bool giveRawActionOffers;
 
@@ -530,11 +532,12 @@ public sealed class HumanInteractionController : MonoBehaviour
         if (WallOptionPanelObject) WallOptionPanelObject.gameObject.SetActive(walls);
     }
 
-    public enum LeftPanelsModes { DefaultPanel, EndRoundTotalPanel }
-    LeftPanelsModes leftPanelMode = LeftPanelsModes.DefaultPanel;
-    private void ToggleLeftPanels(bool EndRoundTotals1)
+    public enum LeftPanelsModes { DefaultPanel, EndRoundTotalPanel, EndRoundTotalPanel2 }
+    public LeftPanelsModes leftPanelMode = LeftPanelsModes.DefaultPanel;
+    private void ToggleLeftPanels(bool EndRoundTotalPanel1, bool EndRoundTotalPanel2)
     {
-        Payout_Panel1.SetActive(EndRoundTotals1);
+        Payout_Panel1.SetActive(EndRoundTotalPanel1);
+        Payout_Panel2.SetActive(EndRoundTotalPanel2);
     }
 
 
@@ -647,6 +650,8 @@ public sealed class HumanInteractionController : MonoBehaviour
     public EndRoundTotalsPlayer endRoundTotalsPlayer;
     private void showPlayerEndRoundTotals(int playerId)
     {
+        ToggleLeftPanels(leftPanelMode == LeftPanelsModes.DefaultPanel, false);
+
         if (leftPanelMode == LeftPanelsModes.DefaultPanel)
         {
             leftPanelMode = LeftPanelsModes.EndRoundTotalPanel;
@@ -660,7 +665,7 @@ public sealed class HumanInteractionController : MonoBehaviour
 
 
         updatePlayerEndRoundTotals(playerId);
-        ToggleLeftPanels(leftPanelMode == LeftPanelsModes.DefaultPanel);
+
     }
 
 
@@ -672,6 +677,57 @@ public sealed class HumanInteractionController : MonoBehaviour
         VpBonusText.text = $"{snapshot.PerEndRoundPayOut[playerId].BonusForVP}";
         CoreBonusText.text = $"{snapshot.PerEndRoundPayOut[playerId].BonusForCoreDamage}";
         TotalFactoryTotalText.text = $"{TotalFactory}";
+
+        if (leftPanelMode == LeftPanelsModes.EndRoundTotalPanel2) updatePerTypeEndRoundTotals();
+    }
+
+    private readonly List<GameObject> spawnedPerTypeFactoryPayOutPrefab = new List<GameObject>();
+    public void ShowFactoryBonusByPieceTypePrefabs()
+    {
+        ToggleLeftPanels(true, leftPanelMode == LeftPanelsModes.EndRoundTotalPanel);
+
+        if (leftPanelMode == LeftPanelsModes.EndRoundTotalPanel)
+        {
+            leftPanelMode = LeftPanelsModes.EndRoundTotalPanel2;
+        }
+        else
+        {
+            leftPanelMode = LeftPanelsModes.EndRoundTotalPanel;
+        }
+
+
+        updatePerTypeEndRoundTotals();
+    }
+
+    public void updatePerTypeEndRoundTotals()
+    {
+        for (int c = 0; c < spawnedPerTypeFactoryPayOutPrefab.Count; c++)
+        {
+            if (spawnedPerTypeFactoryPayOutPrefab[c] != null)
+            {
+                Destroy(spawnedPerTypeFactoryPayOutPrefab[c]);
+            }
+        }
+        spawnedPerTypeFactoryPayOutPrefab.Clear();
+
+        var payout = snapshot.PerEndRoundPayOut[(int)endRoundTotalsPlayer];
+        if (payout.pieceType == null || payout.PieceTypePayOut == null) return;
+        int count = Math.Min(payout.pieceType.Length, payout.PieceTypePayOut.Length);
+        if (count <= 0) return;
+
+        for (int i = 0; i < payout.pieceType.Length; i++)
+        {
+            int type = payout.pieceType[i];
+            var prefab = Instantiate(PerTypeFactoryPayOutPrefab, PerTypeFactoryPayOutRoot);
+            prefab.SetActive(true);
+
+            var prefabScript = prefab.GetComponent<FactoryPerTypePayOut>();
+            prefabScript.SetValues(
+                pieces.displayNameByType[type],
+                payout.PieceTypePayOut[i]
+            );
+            spawnedPerTypeFactoryPayOutPrefab.Add(prefab);
+        }
     }
 
     // Called by bootstrapper
@@ -686,6 +742,7 @@ public sealed class HumanInteractionController : MonoBehaviour
         if (buildMenu) buildMenu.OnItemClicked += OnBuildItemClicked;
         if (nonPieceActionList) nonPieceActionList.OnItemClicked += OnActionItemClicked;
         if (pieceActionListFull) pieceActionListFull.OnItemClicked += OnActionItemClicked;
+        if (SeePerPieceTypeTotalsButton) SeePerPieceTypeTotalsButton.onClick.AddListener(() => ShowFactoryBonusByPieceTypePrefabs());
     }
 
     private void UnhookPresenters()

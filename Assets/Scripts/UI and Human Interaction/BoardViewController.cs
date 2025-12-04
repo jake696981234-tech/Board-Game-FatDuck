@@ -190,6 +190,7 @@ public sealed class BoardViewController : MonoBehaviour
         //hic seed
         hic.snapshot = _snapshot;
         hic.updatePlayerEndRoundTotals((int)hic.endRoundTotalsPlayer);
+        if (hic.leftPanelMode == HumanInteractionController.LeftPanelsModes.EndRoundTotalPanel2) hic.updatePerTypeEndRoundTotals();
 
 
         // Pieces
