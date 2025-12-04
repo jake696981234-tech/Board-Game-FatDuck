@@ -181,7 +181,7 @@ public sealed class Config : ScriptableObject
     [System.Serializable]
     public struct MatchAuthoring
     {
-        public float startingBudgetPerPlayer;
+        public float[] startingBudgetPerRound;
         public int numberOfRounds;
         public int startOfTurnBudgetDecrease;
         public int startCenterVP;
@@ -189,7 +189,7 @@ public sealed class Config : ScriptableObject
     }
 
     [Header("Match Defaults")]
-    public MatchAuthoring match = new MatchAuthoring { startingBudgetPerPlayer = 100f, numberOfRounds = 5, startOfTurnBudgetDecrease = 5, startCenterVP = 5, startCoreHp = 3 };
+    public MatchAuthoring match = new MatchAuthoring { startingBudgetPerRound = new float[4], numberOfRounds = 5, startOfTurnBudgetDecrease = 5, startCenterVP = 5, startCoreHp = 3 };
 
     [System.Serializable]
     public struct CostAuthoring
@@ -320,7 +320,6 @@ public sealed class Config : ScriptableObject
 
             p_applyBot[i] = pc.applyBotSurcharges;
             p_applyDec[i] = pc.applyStartOfTurnBudgetDecrease;
-            p_budget[i] = (pc.startingBudgetOverride >= 0f) ? pc.startingBudgetOverride : match.startingBudgetPerPlayer;
 
             p_isAI[i] = pc.isAI;
             p_team[i] = pc.team;
@@ -336,7 +335,7 @@ public sealed class Config : ScriptableObject
             board_vpCellId: board.victoryPointCellId,
             board_coreCellIdByPlayer: (int[])board.coreCellIdByPlayer.Clone(),
 
-            match_startingBudgetPerPlayer: match.startingBudgetPerPlayer,
+            match_startingBudgetPerRound: (float[])match.startingBudgetPerRound.Clone(),
             match_numberOfRounds: match.numberOfRounds,
             match_startOfTurnBudgetDecrease: match.startOfTurnBudgetDecrease,
             match_startCenterVP: match.startCenterVP,

@@ -45,7 +45,7 @@ public readonly struct GameConfigHub
     public readonly int[] board_coreCellIdByPlayer;// len = playerCount
 
     // --- Match defaults (GameState uses these to seed live counters) ---
-    public readonly float match_startingBudgetPerPlayer;
+    public readonly float[] match_startingBudgetPerRound;
     public readonly int match_numberOfRounds;
     public readonly int match_startOfTurnBudgetDecrease;
     public readonly int match_startCenterVP;
@@ -116,7 +116,7 @@ public readonly struct GameConfigHub
         int board_invalidCellId,
         int board_vpCellId,
         int[] board_coreCellIdByPlayer,
-        float match_startingBudgetPerPlayer,
+        float[] match_startingBudgetPerRound,
         int match_numberOfRounds,
         int match_startOfTurnBudgetDecrease,
         int match_startCenterVP,
@@ -155,7 +155,7 @@ public readonly struct GameConfigHub
         this.board_vpCellId = board_vpCellId;
         this.board_coreCellIdByPlayer = board_coreCellIdByPlayer;
 
-        this.match_startingBudgetPerPlayer = match_startingBudgetPerPlayer;
+        this.match_startingBudgetPerRound = match_startingBudgetPerRound;
         this.match_numberOfRounds = match_numberOfRounds;
         this.match_startOfTurnBudgetDecrease = match_startOfTurnBudgetDecrease;
         this.match_startCenterVP = match_startCenterVP;

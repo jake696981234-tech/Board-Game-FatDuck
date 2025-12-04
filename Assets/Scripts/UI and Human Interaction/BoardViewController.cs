@@ -187,6 +187,11 @@ public sealed class BoardViewController : MonoBehaviour
         }
 
 
+        //hic seed
+        hic.snapshot = _snapshot;
+        hic.updatePlayerEndRoundTotals((int)hic.endRoundTotalsPlayer);
+
+
         // Pieces
         EnsurePiecePool(_snapshot.pieceCount);
         for (int i = 0; i < _snapshot.pieceCount; i++)

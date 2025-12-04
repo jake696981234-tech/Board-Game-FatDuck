@@ -104,6 +104,21 @@ public sealed class GameSnapshotComposer
         snapshot.ownerTintByPlayer = new Color[4] { Color.red, Color.blue, Color.green, Color.silver };
 
         snapshot.version = ++versionCounter;
+
+        snapshot.PerEndRoundPayOut = new CurrentEndRoundPayOut[4];
+        for (byte p = 0; p < 4; p++)
+        {
+            PerPiecePayout EndRoundPayOut = state.TheGameActions.ComputeDetailedPlayerFactoryIncome(p);
+
+            snapshot.PerEndRoundPayOut[p] = new CurrentEndRoundPayOut(EndRoundPayOut.pieceType,
+                                                                        EndRoundPayOut.isGroup,
+                                                                        EndRoundPayOut.payout,
+                                                                        state.ComputePlayerVPReward(p),
+                                                                        state.ComputePlayeroreDamageReward(p));
+        }
+
+
+
         return snapshot;
     }
 

@@ -71,7 +71,12 @@ MonoBehaviour:
     shuffleCoreCellsPerGame: 1
     coreShuffleSeed: 0
   match:
-    startingBudgetPerPlayer: 10000
+    startingBudgetPerRound:
+    - 10000
+    - 0
+    - 0
+    - 0
+    - 0
     numberOfRounds: 5
     startOfTurnBudgetDecrease: 5
     startCenterVP: 5

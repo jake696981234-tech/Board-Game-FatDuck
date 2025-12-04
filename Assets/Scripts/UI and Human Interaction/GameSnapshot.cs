@@ -32,4 +32,6 @@ public sealed class GameSnapshot
 
     // --- Versioning for dirty checking (optional) ---
     public uint version;
+
+    public CurrentEndRoundPayOut[] PerEndRoundPayOut;
 }

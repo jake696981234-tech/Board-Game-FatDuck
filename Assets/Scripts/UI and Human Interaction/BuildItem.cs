@@ -32,7 +32,22 @@ public readonly struct ActionItem
     public readonly int cost;
     public readonly bool legal;
     public readonly int[] legalTargets; // cellIds
+    public readonly int kind;
 
-    public ActionItem(string id, string name, int cost, bool legal, int[] legalTargets)
-    { this.id = id; this.name = name; this.cost = cost; this.legal = legal; this.legalTargets = legalTargets; }
+    public ActionItem(string id, string name, int cost, bool legal, int[] legalTargets, int kind)
+    { this.id = id; this.name = name; this.cost = cost; this.legal = legal; this.legalTargets = legalTargets; this.kind = kind; }
 }
+
+//Total across all piece type, Payout at end of round per player
+public readonly struct CurrentEndRoundPayOut
+{
+    public readonly int[] pieceType;     // internal tag
+    public readonly bool[] IsGroup;
+    public readonly float[] PieceTypePayOut;
+    public readonly float BonusForVP;
+    public readonly float BonusForCoreDamage;
+
+    public CurrentEndRoundPayOut(int[] pieceType, bool[] IsGroup, float[] PieceTypePayOut, float BonusForVP, float BonusForCoreDamage)
+    { this.pieceType = pieceType; this.IsGroup = IsGroup; this.PieceTypePayOut = PieceTypePayOut; this.BonusForVP = BonusForVP; this.BonusForCoreDamage = BonusForCoreDamage; }
+}
+

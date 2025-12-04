@@ -361,29 +361,79 @@ namespace Game.Core
         }
 
 
-
+        //Dont Use this method
         public void ApplyFactoryIncome()
         {
+            float[] income = ComputePlayersFactoryIncome();
+
+            for (int i = 0; i < ps.Length; i++)
+            {
+                ps[i].AddBudget(income[i]);
+            }
+        }
+
+        private float[] perPlayerFactoryIncome = new float[4]; // allocated once
+        public float[] ComputePlayersFactoryIncome()
+        {
+            Array.Clear(perPlayerFactoryIncome, 0, 4);
+
+            for (int i = 0; i < 4; i++)
+            {
+                PerPiecePayout income = ComputeDetailedPlayerFactoryIncome(i);
+                float total = 0f;
+
+                for (int c = 0; c < income.payout.Length; i++)
+                {
+                    total += income.payout[c];
+                }
+                perPlayerFactoryIncome[i] = total;
+            }
+            return perPlayerFactoryIncome;
+        }
+
+        public PerPiecePayout ComputeDetailedPlayerFactoryIncome(int playerId)
+        {
+            var pieceTypes = new List<int>();
+            var isGroups = new List<bool>();
+            var payouts = new List<float>();
+
             // Ensure round number is at least 1
             int roundNum = Math.Max(1, gamestate.currentRoundNumber);
             var counts = GameState.SnapshotOwnerTypeCounts(bm);
+
             foreach (var kv in counts)
             {
+                if (kv.Key.owner != playerId)
+                    continue;
+
                 int owner = kv.Key.owner;
                 if (owner < 0 || owner >= ps.Length) continue;
-                byte type = (byte)kv.Key.type;
+
+                int type = kv.Key.type;
                 int count = kv.Value;
-                int factoryAid = GetFactoryAbilityId(type);
+
+                int factoryAid = GetFactoryAbilityId((byte)type);
                 if (factoryAid < 0) continue;
 
-                int baseAmt = (factoryAid < pcs.factory_amount.Length) ? pcs.factory_amount[factoryAid] : 0;
+                int baseAmt = (factoryAid < pcs.factory_amount.Length)
+                    ? pcs.factory_amount[factoryAid]
+                    : 0;
                 if (baseAmt == 0) continue;
-                bool roundMul = factoryAid < pcs.factory_roundMultiplier.Length && pcs.factory_roundMultiplier[factoryAid];
-                bool group = factoryAid < pcs.factory_group.Length && pcs.factory_group[factoryAid];
-                int groupAmt = (factoryAid < pcs.factory_groupAmount.Length) ? pcs.factory_groupAmount[factoryAid] : 1;
+
+                bool roundMul = factoryAid < pcs.factory_roundMultiplier.Length
+                             && pcs.factory_roundMultiplier[factoryAid];
+
+                bool group = factoryAid < pcs.factory_group.Length
+                          && pcs.factory_group[factoryAid];
+
+                int groupAmt = (factoryAid < pcs.factory_groupAmount.Length)
+                    ? pcs.factory_groupAmount[factoryAid]
+                    : 1;
+
                 int pay = baseAmt;
                 if (roundMul) pay *= roundNum;
-                int payout = 0;
+
+                float payout;
                 if (group)
                 {
                     int groups = count / Math.Max(1, groupAmt);
@@ -393,10 +443,23 @@ namespace Game.Core
                 {
                     payout = pay * count;
                 }
-                if (payout != 0)
-                    ps[owner].AddBudget(payout);
+
+                if (payout == 0)
+                    continue;
+
+                pieceTypes.Add(type);
+                isGroups.Add(group);
+                payouts.Add(payout);
             }
+
+            // Convert lists to arrays for the struct
+            return new PerPiecePayout(
+                pieceTypes.ToArray(),
+                isGroups.ToArray(),
+                payouts.ToArray()
+            );
         }
+
 
 
 
@@ -1280,5 +1343,18 @@ namespace Game.Core
 
 
 
+    }
+}
+public readonly struct PerPiecePayout
+{
+    public readonly int[] pieceType;
+    public readonly bool[] isGroup;
+    public readonly float[] payout;
+
+    public PerPiecePayout(int[] pieceType, bool[] isGroup, float[] payout)
+    {
+        this.pieceType = pieceType;
+        this.isGroup = isGroup;
+        this.payout = payout;
     }
 }

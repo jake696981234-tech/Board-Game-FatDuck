@@ -6,10 +6,11 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
 using Game.Core; // for GameState
+using System.Linq;
 
 public sealed class HumanInteractionController : MonoBehaviour
 {
-    public enum Mode { Build, Create, PieceAction, ActionExecute, WallOptionsSecoundPanel }
+    public enum Mode { Build, Create, PieceAction, ActionExecute, WallOptionsSecoundPanel, MultiInputAction }
 
     List<int> _targetsBuffer = new List<int>(128);
 
@@ -84,12 +85,26 @@ public sealed class HumanInteractionController : MonoBehaviour
     public GameObject PlayerRowPrefab;     // prefab with child names:
                                            // PlayerRow_NameText, PlayerRow_TintSwatch,
                                            // PlayerRow_BudgetText, PlayerRow_VPText, PlayerRow_CoreHPText
+    public Button SeePerPieceTypeTotalsButton;
+
+
+    private Button[] PlayerRow_Button;
 
     [Header("HUD / Debug Box")]
     public TMP_Text Debug_OffersText;
     public TMP_Text Debug_LastActionText;
     public TMP_Text Debug_SnapshotText;
     private EventManager events;
+
+    [Header("Player End Round Totals")]
+
+    public GameObject Payout_Panel1;
+    public TMP_Text TotalPayoutText;
+    public TMP_Text VpBonusText;
+    public TMP_Text CoreBonusText;
+    public TMP_Text TotalFactoryTotalText;
+
+    public GameSnapshot snapshot;
 
     public static bool giveRawActionOffers;
 
@@ -105,6 +120,14 @@ public sealed class HumanInteractionController : MonoBehaviour
         subscribeMe();
         if (boardView) boardView.CellClicked += OnCellClicked;   // from your BoardViewController
         if (endTurnButton) endTurnButton.onClick.AddListener(OnEndTurnClicked);
+
+        // Ensure player row button array is allocated (supports up to 4 seats by design)
+        if (PlayerRow_Button == null || PlayerRow_Button.Length < 4)
+        {
+            PlayerRow_Button = new Button[4];
+        }
+
+
 
         HowManyWallSelected += EnterCreateModeWithWallChosen;
         giveRawActionOffers = config.GiveRawActionOffers;
@@ -133,6 +156,8 @@ public sealed class HumanInteractionController : MonoBehaviour
     [SerializeField, Range(0, 3)] private byte _humanPlayer = 0; // bound by bootstrapper
     private int? _selectedPieceId;
     private int? _selectedCellId;
+
+    private int? _firstCellSelected;
     private ActionItem? _selectedAction;
     private int _selectedActionIndex = -1;
 
@@ -192,6 +217,7 @@ public sealed class HumanInteractionController : MonoBehaviour
                 case Mode.Create: EnterBuildMode(); break;
                 case Mode.PieceAction: EnterBuildMode(); break;
                 case Mode.ActionExecute: EnterPieceActionMode(); break;
+                case Mode.MultiInputAction: EnterPieceActionMode(); break;
             }
         }
     }
@@ -302,7 +328,15 @@ public sealed class HumanInteractionController : MonoBehaviour
     private void EnterActionExecuteMode(ActionItem action)
     {
         boardView.ClearHighlights();
-        _mode = Mode.ActionExecute;
+        if (action.kind == Game.Core.ActionKind.Launcher && _mode != Mode.MultiInputAction)
+        {
+            _mode = Mode.MultiInputAction;
+        }
+        else
+        {
+            _mode = Mode.ActionExecute;
+        }
+
         _selectedAction = action;
 
         SetBackdropColor(config ? config.actionExecuteBackground : new Color(0, 0, 0, 0.8f));
@@ -339,6 +373,7 @@ public sealed class HumanInteractionController : MonoBehaviour
         switch (_mode)
         {
             case Mode.Build:
+                _firstCellSelected = null;
                 _selectedCellId = cellId;
                 // Selection/hover feedback: show selected cell using config colour
                 if (config && boardView)
@@ -358,6 +393,7 @@ public sealed class HumanInteractionController : MonoBehaviour
 
             case Mode.Create:
             case Mode.WallOptionsSecoundPanel:
+                _firstCellSelected = null;
                 // Click on a highlighted target → perform the concrete Create action
                 if (_createArmed)
                 {
@@ -377,7 +413,17 @@ public sealed class HumanInteractionController : MonoBehaviour
                 EnterBuildMode();
                 break;
 
+            case Mode.MultiInputAction:
+                if (FindIfLegalForMultiAction(cellId))
+                {
+                    _firstCellSelected = cellId;
+                    ActionItem item = _selectedAction ?? throw new Exception("Null!");
+                    EnterActionExecuteMode(item);
+                }
+                break;
+
             case Mode.PieceAction:
+                _firstCellSelected = null;
                 _selectedCellId = cellId;
                 PushPieceActionListForSelection();
                 break;
@@ -397,11 +443,33 @@ public sealed class HumanInteractionController : MonoBehaviour
         }
     }
 
+    private bool FindIfLegalForMultiAction(int cellid)
+    {
+        for (int i = 0; i < _count; i++)
+        {
+            var a = _offers[i];
+            if (a.kind != Game.Core.ActionKind.Launcher) continue;
+            if (_mask[i] == 0) continue; // skip masked/illegal offers
+
+            int pieceId = a.aux;
+            if (pieceId < 0 || pieceId >= boardModel.pieceCellId.Length) continue;
+            if (cellid != boardModel.pieceCellId[pieceId]) continue;
+            return true;
+        }
+        return false;
+    }
+
     private int FindConcreteAction(byte kind, ushort src, byte type, ushort dst)
     {
         for (int i = 0; i < _count; i++)
         {
             var a = _offers[i];
+
+            if (_firstCellSelected != null)
+            {
+                if (_firstCellSelected != boardModel.pieceCellId[a.aux]) continue;
+            }
+
             if (a.kind != kind) continue;
             if (a.srcCell != src) continue;
             if (a.pieceType != type) continue;
@@ -461,6 +529,15 @@ public sealed class HumanInteractionController : MonoBehaviour
         if (actionExecutePanel) actionExecutePanel.gameObject.SetActive(execute);
         if (WallOptionPanelObject) WallOptionPanelObject.gameObject.SetActive(walls);
     }
+
+    public enum LeftPanelsModes { DefaultPanel, EndRoundTotalPanel }
+    LeftPanelsModes leftPanelMode = LeftPanelsModes.DefaultPanel;
+    private void ToggleLeftPanels(bool EndRoundTotals1)
+    {
+        Payout_Panel1.SetActive(EndRoundTotals1);
+    }
+
+
 
     private void SetBackdropColor(Color c)
     {
@@ -529,6 +606,10 @@ public sealed class HumanInteractionController : MonoBehaviour
     private void BindPlayerRow(RectTransform row, int playerId)
     {
         if (!row) return;
+        if (PlayerRow_Button == null || PlayerRow_Button.Length <= playerId)
+        {
+            PlayerRow_Button = new Button[4];
+        }
         // Find children by the agreed names
         var nameText = row.Find("PlayerRow_NameText")?.GetComponent<TMP_Text>();
         var tintImg = row.Find("PlayerRow_TintSwatch")?.GetComponent<Image>();
@@ -537,6 +618,8 @@ public sealed class HumanInteractionController : MonoBehaviour
         var hpText = row.Find("PlayerRow_CoreHPText")?.GetComponent<TMP_Text>();
         var turn = row.Find("PlayerRow_TurnText")?.GetComponent<TMP_Text>();
         var action = row.Find("PlayerRow_ActionText")?.GetComponent<TMP_Text>();
+        var passed = row.Find("PlayerRow_PassedText")?.GetComponent<TMP_Text>();
+        PlayerRow_Button[playerId] = row.Find("PlayerRow_Button")?.GetComponent<Button>();
 
         if (nameText) nameText.text = (playerId == gameState.CurrentPlayerId) ? $">Player {playerId}" : $"Player {playerId}";
         if (budgetText) budgetText.text = $"{Mathf.RoundToInt(gameState.GetBudget((byte)playerId))}";
@@ -544,9 +627,51 @@ public sealed class HumanInteractionController : MonoBehaviour
         if (hpText) hpText.text = $"{gameState.GetCoreHealth((byte)playerId)}";
         if (turn) turn.text = $"{playerTurn[playerId]}";
         if (action) action.text = $"{playerAction[playerId]}";
+        if (passed) passed.text = $"{gameState.PassedTurn(playerId)}";
+
+        PlayerRow_Button[playerId].onClick.AddListener(() => showPlayerEndRoundTotals(playerId));
+
+
 
         // Optional tint swatch: if you have a palette elsewhere, assign it here (left blank by default)
         if (tintImg) tintImg.enabled = false;
+    }
+
+    public enum EndRoundTotalsPlayer
+    {
+        playerOne = 0,
+        PlayerTwo = 1,
+        PlayerThree = 2,
+        PlayerFour = 3
+    }
+    public EndRoundTotalsPlayer endRoundTotalsPlayer;
+    private void showPlayerEndRoundTotals(int playerId)
+    {
+        if (leftPanelMode == LeftPanelsModes.DefaultPanel)
+        {
+            leftPanelMode = LeftPanelsModes.EndRoundTotalPanel;
+
+            endRoundTotalsPlayer = (EndRoundTotalsPlayer)playerId;
+        }
+        else
+        {
+            leftPanelMode = LeftPanelsModes.DefaultPanel;
+        }
+
+
+        updatePlayerEndRoundTotals(playerId);
+        ToggleLeftPanels(leftPanelMode == LeftPanelsModes.DefaultPanel);
+    }
+
+
+    public void updatePlayerEndRoundTotals(int playerId)
+    {
+        float TotalFactory = snapshot.PerEndRoundPayOut[playerId].PieceTypePayOut.Sum();
+
+        TotalPayoutText.text = $"{TotalFactory + snapshot.PerEndRoundPayOut[playerId].BonusForVP + snapshot.PerEndRoundPayOut[playerId].BonusForCoreDamage}";
+        VpBonusText.text = $"{snapshot.PerEndRoundPayOut[playerId].BonusForVP}";
+        CoreBonusText.text = $"{snapshot.PerEndRoundPayOut[playerId].BonusForCoreDamage}";
+        TotalFactoryTotalText.text = $"{TotalFactory}";
     }
 
     // Called by bootstrapper
@@ -590,6 +715,7 @@ public sealed class HumanInteractionController : MonoBehaviour
 
         // If this is a NON-piece action (e.g., End Turn), perform immediately.
         // NOTE: If your constant lives at Action.Kind.EndTurn, swap the symbol accordingly.
+
         if (_offers[idx].kind == Game.Core.ActionKind.EndTurn)
         {
             PerformActionIndex(idx);
@@ -758,13 +884,16 @@ public sealed class HumanInteractionController : MonoBehaviour
             if (a.kind != Game.Core.ActionKind.EndTurn) continue; // future: add more non-piece kinds here
             int cost = Mathf.RoundToInt(_quoted[i]);
             bool legal = _mask[i] != 0;
-            items.Add(new ActionItem(i.ToString(), PrettyAction(a), cost, legal, Array.Empty<int>()));
+            int kind = a.kind;
+            items.Add(new ActionItem(i.ToString(), PrettyAction(a), cost, legal, Array.Empty<int>(), kind));
         }
         nonPieceActionList.Show(items);
     }
 
 
     // PieceAction mode (full coverage panel): Only actions originating at the selected cell
+
+
     private void PushPieceActionListForSelection()
     {
         var items = new List<ActionItem>();
@@ -785,10 +914,11 @@ public sealed class HumanInteractionController : MonoBehaviour
                 if (a.kind == Game.Core.ActionKind.EndTurn) continue; // exclude non-piece actions
                 if (a.srcCell != (ushort)cell) continue;               // only actions from this piece
 
+                int kind = a.kind;
                 string label = PrettyAction(a);
                 int cost = Mathf.RoundToInt(_quoted[i]);
                 bool legal = _mask[i] != 0;
-                items.Add(new ActionItem(i.ToString(), label, cost, legal, Array.Empty<int>()));
+                items.Add(new ActionItem(i.ToString(), label, cost, legal, Array.Empty<int>(), kind));
             }
         }
         pieceActionListFull.Show(items);
@@ -811,7 +941,15 @@ public sealed class HumanInteractionController : MonoBehaviour
             if (a.srcCell != src) continue;
             if (a.pieceType != type) continue;
             if (_mask[i] == 0) continue; // masked out = illegal
-            _targetsBuffer.Add(a.dstCell);
+
+            if (_mode == Mode.MultiInputAction)
+            {
+                _targetsBuffer.Add(boardModel.pieceCellId[a.aux]);
+            }
+            else
+            {
+                _targetsBuffer.Add(a.dstCell);
+            }
         }
         return _targetsBuffer;
     }

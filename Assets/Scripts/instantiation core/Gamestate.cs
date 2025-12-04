@@ -76,7 +76,7 @@ namespace Game.Core
                 ps[i].ClearRoundCounters();
                 ps[i].BeginTurnReset();
                 ps[i].endedWithoutActionThisCycle = false;
-                ps[i].budget = hub.match_startingBudgetPerPlayer;
+                ps[i].budget = hub.match_startingBudgetPerRound[currentRoundNumber - 1];
             }
 
 
@@ -254,9 +254,8 @@ namespace Game.Core
 
             turnOrdinal++;
 
-            if (turnOrdinal == 1)
+            if (turnOrdinal == 1 && currentRoundNumber != 1)
             {
-                gameActions.ApplyFactoryIncome();
                 currentRoundNumber++;
             }
 
@@ -318,7 +317,7 @@ namespace Game.Core
                 getPlayerTurnOrdinal()));
 
 
-            // Advance to next alive player
+            // Advance to next alive player and/or player that has not passed there turn
             currentPlayer = NextAlivePlayerAfter(ended);
 
             // Evaluate round-end rules AFTER the handoff
@@ -354,10 +353,7 @@ namespace Game.Core
             for (int i = 0; i < 4; i++)
             {
                 // payout uses each player's own round stats, not currentPlayer's
-                float payout =
-                    ps[i].vpGainedThisRound * hub.reward_budgetBonusForVP +
-                    ps[i].coreHitsThisRound * hub.reward_budgetBonusForCoreDamage +
-                    hub.match_startingBudgetPerPlayer;
+                float payout = ComputePlayerPayOut(i);
 
                 ps[i].budget = payout;   // clamp if you wish via hub.cap_maxBudget
                 ps[i].ClearRoundCounters();
@@ -372,6 +368,29 @@ namespace Game.Core
                 BeginTurn();
         }
 
+        private float[] perPlayerFactoryIncome = new float[4]; // allocated once
+        public float ComputePlayerPayOut(int playerId)
+        {
+            perPlayerFactoryIncome = gameActions.ComputePlayersFactoryIncome();
+            float payout =
+                    ComputePlayerVPReward(playerId) +
+                    ComputePlayeroreDamageReward(playerId) +
+                    hub.match_startingBudgetPerRound[currentRoundNumber - 1] +
+                    perPlayerFactoryIncome[playerId];
+
+            return payout;
+        }
+
+        public float ComputePlayerVPReward(int playerId)
+        {
+            return ps[playerId].vpGainedThisRound * hub.reward_budgetBonusForVP;
+        }
+
+        public float ComputePlayeroreDamageReward(int playerId)
+        {
+            return ps[playerId].coreHitsThisRound * hub.reward_budgetBonusForCoreDamage;
+        }
+
         #endregion
         #region Game Loop Helpers
 
@@ -380,7 +399,7 @@ namespace Game.Core
             for (int k = 1; k <= 4; k++)
             {
                 byte q = (byte)((p + k) & 3);
-                if (!ps[q].isEliminated) return q;
+                if (!ps[q].isEliminated && !ps[q].endedWithoutActionThisCycle) return q;
             }
             return p;
         }
@@ -409,6 +428,7 @@ namespace Game.Core
             bool allBudgetsZero = true;         // Rule A
             bool allEndedWithoutAction = true;  // Rule B
             bool othersRoundComplete = true;    // Rule C
+            // CenterVPIsZero         // Rule D
 
             for (byte p = 0; p < 4; p++)
             {
@@ -430,6 +450,7 @@ namespace Game.Core
 
             if (!anyAlive) return false; // degenerate; don't loop forever
 
+            if (currentCenterVP == 0) return true;
             return allBudgetsZero || allEndedWithoutAction || othersRoundComplete;
         }
 
@@ -496,9 +517,14 @@ namespace Game.Core
         public bool CurrentDidCaptureVP => ps[currentPlayer].didCaptureVP;
         public bool CurrentDidCoreDamage => ps[currentPlayer].didCoreDamage;
         public ref readonly PlayerState CurrentPlayerRef => ref ps[currentPlayer];
+
+        public bool PassedTurn(int playerID)
+        => ps[playerID].endedWithoutActionThisCycle;
         public bool CanCurrentAfford(in Action a, out float quoted)
             => cost.IsAffordable(ps[currentPlayer], a, bm, pcs, out quoted);
 
+
+        public GameActions TheGameActions => gameActions;
 
         // --- simple Accesors ---
         public void SetCoreHealth(byte player, int hp) // clamps by hub caps

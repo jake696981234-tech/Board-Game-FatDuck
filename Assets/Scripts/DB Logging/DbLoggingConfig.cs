@@ -130,7 +130,7 @@ public static class DbLoggingConfig
         events = eventManager;
         Hub = hub;
         TurnBudgetDecrease = Hub.match_startOfTurnBudgetDecrease;
-        startingBudget = Hub.match_startingBudgetPerPlayer;
+        startingBudget = Hub.match_startingBudgetPerRound[0];
         inputMaxRounds = Hub.match_numberOfRounds;
         subscribeToGameState();
     }
