@@ -28,10 +28,11 @@ public partial class Pieces
         Upgrade = 8,
         Launcher = 9,
         Spawner = 10,
-        Factory = 11,
-        Sanctuary = 12,
-        Custom1 = 13,
-        Custom2 = 14
+        SacrificeFactory = 11,
+        Factory = 12,
+        Sanctuary = 13,
+        Custom1 = 14,
+        Custom2 = 15
     }
     public enum TargetKind : byte { None = 0, Cell = 1, Piece = 2 }
 
@@ -107,6 +108,7 @@ public partial class Pieces
     public int[] areaRadius;              // [abilityId]
     public int[] damage;                  // [abilityId]
     public int[] customParam;             // [abilityId]
+    public int[] sacrificeFactory_amount; // [abilityId] -> amount to add when sacrificing
 
     // NOTE: In Plan B, Create is NOT an ability. We keep buildTypeId only for legacy reads;
     // new OfferProvider should not depend on it for Create.
@@ -163,6 +165,19 @@ public partial class Pieces
         }
         slot = -1; return false;
     }
+
+    public bool HasAbilityKind(byte type, AbilityKind kind)
+    {
+        int limit = AbilitySlotCount(type);
+        for (int s = 0; s < limit; s++)
+        {
+            int aid = AbilityIdAtSlot(type, s);
+            if (aid < 0) continue;
+            if (AbilityKindOf(aid) == kind) return true;
+        }
+        return false;
+    }
+
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public AbilityKind AbilityKindOf(int abilityId) => abilityKind[abilityId];
@@ -379,6 +394,36 @@ public partial class Pieces
         return count;
     }
 
+    public int GetLegalTargets_SacrificeFactory(BoardModel bm, int actorPieceId, int abilityId, int[] outTargets)
+    {
+        int originCell = bm.GetPieceCell(actorPieceId);
+        if (originCell < 0) return 0;
+        int actorOwner = bm.GetPieceOwner(actorPieceId);
+
+        int rmin = (abilityId >= 0 && abilityId < rangeMin.Length) ? rangeMin[abilityId] : 0;
+        int rmax = (abilityId >= 0 && abilityId < rangeMax.Length) ? rangeMax[abilityId] : 0;
+        if (rmax < rmin) { int t = rmax; rmax = rmin; rmin = t; }
+
+        int cap = outTargets != null ? outTargets.Length : 0;
+        int count = 0;
+
+        int cellCount = bm.GetCellCount();
+        for (int c = 0; c < cellCount; c++)
+        {
+            int pid = bm.GetCellOccupant(c);
+            if (pid < 0) continue;
+            if (bm.GetPieceOwner(pid) != actorOwner) continue;
+
+            int d = bm.Distance(originCell, c);
+            if (d < rmin || d > rmax) continue;
+            if (!bm.LineOfSightClear(originCell, c)) continue;
+
+            if (count < cap) outTargets[count] = pid; // pieceId target
+            count++;
+        }
+        return count;
+    }
+
     /// <summary>
     /// CAPTURE VP (targetless): legal if actor stands on VP cell.
     /// </summary>
@@ -510,6 +555,7 @@ public partial class Pieces
         areaRadius = new int[abilityCount];
         damage = new int[abilityCount];
         customParam = new int[abilityCount];
+        sacrificeFactory_amount = new int[abilityCount];
         buildTypeId = new int[abilityCount];    // legacy; may be left -1 for most abilities
         baseSurcharge = new int[abilityCount];    // legacy; ignored in pricing
         botThinkSurcharge = new int[abilityCount];

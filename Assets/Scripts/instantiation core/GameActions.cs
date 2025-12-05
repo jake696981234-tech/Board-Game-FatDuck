@@ -106,6 +106,17 @@ namespace Game.Core
             RefreshConnectorState();
         }
 
+        public void ApplySacrificeFactory(in Action theAction, byte player)
+        {
+            int victimID = theAction.aux;
+            if (victimID < 0) return;
+            int Pieceid = bm.GetCellOccupant(theAction.srcCell);
+            bm.pieceFactoryAux[Pieceid] += GetSacrificeFactoryAmount(in theAction);
+
+            events.RaisePieceKilled(victimID);
+            RefreshConnectorState();
+        }
+
         public void ApplyCreate(in Action theAction, byte player)
         {
             int pid = bm.AllocateRow();
@@ -393,13 +404,14 @@ namespace Game.Core
 
         public PerPiecePayout ComputeDetailedPlayerFactoryIncome(int playerId)
         {
+            // Build per-piece payouts for a single player (type, whether grouped, payout per type)
             var pieceTypes = new List<int>();
             var isGroups = new List<bool>();
             var payouts = new List<float>();
 
             // Ensure round number is at least 1
             int roundNum = Math.Max(1, gamestate.currentRoundNumber);
-            var counts = GameState.SnapshotOwnerTypeCounts(bm);
+            var counts = GameState.SnapshotOwnerTypeCounts(bm); // map of (owner,type) -> count
 
             foreach (var kv in counts)
             {
@@ -412,14 +424,17 @@ namespace Game.Core
                 int type = kv.Key.type;
                 int count = kv.Value;
 
-                int factoryAid = GetFactoryAbilityId((byte)type);
+                int factoryAid = GetFactoryAbilityId((byte)type); // ability slot that grants factory income
                 if (factoryAid < 0) continue;
+
+                float AuxPayout = AuxFactoryPayout(owner, type);
 
                 int baseAmt = (factoryAid < pcs.factory_amount.Length)
                     ? pcs.factory_amount[factoryAid]
                     : 0;
-                if (baseAmt == 0) continue;
+                if (baseAmt == 0 && AuxPayout == 0) continue;
 
+                // Flags for scaling
                 bool roundMul = factoryAid < pcs.factory_roundMultiplier.Length
                              && pcs.factory_roundMultiplier[factoryAid];
 
@@ -436,12 +451,12 @@ namespace Game.Core
                 float payout;
                 if (group)
                 {
-                    int groups = count / Math.Max(1, groupAmt);
-                    payout = pay * groups;
+                    int groups = count / Math.Max(1, groupAmt); // pay per full group
+                    payout = pay * groups + AuxPayout;
                 }
                 else
                 {
-                    payout = pay * count;
+                    payout = pay * count + AuxPayout; // pay per individual piece
                 }
 
                 if (payout == 0)
@@ -458,6 +473,22 @@ namespace Game.Core
                 isGroups.ToArray(),
                 payouts.ToArray()
             );
+        }
+
+        private float AuxFactoryPayout(int playerId, int thisType)
+        {
+            float payOut = 0;
+
+            for (int pid = 0; pid < bm.pieceCount; pid++)
+            {
+                byte type = bm.GetPieceType(pid);
+                if (thisType != type) continue;
+                if (!pcs.HasAbilityKind(type, Pieces.AbilityKind.Factory)) continue;
+                if (bm.pieceOwner[pid] != playerId) continue;
+
+                payOut += bm.pieceFactoryAux[pid];
+            }
+            return payOut;
         }
 
 
@@ -558,6 +589,14 @@ namespace Game.Core
             byte typ = bm.GetPieceType(pid);
             int abi = pcs.AbilityIdAtSlot(typ, a.abilitySlot);
             return (short)((abi >= 0 && abi < pcs.damage.Length) ? pcs.damage[abi] : 0);
+        }
+
+        public int GetSacrificeFactoryAmount(in Action a)
+        {
+            int pid = bm.GetCellOccupant(a.srcCell);
+            byte typ = bm.GetPieceType(pid);
+            int abi = pcs.AbilityIdAtSlot(typ, a.abilitySlot);
+            return (abi >= 0 && abi < pcs.sacrificeFactory_amount.Length) ? pcs.sacrificeFactory_amount[abi] : 0;
         }
 
         private int GetFactoryAbilityId(byte type)
@@ -751,6 +790,8 @@ namespace Game.Core
             }
             return count;
         }
+
+
 
         /// <summary>
         /// CAPTURE VP (targetless): legal if actor stands on VP cell.
@@ -1165,6 +1206,7 @@ namespace Game.Core
             if (kind != a.kind) return false; // slot-kind drift guard
 
             int[] targets = bm.GetScratchCellBuffer();
+            int[] targetsPiece = bm.GetScratchCellBuffer();
             int count;
             switch (a.kind)
             {
@@ -1186,6 +1228,9 @@ namespace Game.Core
                     return pcs.IsLegal_CaptureVP(bm, actorPid, abilityId);
                 case CoreDamage:
                     return pcs.IsLegal_CoreDamage(bm, actorPid, abilityId);
+                case SacrificeFactory:
+                    count = pcs.GetLegalTargets_SacrificeFactory(bm, actorPid, abilityId, targetsPiece);
+                    return ContainsFirstN(targets, count, a.aux /* targetPieceId */);
                 default:
                     return false;
             }

@@ -894,6 +894,7 @@ public sealed class HumanInteractionController : MonoBehaviour
             case Game.Core.ActionKind.Upgrade: return $"Upgrade → {a.pieceType} @ {a.dstCell}";
             case Game.Core.ActionKind.Launcher: return $"Launch {a.aux} → {a.dstCell}";
             case Game.Core.ActionKind.Spawner: return $"Spawn x? {a.pieceType} @ {a.dstCell}";
+            case Game.Core.ActionKind.SacrificeFactory: return $"Sacrifice Factory {a.srcCell} → {a.dstCell}";
             case Game.Core.ActionKind.EndTurn: return "End Turn";
             default: return $"{a.kind} [{a.srcCell}->{a.dstCell}]";
         }

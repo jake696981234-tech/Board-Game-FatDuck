@@ -178,6 +178,7 @@ namespace Game.Core
                 case CaptureVP: gameActions.ApplyCaptureVP(in a, currentPlayer); break; // sets flags + VP counters + vpPool
                 case CoreDamage: gameActions.ApplyCoreDamage(in a, currentPlayer); break; // sets flag + damages enemy core + elim check
                 case EndTurn: ApplyEndTurn(); break; // unreachable due to early return above
+                case SacrificeFactory: gameActions.ApplySacrificeFactory(in a, currentPlayer); break;
                 default: return false;
             }
 
@@ -238,7 +239,8 @@ namespace Game.Core
 
         private bool FastCheck(in Action a)
         {
-            if (a.kind > Spawner) return false;
+            // Allow all known action kinds up to SacrificeFactory; reject only undefined kinds.
+            if (a.kind > SacrificeFactory) return false;
             if (currentPlayer >= 4) return false;
             return true;
         }

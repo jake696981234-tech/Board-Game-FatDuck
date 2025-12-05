@@ -257,6 +257,27 @@ public sealed class OfferProvider
                             EmitSpawnerActions(q, abilityId, pieceId, cell, slot, ref write, ref total, cap, outActions, outCosts, outMask);
                             break;
                         }
+                    case Pieces.AbilityKind.SacrificeFactory:
+                        {
+                            int n = GetLegalTargets_SacrificeFactory(q.pcs, abilityId, q.bm, pieceId, scratch);
+                            for (int i = 0; i < n; i++)
+                            {
+                                int tgtPid = scratch[i];
+                                ushort dst = GetPieceCell(q.bm, tgtPid);
+                                var a = new Action
+                                {
+                                    kind = SacrificeFactory,
+                                    abilitySlot = (byte)slot,
+                                    pieceType = 0,
+                                    srcCell = (ushort)cell,
+                                    dstCell = dst,
+                                    aux = (ushort)tgtPid
+                                };
+                                Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask);
+                            }
+                            break;
+                        }
+
                     default:
                         break;
                 }
@@ -393,7 +414,7 @@ public sealed class OfferProvider
         Span<Action> outActions,
         in OfferQuery q,
         Span<float> outCosts,
-        Span<byte>  outMask)
+        Span<byte> outMask)
     {
         total++;
         if (write < cap)
@@ -407,13 +428,13 @@ public sealed class OfferProvider
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void WriteCostMask(in Action a, in OfferQuery q, Span<float> outCosts, Span<byte> outMask, int idx)
     {
-    // EndTurn is always free & affordable (never masked out by cost)
-    if (a.kind == ActionKind.EndTurn)
-    {
-        outCosts[idx] = 0f;
-        outMask[idx]  = 1;
-        return;
-    }
+        // EndTurn is always free & affordable (never masked out by cost)
+        if (a.kind == ActionKind.EndTurn)
+        {
+            outCosts[idx] = 0f;
+            outMask[idx] = 1;
+            return;
+        }
         if (q.cost == null) { outCosts[idx] = 0f; outMask[idx] = 1; return; }
 
         float quoted;
@@ -428,7 +449,7 @@ public sealed class OfferProvider
     private static void ZeroTail(int write, Span<float> outCosts, Span<byte> outMask)
     {
         for (int i = write; i < outCosts.Length; i++) outCosts[i] = 0f;
-        for (int i = write; i < outMask.Length;  i++) outMask[i]  = 0;
+        for (int i = write; i < outMask.Length; i++) outMask[i] = 0;
     }
 
     // ---- BoardModel adapters (1-liners; edit here to match your API names if needed) ----
@@ -482,6 +503,10 @@ public sealed class OfferProvider
         => pcs.GetLegalTargets_Shoot(bm, actorPid, abilityId, outPieceIds);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int GetLegalTargets_SacrificeFactory(Pieces pcs, int abilityId, BoardModel bm, int actorPid, int[] outPieceIds)
+        => pcs.GetLegalTargets_SacrificeFactory(bm, actorPid, abilityId, outPieceIds);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int GetLegalTargets_Push(Pieces pcs, int abilityId, BoardModel bm, int actorPid, int[] outPieceIds)
     {
         // Inline minimal legality similar to GameActions.GetLegalTargets_Push
@@ -532,6 +557,8 @@ public sealed class OfferProvider
 
         return count;
     }
+
+
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int GetLegalTargets_Launcher(Pieces pcs, int abilityId, BoardModel bm, int actorPid, int[] outPairs)

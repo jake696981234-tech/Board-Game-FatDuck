@@ -25,7 +25,8 @@
 // shoot_enabled,shoot_rangeMin,shoot_rangeMax,shoot_damage,
 // capture_enabled,core_enabled,
 // botThinkSurcharge_move,botThinkSurcharge_shoot,botThinkSurcharge_capture,botThinkSurcharge_core,
-// buildable,maxHP,sanctuary_enabled,Sanctuary_range
+// buildable,maxHP,sanctuary_enabled,Sanctuary_range,
+// SacrificeFactory_enabled,SacrificeFactory_MinRange,SacrificeFactory_MaxRange,SacrificeFactory_Amount,SacrificeFactory_BotSurcharges
 //
 // Public API
 // ----------
@@ -103,6 +104,12 @@ public static class PiecesCsvImporter
         bool[] sanctuaryEnabledByType = new bool[typeCount];
         int[] sanctuaryRangeByType = new int[typeCount];
 
+        bool[] sacrificeFactoryEnabledByType = new bool[typeCount];
+        int[] sacrificeFactoryRangeMinByType = new int[typeCount];
+        int[] sacrificeFactoryRangeMaxByType = new int[typeCount];
+        int[] sacrificeFactoryAmountByType = new int[typeCount];
+        int[] sacrificeFactoryBotSurchargeByType = new int[typeCount];
+
         // Worst-case: each row can enable many abilities (Move,Shoot,Capture,Core,Push,GroupBuild,Upgrade,Launcher,Spawner,Factory,Sanctuary, etc.)
         int abilityEstimate = Math.Max(10, typeCount * 10);
 
@@ -176,6 +183,11 @@ public static class PiecesCsvImporter
             bool mcBorder = GetBool(cols, H, "multiCreate_boardering", false);
             bool sanctuaryEnabled = GetBool(cols, H, "sanctuary_enabled", false);
             int sanctuaryRange = GetInt(cols, H, "Sanctuary_range", 0);
+            bool sacrificeFactoryEnabled = GetBool(cols, H, "SacrificeFactory_enabled", false);
+            int sacrificeFactoryMinRange = GetInt(cols, H, "SacrificeFactory_MinRange", 1);
+            int sacrificeFactoryMaxRange = GetInt(cols, H, "SacrificeFactory_MaxRange", 1);
+            int sacrificeFactoryAmount = GetInt(cols, H, "SacrificeFactory_Amount", 0);
+            int sacrificeFactoryBotSurcharge = GetInt(cols, H, "SacrificeFactory_BotSurcharges", 0);
 
             // Map to backing arrays if present in schema
             if (typeId < pcs.idByType.Length) pcs.idByType[typeId] = name;
@@ -250,6 +262,11 @@ public static class PiecesCsvImporter
             mcBorderByType[typeId] = mcBorder;
             sanctuaryEnabledByType[typeId] = sanctuaryEnabled;
             sanctuaryRangeByType[typeId] = sanctuaryRange;
+            sacrificeFactoryEnabledByType[typeId] = sacrificeFactoryEnabled;
+            sacrificeFactoryRangeMinByType[typeId] = sacrificeFactoryMinRange;
+            sacrificeFactoryRangeMaxByType[typeId] = sacrificeFactoryMaxRange;
+            sacrificeFactoryAmountByType[typeId] = sacrificeFactoryAmount;
+            sacrificeFactoryBotSurchargeByType[typeId] = sacrificeFactoryBotSurcharge;
 
             // digitsRequired → store as single-element codeDigits list if your schema expects int[]
             if (typeId < pcs.codeDigitsByType.Length)
@@ -310,6 +327,11 @@ public static class PiecesCsvImporter
             bool mcBorder = mcBorderByType[typeId];
             bool sanctuaryEnabled = sanctuaryEnabledByType[typeId];
             int sanctuaryRange = sanctuaryRangeByType[typeId];
+            bool sacrificeFactoryEnabled = sacrificeFactoryEnabledByType[typeId];
+            int sacrificeFactoryMinRange = sacrificeFactoryRangeMinByType[typeId];
+            int sacrificeFactoryMaxRange = sacrificeFactoryRangeMaxByType[typeId];
+            int sacrificeFactoryAmount = sacrificeFactoryAmountByType[typeId];
+            int sacrificeFactoryBotSurcharge = sacrificeFactoryBotSurchargeByType[typeId];
 
             // MOVE
             if (GetBool(cols, H, "move_enabled", false))
@@ -459,6 +481,20 @@ public static class PiecesCsvImporter
                     typeName,
                     sanctuaryRange,
                     ref nextAbilityId);
+                pcs.AddAbilitySlot((byte)typeId, abilityId);
+            }
+
+            // SACRIFICE FACTORY (active)
+            if (sacrificeFactoryEnabled)
+            {
+                int abilityId = DefineSynthAbility_SacrificeFactory(
+                    pcs,
+                    typeName,
+                    sacrificeFactoryMinRange,
+                    sacrificeFactoryMaxRange,
+                    sacrificeFactoryAmount,
+                    ref nextAbilityId,
+                    sacrificeFactoryBotSurcharge);
                 pcs.AddAbilitySlot((byte)typeId, abilityId);
             }
 
@@ -702,6 +738,26 @@ public static class PiecesCsvImporter
         if (a < pcs.sanctuary_enabled.Length) pcs.sanctuary_enabled[a] = true;
         if (a < pcs.Sanctuary_range.Length) pcs.Sanctuary_range[a] = Math.Max(0, rangeMax);
         if (a < pcs.botThinkSurcharge.Length) pcs.botThinkSurcharge[a] = 0;
+        if (a < pcs.buildTypeId.Length) pcs.buildTypeId[a] = -1;
+        return a;
+    }
+
+    private static int DefineSynthAbility_SacrificeFactory(
+        Pieces pcs,
+        string typeName,
+        int rangeMin,
+        int rangeMax,
+        int amount,
+        ref int nextA,
+        int botSurcharge)
+    {
+        int a = nextA++;
+        string name = $"SacrificeFactory@{typeName}";
+        pcs.DefineAbility(a, name, Pieces.AbilityKind.SacrificeFactory, Pieces.TargetKind.Piece);
+        if (a < pcs.rangeMin.Length) pcs.rangeMin[a] = Math.Max(0, rangeMin);
+        if (a < pcs.rangeMax.Length) pcs.rangeMax[a] = Math.Max(rangeMin, rangeMax);
+        if (a < pcs.sacrificeFactory_amount.Length) pcs.sacrificeFactory_amount[a] = amount;
+        if (a < pcs.botThinkSurcharge.Length) pcs.botThinkSurcharge[a] = botSurcharge;
         if (a < pcs.buildTypeId.Length) pcs.buildTypeId[a] = -1;
         return a;
     }
