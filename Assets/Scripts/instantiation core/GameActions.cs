@@ -50,8 +50,6 @@ namespace Game.Core
         public int MultiCreateCellCount => multiCreateCells.Count;
 
 
-
-
         public HashSet<int> spawnerUsedThisTurn = new HashSet<int>();
 
         private bool _isGameActionSubscribe = false;
@@ -115,6 +113,14 @@ namespace Game.Core
 
             events.RaisePieceKilled(victimID);
             RefreshConnectorState();
+        }
+
+        public void ApplyConversionFactory(in Action theAction, byte player)
+        {
+            int HowMuchToConvert = theAction.aux;
+            if (HowMuchToConvert < 0) return;
+            int Pieceid = bm.GetCellOccupant(theAction.srcCell);
+            bm.pieceFactoryAux[Pieceid] += HowMuchToConvert;
         }
 
         public void ApplyCreate(in Action theAction, byte player)

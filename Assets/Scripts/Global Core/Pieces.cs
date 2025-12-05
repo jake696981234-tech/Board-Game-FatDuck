@@ -29,10 +29,11 @@ public partial class Pieces
         Launcher = 9,
         Spawner = 10,
         SacrificeFactory = 11,
-        Factory = 12,
-        Sanctuary = 13,
-        Custom1 = 14,
-        Custom2 = 15
+        ConversionFactory = 12,
+        Factory = 11,
+        Sanctuary = 12,
+        Custom1 = 13,
+        Custom2 = 14
     }
     public enum TargetKind : byte { None = 0, Cell = 1, Piece = 2 }
 
@@ -423,6 +424,10 @@ public partial class Pieces
         }
         return count;
     }
+
+
+   
+
 
     /// <summary>
     /// CAPTURE VP (targetless): legal if actor stands on VP cell.

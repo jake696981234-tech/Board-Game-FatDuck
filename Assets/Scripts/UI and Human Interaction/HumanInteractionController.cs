@@ -951,26 +951,26 @@ public sealed class HumanInteractionController : MonoBehaviour
 
     // PieceAction mode (full coverage panel): Only actions originating at the selected cell
 
-
+ 
     private void PushPieceActionListForSelection()
     {
         var items = new List<ActionItem>();
-        int onlyOneMove = 0;
+        bool moveAddedForCell = false;
         if (_selectedCellId.HasValue)
         {
             int cell = _selectedCellId.Value;
             for (int i = 0; i < _count; i++)
             {
                 var a = _offers[i];
-                if (a.kind == Game.Core.ActionKind.Move && !config.GiveRawActionOffers)
-                {
-                    onlyOneMove++;
-                }
-                if (a.kind == Game.Core.ActionKind.Move && onlyOneMove >= 2) continue;
-
-
                 if (a.kind == Game.Core.ActionKind.EndTurn) continue; // exclude non-piece actions
                 if (a.srcCell != (ushort)cell) continue;               // only actions from this piece
+
+                // Show only one Move per selected piece unless raw offers requested
+                if (a.kind == Game.Core.ActionKind.Move && !config.GiveRawActionOffers)
+                {
+                    if (moveAddedForCell) continue;
+                    moveAddedForCell = true;
+                }
 
                 int kind = a.kind;
                 string label = PrettyAction(a);
