@@ -128,6 +128,33 @@ public partial class BoardModel
         return write; // total cells at exact ringSize (may be > outCells.Length)
     }
 
+    /// <summary>
+    /// Collects occupant pieceIds at EXACT hex ringSize from originCell.
+    /// Returns total count; writes up to outPieceIds.Length.
+    /// Zero-alloc: reuses the ring scratch buffer.
+    /// </summary>
+    public int pieceIdsRingAroundCell(int originCell, int ringSize, Span<int> outPieceIds)
+    {
+        if (!IsValidCellId(originCell) || ringSize < 0) return 0;
+
+        var scratchCells = GetScratchCellBuffer();
+        int cellsAtRing = cellIdsRingAroundCell(originCell, ringSize, requireEmpty: false, scratchCells.AsSpan());
+        if (cellsAtRing <= 0) return 0;
+
+        int write = 0;
+        int limit = Math.Min(cellsAtRing, scratchCells.Length);
+        for (int i = 0; i < limit; i++)
+        {
+            int pid = occupantPieceId[scratchCells[i]];
+            if (pid == _invalidId || !IsValidPieceId(pid)) continue;
+            if (write < outPieceIds.Length)
+                outPieceIds[write] = pid;
+            write++;
+        }
+
+        return write; // total pieceIds found (may exceed outPieceIds.Length)
+    }
+
 
     /// <summary>
     /// Checks if a piece can move/land here under generic rules

@@ -1,22 +1,25 @@
-name,factory_enabled,factory_amount,factory_roundMultiplier,factory_group,factory_groupAmount,botThinkSurcharge_factory,launcher_enabled,launcher_inputRange,launcher_outputRange,launcher_friendlyFire,launcher_enemyFire,push_enabled,push_rangeMax,push_pushAmount,push_targetsBuildings,push_targetsSoldiers,push_pull,push_friendlyFire,spawn_enabled,spawn_pieceName,spawn_pieceAmount,spawn_range,spawn_onlyOncePerTurn,hasConnectors,connector_needsCapital,connector_isCapital,connector_capitalHealth,connector_masks,buildCost,maxHP,digitsRequired,isBuilding,grantsDigit,move_enabled,move_damage,move_rangeMin,move_rangeMax,botThinkSurcharge_move,shoot_enabled,shoot_rangeMin,shoot_rangeMax,shoot_damage,botThinkSurcharge_shoot,capture_enabled,botThinkSurcharge_capture,core_enabled,botThinkSurcharge_core,spritePath,faction,moveColor,shootColor,buildable
-Frog,,,,,,,,,,,,,,,,,,,,,,,,,,,,,15,1,1,FALSE,,TRUE,1,1,1,2,FALSE,,,,,TRUE,2,TRUE,2,FR,Frog,#00AAFF,#FF5555,TRUE
-Frog Plus,,,,,,,,,,,,,,,,,,,,,,,,,,,,,23,1,1,FALSE,,TRUE,1,1,2,2,FALSE,,,,,TRUE,2,TRUE,2,SFR,Frog,#00AAFF,#FF5555,TRUE
-Lily Pad,,,,,,,,,,,,,,,,,,,,,,,,TRUE,TRUE,,,,13,1,1,TRUE,,TRUE,1,1,1,2,FALSE,,,,,FALSE,,FALSE,,Pond,Frog,#00AAFF,#FF5555,TRUE
-Frog Key,,,,,,,,,,,,,,,,,,,,,,,,TRUE,FALSE,TRUE,3,,40,1,,TRUE,1,FALSE,,,,,FALSE,,,,,FALSE,,FALSE,,Flower,Frog,#00AAFF,#FF5555,TRUE
-Penguin,,,,,,,,,,,,,,,,,,,,,,,,,,,,,20,1,2,FALSE,,TRUE,1,1,1,2,TRUE,1,1,1,2,TRUE,2,TRUE,2,PE,Penguin,#00AAFF,#FF5555,TRUE
-Penguin Plus,,,,,,,,,,,,,,,,,,,,,,,,,,,,,25,1,2,FALSE,,TRUE,1,1,1,2,TRUE,1,2,1,2,TRUE,2,TRUE,2,SPE,Penguin,#00AAFF,#FF5555,TRUE
-Ice Cube Launcher,,,,,,,,,,,,,,,,,,,,,,,,TRUE,TRUE,,,,25,1,2,TRUE,,FALSE,1,1,1,2,TRUE,1,2,1,2,FALSE,2,FALSE,2,abstract-007,Penguin,#00AAFF,#FF5555,TRUE
-Penguin Key,,,,,,,,,,,,,,,,,,,,,,,,TRUE,FALSE,TRUE,2,,40,1,,TRUE,2,FALSE,,,,,FALSE,,,,,FALSE,,FALSE,,abstract-008,Penguin,#00AAFF,#FF5555,TRUE
-Bear,,,,,,,,,,,,,,,,,,,,,,,,,,,,,20,2,3,FALSE,,TRUE,1,1,1,2,FALSE,,,,,TRUE,2,TRUE,2,BE,Bear,#00AAFF,#FF5555,TRUE
-Bear Plus,,,,,,,,,,,,,,,,,,,,,,,,,,,,,25,3,3,FALSE,,TRUE,1,1,1,2,FALSE,,,,,TRUE,2,TRUE,2,SBE,Bear,#00AAFF,#FF5555,TRUE
-Tree Wall,,,,,,,,,,,,,,,,,,,,,,,,TRUE,TRUE,,,,13,2,3,TRUE,,FALSE,1,1,1,2,FALSE,,,,,FALSE,2,FALSE,2,abstract-001,Bear,#00AAFF,#FF5555,TRUE
-Bear Key,,,,,,,,,,,,,,,,,,,,,,,,TRUE,FALSE,TRUE,1,,40,1,,TRUE,3,FALSE,,,,,FALSE,,,,,FALSE,,FALSE,,abstract-002,Bear,#00AAFF,#FF5555,TRUE
-spawner,,,,,,,,,,,,,,,,,,,TRUE,Frog,1,1,FALSE,TRUE,TRUE,,,,13,2,3,TRUE,,FALSE,1,1,1,2,FALSE,,,,,FALSE,2,FALSE,2,abstract-001,Bear,#00AAFF,#FF5555,TRUE
-spawnerv2,,,,,,,,,,,,,,,,,,,TRUE,Frog Plus,4,4,TRUE,TRUE,TRUE,,,,13,2,3,TRUE,,FALSE,1,1,1,2,FALSE,,,,,FALSE,2,FALSE,2,abstract-001,Bear,#00AAFF,#FF5555,TRUE
-Frog Pusher,,,,,,,,,,,,TRUE,5,5,TRUE,TRUE,FALSE,TRUE,,,,,,,,,,,15,1,1,FALSE,,TRUE,1,1,1,2,FALSE,,,,,TRUE,2,TRUE,2,FR,Frog,#00AAFF,#FF5555,TRUE
-Frog Pusher Plus,,,,,,,,,,,,TRUE,5,5,TRUE,TRUE,TRUE,TRUE,,,,,,,,,,,23,1,1,FALSE,,TRUE,1,1,2,2,FALSE,,,,,TRUE,2,TRUE,2,SFR,Frog,#00AAFF,#FF5555,TRUE
-Launcher1,,,,,,,TRUE,1,2,TRUE,TRUE,,,,,,,,,,,,,TRUE,TRUE,,,,13,2,3,TRUE,,FALSE,1,1,1,2,FALSE,,,,,FALSE,2,FALSE,2,abstract-001,Bear,#00AAFF,#FF5555,TRUE
-Launcher2,,,,,,,TRUE,4,6,TRUE,TRUE,,,,,,,,,,,,,TRUE,TRUE,,,,13,2,3,TRUE,,FALSE,1,1,1,2,FALSE,,,,,FALSE,2,FALSE,2,abstract-001,Bear,#00AAFF,#FF5555,TRUE
-Froggy Factory,TRUE,20,TRUE,FALSE,,,,,,,,,,,,,,,,,,,,TRUE,TRUE,,,,13,2,1,TRUE,,FALSE,1,1,1,2,FALSE,,,,,FALSE,2,FALSE,2,abstract-001,Frog,#00AAFF,#FF5555,TRUE
-Penguin Factory,TRUE,20,FALSE,FALSE,,,,,,,,,,,,,,,,,,,,TRUE,TRUE,,,,13,2,2,TRUE,,FALSE,1,1,1,2,FALSE,,,,,FALSE,2,FALSE,2,abstract-001,Penguin,#00AAFF,#FF5555,TRUE
-Bear Factory,TRUE,20,FALSE,FALSE,,,,,,,,,,,,,,,,,,,,TRUE,TRUE,,,,13,2,3,TRUE,,FALSE,1,1,1,2,FALSE,,,,,FALSE,2,FALSE,2,abstract-001,Bear,#00AAFF,#FF5555,TRUE
+name,sanctuary_enabled,Sanctuary_range,factory_enabled,factory_amount,factory_roundMultiplier,factory_group,factory_groupAmount,botThinkSurcharge_factory,launcher_enabled,launcher_inputRange,launcher_outputRange,launcher_friendlyFire,launcher_enemyFire,push_enabled,push_rangeMax,push_pushAmount,push_targetsBuildings,push_targetsSoldiers,push_pull,push_friendlyFire,spawn_enabled,spawn_pieceName,spawn_pieceAmount,spawn_range,spawn_onlyOncePerTurn,hasConnectors,connector_needsCapital,connector_isCapital,connector_capitalHealth,connector_masks,buildCost,maxHP,digitsRequired,isBuilding,grantsDigit,move_enabled,move_damage,move_rangeMin,move_rangeMax,botThinkSurcharge_move,shoot_enabled,shoot_rangeMin,shoot_rangeMax,shoot_damage,botThinkSurcharge_shoot,capture_enabled,botThinkSurcharge_capture,core_enabled,botThinkSurcharge_core,spritePath,faction,moveColor,shootColor,buildable
+Frog,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,15,1,1,FALSE,,TRUE,1,1,1,2,FALSE,,,,,TRUE,2,TRUE,2,FR,Frog,#00AAFF,#FF5555,TRUE
+Frog Plus,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,23,1,1,FALSE,,TRUE,1,1,2,2,FALSE,,,,,TRUE,2,TRUE,2,SFR,Frog,#00AAFF,#FF5555,TRUE
+Lily Pad,,,,,,,,,,,,,,,,,,,,,,,,,,TRUE,TRUE,,,,13,1,1,TRUE,,TRUE,1,1,1,2,FALSE,,,,,FALSE,,FALSE,,Pond,Frog,#00AAFF,#FF5555,TRUE
+Frog Key,,,,,,,,,,,,,,,,,,,,,,,,,,TRUE,FALSE,TRUE,3,,40,1,,TRUE,1,FALSE,,,,,FALSE,,,,,FALSE,,FALSE,,Flower,Frog,#00AAFF,#FF5555,TRUE
+Penguin,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,20,1,2,FALSE,,TRUE,1,1,1,2,TRUE,1,1,1,2,TRUE,2,TRUE,2,PE,Penguin,#00AAFF,#FF5555,TRUE
+Penguin Plus,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,25,1,2,FALSE,,TRUE,1,1,1,2,TRUE,1,2,1,2,TRUE,2,TRUE,2,SPE,Penguin,#00AAFF,#FF5555,TRUE
+Ice Cube Launcher,,,,,,,,,,,,,,,,,,,,,,,,,,TRUE,TRUE,,,,25,1,2,TRUE,,FALSE,1,1,1,2,TRUE,1,2,1,2,FALSE,2,FALSE,2,abstract-007,Penguin,#00AAFF,#FF5555,TRUE
+Penguin Key,,,,,,,,,,,,,,,,,,,,,,,,,,TRUE,FALSE,TRUE,2,,40,1,,TRUE,2,FALSE,,,,,FALSE,,,,,FALSE,,FALSE,,abstract-008,Penguin,#00AAFF,#FF5555,TRUE
+Bear,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,20,2,3,FALSE,,TRUE,1,1,1,2,FALSE,,,,,TRUE,2,TRUE,2,BE,Bear,#00AAFF,#FF5555,TRUE
+Bear Plus,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,25,3,3,FALSE,,TRUE,1,1,1,2,FALSE,,,,,TRUE,2,TRUE,2,SBE,Bear,#00AAFF,#FF5555,TRUE
+Tree Wall,,,,,,,,,,,,,,,,,,,,,,,,,,TRUE,TRUE,,,,13,2,3,TRUE,,FALSE,1,1,1,2,FALSE,,,,,FALSE,2,FALSE,2,abstract-001,Bear,#00AAFF,#FF5555,TRUE
+Bear Key,,,,,,,,,,,,,,,,,,,,,,,,,,TRUE,FALSE,TRUE,1,,40,1,,TRUE,3,FALSE,,,,,FALSE,,,,,FALSE,,FALSE,,abstract-002,Bear,#00AAFF,#FF5555,TRUE
+spawner,,,,,,,,,,,,,,,,,,,,,TRUE,Frog,1,1,FALSE,TRUE,TRUE,,,,13,2,3,TRUE,,FALSE,1,1,1,2,FALSE,,,,,FALSE,2,FALSE,2,abstract-001,Bear,#00AAFF,#FF5555,TRUE
+spawnerv2,,,,,,,,,,,,,,,,,,,,,TRUE,Frog Plus,4,4,TRUE,TRUE,TRUE,,,,13,2,3,TRUE,,FALSE,1,1,1,2,FALSE,,,,,FALSE,2,FALSE,2,abstract-001,Bear,#00AAFF,#FF5555,TRUE
+Frog Pusher,,,,,,,,,,,,,,TRUE,5,5,TRUE,TRUE,FALSE,TRUE,,,,,,,,,,,15,1,1,FALSE,,TRUE,1,1,1,2,FALSE,,,,,TRUE,2,TRUE,2,FR,Frog,#00AAFF,#FF5555,TRUE
+Frog Pusher Plus,,,,,,,,,,,,,,TRUE,5,5,TRUE,TRUE,TRUE,TRUE,,,,,,,,,,,23,1,1,FALSE,,TRUE,1,1,2,2,FALSE,,,,,TRUE,2,TRUE,2,SFR,Frog,#00AAFF,#FF5555,TRUE
+Launcher1,,,,,,,,,TRUE,1,2,TRUE,TRUE,,,,,,,,,,,,,TRUE,TRUE,,,,13,2,3,TRUE,,FALSE,1,1,1,2,FALSE,,,,,FALSE,2,FALSE,2,abstract-001,Bear,#00AAFF,#FF5555,TRUE
+Launcher2,,,,,,,,,TRUE,4,6,TRUE,TRUE,,,,,,,,,,,,,TRUE,TRUE,,,,13,2,3,TRUE,,FALSE,1,1,1,2,FALSE,,,,,FALSE,2,FALSE,2,abstract-001,Bear,#00AAFF,#FF5555,TRUE
+Froggy Factory,,,TRUE,20,TRUE,FALSE,,,,,,,,,,,,,,,,,,,,TRUE,TRUE,,,,13,2,1,TRUE,,FALSE,1,1,1,2,FALSE,,,,,FALSE,2,FALSE,2,abstract-001,Frog,#00AAFF,#FF5555,TRUE
+Penguin Factory,,,TRUE,20,FALSE,FALSE,,,,,,,,,,,,,,,,,,,,TRUE,TRUE,,,,13,2,2,TRUE,,FALSE,1,1,1,2,FALSE,,,,,FALSE,2,FALSE,2,abstract-001,Penguin,#00AAFF,#FF5555,TRUE
+Bear Factory,,,TRUE,20,FALSE,FALSE,,,,,,,,,,,,,,,,,,,,TRUE,TRUE,,,,13,2,3,TRUE,,FALSE,1,1,1,2,FALSE,,,,,FALSE,2,FALSE,2,abstract-001,Bear,#00AAFF,#FF5555,TRUE
+Froggy sanctuary,TRUE,1,,,,,,,,,,,,,,,,,,,,,,,,TRUE,TRUE,,,,13,1,1,TRUE,,FALSE,1,1,1,2,FALSE,,,,,FALSE,2,FALSE,2,abstract-001,Frog,#00AAFF,#FF5555,TRUE
+Froggy sanctuaryv2,TRUE,3,,,,,,,,,,,,,,,,,,,,,,,,TRUE,TRUE,,,,13,1,1,TRUE,,FALSE,1,1,1,2,FALSE,,,,,FALSE,2,FALSE,2,abstract-001,Frog,#00AAFF,#FF5555,TRUE
+Froggy sanctuaryv3,TRUE,5,,,,,,,,,,,,,,,,,,,,,,,,TRUE,TRUE,,,,13,1,1,TRUE,,FALSE,1,1,1,2,FALSE,,,,,FALSE,2,FALSE,2,abstract-001,Frog,#00AAFF,#FF5555,TRUE

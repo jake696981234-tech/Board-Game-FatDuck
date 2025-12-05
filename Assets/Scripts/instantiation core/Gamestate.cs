@@ -340,7 +340,7 @@ namespace Game.Core
             currentRoundNumber = Math.Max(1, currentRoundNumber); // ensure non-zero for next cycle
 
             // 1) Purge temporary units (soldiers), keep buildings
-            GameStateUtilities.RemoveAllSoldiers(bm, pcs);
+            GameStateUtilities.RemoveAllSoldiers(bm, pcs, gameActions);
 
             // 2) Refill center VP pool
             ResetCenterVictoryPointsToStart();
@@ -368,6 +368,11 @@ namespace Game.Core
                 BeginTurn();
         }
 
+
+
+        #endregion
+        #region Game Loop Helpers
+
         private float[] perPlayerFactoryIncome = new float[4]; // allocated once
         public float ComputePlayerPayOut(int playerId)
         {
@@ -390,9 +395,6 @@ namespace Game.Core
         {
             return ps[playerId].coreHitsThisRound * hub.reward_budgetBonusForCoreDamage;
         }
-
-        #endregion
-        #region Game Loop Helpers
 
         private byte NextAlivePlayerAfter(byte p)
         {

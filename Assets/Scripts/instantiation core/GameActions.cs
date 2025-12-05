@@ -461,11 +461,6 @@ namespace Game.Core
         }
 
 
-
-
-
-
-
         #endregion
         #region ApplyHelpers
 
@@ -995,6 +990,78 @@ namespace Game.Core
         }
 
         //Helper to call methods for applyActions easier
+
+        private readonly HashSet<int> dublicateFilter = new HashSet<int>();
+        public int ProtectedBySanctuary(Span<int> outPieceIds)
+        {
+            dublicateFilter.Clear();
+            Span<int> protectedpieces = stackalloc int[240];
+            int foundPieces = 0;
+
+            for (int pid = 0; pid < bm.pieceCount; pid++)
+            {
+                byte type = bm.GetPieceType(pid);
+                int sanctuaryRange = -1;
+
+                // Find a Sanctuary ability on this type and grab its range
+                int slotLimit = pcs.AbilitySlotCount(type);
+                for (int s = 0; s < slotLimit; s++)
+                {
+                    int aid = pcs.AbilityIdAtSlot(type, s);
+                    if (aid < 0 || aid >= pcs.sanctuary_enabled.Length) continue;
+                    if (pcs.abilityKind[aid] != Pieces.AbilityKind.Sanctuary) continue;
+                    if (!pcs.sanctuary_enabled[aid]) continue;
+                    sanctuaryRange = (aid < pcs.Sanctuary_range.Length) ? pcs.Sanctuary_range[aid] : -1;
+                    break;
+                }
+
+                if (sanctuaryRange < 0) continue;
+                int centerCell = bm.pieceCellId[pid];
+                if (centerCell < 0) continue;
+
+                for (int range = 0; range <= sanctuaryRange; range++)
+                {
+                    int found = bm.pieceIdsRingAroundCell(centerCell, range, protectedpieces);
+
+                    if (found <= 0) continue;
+
+                    for (int pp = 0; pp < found; pp++)
+                    {
+                        if (dublicateFilter.Add(protectedpieces[pp]))
+                        {
+                            outPieceIds[foundPieces] = protectedpieces[pp];
+                            foundPieces++;
+                        }
+                    }
+                }
+            }
+            return foundPieces;
+        }
+
+        public bool IsPieceProtectedBySanctuary(int pieceId)
+        {
+            Span<int> protectedpieces = stackalloc int[240];
+            int numberOfProtectedPieces = ProtectedBySanctuary(protectedpieces);
+
+            for (int i = 0; i < numberOfProtectedPieces; i++)
+            {
+                if (pieceId != protectedpieces[i]) continue;
+                return true;
+            }
+            return false;
+        }
+
+        public bool IsPieceApartOfSpan(int PieceId, Span<int> inPieceIds, int spanLength)
+        {
+            for (int i = 0; i < spanLength; i++)
+            {
+                if (PieceId != inPieceIds[i]) continue;
+                return true;
+            }
+            return false;
+        }
+
+
 
         public int PushDestination(int actorPieceId, int targetPieceId, int abilityId)
         {

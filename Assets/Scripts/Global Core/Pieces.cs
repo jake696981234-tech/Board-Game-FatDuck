@@ -29,7 +29,7 @@ public partial class Pieces
         Launcher = 9,
         Spawner = 10,
         Factory = 11,
-        Custom0 = 12,
+        Sanctuary = 12,
         Custom1 = 13,
         Custom2 = 14
     }
@@ -55,39 +55,41 @@ public partial class Pieces
     public string[] spritePathByType;
     public string[] moveUIColorHexByType;
     public string[] shootUIColorHexByType;
-    public bool[]  hasConnectorsByType;      // [type] -> true if this type uses connector/wall sides
-    public bool[]  connectorNeedsCapital;    // [type] -> true if placement requires capital connectivity
-    public bool[]  connectorIsCapital;       // [type] -> true if this type counts as a capital
-    public int[]   connectorCapitalHealth;   // [type] -> capital health contribution for connected component
+    public bool[] hasConnectorsByType;      // [type] -> true if this type uses connector/wall sides
+    public bool[] connectorNeedsCapital;    // [type] -> true if placement requires capital connectivity
+    public bool[] connectorIsCapital;       // [type] -> true if this type counts as a capital
+    public int[] connectorCapitalHealth;   // [type] -> capital health contribution for connected component
     public ulong[] connectorAllowedMasks;    // [type] -> bitmask of allowed 6-bit side configs (bit i -> config i allowed)
-    public bool[]  groupBuildEnabled;        // [type] -> can this type perform group build
-    public int[]   groupBuildTargetType;     // [type] -> type id to create
-    public int[]   groupBuildRequireNumber;  // [type] -> required count in cluster
-    public bool[]  groupBuildDeletion;       // [type] -> delete contributors on build
-    public bool[]  upgradeEnabled;           // [type] -> can perform upgrade
-    public int[]   upgradeTargetType;        // [type] -> replace with this type
-    public int[]   launcher_inputRange;      // [ability] -> range to pick a piece
-    public int[]   launcher_outputRange;     // [ability] -> range from launcher to drop target
-    public bool[]  launcher_friendlyFire;    // [ability] -> can launch friendlies
-    public bool[]  launcher_enemyFire;       // [ability] -> can launch enemies
-    public bool[]  push_TargetsBuildings;    // [ability] -> push can target buildings
-    public bool[]  push_TargetsSoldiers;     // [ability] -> push can target soldiers
-    public int[]   push_rangeMax;            // [ability] -> input range for push
-    public int[]   push_PushAmount;          // [ability] -> displacement distance
-    public bool[]  push_pull;                // [ability] -> invert direction
-    public bool[]  push_FriendlyFire;        // [ability] -> allow friendlies
-    public int[]   push_damage;              // [ability] -> damage on push
-    public int[]   spawn_pieceAmount;        // [ability] -> how many pieces to create
-    public int[]   spawn_targetType;         // [ability] -> type to create
-    public int[]   spawn_range;              // [ability] -> spawn range
-    public bool[]  spawn_onlyOncePerTurn;    // [ability] -> once-per-turn gate
-    public bool[]  multiCreate_enabledByType; // [type] -> multi-create hook
-    public int[]   multiCreate_amountByType;  // [type] -> how many total (including primary)
-    public bool[]  multiCreate_boarderingByType; // [type] -> require new pieces to border each other
-    public int[]   factory_amount;           // [ability] -> payout amount
-    public bool[]  factory_roundMultiplier;  // [ability] -> multiply by round number
-    public bool[]  factory_group;            // [ability] -> requires groups
-    public int[]   factory_groupAmount;      // [ability] -> size of each group
+    public bool[] groupBuildEnabled;        // [type] -> can this type perform group build
+    public int[] groupBuildTargetType;     // [type] -> type id to create
+    public int[] groupBuildRequireNumber;  // [type] -> required count in cluster
+    public bool[] groupBuildDeletion;       // [type] -> delete contributors on build
+    public bool[] upgradeEnabled;           // [type] -> can perform upgrade
+    public int[] upgradeTargetType;        // [type] -> replace with this type
+    public int[] launcher_inputRange;      // [ability] -> range to pick a piece
+    public int[] launcher_outputRange;     // [ability] -> range from launcher to drop target
+    public bool[] launcher_friendlyFire;    // [ability] -> can launch friendlies
+    public bool[] launcher_enemyFire;       // [ability] -> can launch enemies
+    public bool[] push_TargetsBuildings;    // [ability] -> push can target buildings
+    public bool[] push_TargetsSoldiers;     // [ability] -> push can target soldiers
+    public int[] push_rangeMax;            // [ability] -> input range for push
+    public int[] push_PushAmount;          // [ability] -> displacement distance
+    public bool[] push_pull;                // [ability] -> invert direction
+    public bool[] push_FriendlyFire;        // [ability] -> allow friendlies
+    public int[] push_damage;              // [ability] -> damage on push
+    public int[] spawn_pieceAmount;        // [ability] -> how many pieces to create
+    public int[] spawn_targetType;         // [ability] -> type to create
+    public int[] spawn_range;              // [ability] -> spawn range
+    public bool[] spawn_onlyOncePerTurn;    // [ability] -> once-per-turn gate
+    public bool[] multiCreate_enabledByType; // [type] -> multi-create hook
+    public int[] multiCreate_amountByType;  // [type] -> how many total (including primary)
+    public bool[] multiCreate_boarderingByType; // [type] -> require new pieces to border each other
+    public int[] factory_amount;           // [ability] -> payout amount
+    public bool[] factory_roundMultiplier;  // [ability] -> multiply by round number
+    public bool[] factory_group;            // [ability] -> requires groups
+    public int[] factory_groupAmount;      // [ability] -> size of each group
+    public bool[] sanctuary_enabled;
+    public int[] Sanctuary_range;
 
     // Name maps (optional)
     public Dictionary<string, int> typeIndexByName;
@@ -427,6 +429,8 @@ public partial class Pieces
         if (factory_roundMultiplier == null || factory_roundMultiplier.Length != abilityCount) return "factory_roundMultiplier not allocated or wrong size.";
         if (factory_group == null || factory_group.Length != abilityCount) return "factory_group not allocated or wrong size.";
         if (factory_groupAmount == null || factory_groupAmount.Length != abilityCount) return "factory_groupAmount not allocated or wrong size.";
+        if (sanctuary_enabled == null || sanctuary_enabled.Length != abilityCount) return "sanctuary_enabled not allocated or wrong size.";
+        if (Sanctuary_range == null || Sanctuary_range.Length != abilityCount) return "Sanctuary_range not allocated or wrong size.";
         if (push_TargetsBuildings == null || push_TargetsBuildings.Length != abilityCount) return "push_TargetsBuildings not allocated or wrong size.";
         if (push_TargetsSoldiers == null || push_TargetsSoldiers.Length != abilityCount) return "push_TargetsSoldiers not allocated or wrong size.";
         if (push_rangeMax == null || push_rangeMax.Length != abilityCount) return "push_rangeMax not allocated or wrong size.";
@@ -528,6 +532,8 @@ public partial class Pieces
         factory_roundMultiplier = new bool[abilityCount];
         factory_group = new bool[abilityCount];
         factory_groupAmount = new int[abilityCount];
+        sanctuary_enabled = new bool[abilityCount];
+        Sanctuary_range = new int[abilityCount];
         multiCreate_enabledByType = new bool[typeCount];
         multiCreate_amountByType = new int[typeCount];
         multiCreate_boarderingByType = new bool[typeCount];

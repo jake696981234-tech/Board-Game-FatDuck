@@ -25,7 +25,7 @@
 // shoot_enabled,shoot_rangeMin,shoot_rangeMax,shoot_damage,
 // capture_enabled,core_enabled,
 // botThinkSurcharge_move,botThinkSurcharge_shoot,botThinkSurcharge_capture,botThinkSurcharge_core,
-// buildable,maxHP
+// buildable,maxHP,sanctuary_enabled,Sanctuary_range
 //
 // Public API
 // ----------
@@ -100,12 +100,15 @@ public static class PiecesCsvImporter
         int[] mcAmountByType = new int[typeCount];
         bool[] mcBorderByType = new bool[typeCount];
 
-        // Worst-case: each row can enable up to 7 abilities (Move,Shoot,Capture,Core,Push/GroupBuild/Factory/etc.)
-        int abilityEstimate = Math.Max(7, typeCount * 7);
+        bool[] sanctuaryEnabledByType = new bool[typeCount];
+        int[] sanctuaryRangeByType = new int[typeCount];
+
+        // Worst-case: each row can enable many abilities (Move,Shoot,Capture,Core,Push,GroupBuild,Upgrade,Launcher,Spawner,Factory,Sanctuary, etc.)
+        int abilityEstimate = Math.Max(10, typeCount * 10);
 
         // 2) Allocate Pieces registry
         var pcs = new Pieces();
-        pcs.Allocate(typeCount, abilityEstimate, /*maxSlots*/7);
+        pcs.Allocate(typeCount, abilityEstimate, /*maxSlots*/10);
 
         // We will SYNTHESIZE abilities; keep a moving cursor for the next id.
         int nextAbilityId = 0; // grows as we define abilities; finalized into pcs.abilityCount at the end
@@ -171,6 +174,8 @@ public static class PiecesCsvImporter
             bool mcEnabled = GetBool(cols, H, "multiCreate_enabled", false);
             int mcAmount = GetInt(cols, H, "multiCreate_amount", 1);
             bool mcBorder = GetBool(cols, H, "multiCreate_boardering", false);
+            bool sanctuaryEnabled = GetBool(cols, H, "sanctuary_enabled", false);
+            int sanctuaryRange = GetInt(cols, H, "Sanctuary_range", 0);
 
             // Map to backing arrays if present in schema
             if (typeId < pcs.idByType.Length) pcs.idByType[typeId] = name;
@@ -243,6 +248,8 @@ public static class PiecesCsvImporter
             mcEnabledByType[typeId] = mcEnabled;
             mcAmountByType[typeId] = mcAmount;
             mcBorderByType[typeId] = mcBorder;
+            sanctuaryEnabledByType[typeId] = sanctuaryEnabled;
+            sanctuaryRangeByType[typeId] = sanctuaryRange;
 
             // digitsRequired → store as single-element codeDigits list if your schema expects int[]
             if (typeId < pcs.codeDigitsByType.Length)
@@ -301,6 +308,8 @@ public static class PiecesCsvImporter
             bool mcEnabled = mcEnabledByType[typeId];
             int mcAmount = mcAmountByType[typeId];
             bool mcBorder = mcBorderByType[typeId];
+            bool sanctuaryEnabled = sanctuaryEnabledByType[typeId];
+            int sanctuaryRange = sanctuaryRangeByType[typeId];
 
             // MOVE
             if (GetBool(cols, H, "move_enabled", false))
@@ -439,6 +448,17 @@ public static class PiecesCsvImporter
                     factoryGroupAmount,
                     ref nextAbilityId,
                     botSurcharge: factoryBotS);
+                pcs.AddAbilitySlot((byte)typeId, abilityId);
+            }
+
+            // SANCTUARY
+            if (sanctuaryEnabled)
+            {
+                int abilityId = DefineSynthAbility_Sanctuary(
+                    pcs,
+                    typeName,
+                    sanctuaryRange,
+                    ref nextAbilityId);
                 pcs.AddAbilitySlot((byte)typeId, abilityId);
             }
 
@@ -661,6 +681,27 @@ public static class PiecesCsvImporter
         if (a < pcs.factory_group.Length) pcs.factory_group[a] = group;
         if (a < pcs.factory_groupAmount.Length) pcs.factory_groupAmount[a] = Math.Max(1, groupAmount);
         if (a < pcs.botThinkSurcharge.Length) pcs.botThinkSurcharge[a] = botSurcharge;
+        if (a < pcs.buildTypeId.Length) pcs.buildTypeId[a] = -1;
+        return a;
+    }
+
+    private static int DefineSynthAbility_Sanctuary(
+        Pieces pcs,
+        string typeName,
+        int rangeMax,
+        ref int nextA)
+    {
+        int a = nextA++;
+        string name = $"Sanctuary@{typeName}";
+        pcs.DefineAbility(a, name, Pieces.AbilityKind.Sanctuary, Pieces.TargetKind.None);
+        if (a < pcs.rangeMin.Length) pcs.rangeMin[a] = 0;
+        if (a < pcs.rangeMax.Length) pcs.rangeMax[a] = Math.Max(0, rangeMax);
+        if (a < pcs.areaRadius.Length) pcs.areaRadius[a] = 0;
+        if (a < pcs.damage.Length) pcs.damage[a] = 0;
+        if (a < pcs.customParam.Length) pcs.customParam[a] = 0;
+        if (a < pcs.sanctuary_enabled.Length) pcs.sanctuary_enabled[a] = true;
+        if (a < pcs.Sanctuary_range.Length) pcs.Sanctuary_range[a] = Math.Max(0, rangeMax);
+        if (a < pcs.botThinkSurcharge.Length) pcs.botThinkSurcharge[a] = 0;
         if (a < pcs.buildTypeId.Length) pcs.buildTypeId[a] = -1;
         return a;
     }

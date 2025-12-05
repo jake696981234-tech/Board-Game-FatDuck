@@ -39,8 +39,9 @@ public partial class BoardModel
     public int[] pieceCellId;  // [pieceId] -> cellId
     public byte[] pieceType;    // [pieceId] -> type index (semantics live in Pieces.cs)
     public short[] pieceHP;      // [pieceId] -> hp (unit/building maxHP comes from Pieces.cs)
+    public int[] pieceFactoryAux;
     public byte[] pieceConnectorConfig; // [pieceId] -> connector configuration index (0-63) if hasConnectors, else 0
-    public int[]  pieceCapitalHP;       // [pieceId] -> current capital HP buff (0 if none)
+    public int[] pieceCapitalHP;       // [pieceId] -> current capital HP buff (0 if none)
 
     // ---------- Optional hook from Pieces (perf helper) ----------
     public Func<byte, bool> IsBuildingType;
@@ -245,6 +246,7 @@ public partial class BoardModel
     public int PieceCell(int pieceId) => GetPieceCell(pieceId);
     public byte PieceType(int pieceId) => GetPieceType(pieceId);
     public short PieceHP(int pieceId) => (IsValidPieceId(pieceId) && pieceHP != null) ? pieceHP[pieceId] : (short)0;
+    
 
     // =====================================================================
     // Atomic piece ops (dense columns + cell occupancy kept in sync)
@@ -301,6 +303,8 @@ public partial class BoardModel
         pieceCount = last;
     }
 
+
+
     /// <summary>Write fields for an existing/allocated row and set occupancy.</summary>
     public void PlacePieceRow(int pieceId, int owner, byte type, int cellId, short hp)
     {
@@ -328,8 +332,6 @@ public partial class BoardModel
     {
         int hp = pieceHP[pieceId] - delta;
         if (hp > 0) { pieceHP[pieceId] = (short)hp; return false; }
-
-
 
         pieceHP[pieceId] = 0;
         return true;
@@ -602,15 +604,19 @@ public static class GameStateUtilities
     /// Removes all Soldiers (i.e., pieces where Pieces.IsBuilding(type) == false).
     /// Returns the number of rows removed. Uses swap-back to stay O(n).
     /// </summary>
-    public static int RemoveAllSoldiers(BoardModel bm, Pieces pieces)
+    public static int RemoveAllSoldiers(BoardModel bm, Pieces pieces, Game.Core.GameActions gameActions)
     {
         if (bm == null || pieces == null) return 0;
+
+        Span<int> protectedpieces = stackalloc int[240];
+        int numberOfProtectedPieces = gameActions.ProtectedBySanctuary(protectedpieces);
+
         int removed = 0;
         for (int pid = bm.pieceCount - 1; pid >= 0; pid--)
         {
             byte t = bm.pieceType[pid];
             bool isBuilding = pieces.IsBuilding(t); // assumes Pieces exposes this
-            if (isBuilding) continue;
+            if (isBuilding || gameActions.IsPieceApartOfSpan(pid, protectedpieces, numberOfProtectedPieces)) continue;
 
             // Free row (handles occupancy + swap-back)
             bm.FreeRowSwapBack(pid);
