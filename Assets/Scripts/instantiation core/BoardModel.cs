@@ -148,6 +148,7 @@ public partial class BoardModel
         }
         return false;
     }
+    
 
     // =====================================================================
     // Geometry passthrough (no allocations)

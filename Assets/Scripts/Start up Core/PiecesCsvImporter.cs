@@ -26,7 +26,8 @@
 // capture_enabled,core_enabled,
 // botThinkSurcharge_move,botThinkSurcharge_shoot,botThinkSurcharge_capture,botThinkSurcharge_core,
 // buildable,maxHP,sanctuary_enabled,Sanctuary_range,
-// SacrificeFactory_enabled,SacrificeFactory_MinRange,SacrificeFactory_MaxRange,SacrificeFactory_Amount,SacrificeFactory_BotSurcharges
+// SacrificeFactory_enabled,SacrificeFactory_MinRange,SacrificeFactory_MaxRange,SacrificeFactory_Amount,SacrificeFactory_BotSurcharges,
+// ConversionFactory_enabled,ConversionFactory_CoreHealth,ConversionFactory_VP,ConversionFactory_Amount,ConversionFactory_BotSurcharge
 //
 // Public API
 // ----------
@@ -110,6 +111,12 @@ public static class PiecesCsvImporter
         int[] sacrificeFactoryAmountByType = new int[typeCount];
         int[] sacrificeFactoryBotSurchargeByType = new int[typeCount];
 
+        bool[] conversionFactoryEnabledByType = new bool[typeCount];
+        bool[] conversionFactoryCoreHealthByType = new bool[typeCount];
+        bool[] conversionFactoryVpByType = new bool[typeCount];
+        int[] conversionFactoryAmountByType = new int[typeCount];
+        int[] conversionFactoryBotSurchargeByType = new int[typeCount];
+
         // Worst-case: each row can enable many abilities (Move,Shoot,Capture,Core,Push,GroupBuild,Upgrade,Launcher,Spawner,Factory,Sanctuary, etc.)
         int abilityEstimate = Math.Max(10, typeCount * 10);
 
@@ -188,6 +195,11 @@ public static class PiecesCsvImporter
             int sacrificeFactoryMaxRange = GetInt(cols, H, "SacrificeFactory_MaxRange", 1);
             int sacrificeFactoryAmount = GetInt(cols, H, "SacrificeFactory_Amount", 0);
             int sacrificeFactoryBotSurcharge = GetInt(cols, H, "SacrificeFactory_BotSurcharges", 0);
+            bool conversionFactoryEnabled = GetBool(cols, H, "ConversionFactory_enabled", false);
+            bool conversionFactoryCoreHealth = GetBool(cols, H, "ConversionFactory_CoreHealth", false);
+            bool conversionFactoryVp = GetBool(cols, H, "ConversionFactory_VP", false);
+            int conversionFactoryAmount = GetInt(cols, H, "ConversionFactory_Amount", 0);
+            int conversionFactoryBotSurcharge = GetInt(cols, H, "ConversionFactory_BotSurcharge", 0);
 
             // Map to backing arrays if present in schema
             if (typeId < pcs.idByType.Length) pcs.idByType[typeId] = name;
@@ -267,6 +279,11 @@ public static class PiecesCsvImporter
             sacrificeFactoryRangeMaxByType[typeId] = sacrificeFactoryMaxRange;
             sacrificeFactoryAmountByType[typeId] = sacrificeFactoryAmount;
             sacrificeFactoryBotSurchargeByType[typeId] = sacrificeFactoryBotSurcharge;
+            conversionFactoryEnabledByType[typeId] = conversionFactoryEnabled;
+            conversionFactoryCoreHealthByType[typeId] = conversionFactoryCoreHealth;
+            conversionFactoryVpByType[typeId] = conversionFactoryVp;
+            conversionFactoryAmountByType[typeId] = conversionFactoryAmount;
+            conversionFactoryBotSurchargeByType[typeId] = conversionFactoryBotSurcharge;
 
             // digitsRequired → store as single-element codeDigits list if your schema expects int[]
             if (typeId < pcs.codeDigitsByType.Length)
@@ -332,6 +349,11 @@ public static class PiecesCsvImporter
             int sacrificeFactoryMaxRange = sacrificeFactoryRangeMaxByType[typeId];
             int sacrificeFactoryAmount = sacrificeFactoryAmountByType[typeId];
             int sacrificeFactoryBotSurcharge = sacrificeFactoryBotSurchargeByType[typeId];
+            bool conversionFactoryEnabled = conversionFactoryEnabledByType[typeId];
+            bool conversionFactoryCoreHealth = conversionFactoryCoreHealthByType[typeId];
+            bool conversionFactoryVp = conversionFactoryVpByType[typeId];
+            int conversionFactoryAmount = conversionFactoryAmountByType[typeId];
+            int conversionFactoryBotSurcharge = conversionFactoryBotSurchargeByType[typeId];
 
             // MOVE
             if (GetBool(cols, H, "move_enabled", false))
@@ -495,6 +517,20 @@ public static class PiecesCsvImporter
                     sacrificeFactoryAmount,
                     ref nextAbilityId,
                     sacrificeFactoryBotSurcharge);
+                pcs.AddAbilitySlot((byte)typeId, abilityId);
+            }
+
+            // CONVERSION FACTORY (active)
+            if (conversionFactoryEnabled)
+            {
+                int abilityId = DefineSynthAbility_ConversionFactory(
+                    pcs,
+                    typeName,
+                    conversionFactoryCoreHealth,
+                    conversionFactoryVp,
+                    conversionFactoryAmount,
+                    ref nextAbilityId,
+                    conversionFactoryBotSurcharge);
                 pcs.AddAbilitySlot((byte)typeId, abilityId);
             }
 
@@ -758,6 +794,29 @@ public static class PiecesCsvImporter
         if (a < pcs.rangeMax.Length) pcs.rangeMax[a] = Math.Max(rangeMin, rangeMax);
         if (a < pcs.sacrificeFactory_amount.Length) pcs.sacrificeFactory_amount[a] = amount;
         if (a < pcs.botThinkSurcharge.Length) pcs.botThinkSurcharge[a] = botSurcharge;
+        if (a < pcs.buildTypeId.Length) pcs.buildTypeId[a] = -1;
+        return a;
+    }
+
+    private static int DefineSynthAbility_ConversionFactory(
+        Pieces pcs,
+        string typeName,
+        bool toCoreHealth,
+        bool toVP,
+        int amount,
+        ref int nextA,
+        int botSurcharge)
+    {
+        int a = nextA++;
+        string name = $"ConversionFactory@{typeName}";
+        pcs.DefineAbility(a, name, Pieces.AbilityKind.ConversionFactory, Pieces.TargetKind.None);
+        if (a < pcs.rangeMin.Length) pcs.rangeMin[a] = 0;
+        if (a < pcs.rangeMax.Length) pcs.rangeMax[a] = 0;
+        if (a < pcs.conversionFactory_coreHealth.Length) pcs.conversionFactory_coreHealth[a] = toCoreHealth;
+        if (a < pcs.conversionFactory_vp.Length) pcs.conversionFactory_vp[a] = toVP;
+        if (a < pcs.conversionFactory_amount.Length) pcs.conversionFactory_amount[a] = amount;
+        if (a < pcs.botThinkSurcharge.Length) pcs.botThinkSurcharge[a] = botSurcharge;
+        if (a < pcs.conversionFactory_botSurcharge.Length) pcs.conversionFactory_botSurcharge[a] = botSurcharge;
         if (a < pcs.buildTypeId.Length) pcs.buildTypeId[a] = -1;
         return a;
     }

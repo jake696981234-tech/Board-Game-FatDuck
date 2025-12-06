@@ -277,6 +277,23 @@ public sealed class OfferProvider
                             }
                             break;
                         }
+                    case Pieces.AbilityKind.ConversionFactory: fix me
+                        {
+                            if (q.pcs.IsLegal_ConversionFactory(q.ps.vpTotal))
+                            {
+                                var a = new Action
+                                {
+                                    kind = ConversionFactory,
+                                    abilitySlot = (byte)slot,
+                                    pieceType = 0,
+                                    srcCell = (ushort)cell,
+                                    dstCell = (ushort)cell,
+                                    aux = 0
+                                };
+                                Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask);
+                            }
+                            break;
+                        }
 
                     default:
                         break;

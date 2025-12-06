@@ -117,10 +117,10 @@ namespace Game.Core
 
         public void ApplyConversionFactory(in Action theAction, byte player)
         {
-            int HowMuchToConvert = theAction.aux;
-            if (HowMuchToConvert < 0) return;
             int Pieceid = bm.GetCellOccupant(theAction.srcCell);
-            bm.pieceFactoryAux[Pieceid] += HowMuchToConvert;
+
+            ps[player].vpTotal--;
+            bm.pieceFactoryAux[Pieceid] += GetConversionFactoryAmount(theAction);
         }
 
         public void ApplyCreate(in Action theAction, byte player)
@@ -603,6 +603,14 @@ namespace Game.Core
             byte typ = bm.GetPieceType(pid);
             int abi = pcs.AbilityIdAtSlot(typ, a.abilitySlot);
             return (abi >= 0 && abi < pcs.sacrificeFactory_amount.Length) ? pcs.sacrificeFactory_amount[abi] : 0;
+        }
+
+        public int GetConversionFactoryAmount(in Action a)
+        {
+            int pid = bm.GetCellOccupant(a.srcCell);
+            byte typ = bm.GetPieceType(pid);
+            int abi = pcs.AbilityIdAtSlot(typ, a.abilitySlot);
+            return (abi >= 0 && abi < pcs.conversionFactory_amount.Length) ? pcs.conversionFactory_amount[abi] : 0;
         }
 
         private int GetFactoryAbilityId(byte type)

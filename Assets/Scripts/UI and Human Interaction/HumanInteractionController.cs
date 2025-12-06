@@ -895,6 +895,7 @@ public sealed class HumanInteractionController : MonoBehaviour
             case Game.Core.ActionKind.Launcher: return $"Launch {a.aux} → {a.dstCell}";
             case Game.Core.ActionKind.Spawner: return $"Spawn x? {a.pieceType} @ {a.dstCell}";
             case Game.Core.ActionKind.SacrificeFactory: return $"Sacrifice Factory {a.srcCell} → {a.dstCell}";
+            case Game.Core.ActionKind.ConversionFactory: return $"ConversionFactory";
             case Game.Core.ActionKind.EndTurn: return "End Turn";
             default: return $"{a.kind} [{a.srcCell}->{a.dstCell}]";
         }
@@ -951,7 +952,7 @@ public sealed class HumanInteractionController : MonoBehaviour
 
     // PieceAction mode (full coverage panel): Only actions originating at the selected cell
 
- 
+
     private void PushPieceActionListForSelection()
     {
         var items = new List<ActionItem>();

@@ -92,6 +92,10 @@ public partial class Pieces
     public int[] factory_groupAmount;      // [ability] -> size of each group
     public bool[] sanctuary_enabled;
     public int[] Sanctuary_range;
+    public bool[] conversionFactory_coreHealth; // [ability] -> convert to core health
+    public bool[] conversionFactory_vp;         // [ability] -> convert to VP
+    public int[] conversionFactory_amount;      // [ability] -> amount converted
+    public int[] conversionFactory_botSurcharge; // [ability] -> bot surcharge
 
     // Name maps (optional)
     public Dictionary<string, int> typeIndexByName;
@@ -426,7 +430,12 @@ public partial class Pieces
     }
 
 
-   
+    public bool IsLegal_ConversionFactory(int PlayersVPAmount)
+    {
+        if (PlayersVPAmount <= 0) return false;
+        return true;
+    }
+
 
 
     /// <summary>
@@ -585,6 +594,10 @@ public partial class Pieces
         factory_groupAmount = new int[abilityCount];
         sanctuary_enabled = new bool[abilityCount];
         Sanctuary_range = new int[abilityCount];
+        conversionFactory_coreHealth = new bool[abilityCount];
+        conversionFactory_vp = new bool[abilityCount];
+        conversionFactory_amount = new int[abilityCount];
+        conversionFactory_botSurcharge = new int[abilityCount];
         multiCreate_enabledByType = new bool[typeCount];
         multiCreate_amountByType = new int[typeCount];
         multiCreate_boarderingByType = new bool[typeCount];
