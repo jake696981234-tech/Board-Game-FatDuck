@@ -8,7 +8,7 @@ namespace Game.Core
     // Deterministic, allocation-free mutation entrypoint for Phase A.
     // Aligns with Pieces.AbilityKind (incl. CoreDamage), pricing-only CostEngine,
     // and read-only OfferProvider. All state mutations happen through here.
-    public sealed partial class GameState
+    public class GameState
     {
         #region Class's Refrences
         public event System.Action OnActionExecuted;
@@ -16,12 +16,9 @@ namespace Game.Core
         private GameConfigHub hub;
 
         private BoardModel bm;
-        private Pieces pcs;
+
         private CostEngine cost;
         private GameController controller;
-
-        public GameActions gameActions;
-
         private EventManager events;
 
 
@@ -36,26 +33,48 @@ namespace Game.Core
         private byte winner; // 0..3; 255 = none/draw
         public int currentRoundNumber = 1;
 
+
         private int currentCenterVP;             // was BM.currentCenterCellVictoryPointAmount
         private int[] currentCoreHealthByPlayer;   // was BM.currentCoreHealthByPlayer
+
+        //Apply Methods Values- taken from game Actions
+
+        public bool multiCreateActive;
+        public byte multiCreateType;
+        public bool multiCreateBorder;
+        public int multiCreateRemaining;
+        public List<int> multiCreateCells = new List<int>(8);
+
+        public int MultiCreateCellCount => multiCreateCells.Count;
+
+        public readonly HashSet<int> dublicateFilter = new HashSet<int>();
+
+        public void ResetMultiCreate()
+        {
+            multiCreateActive = false;
+            multiCreateType = 0;
+            multiCreateBorder = false;
+            multiCreateRemaining = 0;
+            multiCreateCells.Clear();
+        }
+
 
         #endregion
         #region Initialize Method
 
+        private int gameIndex;
         public void Initialize(in GameConfigHub hub,
                        BoardModel board,
-                       Pieces pieces,
                        CostEngine pricing,
                        PlayerState[] players,
-                       byte startingPlayer, EventManager eventManager, GameController gameController, GameActions theGameActions)
+                       byte startingPlayer, EventManager eventManager, GameController gameController, int theGameIndex)
         {
             this.hub = hub;
             bm = board;
-            pcs = pieces;
             cost = pricing;
             events = eventManager;
             controller = gameController;
-            gameActions = theGameActions;
+            gameIndex = theGameIndex;
 
             ps = players;
             currentPlayer = startingPlayer;
@@ -97,15 +116,15 @@ namespace Game.Core
             ref var cur = ref ps[currentPlayer];
 
             if (!FastCheck(a)) return false;
-            if (!gameActions.IsStillLegal(in a, currentPlayer)) return false;
+            if (!LegalityKernals.IsStillLegal(in a, currentPlayer, gameIndex)) return false;
             events.actionBegin(new ActionContext { ThePlayer = currentPlayer });
 
             CostEngine.CostBreakdown quote = default;
-            bool isMultiPlacement = gameActions.multiCreateActive && a.kind == Create && a.pieceType == gameActions.multiCreateType;
+            bool isMultiPlacement = multiCreateActive && a.kind == Create && a.pieceType == multiCreateType;
 
             if (a.kind != EndTurn && !isMultiPlacement)
             {
-                if (!cost.IsAffordable(cur, a, bm, pcs, out quote))
+                if (!cost.IsAffordable(a, out quote, gameIndex, currentPlayer))
                     return false;
             }
             else
@@ -155,36 +174,36 @@ namespace Game.Core
 
             switch (a.kind)
             {
-                case Move: gameActions.ApplyMove(in a, currentPlayer); break;
-                case Shoot: gameActions.ApplyShoot(in a, currentPlayer); break;
+                case Move: GameActions.ApplyMove(in a, currentPlayer, gameIndex); break;
+                case Shoot: GameActions.ApplyShoot(in a, currentPlayer, gameIndex); break;
                 case Create:
-                    if (gameActions.multiCreateActive && a.pieceType == gameActions.multiCreateType)
+                    if (multiCreateActive && a.pieceType == multiCreateType)
                     {
-                        gameActions.ApplyMultiCreatePlacement(in a, currentPlayer);
+                        GameActions.ApplyMultiCreatePlacement(in a, currentPlayer, gameIndex);
                     }
                     else
                     {
                         if (controller.PieceLimitEnabled && controller.PieceLimitPerPlayer > 0 &&
                             bm.GetPieceCountForPlayer(currentPlayer) >= controller.PieceLimitPerPlayer)
                             return false;
-                        gameActions.ApplyCreate(in a, currentPlayer);
+                        GameActions.ApplyCreate(in a, currentPlayer, gameIndex);
                     }
                     break;
-                case Push: gameActions.ApplyPush(in a, currentPlayer); break;
-                case Upgrade: gameActions.ApplyUpgrade(in a, currentPlayer); break;
-                case Launcher: gameActions.ApplyLauncher(in a, currentPlayer); break;
-                case Spawner: gameActions.ApplySpawner(in a, currentPlayer); break;
-                case GroupBuild: gameActions.ApplyGroupBuild(in a, currentPlayer); break;
-                case CaptureVP: gameActions.ApplyCaptureVP(in a, currentPlayer); break; // sets flags + VP counters + vpPool
-                case CoreDamage: gameActions.ApplyCoreDamage(in a, currentPlayer); break; // sets flag + damages enemy core + elim check
+                case Push: GameActions.ApplyPush(in a, currentPlayer, gameIndex); break;
+                case Upgrade: GameActions.ApplyUpgrade(in a, currentPlayer, gameIndex); break;
+                case Launcher: GameActions.ApplyLauncher(in a, currentPlayer, gameIndex); break;
+                case Spawner: GameActions.ApplySpawner(in a, currentPlayer, gameIndex); break;
+                case GroupBuild: GameActions.ApplyGroupBuild(in a, currentPlayer, gameIndex); break;
+                case CaptureVP: GameActions.ApplyCaptureVP(in a, currentPlayer, gameIndex); break; // sets flags + VP counters + vpPool
+                case CoreDamage: GameActions.ApplyCoreDamage(in a, currentPlayer, gameIndex); break; // sets flag + damages enemy core + elim check
                 case EndTurn: ApplyEndTurn(); break; // unreachable due to early return above
-                case SacrificeFactory: gameActions.ApplySacrificeFactory(in a, currentPlayer); break;
-                case ConversionFactory: gameActions.ApplyConversionFactory(in a, currentPlayer); break;
+                case SacrificeFactory: GameActions.ApplySacrificeFactory(in a, currentPlayer, gameIndex); break;
+                case ConversionFactory: GameActions.ApplyConversionFactory(in a, currentPlayer, gameIndex); break;
                 default: return false;
             }
 
             // For non-EndTurn actions, apply costs and advance index
-            bool skipCost = gameActions.multiCreateActive && a.kind == Create && a.pieceType == gameActions.multiCreateType;
+            bool skipCost = multiCreateActive && a.kind == Create && a.pieceType == multiCreateType;
             if (!skipCost)
             {
                 cur.AddBudget(-(float)quote.Total);
@@ -252,6 +271,7 @@ namespace Game.Core
         private void BeginTurn()
         {
             events.turnBegin(new TurnContext { ThePlayer = currentPlayer });
+            ResetMultiCreate();
             ps[currentPlayer].BeginTurnReset();
 
 
@@ -269,7 +289,7 @@ namespace Game.Core
                 ps[currentPlayer].AddBudget(-(float)hub.match_startOfTurnBudgetDecrease);
 
             // Refresh connector capital HP/state at start of turn
-            PiecesSides.RecomputeConnectorComponents(bm, pcs);
+            PiecesSides.RecomputeConnectorComponents(gameIndex);
 
             // Debug log
             if (GameEvents.enableDebugLogs)
@@ -282,7 +302,7 @@ namespace Game.Core
         {
             // Player who just ended
             byte ended = currentPlayer;
-            gameActions.ResetMultiCreate();
+            ResetMultiCreate();
 
             //Debug log
             if (GameEvents.enableDebugLogs)
@@ -343,7 +363,7 @@ namespace Game.Core
             currentRoundNumber = Math.Max(1, currentRoundNumber); // ensure non-zero for next cycle
 
             // 1) Purge temporary units (soldiers), keep buildings
-            GameStateUtilities.RemoveAllSoldiers(bm, pcs, gameActions);
+            GameStateUtilities.RemoveAllSoldiers(gameIndex);
 
             // 2) Refill center VP pool
             ResetCenterVictoryPointsToStart();
@@ -379,7 +399,7 @@ namespace Game.Core
         private float[] perPlayerFactoryIncome = new float[4]; // allocated once
         public float ComputePlayerPayOut(int playerId)
         {
-            perPlayerFactoryIncome = gameActions.ComputePlayersFactoryIncome();
+            perPlayerFactoryIncome = GameActions.ComputePlayersFactoryIncome(gameIndex);
             float payout =
                     ComputePlayerVPReward(playerId) +
                     ComputePlayeroreDamageReward(playerId) +
@@ -526,10 +546,8 @@ namespace Game.Core
         public bool PassedTurn(int playerID)
         => ps[playerID].endedWithoutActionThisCycle;
         public bool CanCurrentAfford(in Action a, out float quoted)
-            => cost.IsAffordable(ps[currentPlayer], a, bm, pcs, out quoted);
+            => cost.IsAffordable(a, out quoted, gameIndex, currentPlayer);
 
-
-        public GameActions TheGameActions => gameActions;
 
         // --- simple Accesors ---
         public void SetCoreHealth(byte player, int hp) // clamps by hub caps

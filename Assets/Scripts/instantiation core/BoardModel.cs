@@ -46,6 +46,8 @@ public partial class BoardModel
     public byte[] pieceConnectorConfig; // [pieceId] -> connector configuration index (0-63) if hasConnectors, else 0
     public int[] pieceCapitalHP;       // [pieceId] -> current capital HP buff (0 if none)
 
+    public HashSet<int> spawnerUsedThisTurn = new HashSet<int>();
+
     // ---------- Optional hook from Pieces (perf helper) ----------
     public Func<byte, bool> IsBuildingType;
 
@@ -148,7 +150,7 @@ public partial class BoardModel
         }
         return false;
     }
-    
+
 
     // =====================================================================
     // Geometry passthrough (no allocations)
@@ -611,19 +613,19 @@ public static class GameStateUtilities
     /// Removes all Soldiers (i.e., pieces where Pieces.IsBuilding(type) == false).
     /// Returns the number of rows removed. Uses swap-back to stay O(n).
     /// </summary>
-    public static int RemoveAllSoldiers(BoardModel bm, Pieces pieces, Game.Core.GameActions gameActions)
+    public static int RemoveAllSoldiers(int gameIndex)
     {
-        if (bm == null || pieces == null) return 0;
+        var bm = GameRegistry.game[gameIndex].boardModel;
 
         Span<int> protectedpieces = stackalloc int[240];
-        int numberOfProtectedPieces = gameActions.ProtectedBySanctuary(protectedpieces);
+        int numberOfProtectedPieces = Game.Core.GameActions.ProtectedBySanctuary(protectedpieces, gameIndex);
 
         int removed = 0;
         for (int pid = bm.pieceCount - 1; pid >= 0; pid--)
         {
             byte t = bm.pieceType[pid];
-            bool isBuilding = pieces.IsBuilding(t); // assumes Pieces exposes this
-            if (isBuilding || gameActions.IsPieceApartOfSpan(pid, protectedpieces, numberOfProtectedPieces)) continue;
+            bool isBuilding = Pieces.IsBuilding(t); // assumes Pieces exposes this
+            if (isBuilding || Game.Core.GameActions.IsPieceApartOfSpan(pid, protectedpieces, numberOfProtectedPieces)) continue;
 
             // Free row (handles occupancy + swap-back)
             bm.FreeRowSwapBack(pid);

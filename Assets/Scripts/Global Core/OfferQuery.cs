@@ -11,15 +11,6 @@ namespace Game.Core
     /// </summary>
     public readonly struct OfferQuery
     {
-        /// <summary>World snapshot and geometry helpers (neighbors, LOS, BFS, scratch).</summary>
-        public readonly BoardModel bm;
-
-        /// <summary>Ability metadata + structural legality kernels.</summary>
-        public readonly Pieces pcs;
-
-        /// <summary>Active player's state (budget, per-turn flags, etc.).</summary>
-        public readonly PlayerState ps;
-
         /// <summary>Active player id (0..MaxPlayers-1).</summary>
         public readonly byte playerId;
 
@@ -38,14 +29,11 @@ namespace Game.Core
         public readonly int[] multiCreateCells; // snapshot of already placed cells
         public readonly int multiCreateCellCount;
 
-        public OfferQuery(BoardModel bm, Pieces pcs, PlayerState ps, byte playerId, CostEngine cost, bool pieceLimitEnabled, int pieceLimitPerPlayer,
+        public OfferQuery(byte playerId, CostEngine cost, bool pieceLimitEnabled, int pieceLimitPerPlayer,
             bool multiCreateActive = false, byte multiCreateType = 0, bool multiCreateBorder = false, int multiCreateRemaining = 0, int[] multiCreateCells = null, int multiCreateCellCount = 0)
         {
-            this.bm       = bm;
-            this.pcs      = pcs;
-            this.ps       = ps;
             this.playerId = playerId;
-            this.cost     = cost;
+            this.cost = cost;
             this.pieceLimitEnabled = pieceLimitEnabled;
             this.pieceLimitPerPlayer = pieceLimitPerPlayer;
             this.multiCreateActive = multiCreateActive;

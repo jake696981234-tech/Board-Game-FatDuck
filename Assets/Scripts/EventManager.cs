@@ -37,10 +37,6 @@ public class EventManager
 
     public event Action<int> PieceKilled;
 
-    public void RaisePieceKilled(int victimID)
-    {
-        PieceKilled?.Invoke(victimID);
-    }
 
 
 

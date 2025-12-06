@@ -19,9 +19,11 @@ public static class PiecesSides
     /// Returns true if placing a piece of <paramref name="type"/> with the given connector config at <paramref name="cell"/>
     /// does not violate connector-vs-wall adjacency, and (if required) is connected via connectors to a capital.
     /// </summary>
-    public static bool IsConnectorPlacementLegal(BoardModel bm, Pieces pcs, int cell, byte type, int configIndex, byte playerId)
+    public static bool IsConnectorPlacementLegal(int cell, byte type, int configIndex, byte playerId, int gameIndex)
     {
-        if (!pcs.IsConnectorConfigAllowed(type, configIndex)) return false;
+        var bm = GameRegistry.game[gameIndex].boardModel;
+
+        if (!Pieces.IsConnectorConfigAllowed(type, configIndex)) return false;
 
         // Adjacent wall/connector compatibility
         int[] neigh = bm.GetScratchNeighborBuffer();
@@ -33,7 +35,7 @@ public static class PiecesSides
             int nbPid = bm.GetCellOccupant(nbCell);
             if (nbPid < 0) continue;
             byte nbType = bm.GetPieceType(nbPid);
-            bool nbHasConn = pcs.HasConnectors(nbType);
+            bool nbHasConn = Pieces.HasConnectors(nbType);
             int nbConfig = nbHasConn ? bm.pieceConnectorConfig[nbPid] : 0;
 
             bool ourConn = IsConnectorSide(configIndex, i);
@@ -43,18 +45,18 @@ public static class PiecesSides
             if (ourConn != nbConn && (ourConn || nbConn)) return false;
         }
 
-        if (!pcs.ConnectorNeedsCapital(type))
+        if (!Pieces.ConnectorNeedsCapital(type))
             return true;
 
         // If this piece is itself a capital, connectivity is satisfied.
-        if (pcs.ConnectorIsCapital(type))
+        if (Pieces.ConnectorIsCapital(type))
             return true;
 
         // BFS through connector edges to find any capital.
-        return HasPathToCapital(bm, pcs, cell, type, configIndex, playerId);
+        return HasPathToCapital(bm, cell, type, configIndex, playerId);
     }
 
-    private static bool HasPathToCapital(BoardModel bm, Pieces pcs, int startCell, byte startType, int startConfig, byte playerId)
+    private static bool HasPathToCapital(BoardModel bm, int startCell, byte startType, int startConfig, byte playerId)
     {
         int cellCount = bm.GetCellCount();
         bool[] visited = new bool[cellCount];
@@ -81,11 +83,11 @@ public static class PiecesSides
             {
                 if (pid < 0) continue;
                 type = bm.GetPieceType(pid);
-                if (!pcs.HasConnectors(type)) continue;
+                if (!Pieces.HasConnectors(type)) continue;
                 config = bm.pieceConnectorConfig[pid];
             }
 
-            if (pcs.ConnectorIsCapital(type) && bm.GetPieceOwner(pid) == playerId)
+            if (Pieces.ConnectorIsCapital(type) && bm.GetPieceOwner(pid) == playerId)
                 return true;
 
             int[] neigh = bm.GetScratchNeighborBuffer();
@@ -104,7 +106,7 @@ public static class PiecesSides
                     continue; // empty breaks chain
 
                 nbType = bm.GetPieceType(nbPid);
-                if (!pcs.HasConnectors(nbType))
+                if (!Pieces.HasConnectors(nbType))
                     continue; // neighbor with no connectors counts as wall
 
                 nbConfig = bm.pieceConnectorConfig[nbPid];
@@ -123,8 +125,10 @@ public static class PiecesSides
     /// Recompute connector components, assign capital HP, and return a list of pieceIds that must be destroyed
     /// because they require a capital but are disconnected.
     /// </summary>
-    public static List<int> RecomputeConnectorComponents(BoardModel bm, Pieces pcs)
+    public static List<int> RecomputeConnectorComponents(int gameIndex)
     {
+        var bm = GameRegistry.game[gameIndex].boardModel;
+
         int pc = bm.pieceCount;
         bool[] visited = new bool[pc];
         List<int> toDestroy = null;
@@ -133,7 +137,7 @@ public static class PiecesSides
         {
             if (visited[pid]) continue;
             byte t = bm.pieceType[pid];
-            if (!pcs.HasConnectors(t)) continue;
+            if (!Pieces.HasConnectors(t)) continue;
 
             // BFS over connector edges
             List<int> comp = new List<int>(8);
@@ -149,8 +153,8 @@ public static class PiecesSides
                 comp.Add(cur);
                 byte ct = bm.pieceType[cur];
                 int cfg = bm.pieceConnectorConfig[cur];
-                if (pcs.ConnectorIsCapital(ct)) hasCapital = true;
-                int capHp = pcs.ConnectorCapitalHealth(ct);
+                if (Pieces.ConnectorIsCapital(ct)) hasCapital = true;
+                int capHp = Pieces.ConnectorCapitalHealth(ct);
                 if (capHp > maxCapHp) maxCapHp = capHp;
 
                 int cell = bm.pieceCellId[cur];
@@ -163,7 +167,7 @@ public static class PiecesSides
                     if (nbPid < 0) continue;
                     if (visited[nbPid]) continue;
                     byte nt = bm.pieceType[nbPid];
-                    if (!pcs.HasConnectors(nt)) continue;
+                    if (!Pieces.HasConnectors(nt)) continue;
                     int nCfg = bm.pieceConnectorConfig[nbPid];
 
                     bool ourConn = IsConnectorSide(cfg, d);
@@ -179,7 +183,7 @@ public static class PiecesSides
             foreach (int id in comp)
             {
                 bm.pieceCapitalHP[id] = appliedHp;
-                if (appliedHp == 0 && pcs.ConnectorNeedsCapital(bm.pieceType[id]))
+                if (appliedHp == 0 && Pieces.ConnectorNeedsCapital(bm.pieceType[id]))
                 {
                     toDestroy ??= new List<int>();
                     toDestroy.Add(id);

@@ -23,12 +23,11 @@ public sealed class MLAgentController : Agent
     private GameConfigHub _hub;
     private GameState _gs;
     private BoardModel _bm;
-    private Pieces _pcs;
     private CostEngine _cost;      // can be null in structural-only runs
-    private OfferProvider _offers;
     private PlayerAgent _pa;        // reused for obs + offer build bridge
 
-    GameActions gameActions => _gs.gameActions;
+    private int gameIndex;
+
 
     // Offer buffers (capacity = hub.agent.maxOffersToConsider)
     private Game.Core.Action[] _actions;
@@ -57,19 +56,17 @@ public sealed class MLAgentController : Agent
     public void Init(GameConfigHub hub,
                      GameState gs,
                      BoardModel bm,
-                     Pieces pcs,
                      CostEngine cost,
-                     OfferProvider offers,
                      PlayerAgent pa,
                      byte myPlayerId,
-                     in Config.MLRewardsAuthoring rewards)
+                     in Config.MLRewardsAuthoring rewards,
+                     int theGameIndex)
     {
+        gameIndex = theGameIndex;
         _hub = hub;
         _gs = gs;
         _bm = bm;
-        _pcs = pcs;
         _cost = cost;
-        _offers = offers;
         _pa = pa;
         playerId = myPlayerId;
 
@@ -292,15 +289,15 @@ public sealed class MLAgentController : Agent
     private int BuildOffersForCurrentPlayer()
     {
         // Build OfferQuery: (bm, pcs, ps, playerId, cost)
-        gameActions.GetMultiCreateState(out bool mcActive, out byte mcType, out bool mcBorder, out int mcRemaining, out int[] mcCells, out int mcCellCount);
-        var q = new OfferQuery(_bm, _pcs, _gs.CurrentPlayerRef, playerId, _cost, _gs.PieceLimitEnabled, _gs.pieceLimitPerPlayer,
+        GameActions.GetMultiCreateState(out bool mcActive, out byte mcType, out bool mcBorder, out int mcRemaining, out int[] mcCells, out int mcCellCount, gameIndex);
+        var q = new OfferQuery(playerId, _cost, _gs.PieceLimitEnabled, _gs.pieceLimitPerPlayer,
             mcActive, mcType, mcBorder, mcRemaining, mcCells, mcCellCount);
 
         var acts = _actions.AsSpan();
         var costs = _quoted.AsSpan();
         var mask = _mask.AsSpan();
 
-        int total = _offers.BuildActionList(in q, acts, costs, mask);
+        int total = OfferProvider.BuildActionList(in q, acts, costs, mask, gameIndex, playerId);
         // We only allow the emitted prefix to be selectable by the policy
         return Math.Min(total, acts.Length);
     }

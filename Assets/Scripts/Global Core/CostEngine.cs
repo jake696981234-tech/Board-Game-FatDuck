@@ -24,20 +24,23 @@ public sealed class CostEngine
     /// Quote = TurnFee(k) + AbilityCost + BuildCost, where k = cur.actionIndexThisTurn.
     /// No side effects. No allocations.
     /// </summary>
-    public int Quote(in PlayerState cur, in Action a, in BoardModel b, in Pieces pcs)
+    public int Quote(in Action a, int gameIndex, int player)
     {
+        var gameState = GameRegistry.game[gameIndex].gameState;
+
+
         // Turn fee: 0 for the first action; then geometric progression from config.
-        int k = cur.actionIndexThisTurn; // before taking this action
+        int k = gameState.ps[player].actionIndexThisTurn; // before taking this action
         int turnFee = (k == 0) ? 0 : RoundToInt(baseActionCost * MathF.Pow(actionGrowthFactor, k - 1));
 
         // Resolve ability once. EndTurn has no ability.
-        int abilityId = ResolveAbilityId(a, b, pcs);
+        int abilityId = ResolveAbilityId(a, gameIndex);
 
         // Ability surcharge: none for EndTurn/invalid.
         int abilityCost = 0;
         if (a.kind != ActionKind.EndTurn && a.kind != ActionKind.Create && abilityId >= 0)
         {
-            abilityCost = pcs.AbilitySurcharge(abilityId, applyBotSurcharges: cur.applyBotSurcharges);
+            abilityCost = Pieces.AbilitySurcharge(abilityId, applyBotSurcharges: gameState.ps[player].applyBotSurcharges);
         }
 
 
@@ -45,14 +48,14 @@ public sealed class CostEngine
         int buildCost = 0;
         if (a.kind == ActionKind.Create)
         {
-            buildCost = pcs.GetBuildCost(a.pieceType); // new accessor on Pieces
+            buildCost = Pieces.GetBuildCost(a.pieceType); // new accessor on Pieces
         }
         else if (a.kind == ActionKind.Spawner && abilityId >= 0)
         {
-            int targetType = (abilityId < pcs.spawn_targetType.Length) ? pcs.spawn_targetType[abilityId] : -1;
-            int amount = (abilityId < pcs.spawn_pieceAmount.Length) ? pcs.spawn_pieceAmount[abilityId] : 0;
+            int targetType = (abilityId < Pieces.spawn_targetType.Length) ? Pieces.spawn_targetType[abilityId] : -1;
+            int amount = (abilityId < Pieces.spawn_pieceAmount.Length) ? Pieces.spawn_pieceAmount[abilityId] : 0;
             if (targetType >= 0 && amount > 0)
-                buildCost = pcs.GetBuildCost((byte)targetType) * amount;
+                buildCost = Pieces.GetBuildCost((byte)targetType) * amount;
         }
 
 
@@ -63,8 +66,10 @@ public sealed class CostEngine
     /// Pure read: compute <paramref name="quoted"/> (including turn fee) and check budget + per-turn caps.
     /// EndTurn is always affordable with quoted = 0. No side effects.
     /// </summary>
-    public bool IsAffordable(in PlayerState cur, in Action a, in BoardModel b, in Pieces pcs, out float quoted)
+    public bool IsAffordable(in Action a, out float quoted, int gameIndex, int player)
     {
+        var gameState = GameRegistry.game[gameIndex].gameState;
+
         // EndTurn is always free & affordable (never blocked)
         if (a.kind == ActionKind.EndTurn)
         {
@@ -72,12 +77,12 @@ public sealed class CostEngine
             return true;
         }
 
-        quoted = Quote(cur, a, b, pcs);
-        if (cur.budget < quoted) return false;
+        quoted = Quote(a, gameIndex, player);
+        if (gameState.ps[player].budget < quoted) return false;
 
         // Once-per-turn gates (read-only caps)
-        if (a.kind == ActionKind.CaptureVP && cur.didCaptureVP) return false;
-        if (a.kind == ActionKind.CoreDamage && cur.didCoreDamage) return false;
+        if (a.kind == ActionKind.CaptureVP && gameState.ps[player].didCaptureVP) return false;
+        if (a.kind == ActionKind.CoreDamage && gameState.ps[player].didCoreDamage) return false;
 
         return true;
     }
@@ -87,16 +92,18 @@ public sealed class CostEngine
     /// Resolve abilityId from the action's (srcCell → pieceId → type) + abilitySlot.
     /// Returns -1 for EndTurn or if any part of the chain is invalid. No allocations.
     /// </summary>
-    public static int ResolveAbilityId(in Action a, in BoardModel b, in Pieces pcs)
+    public static int ResolveAbilityId(in Action a, int gameIndex)
     {
+        var bm = GameRegistry.game[gameIndex].boardModel;
+
         if (a.kind == ActionKind.EndTurn) return -1;
         if (a.srcCell == (ushort)0xFFFF) return -1; // per Action.cs contract
 
-        int pieceId = b.GetCellOccupant(a.srcCell);
+        int pieceId = bm.GetCellOccupant(a.srcCell);
         if (pieceId < 0) return -1;
 
-        byte type = (byte)b.GetPieceType(pieceId); // explicit cast for BM APIs that return int
-        return pcs.AbilityIdAtSlot(type, a.abilitySlot);
+        byte type = (byte)bm.GetPieceType(pieceId); // explicit cast for BM APIs that return int
+        return Pieces.AbilityIdAtSlot(type, a.abilitySlot);
     }
 
     private static int RoundToInt(float value)
@@ -117,23 +124,25 @@ public sealed class CostEngine
         { TurnFee = tf; AbilityCost = ac; BuildCost = bc; Total = tf + ac + bc; }
     }
 
-    public CostBreakdown QuoteBreakdown(in PlayerState cur, in Action a, in BoardModel b, in Pieces pcs)
+    public CostBreakdown QuoteBreakdown(in PlayerState cur, in Action a, int gameIndex)
     {
+        var bm = GameRegistry.game[gameIndex].boardModel;
+
         // Turn fee
         int k = cur.actionIndexThisTurn;
         int turnFee = (k == 0) ? 0 : RoundToInt(baseActionCost * MathF.Pow(actionGrowthFactor, k - 1));
         // Ability surcharge (non-EndTurn/Create)
         int abilityCost = 0;
-        int abilityId = ResolveAbilityId(a, b, pcs);
+        int abilityId = ResolveAbilityId(a, gameIndex);
         if (a.kind != ActionKind.EndTurn && a.kind != ActionKind.Create && abilityId >= 0)
-            abilityCost = pcs.AbilitySurcharge(abilityId, applyBotSurcharges: cur.applyBotSurcharges);
+            abilityCost = Pieces.AbilitySurcharge(abilityId, applyBotSurcharges: cur.applyBotSurcharges);
         // Build cost (Create only)
-        int buildCost = (a.kind == ActionKind.Create) ? pcs.GetBuildCost(a.pieceType) : 0;
+        int buildCost = (a.kind == ActionKind.Create) ? Pieces.GetBuildCost(a.pieceType) : 0;
         if (a.kind == ActionKind.Spawner && abilityId >= 0)
         {
-            int targetType = (abilityId < pcs.spawn_targetType.Length) ? pcs.spawn_targetType[abilityId] : -1;
-            int amount = (abilityId < pcs.spawn_pieceAmount.Length) ? pcs.spawn_pieceAmount[abilityId] : 0;
-            if (targetType >= 0 && amount > 0) buildCost = pcs.GetBuildCost((byte)targetType) * amount;
+            int targetType = (abilityId < Pieces.spawn_targetType.Length) ? Pieces.spawn_targetType[abilityId] : -1;
+            int amount = (abilityId < Pieces.spawn_pieceAmount.Length) ? Pieces.spawn_pieceAmount[abilityId] : 0;
+            if (targetType >= 0 && amount > 0) buildCost = Pieces.GetBuildCost((byte)targetType) * amount;
         }
         return new CostBreakdown(turnFee, abilityCost, buildCost);
     }
@@ -142,14 +151,14 @@ public sealed class CostEngine
 
 
     // ---- NEW: overload that also returns the breakdown (non-breaking addition) ----
-    public bool IsAffordable(in PlayerState cur, in Action a, in BoardModel b, in Pieces pcs, out CostBreakdown breakdown)
+    public bool IsAffordable(in PlayerState cur, in Action a, out CostBreakdown breakdown, int gameIndex)
     {
         if (a.kind == ActionKind.EndTurn)
         {
             breakdown = new CostBreakdown(0, 0, 0);
             return true;
         }
-        breakdown = QuoteBreakdown(cur, a, b, pcs);
+        breakdown = QuoteBreakdown(cur, a, gameIndex);
         if (cur.budget < breakdown.Total) return false;
         if (a.kind == ActionKind.CaptureVP && cur.didCaptureVP) return false;
         if (a.kind == ActionKind.CoreDamage && cur.didCoreDamage) return false;
