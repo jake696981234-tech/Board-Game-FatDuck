@@ -8,23 +8,18 @@ using Action = Game.Core.Action; // avoid System.Action clash
 /// - <b>No</b> mutations: budget, indices, flags/VP are owned by GameState reducers.
 /// - Uses integer pricing; turn fee follows geometric growth with first action free.
 /// </summary>
-public sealed class CostEngine
+public static class CostEngine
 {
-    private readonly int baseActionCost;
-    private readonly float actionGrowthFactor;
+    public static int baseActionCost;
+    public static float actionGrowthFactor;
 
-    public CostEngine(in GameConfigHub hub)
-    {
-        this.baseActionCost = hub.cost_baseActionCost;
-        this.actionGrowthFactor = hub.cost_actionGrowthFactor;
-    }
 
     /// <summary>
     /// Pure read: return the deterministic price of taking <paramref name="a"/> in the given context.
     /// Quote = TurnFee(k) + AbilityCost + BuildCost, where k = cur.actionIndexThisTurn.
     /// No side effects. No allocations.
     /// </summary>
-    public int Quote(in Action a, int gameIndex, int player)
+    public static int Quote(in Action a, int gameIndex, int player)
     {
         var gameState = GameRegistry.game[gameIndex].gameState;
 
@@ -66,7 +61,7 @@ public sealed class CostEngine
     /// Pure read: compute <paramref name="quoted"/> (including turn fee) and check budget + per-turn caps.
     /// EndTurn is always affordable with quoted = 0. No side effects.
     /// </summary>
-    public bool IsAffordable(in Action a, out float quoted, int gameIndex, int player)
+    public static bool IsAffordable(in Action a, out float quoted, int gameIndex, int player)
     {
         var gameState = GameRegistry.game[gameIndex].gameState;
 
@@ -124,7 +119,7 @@ public sealed class CostEngine
         { TurnFee = tf; AbilityCost = ac; BuildCost = bc; Total = tf + ac + bc; }
     }
 
-    public CostBreakdown QuoteBreakdown(in PlayerState cur, in Action a, int gameIndex)
+    public static CostBreakdown QuoteBreakdown(in PlayerState cur, in Action a, int gameIndex)
     {
         var bm = GameRegistry.game[gameIndex].boardModel;
 
@@ -151,7 +146,7 @@ public sealed class CostEngine
 
 
     // ---- NEW: overload that also returns the breakdown (non-breaking addition) ----
-    public bool IsAffordable(in PlayerState cur, in Action a, out CostBreakdown breakdown, int gameIndex)
+    public static bool IsAffordable(in PlayerState cur, in Action a, out CostBreakdown breakdown, int gameIndex)
     {
         if (a.kind == ActionKind.EndTurn)
         {

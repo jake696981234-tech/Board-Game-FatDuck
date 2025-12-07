@@ -16,8 +16,6 @@ namespace Game.Core
         private GameConfigHub hub;
 
         private BoardModel bm;
-
-        private CostEngine cost;
         private GameController controller;
         private EventManager events;
 
@@ -65,13 +63,11 @@ namespace Game.Core
         private int gameIndex;
         public void Initialize(in GameConfigHub hub,
                        BoardModel board,
-                       CostEngine pricing,
                        PlayerState[] players,
                        byte startingPlayer, EventManager eventManager, GameController gameController, int theGameIndex)
         {
             this.hub = hub;
             bm = board;
-            cost = pricing;
             events = eventManager;
             controller = gameController;
             gameIndex = theGameIndex;
@@ -124,7 +120,7 @@ namespace Game.Core
 
             if (a.kind != EndTurn && !isMultiPlacement)
             {
-                if (!cost.IsAffordable(a, out quote, gameIndex, currentPlayer))
+                if (!CostEngine.IsAffordable(in cur, in a, out quote, gameIndex))
                     return false;
             }
             else
@@ -545,8 +541,6 @@ namespace Game.Core
 
         public bool PassedTurn(int playerID)
         => ps[playerID].endedWithoutActionThisCycle;
-        public bool CanCurrentAfford(in Action a, out float quoted)
-            => cost.IsAffordable(a, out quoted, gameIndex, currentPlayer);
 
 
         // --- simple Accesors ---

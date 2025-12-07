@@ -7,6 +7,7 @@ public class GameController : MonoBehaviour
 {
     public Config config;     // assign in Inspector
     public GameBootstrapper gameBootstrapper;
+    public int gameIndex;
 
     public PerGameConfig perGameConfig;
 
@@ -108,7 +109,7 @@ public class GameController : MonoBehaviour
         }
 
         gameState = new Game.Core.GameState();
-        gameState.Initialize(in gameBootstrapper.hub, board, gameBootstrapper.cost, ps, startingPlayer, eventManager, this, gameIndex);
+        gameState.Initialize(in gameBootstrapper.hub, board, ps, startingPlayer, eventManager, this, gameIndex);
 
 
         if (inspectGame && config.dbLogging.enabled)
@@ -171,7 +172,7 @@ public class GameController : MonoBehaviour
                         else { policy = new HeuristicPolicy(); }
 
 
-                        agent.Init(in gameBootstrapper.hub, gameState, board, gameBootstrapper.cost, policy);
+                        agent.Init(in gameBootstrapper.hub, gameState, board, gameBootstrapper.cost, gameIndex, policy);
                         agent.BindSeat(seat); // (see tiny method below)
                         heuristicControllers[seat] = agent;
                         break;
@@ -218,11 +219,11 @@ public class GameController : MonoBehaviour
 
                         paBridge.BindSeat(seat);
 
-                        paBridge.Init(in gameBootstrapper.hub, gameState, board, gameBootstrapper.cost);
+                        paBridge.Init(in gameBootstrapper.hub, gameState, board, gameBootstrapper.cost, gameIndex);
 
                         // Wire everything into the ML controller
 
-                        ml.Init(gameBootstrapper.hub, gameState, board, gameBootstrapper.cost, paBridge, seat, in config.mlRewards);
+                        ml.Init(gameBootstrapper.hub, gameState, board, gameBootstrapper.cost, paBridge, seat, in config.mlRewards, gameIndex);
                         break;
                     }
                 case GameConfigHub.ControlMode.Human:
@@ -261,7 +262,6 @@ public class GameController : MonoBehaviour
                 geometry,   // local variable from your builder call
                 board,      // BoardModel
                  gameState,  // Game.Core.GameState
-                  GameBootstrapper.PiecesData      // Pieces (CSV-driven)
              );
 
             currentSnapshot = snapshotComposer.GetSnapshot();

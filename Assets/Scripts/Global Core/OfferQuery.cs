@@ -18,7 +18,7 @@ namespace Game.Core
         /// Pricing/masking engine. May be null in structural-only mode.
         /// When null, OfferProvider should set cost=0 and mask=1 for structurally legal actions.
         /// </summary>
-        public readonly CostEngine cost;
+
 
         public readonly bool pieceLimitEnabled;
         public readonly int pieceLimitPerPlayer;
@@ -29,11 +29,10 @@ namespace Game.Core
         public readonly int[] multiCreateCells; // snapshot of already placed cells
         public readonly int multiCreateCellCount;
 
-        public OfferQuery(byte playerId, CostEngine cost, bool pieceLimitEnabled, int pieceLimitPerPlayer,
+        public OfferQuery(byte playerId, bool pieceLimitEnabled, int pieceLimitPerPlayer,
             bool multiCreateActive = false, byte multiCreateType = 0, bool multiCreateBorder = false, int multiCreateRemaining = 0, int[] multiCreateCells = null, int multiCreateCellCount = 0)
         {
             this.playerId = playerId;
-            this.cost = cost;
             this.pieceLimitEnabled = pieceLimitEnabled;
             this.pieceLimitPerPlayer = pieceLimitPerPlayer;
             this.multiCreateActive = multiCreateActive;

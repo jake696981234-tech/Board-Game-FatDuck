@@ -23,7 +23,6 @@ public sealed class GameBootstrapper : MonoBehaviour
 
 
     public GameConfigHub hub;
-    public CostEngine cost;
 
     void Awake()
     {
@@ -40,8 +39,11 @@ public sealed class GameBootstrapper : MonoBehaviour
         // 1) Freeze authoring into an immutable hub
         hub = config.BuildHub();
 
-        // 3) Cost engine
-        cost = new CostEngine(in hub);
+        CostEngine.baseActionCost = hub.cost_baseActionCost;
+        CostEngine.actionGrowthFactor = hub.cost_actionGrowthFactor;
+
+        // 3) GameRegistry
+        GameRegistry.Init(config.gamesToRun);
 
 
 
@@ -53,6 +55,7 @@ public sealed class GameBootstrapper : MonoBehaviour
             if (controller != null)
             {
                 controller.gameBootstrapper = this;
+                controller.gameIndex = i;
                 if (controller.config == null)
                     controller.config = this.config;
             }

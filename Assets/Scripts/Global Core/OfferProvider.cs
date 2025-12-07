@@ -462,10 +462,9 @@ public static class OfferProvider
             outMask[idx] = 1;
             return;
         }
-        if (q.cost == null) { outCosts[idx] = 0f; outMask[idx] = 1; return; }
 
         float quoted;
-        if (q.cost.IsAffordable(a, out quoted, player, gameIndex))
+        if (CostEngine.IsAffordable(a, out quoted, player, gameIndex))
         { outCosts[idx] = quoted; outMask[idx] = 1; }
         else { outCosts[idx] = quoted; outMask[idx] = 0; }
     }
