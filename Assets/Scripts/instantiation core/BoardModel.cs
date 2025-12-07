@@ -301,8 +301,6 @@ public partial class BoardModel
         pieceCount = last;
     }
 
-
-
     /// <summary>Write fields for an existing/allocated row and set occupancy.</summary>
     public void PlacePieceRow(int pieceId, int owner, byte type, int cellId, short hp)
     {
@@ -514,8 +512,6 @@ public partial class BoardModel
         if (outCells == null) return 0;
         return EnumerateReachableEmpty(originCell, maxSteps, outCells.AsSpan());
     }
-
-
 
 }
 public static class GameStateUtilities
