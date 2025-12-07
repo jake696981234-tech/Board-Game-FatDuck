@@ -143,7 +143,7 @@ public static class BmAbilityCac
 
         if (!bm.IsValidCellId(originCell) || ringSize < 0) return 0;
 
-        var scratchCells = bm.GetScratchCellBuffer();
+        var scratchCells = Scratch.GetScratchCellBuffer(gameIndex);
         int cellsAtRing = cellIdsRingAroundCell(originCell, ringSize, requireEmpty: false, scratchCells.AsSpan(), gameIndex);
         if (cellsAtRing <= 0) return 0;
 
@@ -356,9 +356,9 @@ public static class BmAbilityCac
         var bm = GameRegistry.game[gameIndex].boardModel;
 
         if (startCell < 0) return 0;
-        var visited = bm.GetScratchCellBuffer();
+        var visited = Scratch.GetScratchCellBuffer(gameIndex);
         Array.Clear(visited, 0, visited.Length);
-        int[] queue = bm.GetScratchCellBuffer();
+        int[] queue = Scratch.GetScratchCellBuffer(gameIndex);
         int head = 0, tail = 0;
         queue[tail++] = startCell;
         visited[startCell] = 1;
@@ -368,7 +368,7 @@ public static class BmAbilityCac
             int cell = queue[head++];
             int pid = bm.GetCellOccupant(cell);
             if (pid >= 0 && bm.GetPieceType(pid) == type) count++;
-            int[] neigh = bm.GetScratchNeighborBuffer();
+            int[] neigh = Scratch.GetScratchNeighborBuffer(gameIndex);
             int n = bm.GetNeighbors(cell, neigh);
             for (int i = 0; i < n; i++)
             {
@@ -391,7 +391,7 @@ public static class BmAbilityCac
         if (!bm.IsEmpty(cell)) return false;
         int core = bm.GetPlayerCoreCellId(player);
         if (cell == core) return true;
-        var scratch = bm.GetScratchCellBuffer();
+        var scratch = Scratch.GetScratchCellBuffer(gameIndex);
         int n = bm.GetNeighbors(core, scratch);
         for (int i = 0; i < n; i++) if (scratch[i] == cell) return true;
         int n2 = bm.GetNeighbors(cell, scratch);

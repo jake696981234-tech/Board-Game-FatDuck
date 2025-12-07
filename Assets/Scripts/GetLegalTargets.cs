@@ -25,7 +25,7 @@ public static class GetLegalTargets
         int cap = outTargets != null ? outTargets.Length : 0;
 
         // Reachable empty cells up to rmax
-        int[] tmpReachable = bm.GetScratchCellBuffer();
+        int[] tmpReachable = Scratch.GetScratchCellBuffer(gameIndex);
         int reachCount = bm.EnumerateReachableEmpty(originCell, rmax, tmpReachable);
 
         // Emit EMPTY destinations (distance-filtered)
@@ -46,7 +46,7 @@ public static class GetLegalTargets
         // Direct adjacent melee (one-step onto enemy) when [rmin,rmax] includes 1
         if (rmin <= 1 && 1 <= rmax)
         {
-            int[] neigh0 = bm.GetScratchNeighborBuffer();
+            int[] neigh0 = Scratch.GetScratchNeighborBuffer(gameIndex);
             int n0 = bm.GetNeighbors(originCell, neigh0);
             int actorOwner0 = bm.GetPieceOwner(actorPieceId);
             for (int n = 0; n < n0; n++)
@@ -63,7 +63,7 @@ public static class GetLegalTargets
                 count++;
             }
         }
-        int[] neigh = bm.GetScratchNeighborBuffer();
+        int[] neigh = Scratch.GetScratchNeighborBuffer(gameIndex);
         int actorOwner = bm.GetPieceOwner(actorPieceId);
         for (int i = 0; i < reachCount; i++)
         {

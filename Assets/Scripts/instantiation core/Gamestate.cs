@@ -239,12 +239,6 @@ namespace Game.Core
             ));
 
 
-            //Debug log
-            if (GameEvents.enableDebugLogsFromPeform)
-            {
-                Debug.Log($"Player {currentPlayer} performed action {a.kind}.");
-            }
-
             // Tell listeners (Bootstrapper/View) to refresh visuals
             OnActionExecuted?.Invoke();
             return true;
@@ -287,11 +281,6 @@ namespace Game.Core
             // Refresh connector capital HP/state at start of turn
             PiecesSides.RecomputeConnectorComponents(gameIndex);
 
-            // Debug log
-            if (GameEvents.enableDebugLogs)
-            {
-                Debug.Log($"Begin turn for player {currentPlayer}");
-            }
         }
 
         private void ApplyEndTurn()
@@ -300,11 +289,6 @@ namespace Game.Core
             byte ended = currentPlayer;
             ResetMultiCreate();
 
-            //Debug log
-            if (GameEvents.enableDebugLogs)
-            {
-                Debug.Log($"Player ended their turn.");
-            }
 
             // Mark whether they ended without acting this turn
             ps[ended].endedWithoutActionThisCycle = ps[ended].actionIndexThisTurn == 0;

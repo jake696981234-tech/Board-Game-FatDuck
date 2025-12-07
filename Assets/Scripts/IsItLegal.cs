@@ -128,7 +128,7 @@ public static class IsItLegal
         if (reqDigit >= 0 && !gameState.ps[currentPlayer].HasDigit(reqDigit)) return false;
 
         // Gather empty cells in range with LOS
-        int[] scratch = bm.GetScratchCellBuffer();
+        int[] scratch = Scratch.GetScratchCellBuffer(gameIndex);
         int cellCount = bm.GetCellCount();
         int emptyCount = 0;
         for (int c = 0; c < cellCount; c++)
@@ -223,7 +223,7 @@ public static class IsItLegal
                 if (gameState.multiCreateBorder)
                 {
                     bool adjacent = false;
-                    var scratch = bm.GetScratchNeighborBuffer();
+                    var scratch = Scratch.GetScratchNeighborBuffer(gameIndex);
                     int n = bm.GetNeighbors(a.dstCell, scratch);
                     for (int i = 0; i < n; i++)
                     {
@@ -249,13 +249,13 @@ public static class IsItLegal
             if (a.dstCell == core) { geomOk = true; }
             if (!geomOk)
             {
-                var scratch = bm.GetScratchCellBuffer();
+                var scratch = Scratch.GetScratchCellBuffer(gameIndex);
                 int n = bm.GetNeighbors(core, scratch);
                 for (int i = 0; i < n; i++) { if (scratch[i] == a.dstCell) { geomOk = true; break; } }
             }
             if (!geomOk)
             {
-                var scratch2 = bm.GetScratchCellBuffer();
+                var scratch2 = Scratch.GetScratchCellBuffer(gameIndex);
                 int n2 = bm.GetNeighbors(a.dstCell, scratch2);
                 for (int i = 0; i < n2; i++)
                 {
@@ -299,8 +299,8 @@ public static class IsItLegal
         byte kind = Pieces.GetAbilityKind(type, a.abilitySlot);
         if (kind != a.kind) return false; // slot-kind drift guard
 
-        int[] targets = bm.GetScratchCellBuffer();
-        int[] targetsPiece = bm.GetScratchCellBuffer();
+        int[] targets = Scratch.GetScratchCellBuffer(gameIndex);
+        int[] targetsPiece = Scratch.GetScratchCellBuffer(gameIndex);
         int count;
         switch (a.kind)
         {

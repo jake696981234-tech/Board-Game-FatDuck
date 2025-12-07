@@ -42,7 +42,7 @@ using System.Text;
 
 public static class PiecesCsvImporter
 {
-    public static Pieces Import(string pathToPiecesCsv, Action<int, string, bool, string, int> onTypeDefined = null)
+    public static void Import(string pathToPiecesCsv, Action<int, string, bool, string, int> onTypeDefined = null)
     {
         if (!File.Exists(pathToPiecesCsv))
             throw new FileNotFoundException($"pieces.csv not found: {pathToPiecesCsv}");
@@ -121,11 +121,10 @@ public static class PiecesCsvImporter
         int abilityEstimate = Math.Max(10, typeCount * 10);
 
         // 2) Allocate Pieces registry
-        var pcs = new Pieces();
-        pcs.Allocate(typeCount, abilityEstimate, /*maxSlots*/10);
+        Pieces.Allocate(typeCount, abilityEstimate, /*maxSlots*/10);
 
         // We will SYNTHESIZE abilities; keep a moving cursor for the next id.
-        int nextAbilityId = 0; // grows as we define abilities; finalized into pcs.abilityCount at the end
+        int nextAbilityId = 0; // grows as we define abilities; finalized into Pieces.abilityCount at the end
 
         // Header map for name→index
         var H = BuildHeaderIndex(headers);
@@ -137,7 +136,7 @@ public static class PiecesCsvImporter
         {
             var cols = rows[typeId];
             string name = Get(cols, H, "name", required: true);
-            pcs.DefineType(typeId, name);
+            Pieces.DefineType(typeId, name);
 
             // Basic descriptive fields (optional where noted)
             string faction = Get(cols, H, "faction", defaultValue: "");
@@ -202,35 +201,35 @@ public static class PiecesCsvImporter
             int conversionFactoryBotSurcharge = GetInt(cols, H, "ConversionFactory_BotSurcharge", 0);
 
             // Map to backing arrays if present in schema
-            if (typeId < pcs.idByType.Length) pcs.idByType[typeId] = name;
-            if (typeId < pcs.grantsDigitByType.Length) pcs.grantsDigitByType[typeId] = (sbyte)grantsDigit;
-            if (typeId < pcs.displayNameByType.Length) pcs.displayNameByType[typeId] = name; // default display = name
-            if (typeId < pcs.factionNameByType.Length) pcs.factionNameByType[typeId] = faction;
-            if (typeId < pcs.spritePathByType.Length) pcs.spritePathByType[typeId] = spritePath;
-            if (typeId < pcs.moveUIColorHexByType.Length) pcs.moveUIColorHexByType[typeId] = moveColor;
-            if (typeId < pcs.shootUIColorHexByType.Length) pcs.shootUIColorHexByType[typeId] = shootColor;
-            if (typeId < pcs.isBuildingByType.Length) pcs.isBuildingByType[typeId] = isBuilding;
-            if (typeId < pcs.buildCostByType.Length) pcs.buildCostByType[typeId] = buildCost;
-            if (typeId < pcs.maxHPByType.Length) pcs.maxHPByType[typeId] = maxHP;
-            if (typeId < pcs.buildableByType.Length) pcs.buildableByType[typeId] = (byte)(buildable ? 1 : 0);
-            if (typeId < pcs.hasConnectorsByType.Length) pcs.hasConnectorsByType[typeId] = hasConn;
-            if (typeId < pcs.connectorNeedsCapital.Length) pcs.connectorNeedsCapital[typeId] = needsCap;
-            if (typeId < pcs.connectorIsCapital.Length) pcs.connectorIsCapital[typeId] = isCap;
-            if (typeId < pcs.connectorCapitalHealth.Length) pcs.connectorCapitalHealth[typeId] = capHp;
-            if (typeId < pcs.connectorAllowedMasks.Length)
+            if (typeId < Pieces.idByType.Length) Pieces.idByType[typeId] = name;
+            if (typeId < Pieces.grantsDigitByType.Length) Pieces.grantsDigitByType[typeId] = (sbyte)grantsDigit;
+            if (typeId < Pieces.displayNameByType.Length) Pieces.displayNameByType[typeId] = name; // default display = name
+            if (typeId < Pieces.factionNameByType.Length) Pieces.factionNameByType[typeId] = faction;
+            if (typeId < Pieces.spritePathByType.Length) Pieces.spritePathByType[typeId] = spritePath;
+            if (typeId < Pieces.moveUIColorHexByType.Length) Pieces.moveUIColorHexByType[typeId] = moveColor;
+            if (typeId < Pieces.shootUIColorHexByType.Length) Pieces.shootUIColorHexByType[typeId] = shootColor;
+            if (typeId < Pieces.isBuildingByType.Length) Pieces.isBuildingByType[typeId] = isBuilding;
+            if (typeId < Pieces.buildCostByType.Length) Pieces.buildCostByType[typeId] = buildCost;
+            if (typeId < Pieces.maxHPByType.Length) Pieces.maxHPByType[typeId] = maxHP;
+            if (typeId < Pieces.buildableByType.Length) Pieces.buildableByType[typeId] = (byte)(buildable ? 1 : 0);
+            if (typeId < Pieces.hasConnectorsByType.Length) Pieces.hasConnectorsByType[typeId] = hasConn;
+            if (typeId < Pieces.connectorNeedsCapital.Length) Pieces.connectorNeedsCapital[typeId] = needsCap;
+            if (typeId < Pieces.connectorIsCapital.Length) Pieces.connectorIsCapital[typeId] = isCap;
+            if (typeId < Pieces.connectorCapitalHealth.Length) Pieces.connectorCapitalHealth[typeId] = capHp;
+            if (typeId < Pieces.connectorAllowedMasks.Length)
             {
-                pcs.connectorAllowedMasks[typeId] =
+                Pieces.connectorAllowedMasks[typeId] =
                     (hasConn && allowedMask == 0UL) ? ulong.MaxValue : allowedMask;
             }
-            if (gbEnabled && typeId < pcs.groupBuildEnabled.Length)
+            if (gbEnabled && typeId < Pieces.groupBuildEnabled.Length)
             {
-                pcs.groupBuildEnabled[typeId] = true;
-                pcs.groupBuildRequireNumber[typeId] = Math.Max(2, gbRequire);
-                pcs.groupBuildDeletion[typeId] = gbDeletion;
+                Pieces.groupBuildEnabled[typeId] = true;
+                Pieces.groupBuildRequireNumber[typeId] = Math.Max(2, gbRequire);
+                Pieces.groupBuildDeletion[typeId] = gbDeletion;
                 // target type resolved later after all types defined
-                if (typeId < pcs.groupBuildTargetType.Length) pcs.groupBuildTargetType[typeId] = -1;
-                if (!string.IsNullOrWhiteSpace(gbTargetName) && pcs.typeIndexByName != null && pcs.typeIndexByName.TryGetValue(gbTargetName, out var tgtId))
-                    pcs.groupBuildTargetType[typeId] = tgtId;
+                if (typeId < Pieces.groupBuildTargetType.Length) Pieces.groupBuildTargetType[typeId] = -1;
+                if (!string.IsNullOrWhiteSpace(gbTargetName) && Pieces.typeIndexByName != null && Pieces.typeIndexByName.TryGetValue(gbTargetName, out var tgtId))
+                    Pieces.groupBuildTargetType[typeId] = tgtId;
             }
             // Stage per-type configs for second pass
             pushEnabledByType[typeId] = pushEnabled;
@@ -286,12 +285,12 @@ public static class PiecesCsvImporter
             conversionFactoryBotSurchargeByType[typeId] = conversionFactoryBotSurcharge;
 
             // digitsRequired → store as single-element codeDigits list if your schema expects int[]
-            if (typeId < pcs.codeDigitsByType.Length)
+            if (typeId < Pieces.codeDigitsByType.Length)
             {
                 if (digitsReq > 0)
-                    pcs.codeDigitsByType[typeId] = new int[1] { digitsReq };
+                    Pieces.codeDigitsByType[typeId] = new int[1] { digitsReq };
                 else
-                    pcs.codeDigitsByType[typeId] = Array.Empty<int>();
+                    Pieces.codeDigitsByType[typeId] = Array.Empty<int>();
             }
             // Emit to caller (pieceID, pieceName, isBuilding, faction, buildCost)
             onTypeDefined?.Invoke(typeId, name, isBuilding, faction, buildCost);
@@ -301,7 +300,7 @@ public static class PiecesCsvImporter
         for (int typeId = 0; typeId < typeCount; typeId++)
         {
             var cols = rows[typeId];
-            string typeName = pcs.idByType[typeId];
+            string typeName = Pieces.idByType[typeId];
             // pull staged per-type configs
             bool pushEnabled = pushEnabledByType[typeId];
             int pushRange = pushRangeByType[typeId];
@@ -361,10 +360,10 @@ public static class PiecesCsvImporter
                 int rMin = GetInt(cols, H, "move_rangeMin", 1);
                 int rMax = GetInt(cols, H, "move_rangeMax", 1);
                 int mDmg = GetInt(cols, H, "move_damage", 0); // optional; defaults to 0
-                int abilityId = DefineSynthAbility_Move(pcs, typeName, rMin, rMax, mDmg,
+                int abilityId = DefineSynthAbility_Move(typeName, rMin, rMax, mDmg,
                     ref nextAbilityId,
                     botSurcharge: GetInt(cols, H, "botThinkSurcharge_move", 0));
-                pcs.AddAbilitySlot((byte)typeId, abilityId); // slot 0 by order
+                Pieces.AddAbilitySlot((byte)typeId, abilityId); // slot 0 by order
             }
 
             // SHOOT
@@ -373,35 +372,34 @@ public static class PiecesCsvImporter
                 int rMin = GetInt(cols, H, "shoot_rangeMin", 1);
                 int rMax = GetInt(cols, H, "shoot_rangeMax", 1);
                 int dmg = GetInt(cols, H, "shoot_damage", 1);
-                int abilityId = DefineSynthAbility_Shoot(pcs, typeName, rMin, rMax, dmg,
+                int abilityId = DefineSynthAbility_Shoot(typeName, rMin, rMax, dmg,
                     ref nextAbilityId,
                     botSurcharge: GetInt(cols, H, "botThinkSurcharge_shoot", 0));
-                pcs.AddAbilitySlot((byte)typeId, abilityId); // slot 1 by order
+                Pieces.AddAbilitySlot((byte)typeId, abilityId); // slot 1 by order
             }
 
             // CAPTURE VP (standing on VP tile)
             if (GetBool(cols, H, "capture_enabled", false))
             {
-                int abilityId = DefineSynthAbility_Capture(pcs, typeName,
+                int abilityId = DefineSynthAbility_Capture(typeName,
                     ref nextAbilityId,
                     botSurcharge: GetInt(cols, H, "botThinkSurcharge_capture", 0));
-                pcs.AddAbilitySlot((byte)typeId, abilityId); // slot 2 by order
+                Pieces.AddAbilitySlot((byte)typeId, abilityId); // slot 2 by order
             }
 
             // CORE DAMAGE (standing on enemy core)
             if (GetBool(cols, H, "core_enabled", false))
             {
-                int abilityId = DefineSynthAbility_CoreDamage(pcs, typeName,
+                int abilityId = DefineSynthAbility_CoreDamage(typeName,
                     ref nextAbilityId,
                     botSurcharge: GetInt(cols, H, "botThinkSurcharge_core", 0));
-                pcs.AddAbilitySlot((byte)typeId, abilityId); // slot 3 by order
+                Pieces.AddAbilitySlot((byte)typeId, abilityId); // slot 3 by order
             }
 
             // PUSH (piece-targeted)
             if (pushEnabled)
             {
                 int abilityId = DefineSynthAbility_Push(
-                    pcs,
                     typeName,
                     pushRange,
                     pushAmount,
@@ -412,18 +410,17 @@ public static class PiecesCsvImporter
                     pushDamage,
                     ref nextAbilityId,
                     botSurcharge: pushBotSurcharge);
-                pcs.AddAbilitySlot((byte)typeId, abilityId); // next slot by order
+                Pieces.AddAbilitySlot((byte)typeId, abilityId); // next slot by order
             }
 
             // GROUP BUILD (non-targeted; create target type)
             if (gbEnabled)
             {
                 int abilityId = DefineSynthAbility_GroupBuild(
-                    pcs,
                     typeName,
                     ref nextAbilityId,
                     botSurcharge: GetInt(cols, H, "botThinkSurcharge_groupBuild", 0));
-                pcs.AddAbilitySlot((byte)typeId, abilityId);
+                Pieces.AddAbilitySlot((byte)typeId, abilityId);
             }
 
             // UPGRADE (self replace)
@@ -431,12 +428,12 @@ public static class PiecesCsvImporter
             {
                 string upName = Get(cols, H, "upgrade_pieceName", defaultValue: string.Empty);
                 int botS = GetInt(cols, H, "botThinkSurcharge_upgrade", 0);
-                int abilityId = DefineSynthAbility_Upgrade(pcs, typeName, ref nextAbilityId, botS);
-                pcs.AddAbilitySlot((byte)typeId, abilityId);
-                if (!string.IsNullOrWhiteSpace(upName) && pcs.typeIndexByName != null && pcs.typeIndexByName.TryGetValue(upName, out var upTarget))
+                int abilityId = DefineSynthAbility_Upgrade(typeName, ref nextAbilityId, botS);
+                Pieces.AddAbilitySlot((byte)typeId, abilityId);
+                if (!string.IsNullOrWhiteSpace(upName) && Pieces.typeIndexByName != null && Pieces.typeIndexByName.TryGetValue(upName, out var upTarget))
                 {
-                    pcs.upgradeEnabled[typeId] = true;
-                    pcs.upgradeTargetType[typeId] = upTarget;
+                    Pieces.upgradeEnabled[typeId] = true;
+                    Pieces.upgradeTargetType[typeId] = upTarget;
                 }
             }
 
@@ -444,7 +441,6 @@ public static class PiecesCsvImporter
             if (launcherEnabled)
             {
                 int abilityId = DefineSynthAbility_Launcher(
-                    pcs,
                     typeName,
                     launcherInput,
                     launcherOutput,
@@ -452,39 +448,37 @@ public static class PiecesCsvImporter
                     launcherEnemy,
                     ref nextAbilityId,
                     launcherBotS);
-                pcs.AddAbilitySlot((byte)typeId, abilityId);
+                Pieces.AddAbilitySlot((byte)typeId, abilityId);
             }
 
             // SPAWNER
             if (spawnEnabled)
             {
                 int abilityId = DefineSynthAbility_Spawner(
-                    pcs,
                     typeName,
                     spawnAmount,
                     spawnRange,
                     spawnOncePerTurn,
                     ref nextAbilityId,
                     spawnBotS);
-                pcs.AddAbilitySlot((byte)typeId, abilityId);
-                if (!string.IsNullOrWhiteSpace(spawnPieceName) && pcs.typeIndexByName != null && pcs.typeIndexByName.TryGetValue(spawnPieceName, out var spawnTgt))
+                Pieces.AddAbilitySlot((byte)typeId, abilityId);
+                if (!string.IsNullOrWhiteSpace(spawnPieceName) && Pieces.typeIndexByName != null && Pieces.typeIndexByName.TryGetValue(spawnPieceName, out var spawnTgt))
                 {
-                    pcs.spawn_targetType[abilityId] = spawnTgt;
+                    Pieces.spawn_targetType[abilityId] = spawnTgt;
                 }
                 else
                 {
-                    pcs.spawn_targetType[abilityId] = -1;
+                    Pieces.spawn_targetType[abilityId] = -1;
                 }
-                pcs.spawn_pieceAmount[abilityId] = Math.Max(1, spawnAmount);
-                pcs.spawn_range[abilityId] = Math.Max(1, spawnRange);
-                pcs.spawn_onlyOncePerTurn[abilityId] = spawnOncePerTurn;
+                Pieces.spawn_pieceAmount[abilityId] = Math.Max(1, spawnAmount);
+                Pieces.spawn_range[abilityId] = Math.Max(1, spawnRange);
+                Pieces.spawn_onlyOncePerTurn[abilityId] = spawnOncePerTurn;
             }
 
             // FACTORY (passive)
             if (factoryEnabled)
             {
                 int abilityId = DefineSynthAbility_Factory(
-                    pcs,
                     typeName,
                     factoryAmount,
                     factoryRoundMul,
@@ -492,161 +486,156 @@ public static class PiecesCsvImporter
                     factoryGroupAmount,
                     ref nextAbilityId,
                     botSurcharge: factoryBotS);
-                pcs.AddAbilitySlot((byte)typeId, abilityId);
+                Pieces.AddAbilitySlot((byte)typeId, abilityId);
             }
 
             // SANCTUARY
             if (sanctuaryEnabled)
             {
                 int abilityId = DefineSynthAbility_Sanctuary(
-                    pcs,
                     typeName,
                     sanctuaryRange,
                     ref nextAbilityId);
-                pcs.AddAbilitySlot((byte)typeId, abilityId);
+                Pieces.AddAbilitySlot((byte)typeId, abilityId);
             }
 
             // SACRIFICE FACTORY (active)
             if (sacrificeFactoryEnabled)
             {
                 int abilityId = DefineSynthAbility_SacrificeFactory(
-                    pcs,
                     typeName,
                     sacrificeFactoryMinRange,
                     sacrificeFactoryMaxRange,
                     sacrificeFactoryAmount,
                     ref nextAbilityId,
                     sacrificeFactoryBotSurcharge);
-                pcs.AddAbilitySlot((byte)typeId, abilityId);
+                Pieces.AddAbilitySlot((byte)typeId, abilityId);
             }
 
             // CONVERSION FACTORY (active)
             if (conversionFactoryEnabled)
             {
                 int abilityId = DefineSynthAbility_ConversionFactory(
-                    pcs,
                     typeName,
                     conversionFactoryCoreHealth,
                     conversionFactoryVp,
                     conversionFactoryAmount,
                     ref nextAbilityId,
                     conversionFactoryBotSurcharge);
-                pcs.AddAbilitySlot((byte)typeId, abilityId);
+                Pieces.AddAbilitySlot((byte)typeId, abilityId);
             }
 
             // MULTI CREATE (type-level flag)
-            if (mcEnabled && typeId < pcs.multiCreate_enabledByType.Length)
+            if (mcEnabled && typeId < Pieces.multiCreate_enabledByType.Length)
             {
-                pcs.multiCreate_enabledByType[typeId] = true;
-                pcs.multiCreate_amountByType[typeId] = Math.Max(1, mcAmount);
-                pcs.multiCreate_boarderingByType[typeId] = mcBorder;
+                Pieces.multiCreate_enabledByType[typeId] = true;
+                Pieces.multiCreate_amountByType[typeId] = Math.Max(1, mcAmount);
+                Pieces.multiCreate_boarderingByType[typeId] = mcBorder;
             }
         }
 
         // Finalize ability count to actual number synthesized
-        pcs.abilityCount = nextAbilityId;
+        Pieces.abilityCount = nextAbilityId;
 
         // 5) Finalize / validate
-        string warn = pcs.ValidateBasic();
+        string warn = Pieces.ValidateBasic();
         if (!string.IsNullOrEmpty(warn))
             Log($"[PiecesCsvImporter] ValidateBasic warning: {warn}");
 
         // Build lookup maps if Pieces expects them post-define
-        if (pcs.typeIndexByName != null)
+        if (Pieces.typeIndexByName != null)
         {
-            for (int t = 0; t < pcs.typeCount; t++)
-                pcs.typeIndexByName[pcs.idByType[t]] = t;
+            for (int t = 0; t < Pieces.typeCount; t++)
+                Pieces.typeIndexByName[Pieces.idByType[t]] = t;
         }
-        if (pcs.abilityIndexByName != null)
+        if (Pieces.abilityIndexByName != null)
         {
-            for (int a = 0; a < pcs.abilityCount; a++)
-                pcs.abilityIndexByName[pcs.abilityNameByIndex[a]] = a;
+            for (int a = 0; a < Pieces.abilityCount; a++)
+                Pieces.abilityIndexByName[Pieces.abilityNameByIndex[a]] = a;
         }
 
-        Log($"[PiecesCsvImporter] Loaded {pcs.typeCount} types, {pcs.abilityCount} abilities (single-file).");
-        return pcs;
+        Log($"[PiecesCsvImporter] Loaded {Pieces.typeCount} types, {Pieces.abilityCount} abilities (single-file).");
     }
 
     // ---- Ability synthesizers ------------------------------------------------
-    private static int DefineSynthAbility_Move(Pieces pcs, string typeName, int rangeMin, int rangeMax, int damage, ref int nextA, int botSurcharge)
+    private static int DefineSynthAbility_Move(string typeName, int rangeMin, int rangeMax, int damage, ref int nextA, int botSurcharge)
     {
         int a = nextA++; // next synthesized id
         string name = $"Move@{typeName}";
-        pcs.DefineAbility(a, name, Pieces.AbilityKind.Move, Pieces.TargetKind.None);
-        if (a < pcs.rangeMin.Length) pcs.rangeMin[a] = rangeMin;
-        if (a < pcs.rangeMax.Length) pcs.rangeMax[a] = rangeMax;
-        if (a < pcs.areaRadius.Length) pcs.areaRadius[a] = 0;
-        if (a < pcs.damage.Length) pcs.damage[a] = damage;
-        if (a < pcs.customParam.Length) pcs.customParam[a] = 0;
-        if (a < pcs.baseSurcharge.Length) pcs.baseSurcharge[a] = 0;
-        if (a < pcs.botThinkSurcharge.Length) pcs.botThinkSurcharge[a] = botSurcharge;
-        if (a < pcs.buildTypeId.Length) pcs.buildTypeId[a] = -1; // not used
+        Pieces.DefineAbility(a, name, Pieces.AbilityKind.Move, Pieces.TargetKind.None);
+        if (a < Pieces.rangeMin.Length) Pieces.rangeMin[a] = rangeMin;
+        if (a < Pieces.rangeMax.Length) Pieces.rangeMax[a] = rangeMax;
+        if (a < Pieces.areaRadius.Length) Pieces.areaRadius[a] = 0;
+        if (a < Pieces.damage.Length) Pieces.damage[a] = damage;
+        if (a < Pieces.customParam.Length) Pieces.customParam[a] = 0;
+        if (a < Pieces.baseSurcharge.Length) Pieces.baseSurcharge[a] = 0;
+        if (a < Pieces.botThinkSurcharge.Length) Pieces.botThinkSurcharge[a] = botSurcharge;
+        if (a < Pieces.buildTypeId.Length) Pieces.buildTypeId[a] = -1; // not used
         return a;
     }
 
-    private static int DefineSynthAbility_Shoot(Pieces pcs, string typeName, int rangeMin, int rangeMax, int damage, ref int nextA, int botSurcharge)
+    private static int DefineSynthAbility_Shoot(string typeName, int rangeMin, int rangeMax, int damage, ref int nextA, int botSurcharge)
     {
         int a = nextA++; // next synthesized id
         string name = $"Shoot@{typeName}";
-        pcs.DefineAbility(a, name, Pieces.AbilityKind.Shoot, Pieces.TargetKind.Piece);
-        if (a < pcs.rangeMin.Length) pcs.rangeMin[a] = rangeMin;
-        if (a < pcs.rangeMax.Length) pcs.rangeMax[a] = rangeMax;
-        if (a < pcs.areaRadius.Length) pcs.areaRadius[a] = 0;
-        if (a < pcs.damage.Length) pcs.damage[a] = damage;
-        if (a < pcs.customParam.Length) pcs.customParam[a] = 0;
-        if (a < pcs.baseSurcharge.Length) pcs.baseSurcharge[a] = 0;
-        if (a < pcs.botThinkSurcharge.Length) pcs.botThinkSurcharge[a] = botSurcharge;
-        if (a < pcs.buildTypeId.Length) pcs.buildTypeId[a] = -1; // not used
+        Pieces.DefineAbility(a, name, Pieces.AbilityKind.Shoot, Pieces.TargetKind.Piece);
+        if (a < Pieces.rangeMin.Length) Pieces.rangeMin[a] = rangeMin;
+        if (a < Pieces.rangeMax.Length) Pieces.rangeMax[a] = rangeMax;
+        if (a < Pieces.areaRadius.Length) Pieces.areaRadius[a] = 0;
+        if (a < Pieces.damage.Length) Pieces.damage[a] = damage;
+        if (a < Pieces.customParam.Length) Pieces.customParam[a] = 0;
+        if (a < Pieces.baseSurcharge.Length) Pieces.baseSurcharge[a] = 0;
+        if (a < Pieces.botThinkSurcharge.Length) Pieces.botThinkSurcharge[a] = botSurcharge;
+        if (a < Pieces.buildTypeId.Length) Pieces.buildTypeId[a] = -1; // not used
         return a;
     }
 
-    private static int DefineSynthAbility_Capture(Pieces pcs, string typeName, ref int nextA, int botSurcharge)
+    private static int DefineSynthAbility_Capture(string typeName, ref int nextA, int botSurcharge)
     {
         int a = nextA++; // use the moving cursor
         string name = $"CaptureVP@{typeName}";
-        pcs.DefineAbility(a, name, Pieces.AbilityKind.CaptureVP, Pieces.TargetKind.Cell);
-        if (a < pcs.rangeMin.Length) pcs.rangeMin[a] = 0;
-        if (a < pcs.rangeMax.Length) pcs.rangeMax[a] = 0;
-        if (a < pcs.areaRadius.Length) pcs.areaRadius[a] = 0;
-        if (a < pcs.damage.Length) pcs.damage[a] = 0;
-        if (a < pcs.customParam.Length) pcs.customParam[a] = 0;
-        if (a < pcs.baseSurcharge.Length) pcs.baseSurcharge[a] = 0;
-        if (a < pcs.botThinkSurcharge.Length) pcs.botThinkSurcharge[a] = botSurcharge;
-        if (a < pcs.buildTypeId.Length) pcs.buildTypeId[a] = -1;
+        Pieces.DefineAbility(a, name, Pieces.AbilityKind.CaptureVP, Pieces.TargetKind.Cell);
+        if (a < Pieces.rangeMin.Length) Pieces.rangeMin[a] = 0;
+        if (a < Pieces.rangeMax.Length) Pieces.rangeMax[a] = 0;
+        if (a < Pieces.areaRadius.Length) Pieces.areaRadius[a] = 0;
+        if (a < Pieces.damage.Length) Pieces.damage[a] = 0;
+        if (a < Pieces.customParam.Length) Pieces.customParam[a] = 0;
+        if (a < Pieces.baseSurcharge.Length) Pieces.baseSurcharge[a] = 0;
+        if (a < Pieces.botThinkSurcharge.Length) Pieces.botThinkSurcharge[a] = botSurcharge;
+        if (a < Pieces.buildTypeId.Length) Pieces.buildTypeId[a] = -1;
         return a;
     }
 
-    private static int DefineSynthAbility_CoreDamage(Pieces pcs, string typeName, ref int nextA, int botSurcharge)
+    private static int DefineSynthAbility_CoreDamage(string typeName, ref int nextA, int botSurcharge)
     {
         int a = nextA++; // use the moving cursor
         string name = $"CoreDamage@{typeName}";
-        pcs.DefineAbility(a, name, Pieces.AbilityKind.CoreDamage, Pieces.TargetKind.Cell);
-        if (a < pcs.rangeMin.Length) pcs.rangeMin[a] = 0;
-        if (a < pcs.rangeMax.Length) pcs.rangeMax[a] = 0;
-        if (a < pcs.areaRadius.Length) pcs.areaRadius[a] = 0;
-        if (a < pcs.damage.Length) pcs.damage[a] = 0; // effect is contextual at kernel
-        if (a < pcs.customParam.Length) pcs.customParam[a] = 0;
-        if (a < pcs.baseSurcharge.Length) pcs.baseSurcharge[a] = 0;
-        if (a < pcs.botThinkSurcharge.Length) pcs.botThinkSurcharge[a] = botSurcharge;
-        if (a < pcs.buildTypeId.Length) pcs.buildTypeId[a] = -1;
+        Pieces.DefineAbility(a, name, Pieces.AbilityKind.CoreDamage, Pieces.TargetKind.Cell);
+        if (a < Pieces.rangeMin.Length) Pieces.rangeMin[a] = 0;
+        if (a < Pieces.rangeMax.Length) Pieces.rangeMax[a] = 0;
+        if (a < Pieces.areaRadius.Length) Pieces.areaRadius[a] = 0;
+        if (a < Pieces.damage.Length) Pieces.damage[a] = 0; // effect is contextual at kernel
+        if (a < Pieces.customParam.Length) Pieces.customParam[a] = 0;
+        if (a < Pieces.baseSurcharge.Length) Pieces.baseSurcharge[a] = 0;
+        if (a < Pieces.botThinkSurcharge.Length) Pieces.botThinkSurcharge[a] = botSurcharge;
+        if (a < Pieces.buildTypeId.Length) Pieces.buildTypeId[a] = -1;
         return a;
     }
 
-    private static int DefineSynthAbility_GroupBuild(Pieces pcs, string typeName, ref int nextA, int botSurcharge)
+    private static int DefineSynthAbility_GroupBuild(string typeName, ref int nextA, int botSurcharge)
     {
         int a = nextA++;
         string name = $"GroupBuild@{typeName}";
-        pcs.DefineAbility(a, name, Pieces.AbilityKind.GroupBuild, Pieces.TargetKind.Cell);
-        if (a < pcs.rangeMin.Length) pcs.rangeMin[a] = 0;
-        if (a < pcs.rangeMax.Length) pcs.rangeMax[a] = 0;
-        if (a < pcs.damage.Length) pcs.damage[a] = 0;
-        if (a < pcs.botThinkSurcharge.Length) pcs.botThinkSurcharge[a] = botSurcharge;
-        if (a < pcs.buildTypeId.Length) pcs.buildTypeId[a] = -1;
+        Pieces.DefineAbility(a, name, Pieces.AbilityKind.GroupBuild, Pieces.TargetKind.Cell);
+        if (a < Pieces.rangeMin.Length) Pieces.rangeMin[a] = 0;
+        if (a < Pieces.rangeMax.Length) Pieces.rangeMax[a] = 0;
+        if (a < Pieces.damage.Length) Pieces.damage[a] = 0;
+        if (a < Pieces.botThinkSurcharge.Length) Pieces.botThinkSurcharge[a] = botSurcharge;
+        if (a < Pieces.buildTypeId.Length) Pieces.buildTypeId[a] = -1;
         return a;
     }
 
     private static int DefineSynthAbility_Push(
-        Pieces pcs,
         string typeName,
         int rangeMax,
         int pushAmount,
@@ -660,37 +649,36 @@ public static class PiecesCsvImporter
     {
         int a = nextA++;
         string name = $"Push@{typeName}";
-        pcs.DefineAbility(a, name, Pieces.AbilityKind.Push, Pieces.TargetKind.Piece);
-        if (a < pcs.rangeMin.Length) pcs.rangeMin[a] = 1;
-        if (a < pcs.rangeMax.Length) pcs.rangeMax[a] = rangeMax;
-        if (a < pcs.damage.Length) pcs.damage[a] = damage;
-        if (a < pcs.push_TargetsBuildings.Length) pcs.push_TargetsBuildings[a] = targetsBuildings;
-        if (a < pcs.push_TargetsSoldiers.Length) pcs.push_TargetsSoldiers[a] = targetsSoldiers;
-        if (a < pcs.push_rangeMax.Length) pcs.push_rangeMax[a] = rangeMax;
-        if (a < pcs.push_PushAmount.Length) pcs.push_PushAmount[a] = pushAmount;
-        if (a < pcs.push_pull.Length) pcs.push_pull[a] = pull;
-        if (a < pcs.push_FriendlyFire.Length) pcs.push_FriendlyFire[a] = friendlyFire;
-        if (a < pcs.push_damage.Length) pcs.push_damage[a] = damage;
-        if (a < pcs.botThinkSurcharge.Length) pcs.botThinkSurcharge[a] = botSurcharge;
-        if (a < pcs.buildTypeId.Length) pcs.buildTypeId[a] = -1;
+        Pieces.DefineAbility(a, name, Pieces.AbilityKind.Push, Pieces.TargetKind.Piece);
+        if (a < Pieces.rangeMin.Length) Pieces.rangeMin[a] = 1;
+        if (a < Pieces.rangeMax.Length) Pieces.rangeMax[a] = rangeMax;
+        if (a < Pieces.damage.Length) Pieces.damage[a] = damage;
+        if (a < Pieces.push_TargetsBuildings.Length) Pieces.push_TargetsBuildings[a] = targetsBuildings;
+        if (a < Pieces.push_TargetsSoldiers.Length) Pieces.push_TargetsSoldiers[a] = targetsSoldiers;
+        if (a < Pieces.push_rangeMax.Length) Pieces.push_rangeMax[a] = rangeMax;
+        if (a < Pieces.push_PushAmount.Length) Pieces.push_PushAmount[a] = pushAmount;
+        if (a < Pieces.push_pull.Length) Pieces.push_pull[a] = pull;
+        if (a < Pieces.push_FriendlyFire.Length) Pieces.push_FriendlyFire[a] = friendlyFire;
+        if (a < Pieces.push_damage.Length) Pieces.push_damage[a] = damage;
+        if (a < Pieces.botThinkSurcharge.Length) Pieces.botThinkSurcharge[a] = botSurcharge;
+        if (a < Pieces.buildTypeId.Length) Pieces.buildTypeId[a] = -1;
         return a;
     }
 
-    private static int DefineSynthAbility_Upgrade(Pieces pcs, string typeName, ref int nextA, int botSurcharge)
+    private static int DefineSynthAbility_Upgrade(string typeName, ref int nextA, int botSurcharge)
     {
         int a = nextA++;
         string name = $"Upgrade@{typeName}";
-        pcs.DefineAbility(a, name, Pieces.AbilityKind.Upgrade, Pieces.TargetKind.Cell);
-        if (a < pcs.rangeMin.Length) pcs.rangeMin[a] = 0;
-        if (a < pcs.rangeMax.Length) pcs.rangeMax[a] = 0;
-        if (a < pcs.damage.Length) pcs.damage[a] = 0;
-        if (a < pcs.botThinkSurcharge.Length) pcs.botThinkSurcharge[a] = botSurcharge;
-        if (a < pcs.buildTypeId.Length) pcs.buildTypeId[a] = -1;
+        Pieces.DefineAbility(a, name, Pieces.AbilityKind.Upgrade, Pieces.TargetKind.Cell);
+        if (a < Pieces.rangeMin.Length) Pieces.rangeMin[a] = 0;
+        if (a < Pieces.rangeMax.Length) Pieces.rangeMax[a] = 0;
+        if (a < Pieces.damage.Length) Pieces.damage[a] = 0;
+        if (a < Pieces.botThinkSurcharge.Length) Pieces.botThinkSurcharge[a] = botSurcharge;
+        if (a < Pieces.buildTypeId.Length) Pieces.buildTypeId[a] = -1;
         return a;
     }
 
     private static int DefineSynthAbility_Launcher(
-        Pieces pcs,
         string typeName,
         int inputRange,
         int outputRange,
@@ -701,20 +689,19 @@ public static class PiecesCsvImporter
     {
         int a = nextA++;
         string name = $"Launcher@{typeName}";
-        pcs.DefineAbility(a, name, Pieces.AbilityKind.Launcher, Pieces.TargetKind.Piece);
-        if (a < pcs.rangeMin.Length) pcs.rangeMin[a] = 1;
-        if (a < pcs.rangeMax.Length) pcs.rangeMax[a] = Math.Max(inputRange, outputRange);
-        if (a < pcs.launcher_inputRange.Length) pcs.launcher_inputRange[a] = inputRange;
-        if (a < pcs.launcher_outputRange.Length) pcs.launcher_outputRange[a] = outputRange;
-        if (a < pcs.launcher_friendlyFire.Length) pcs.launcher_friendlyFire[a] = friendlyFire;
-        if (a < pcs.launcher_enemyFire.Length) pcs.launcher_enemyFire[a] = enemyFire;
-        if (a < pcs.botThinkSurcharge.Length) pcs.botThinkSurcharge[a] = botSurcharge;
-        if (a < pcs.buildTypeId.Length) pcs.buildTypeId[a] = -1;
+        Pieces.DefineAbility(a, name, Pieces.AbilityKind.Launcher, Pieces.TargetKind.Piece);
+        if (a < Pieces.rangeMin.Length) Pieces.rangeMin[a] = 1;
+        if (a < Pieces.rangeMax.Length) Pieces.rangeMax[a] = Math.Max(inputRange, outputRange);
+        if (a < Pieces.launcher_inputRange.Length) Pieces.launcher_inputRange[a] = inputRange;
+        if (a < Pieces.launcher_outputRange.Length) Pieces.launcher_outputRange[a] = outputRange;
+        if (a < Pieces.launcher_friendlyFire.Length) Pieces.launcher_friendlyFire[a] = friendlyFire;
+        if (a < Pieces.launcher_enemyFire.Length) Pieces.launcher_enemyFire[a] = enemyFire;
+        if (a < Pieces.botThinkSurcharge.Length) Pieces.botThinkSurcharge[a] = botSurcharge;
+        if (a < Pieces.buildTypeId.Length) Pieces.buildTypeId[a] = -1;
         return a;
     }
 
     private static int DefineSynthAbility_Spawner(
-        Pieces pcs,
         string typeName,
         int pieceAmount,
         int range,
@@ -724,19 +711,18 @@ public static class PiecesCsvImporter
     {
         int a = nextA++;
         string name = $"Spawner@{typeName}";
-        pcs.DefineAbility(a, name, Pieces.AbilityKind.Spawner, Pieces.TargetKind.Cell);
-        if (a < pcs.rangeMin.Length) pcs.rangeMin[a] = 1;
-        if (a < pcs.rangeMax.Length) pcs.rangeMax[a] = range;
-        if (a < pcs.spawn_pieceAmount.Length) pcs.spawn_pieceAmount[a] = pieceAmount;
-        if (a < pcs.spawn_range.Length) pcs.spawn_range[a] = range;
-        if (a < pcs.spawn_onlyOncePerTurn.Length) pcs.spawn_onlyOncePerTurn[a] = oncePerTurn;
-        if (a < pcs.botThinkSurcharge.Length) pcs.botThinkSurcharge[a] = botSurcharge;
-        if (a < pcs.buildTypeId.Length) pcs.buildTypeId[a] = -1;
+        Pieces.DefineAbility(a, name, Pieces.AbilityKind.Spawner, Pieces.TargetKind.Cell);
+        if (a < Pieces.rangeMin.Length) Pieces.rangeMin[a] = 1;
+        if (a < Pieces.rangeMax.Length) Pieces.rangeMax[a] = range;
+        if (a < Pieces.spawn_pieceAmount.Length) Pieces.spawn_pieceAmount[a] = pieceAmount;
+        if (a < Pieces.spawn_range.Length) Pieces.spawn_range[a] = range;
+        if (a < Pieces.spawn_onlyOncePerTurn.Length) Pieces.spawn_onlyOncePerTurn[a] = oncePerTurn;
+        if (a < Pieces.botThinkSurcharge.Length) Pieces.botThinkSurcharge[a] = botSurcharge;
+        if (a < Pieces.buildTypeId.Length) Pieces.buildTypeId[a] = -1;
         return a;
     }
 
     private static int DefineSynthAbility_Factory(
-        Pieces pcs,
         string typeName,
         int amount,
         bool roundMul,
@@ -747,39 +733,37 @@ public static class PiecesCsvImporter
     {
         int a = nextA++;
         string name = $"Factory@{typeName}";
-        pcs.DefineAbility(a, name, Pieces.AbilityKind.Factory, Pieces.TargetKind.None);
-        if (a < pcs.factory_amount.Length) pcs.factory_amount[a] = amount;
-        if (a < pcs.factory_roundMultiplier.Length) pcs.factory_roundMultiplier[a] = roundMul;
-        if (a < pcs.factory_group.Length) pcs.factory_group[a] = group;
-        if (a < pcs.factory_groupAmount.Length) pcs.factory_groupAmount[a] = Math.Max(1, groupAmount);
-        if (a < pcs.botThinkSurcharge.Length) pcs.botThinkSurcharge[a] = botSurcharge;
-        if (a < pcs.buildTypeId.Length) pcs.buildTypeId[a] = -1;
+        Pieces.DefineAbility(a, name, Pieces.AbilityKind.Factory, Pieces.TargetKind.None);
+        if (a < Pieces.factory_amount.Length) Pieces.factory_amount[a] = amount;
+        if (a < Pieces.factory_roundMultiplier.Length) Pieces.factory_roundMultiplier[a] = roundMul;
+        if (a < Pieces.factory_group.Length) Pieces.factory_group[a] = group;
+        if (a < Pieces.factory_groupAmount.Length) Pieces.factory_groupAmount[a] = Math.Max(1, groupAmount);
+        if (a < Pieces.botThinkSurcharge.Length) Pieces.botThinkSurcharge[a] = botSurcharge;
+        if (a < Pieces.buildTypeId.Length) Pieces.buildTypeId[a] = -1;
         return a;
     }
 
     private static int DefineSynthAbility_Sanctuary(
-        Pieces pcs,
         string typeName,
         int rangeMax,
         ref int nextA)
     {
         int a = nextA++;
         string name = $"Sanctuary@{typeName}";
-        pcs.DefineAbility(a, name, Pieces.AbilityKind.Sanctuary, Pieces.TargetKind.None);
-        if (a < pcs.rangeMin.Length) pcs.rangeMin[a] = 0;
-        if (a < pcs.rangeMax.Length) pcs.rangeMax[a] = Math.Max(0, rangeMax);
-        if (a < pcs.areaRadius.Length) pcs.areaRadius[a] = 0;
-        if (a < pcs.damage.Length) pcs.damage[a] = 0;
-        if (a < pcs.customParam.Length) pcs.customParam[a] = 0;
-        if (a < pcs.sanctuary_enabled.Length) pcs.sanctuary_enabled[a] = true;
-        if (a < pcs.Sanctuary_range.Length) pcs.Sanctuary_range[a] = Math.Max(0, rangeMax);
-        if (a < pcs.botThinkSurcharge.Length) pcs.botThinkSurcharge[a] = 0;
-        if (a < pcs.buildTypeId.Length) pcs.buildTypeId[a] = -1;
+        Pieces.DefineAbility(a, name, Pieces.AbilityKind.Sanctuary, Pieces.TargetKind.None);
+        if (a < Pieces.rangeMin.Length) Pieces.rangeMin[a] = 0;
+        if (a < Pieces.rangeMax.Length) Pieces.rangeMax[a] = Math.Max(0, rangeMax);
+        if (a < Pieces.areaRadius.Length) Pieces.areaRadius[a] = 0;
+        if (a < Pieces.damage.Length) Pieces.damage[a] = 0;
+        if (a < Pieces.customParam.Length) Pieces.customParam[a] = 0;
+        if (a < Pieces.sanctuary_enabled.Length) Pieces.sanctuary_enabled[a] = true;
+        if (a < Pieces.Sanctuary_range.Length) Pieces.Sanctuary_range[a] = Math.Max(0, rangeMax);
+        if (a < Pieces.botThinkSurcharge.Length) Pieces.botThinkSurcharge[a] = 0;
+        if (a < Pieces.buildTypeId.Length) Pieces.buildTypeId[a] = -1;
         return a;
     }
 
     private static int DefineSynthAbility_SacrificeFactory(
-        Pieces pcs,
         string typeName,
         int rangeMin,
         int rangeMax,
@@ -789,17 +773,16 @@ public static class PiecesCsvImporter
     {
         int a = nextA++;
         string name = $"SacrificeFactory@{typeName}";
-        pcs.DefineAbility(a, name, Pieces.AbilityKind.SacrificeFactory, Pieces.TargetKind.Piece);
-        if (a < pcs.rangeMin.Length) pcs.rangeMin[a] = Math.Max(0, rangeMin);
-        if (a < pcs.rangeMax.Length) pcs.rangeMax[a] = Math.Max(rangeMin, rangeMax);
-        if (a < pcs.sacrificeFactory_amount.Length) pcs.sacrificeFactory_amount[a] = amount;
-        if (a < pcs.botThinkSurcharge.Length) pcs.botThinkSurcharge[a] = botSurcharge;
-        if (a < pcs.buildTypeId.Length) pcs.buildTypeId[a] = -1;
+        Pieces.DefineAbility(a, name, Pieces.AbilityKind.SacrificeFactory, Pieces.TargetKind.Piece);
+        if (a < Pieces.rangeMin.Length) Pieces.rangeMin[a] = Math.Max(0, rangeMin);
+        if (a < Pieces.rangeMax.Length) Pieces.rangeMax[a] = Math.Max(rangeMin, rangeMax);
+        if (a < Pieces.sacrificeFactory_amount.Length) Pieces.sacrificeFactory_amount[a] = amount;
+        if (a < Pieces.botThinkSurcharge.Length) Pieces.botThinkSurcharge[a] = botSurcharge;
+        if (a < Pieces.buildTypeId.Length) Pieces.buildTypeId[a] = -1;
         return a;
     }
 
     private static int DefineSynthAbility_ConversionFactory(
-        Pieces pcs,
         string typeName,
         bool toCoreHealth,
         bool toVP,
@@ -809,15 +792,15 @@ public static class PiecesCsvImporter
     {
         int a = nextA++;
         string name = $"ConversionFactory@{typeName}";
-        pcs.DefineAbility(a, name, Pieces.AbilityKind.ConversionFactory, Pieces.TargetKind.None);
-        if (a < pcs.rangeMin.Length) pcs.rangeMin[a] = 0;
-        if (a < pcs.rangeMax.Length) pcs.rangeMax[a] = 0;
-        if (a < pcs.conversionFactory_coreHealth.Length) pcs.conversionFactory_coreHealth[a] = toCoreHealth;
-        if (a < pcs.conversionFactory_vp.Length) pcs.conversionFactory_vp[a] = toVP;
-        if (a < pcs.conversionFactory_amount.Length) pcs.conversionFactory_amount[a] = amount;
-        if (a < pcs.botThinkSurcharge.Length) pcs.botThinkSurcharge[a] = botSurcharge;
-        if (a < pcs.conversionFactory_botSurcharge.Length) pcs.conversionFactory_botSurcharge[a] = botSurcharge;
-        if (a < pcs.buildTypeId.Length) pcs.buildTypeId[a] = -1;
+        Pieces.DefineAbility(a, name, Pieces.AbilityKind.ConversionFactory, Pieces.TargetKind.None);
+        if (a < Pieces.rangeMin.Length) Pieces.rangeMin[a] = 0;
+        if (a < Pieces.rangeMax.Length) Pieces.rangeMax[a] = 0;
+        if (a < Pieces.conversionFactory_coreHealth.Length) Pieces.conversionFactory_coreHealth[a] = toCoreHealth;
+        if (a < Pieces.conversionFactory_vp.Length) Pieces.conversionFactory_vp[a] = toVP;
+        if (a < Pieces.conversionFactory_amount.Length) Pieces.conversionFactory_amount[a] = amount;
+        if (a < Pieces.botThinkSurcharge.Length) Pieces.botThinkSurcharge[a] = botSurcharge;
+        if (a < Pieces.conversionFactory_botSurcharge.Length) Pieces.conversionFactory_botSurcharge[a] = botSurcharge;
+        if (a < Pieces.buildTypeId.Length) Pieces.buildTypeId[a] = -1;
         return a;
     }
 
