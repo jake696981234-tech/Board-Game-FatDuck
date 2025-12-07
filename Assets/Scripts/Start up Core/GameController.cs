@@ -91,30 +91,31 @@ public class GameController : MonoBehaviour
         eventManager = new EventManager();
         setGameConfigValues();
 
-        var geometry = GeometryBuilder.Build(gameBootstrapper.hub.board_radius);
+        var geometry = GeometryBuilder.Build();
         board = new BoardModel();
         var coreCells = BuildCoreCellsForNextMatch();
-        board.Init(in geometry, in gameBootstrapper.hub, gameBootstrapper.hub.player_count, coreCellIdOverride: coreCells);
+        board.Init(in geometry, coreCellIdOverride: coreCells);
 
         var ps = new PlayerState[4];
         for (byte i = 0; i < 4; i++)
         {
             ps[i] = new PlayerState();
-            bool active = i < gameBootstrapper.hub.player_count;
-            ps[i].applyBotSurcharges = active && gameBootstrapper.hub.player_applyBotSurcharges[i];
-            ps[i].applyStartOfTurnBudgetDecrease = active && gameBootstrapper.hub.player_applyStartOfTurnBudgetDecrease[i];
-            ps[i].isAI = active && gameBootstrapper.hub.player_isAI[i];
-            ps[i].team = active ? gameBootstrapper.hub.player_team[i] : i;
-            ps[i].name = active ? gameBootstrapper.hub.player_name[i] : $"P{i}";
+            bool active = i < GameBootstrapper.hub.player_count;
+            ps[i].applyBotSurcharges = active && GameBootstrapper.hub.player_applyBotSurcharges[i];
+            ps[i].applyStartOfTurnBudgetDecrease = active && GameBootstrapper.hub.player_applyStartOfTurnBudgetDecrease[i];
+            ps[i].isAI = active && GameBootstrapper.hub.player_isAI[i];
+            ps[i].team = active ? GameBootstrapper.hub.player_team[i] : i;
+            ps[i].name = active ? GameBootstrapper.hub.player_name[i] : $"P{i}";
         }
 
         gameState = new Game.Core.GameState();
-        gameState.Initialize(in gameBootstrapper.hub, board, ps, startingPlayer, eventManager, this, gameIndex);
+        gameState.Initialize(board, ps, startingPlayer, eventManager, this, gameIndex);
+        GameRegistry.Register(gameIndex, gameState, board, eventManager, this);
 
 
         if (inspectGame && config.dbLogging.enabled)
         {
-            DbLoggingConfig.InitializeLoggingValues(in gameBootstrapper.hub, eventManager);
+            DbLoggingConfig.InitializeLoggingValues(eventManager);
             // Apply runtime logging tuning from Config
             DbLoggingConfig.ApplyConfig(in config.dbLogging);
             DbLoggingConfig.DeleteConflictingSimIdRows();
@@ -134,18 +135,18 @@ public class GameController : MonoBehaviour
 
 
 
-        for (byte seat = 0; seat < gameBootstrapper.hub.player_count; seat++)
+        for (byte seat = 0; seat < GameBootstrapper.hub.player_count; seat++)
         {
-            switch (gameBootstrapper.hub.playerControl[seat])
+            switch (GameBootstrapper.hub.playerControl[seat])
             {
                 case GameConfigHub.ControlMode.Heuristic:
                     {
                         var agent = new PlayerAgent();
                         // Select a policy per seat
                         IBotPolicy policy;
-                        if (gameBootstrapper.hub.playerPolicy != null && seat < gameBootstrapper.hub.playerPolicy.Length)
+                        if (GameBootstrapper.hub.playerPolicy != null && seat < GameBootstrapper.hub.playerPolicy.Length)
                         {
-                            switch (gameBootstrapper.hub.playerPolicy[seat])
+                            switch (GameBootstrapper.hub.playerPolicy[seat])
                             {
                                 case GameConfigHub.PolicyKind.DumbGreg:
                                     {
@@ -172,14 +173,14 @@ public class GameController : MonoBehaviour
                         else { policy = new HeuristicPolicy(); }
 
 
-                        agent.Init(in gameBootstrapper.hub, gameState, board, gameIndex, policy);
+                        agent.Init(gameState, board, gameIndex, policy);
                         agent.BindSeat(seat); // (see tiny method below)
                         heuristicControllers[seat] = agent;
                         break;
                     }
                 case GameConfigHub.ControlMode.ML:
                     {
-                        if (!gameBootstrapper.hub.enableMLAgents)
+                        if (!GameBootstrapper.hub.enableMLAgents)
                         {
                             Debug.LogWarning($"Seat {seat}: ML requested but ML Agents disabled; seat left idle.");
                             break;
@@ -190,13 +191,13 @@ public class GameController : MonoBehaviour
 
                         // --- Auto inject Behavior Parameters based on config ---
                         var bp = go.AddComponent<Unity.MLAgents.Policies.BehaviorParameters>();
-                        bp.BehaviorName = gameBootstrapper.hub.mlBehavior.name;
-                        bp.UseChildSensors = gameBootstrapper.hub.mlBehavior.useChildSensors;
-                        bp.BrainParameters.VectorObservationSize = gameBootstrapper.hub.mlBehavior.obsSize;
+                        bp.BehaviorName = GameBootstrapper.hub.mlBehavior.name;
+                        bp.UseChildSensors = GameBootstrapper.hub.mlBehavior.useChildSensors;
+                        bp.BrainParameters.VectorObservationSize = GameBootstrapper.hub.mlBehavior.obsSize;
                         bp.BrainParameters.ActionSpec =
-                            Unity.MLAgents.Actuators.ActionSpec.MakeDiscrete(gameBootstrapper.hub.mlBehavior.actionBranchSize);
-                        bp.TeamId = (seat < gameBootstrapper.hub.player_team.Length)
-                            ? gameBootstrapper.hub.player_team[seat]
+                            Unity.MLAgents.Actuators.ActionSpec.MakeDiscrete(GameBootstrapper.hub.mlBehavior.actionBranchSize);
+                        bp.TeamId = (seat < GameBootstrapper.hub.player_team.Length)
+                            ? GameBootstrapper.hub.player_team[seat]
                             : seat;
 
                         var behaviorOverride = (config != null && config.playerBehaviorOverrides != null && seat < config.playerBehaviorOverrides.Length)
@@ -219,11 +220,11 @@ public class GameController : MonoBehaviour
 
                         paBridge.BindSeat(seat);
 
-                        paBridge.Init(in gameBootstrapper.hub, gameState, board, gameIndex);
+                        paBridge.Init(gameState, board, gameIndex);
 
                         // Wire everything into the ML controller
 
-                        ml.Init(gameBootstrapper.hub, gameState, board, paBridge, seat, in config.mlRewards, gameIndex);
+                        ml.Init(gameState, board, paBridge, seat, in config.mlRewards, gameIndex);
                         break;
                     }
                 case GameConfigHub.ControlMode.Human:
@@ -243,9 +244,9 @@ public class GameController : MonoBehaviour
             {
                 // pick the first seat marked Human
                 byte humanSeat = 0;
-                for (byte s = 0; s < gameBootstrapper.hub.player_count; s++)
+                for (byte s = 0; s < GameBootstrapper.hub.player_count; s++)
                 {
-                    if (gameBootstrapper.hub.playerControl[s] == GameConfigHub.ControlMode.Human) { humanSeat = s; break; }
+                    if (GameBootstrapper.hub.playerControl[s] == GameConfigHub.ControlMode.Human) { humanSeat = s; break; }
                 }
 
                 // inject live systems (same ones agents/ML use)
@@ -314,7 +315,7 @@ public class GameController : MonoBehaviour
         }
 
         byte cur = gameState.CurrentPlayerId;
-        if (gameBootstrapper.hub.playerControl[cur] == GameConfigHub.ControlMode.Heuristic)
+        if (GameBootstrapper.hub.playerControl[cur] == GameConfigHub.ControlMode.Heuristic)
         {
             var agent = heuristicControllers[cur];
             if (agent != null) agent.Tick();
@@ -353,16 +354,17 @@ public class GameController : MonoBehaviour
             for (byte i = 0; i < 4; i++)
             {
                 ps[i] = new PlayerState();
-                bool active = i < gameBootstrapper.hub.player_count;
-                ps[i].applyBotSurcharges = active && gameBootstrapper.hub.player_applyBotSurcharges[i];
-                ps[i].applyStartOfTurnBudgetDecrease = active && gameBootstrapper.hub.player_applyStartOfTurnBudgetDecrease[i];
-                ps[i].isAI = active && gameBootstrapper.hub.player_isAI[i];
-                ps[i].team = active ? gameBootstrapper.hub.player_team[i] : i;
-                ps[i].name = active ? gameBootstrapper.hub.player_name[i] : $"P{i}";
+                bool active = i < GameBootstrapper.hub.player_count;
+                ps[i].applyBotSurcharges = active && GameBootstrapper.hub.player_applyBotSurcharges[i];
+                ps[i].applyStartOfTurnBudgetDecrease = active && GameBootstrapper.hub.player_applyStartOfTurnBudgetDecrease[i];
+                ps[i].isAI = active && GameBootstrapper.hub.player_isAI[i];
+                ps[i].team = active ? GameBootstrapper.hub.player_team[i] : i;
+                ps[i].name = active ? GameBootstrapper.hub.player_name[i] : $"P{i}";
             }
 
             // Reset GameState (reuse same instance so controllers keep references)
-            gameState.Initialize(in gameBootstrapper.hub, board, ps, startingPlayer, eventManager, this, gameIndex);
+            gameState.Initialize(board, ps, startingPlayer, eventManager, this, gameIndex);
+            GameRegistry.Register(gameIndex, gameState, board, eventManager, this);
 
 
             if (inspectGame)
@@ -414,7 +416,7 @@ public class GameController : MonoBehaviour
 
     private int[] BuildCoreCellsForNextMatch()
     {
-        var baseIds = (int[])gameBootstrapper.hub.board_coreCellIdByPlayer.Clone();
+        var baseIds = (int[])GameBootstrapper.hub.board_coreCellIdByPlayer.Clone();
         if (config == null || !config.board.shuffleCoreCellsPerGame)
         {
             _matchIndex++;

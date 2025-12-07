@@ -52,7 +52,7 @@ public sealed class MLAgentController : Agent
     // -------------------- Bootstrap wiring --------------------
 
     // Call this from your GameBootstrapper after systems are constructed.
-    public void Init(GameConfigHub hub,
+    public void Init(
                      GameState gs,
                      BoardModel bm,
                      PlayerAgent pa,
@@ -61,7 +61,7 @@ public sealed class MLAgentController : Agent
                      int theGameIndex)
     {
         gameIndex = theGameIndex;
-        _hub = hub;
+        _hub = GameBootstrapper.hub;
         _gs = gs;
         _bm = bm;
         _pa = pa;

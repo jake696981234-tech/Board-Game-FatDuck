@@ -10,16 +10,17 @@ public static class GeometryBuilder
         ( -1,  0), ( -1, +1), ( 0, +1),
     };
 
-    public static BoardGeometry Build(byte radius)
+    public static BoardGeometry Build()
     {
+        byte radius = GameBootstrapper.hub.board_radius;
         // 1) Enumerate axial coords
         var coords = new List<(short q, short r)>(EstimateCellCount(radius));
-        var idByAxial = new Dictionary<(short,short), int>(coords.Capacity);
+        var idByAxial = new Dictionary<(short, short), int>(coords.Capacity);
 
         for (int q = -radius; q <= radius; q++)
         {
             int rmin = Math.Max(-radius, -q - radius);
-            int rmax = Math.Min( radius, -q + radius);
+            int rmax = Math.Min(radius, -q + radius);
             for (int r = rmin; r <= rmax; r++)
             {
                 int id = coords.Count;

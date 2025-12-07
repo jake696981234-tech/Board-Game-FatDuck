@@ -464,7 +464,7 @@ public static class OfferProvider
         }
 
         float quoted;
-        if (CostEngine.IsAffordable(a, out quoted, player, gameIndex))
+        if (CostEngine.IsAffordable(a, out quoted, gameIndex, player))
         { outCosts[idx] = quoted; outMask[idx] = 1; }
         else { outCosts[idx] = quoted; outMask[idx] = 0; }
     }

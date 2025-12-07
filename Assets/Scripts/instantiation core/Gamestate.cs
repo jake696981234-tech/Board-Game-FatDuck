@@ -61,12 +61,12 @@ namespace Game.Core
         #region Initialize Method
 
         private int gameIndex;
-        public void Initialize(in GameConfigHub hub,
+        public void Initialize(
                        BoardModel board,
                        PlayerState[] players,
                        byte startingPlayer, EventManager eventManager, GameController gameController, int theGameIndex)
         {
-            this.hub = hub;
+            this.hub = GameBootstrapper.hub;
             bm = board;
             events = eventManager;
             controller = gameController;

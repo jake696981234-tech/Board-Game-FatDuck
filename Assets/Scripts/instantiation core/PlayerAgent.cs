@@ -35,13 +35,13 @@ public sealed class PlayerAgent
     private byte[] _mask;
 
     /// <summary>Call once from GameBootstrapper after systems are constructed.</summary>
-    public void Init(in GameConfigHub hub,
+    public void Init(
                      GameState gs,
                      BoardModel bm,
                      int theGameIndex)
     {
-        _hub = hub;
-        _cfg = hub.agent;
+        _hub = GameBootstrapper.hub;
+        _cfg = GameBootstrapper.hub.agent;
         _gs = gs;
         _bm = bm;
         gameIndex = theGameIndex;
@@ -57,13 +57,13 @@ public sealed class PlayerAgent
     }
 
     // Overload allowing explicit policy
-    public void Init(in GameConfigHub hub,
+    public void Init(
                      GameState gs,
                      BoardModel bm,
                      int theGameIndex,
                      IBotPolicy policy)
     {
-        Init(in hub, gs, bm, theGameIndex);
+        Init(gs, bm, theGameIndex);
         _policy = policy ?? new HeuristicPolicy();
     }
 

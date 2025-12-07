@@ -22,19 +22,19 @@ public sealed class GameBootstrapper : MonoBehaviour
     public BoardModel board;
 
 
-    public GameConfigHub hub;
+    public static GameConfigHub hub;
+
 
     void Awake()
     {
         uiRoot.SetActive(config.inspectGame);
+
 
         string csvPath = Path.Combine(Application.streamingAssetsPath, "pieces.csv");
         PiecesCsvImporter.Import(csvPath);
 
 
         if (config == null) { Debug.LogError("Config asset not assigned."); return; }
-
-
 
         // 1) Freeze authoring into an immutable hub
         hub = config.BuildHub();
@@ -51,6 +51,9 @@ public sealed class GameBootstrapper : MonoBehaviour
         {
             GameObject newGameController = Instantiate(inspectGameController);
             var controller = newGameController.GetComponent<GameController>();
+            
+            GameRegistry.game[i].gameController = controller;
+            
 
             if (controller != null)
             {

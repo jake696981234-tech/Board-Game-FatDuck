@@ -58,17 +58,17 @@ public partial class BoardModel
     /// (GameState will seed/own live match counters.)
     /// </summary>
     // BoardModel.cs
-    public void Init(in BoardGeometry geometry, in GameConfigHub hub, int playerCount, int initialPieceCapacity = 8, int[] coreCellIdOverride = null)
+    public void Init(in BoardGeometry geometry, int initialPieceCapacity = 8, int[] coreCellIdOverride = null)
     {
         // store snapshots
         geo = geometry;
-        _radius = hub.board_radius;
-        _cellCount = hub.board_totalCells;
-        _invalidId = hub.board_invalidCellId;
-        _vpCellId = hub.board_vpCellId;
+        _radius = GameBootstrapper.hub.board_radius;
+        _cellCount = GameBootstrapper.hub.board_totalCells;
+        _invalidId = GameBootstrapper.hub.board_invalidCellId;
+        _vpCellId = GameBootstrapper.hub.board_vpCellId;
         _coreCellIdByPlayer = coreCellIdOverride != null
             ? (int[])coreCellIdOverride.Clone()
-            : (int[])hub.board_coreCellIdByPlayer.Clone();
+            : (int[])GameBootstrapper.hub.board_coreCellIdByPlayer.Clone();
 
         occupantPieceId = new int[_cellCount];
         for (int i = 0; i < _cellCount; i++) occupantPieceId[i] = _invalidId;

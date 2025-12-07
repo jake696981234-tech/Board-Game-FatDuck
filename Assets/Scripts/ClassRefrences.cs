@@ -17,17 +17,27 @@ public static class GameRegistry
     {
         game = new Games[gameCount];
         for (int i = 0; i < gameCount; i++)
-            game[i] = CreateNewGame(i);
+        {
+            game[i] = new Games
+            {
+                gameState = new Game.Core.GameState(),
+                boardModel = new BoardModel(),
+                eventManager = new EventManager(),
+                gameController = null
+            };
+        }
     }
 
-    private static Games CreateNewGame(int gameId)
+    public static void Register(int gameId, Game.Core.GameState gameState, BoardModel boardModel, EventManager eventManager, GameController gameController)
     {
-        return new Games
-        {
-            gameState = new Game.Core.GameState(),
-            boardModel = new BoardModel(),
-            eventManager = new EventManager(),
-            gameController = new GameController(),
-        };
+        if (game == null || gameId < 0 || gameId >= game.Length)
+            return;
+
+        var entry = game[gameId] ?? new Games();
+        entry.gameState = gameState;
+        entry.boardModel = boardModel;
+        entry.eventManager = eventManager;
+        entry.gameController = gameController;
+        game[gameId] = entry;
     }
 }

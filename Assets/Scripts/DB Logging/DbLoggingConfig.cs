@@ -125,10 +125,10 @@ public static class DbLoggingConfig
 
 
     private static EventManager events;
-    public static void InitializeLoggingValues(in GameConfigHub hub, EventManager eventManager)
+    public static void InitializeLoggingValues(EventManager eventManager)
     {
         events = eventManager;
-        Hub = hub;
+        Hub = GameBootstrapper.hub;
         TurnBudgetDecrease = Hub.match_startOfTurnBudgetDecrease;
         startingBudget = Hub.match_startingBudgetPerRound[0];
         inputMaxRounds = Hub.match_numberOfRounds;
