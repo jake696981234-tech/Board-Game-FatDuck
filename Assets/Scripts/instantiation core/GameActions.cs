@@ -188,7 +188,7 @@ namespace Game.Core
             int range = Pieces.spawn_range[abilityId];
 
             int origin = bm.GetPieceCell(actorPid);
-            int[] empties = bm.GetScratchCellBuffer();
+            int[] empties = Scratch.GetScratchCellBuffer(gameIndex);
             int cellCount = bm.GetCellCount();
             int eCount = 0;
             for (int c = 0; c < cellCount; c++)
@@ -196,7 +196,7 @@ namespace Game.Core
                 if (!bm.IsEmpty(c)) continue;
                 int dist = bm.Distance(origin, c);
                 if (dist < 1 || dist > range) continue;
-                if (!bm.LineOfSightClear(origin, c)) continue;
+                if (!BmAbilityCac.LineOfSightClear(origin, c, gameIndex)) continue;
                 empties[eCount++] = c;
             }
             Array.Sort(empties, 0, eCount);
@@ -347,25 +347,14 @@ namespace Game.Core
             }
             else
             {
-                int pushedCellID = LegalityKernals.ComputePushDestination(actorPid, victimID, abilityId, gameIndex);
+                int pushedCellID = BmAbilityCac.ComputePushDestination(actorPid, victimID, abilityId, gameIndex);
                 bm.MovePieceRow(victimID, pushedCellID);
             }
             RefreshConnectorState(gameIndex);
         }
 
 
-        //Dont Use this method
-        public static void ApplyFactoryIncome(int gameIndex)
-        {
-            var gameState = GameRegistry.game[gameIndex].gameState;
 
-            float[] income = ComputePlayersFactoryIncome(gameIndex);
-
-            for (int i = 0; i < gameState.ps.Length; i++)
-            {
-                gameState.ps[i].AddBudget(income[i]);
-            }
-        }
 
 
         public static float[] ComputePlayersFactoryIncome(int gameIndex)
@@ -486,13 +475,7 @@ namespace Game.Core
         #region ApplyHelpers
 
 
-        //private void ifOnKillAction(in Action theAction);
-        // {   
-
-        // }
-
-        //this can replace the if(killed) line in both ResolveMelee and ResolveShoot
-        public static void pieceKilled(int victim, int gameIndex)
+        private static void pieceKilled(int victim, int gameIndex)
         {
             var gameState = GameRegistry.game[gameIndex].gameState;
             var bm = GameRegistry.game[gameIndex].boardModel;
@@ -511,7 +494,7 @@ namespace Game.Core
 
             if (targetPid < 0 || dmg <= 0) return false;
 
-            int incomingDir = bm.GetDirectionIndex(attackerCell, bm.GetPieceCell(targetPid));
+            int incomingDir = BmAbilityCac.GetDirectionIndex(attackerCell, bm.GetPieceCell(targetPid), gameIndex);
             if (incomingDir >= 0 && Pieces.HasConnectors(bm.GetPieceType(targetPid)))
             {
                 int hitSide = PiecesSides.OppositeDir(incomingDir);
@@ -557,7 +540,7 @@ namespace Game.Core
 
 
 
-        public static void ResolveMelee(int actorPid, int defenderPid, in Action a, int gameIndex)
+        private static void ResolveMelee(int actorPid, int defenderPid, in Action a, int gameIndex)
         {
             var bm = GameRegistry.game[gameIndex].boardModel;
             var gameState = GameRegistry.game[gameIndex].gameState;
@@ -577,13 +560,13 @@ namespace Game.Core
             else
             {
                 int origin = a.srcCell;
-                int best = bm.FindNearestEmptyAdjacent(origin, bm.GetPieceCell(defenderPid));
+                int best = BmAbilityCac.FindNearestEmptyAdjacent(origin, bm.GetPieceCell(defenderPid), gameIndex);
                 if (best >= 0) bm.MovePieceRow(actorPid, best);
             }
             // Connector state refresh happens in GameActions after move/shoot/push/kill
         }
 
-        public static short GetAbilityDamage(in Action a, int gameIndex)
+        private static short GetAbilityDamage(in Action a, int gameIndex)
         {
             var bm = GameRegistry.game[gameIndex].boardModel;
 
@@ -593,7 +576,7 @@ namespace Game.Core
             return (short)((abi >= 0 && abi < Pieces.damage.Length) ? Pieces.damage[abi] : 0);
         }
 
-        public static int GetSacrificeFactoryAmount(in Action a, int gameIndex)
+        private static int GetSacrificeFactoryAmount(in Action a, int gameIndex)
         {
             var bm = GameRegistry.game[gameIndex].boardModel;
 
@@ -603,7 +586,7 @@ namespace Game.Core
             return (abi >= 0 && abi < Pieces.sacrificeFactory_amount.Length) ? Pieces.sacrificeFactory_amount[abi] : 0;
         }
 
-        public static int GetConversionFactoryAmount(in Action a, int gameIndex)
+        private static int GetConversionFactoryAmount(in Action a, int gameIndex)
         {
             var bm = GameRegistry.game[gameIndex].boardModel;
 
@@ -631,9 +614,9 @@ namespace Game.Core
 
             var cells = new List<int>();
             if (startCell < 0) return cells;
-            var visited = bm.GetScratchCellBuffer();
+            var visited = Scratch.GetScratchCellBuffer(gameIndex);
             Array.Clear(visited, 0, visited.Length);
-            int[] queue = bm.GetScratchCellBuffer();
+            int[] queue = Scratch.GetScratchCellBuffer(gameIndex);
             int head = 0, tail = 0;
             queue[tail++] = startCell;
             visited[startCell] = 1;
@@ -644,7 +627,7 @@ namespace Game.Core
                 if (pid >= 0 && bm.GetPieceType(pid) == type)
                 {
                     cells.Add(cell);
-                    int[] neigh = bm.GetScratchNeighborBuffer();
+                    int[] neigh = Scratch.GetScratchNeighborBuffer(gameIndex);
                     int n = bm.GetNeighbors(cell, neigh);
                     for (int i = 0; i < n; i++)
                     {
@@ -715,7 +698,7 @@ namespace Game.Core
 
                 for (int range = 0; range <= sanctuaryRange; range++)
                 {
-                    int found = bm.pieceIdsRingAroundCell(centerCell, range, protectedpieces);
+                    int found = BmAbilityCac.pieceIdsRingAroundCell(centerCell, range, protectedpieces, gameIndex);
 
                     if (found <= 0) continue;
 
@@ -732,7 +715,7 @@ namespace Game.Core
             return foundPieces;
         }
 
-        public static bool IsPieceProtectedBySanctuary(int pieceId, int gameIndex)
+        private static bool IsPieceProtectedBySanctuary(int pieceId, int gameIndex)
         {
             Span<int> protectedpieces = stackalloc int[240];
             int numberOfProtectedPieces = ProtectedBySanctuary(protectedpieces, gameIndex);

@@ -14,7 +14,7 @@ public partial class BoardModel
 {
     // ---------- Immutable board constants (set once at Init) ----------
     private int _radius;
-    private int _cellCount;
+    public int _cellCount;
     public int _invalidId;
 
     // ---------- Scenario anchors (cell IDs; set at Init) ----------
@@ -355,22 +355,6 @@ public partial class BoardModel
     public int _stamp;      // increments per call
 
     // Public scratch buffers
-    private int[] _scratchCells;     // len == CellCount
-    private int[] _scratchNeighbors; // len >= 6
-
-    public int[] GetScratchCellBuffer()
-    {
-        if (_scratchCells == null || _scratchCells.Length != _cellCount)
-            _scratchCells = new int[_cellCount];
-        return _scratchCells;
-    }
-
-    public int[] GetScratchNeighborBuffer()
-    {
-        if (_scratchNeighbors == null || _scratchNeighbors.Length < 6)
-            _scratchNeighbors = new int[6];
-        return _scratchNeighbors;
-    }
 
     public void EnsureScratchAllocated()
     {

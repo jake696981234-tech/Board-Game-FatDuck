@@ -112,7 +112,7 @@ namespace Game.Core
             ref var cur = ref ps[currentPlayer];
 
             if (!FastCheck(a)) return false;
-            if (!LegalityKernals.IsStillLegal(in a, currentPlayer, gameIndex)) return false;
+            if (!IsItLegal.IsStillLegal(in a, currentPlayer, gameIndex)) return false;
             events.actionBegin(new ActionContext { ThePlayer = currentPlayer });
 
             CostEngine.CostBreakdown quote = default;

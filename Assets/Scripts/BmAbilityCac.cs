@@ -1,11 +1,8 @@
-using UnityEngine;
 using System;
 
 public static class BmAbilityCac
 {
     //The Aim of this script is to contain board Model related Methods, that are needed for abilitys
-
-
 
     /// <summary>
     /// Returns an approximate hex direction index 0..5 from fromCell to toCell,
@@ -352,12 +349,7 @@ public static class BmAbilityCac
         return bm.InvalidId;
     }
 
-    public static bool ContainsFirstN(int[] xs, int count, int value)
-    {
-        int n = (xs != null) ? Math.Min(count, xs.Length) : 0;
-        for (int i = 0; i < n; i++) if (xs[i] == value) return true;
-        return false;
-    }
+
 
     public static int CountClusterOfType(byte type, int startCell, int gameIndex)
     {

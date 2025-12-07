@@ -26,7 +26,7 @@ public static class PiecesSides
         if (!Pieces.IsConnectorConfigAllowed(type, configIndex)) return false;
 
         // Adjacent wall/connector compatibility
-        int[] neigh = bm.GetScratchNeighborBuffer();
+        int[] neigh = Scratch.GetScratchNeighborBuffer(gameIndex);
         int n = bm.GetNeighbors(cell, neigh);
         for (int i = 0; i < n; i++)
         {
@@ -53,14 +53,16 @@ public static class PiecesSides
             return true;
 
         // BFS through connector edges to find any capital.
-        return HasPathToCapital(bm, cell, type, configIndex, playerId);
+        return HasPathToCapital(cell, type, configIndex, playerId, gameIndex);
     }
 
-    private static bool HasPathToCapital(BoardModel bm, int startCell, byte startType, int startConfig, byte playerId)
+    private static bool HasPathToCapital(int startCell, byte startType, int startConfig, byte playerId, int gameIndex)
     {
+        var bm = GameRegistry.game[gameIndex].boardModel;
+
         int cellCount = bm.GetCellCount();
         bool[] visited = new bool[cellCount];
-        int[] queue = bm.GetScratchCellBuffer();
+        int[] queue = Scratch.GetScratchCellBuffer(gameIndex);
         int head = 0, tail = 0;
 
         visited[startCell] = true;
@@ -90,7 +92,7 @@ public static class PiecesSides
             if (Pieces.ConnectorIsCapital(type) && bm.GetPieceOwner(pid) == playerId)
                 return true;
 
-            int[] neigh = bm.GetScratchNeighborBuffer();
+            int[] neigh = Scratch.GetScratchNeighborBuffer(gameIndex);
             int n = bm.GetNeighbors(cell, neigh);
             for (int d = 0; d < n; d++)
             {
@@ -158,7 +160,7 @@ public static class PiecesSides
                 if (capHp > maxCapHp) maxCapHp = capHp;
 
                 int cell = bm.pieceCellId[cur];
-                int[] neigh = bm.GetScratchNeighborBuffer();
+                int[] neigh = Scratch.GetScratchNeighborBuffer(gameIndex);
                 int n = bm.GetNeighbors(cell, neigh);
                 for (int d = 0; d < n; d++)
                 {

@@ -59,7 +59,7 @@ public static class OfferProvider
             return total;
         }
 
-        int[] scratch = bm.GetScratchCellBuffer(); // neighbor buffer, etc. (no allocs)
+        int[] scratch = Scratch.GetScratchCellBuffer(gameIndex); // neighbor buffer, etc. (no allocs)
         int cellCount = bm.GetCellCount();
 
         // =============================
@@ -83,7 +83,7 @@ public static class OfferProvider
                 {
                     case Pieces.AbilityKind.Move:
                         {
-                            int n = LegalityKernals.GetLegalTargets_Move(abilityId, pieceId, scratch, gameIndex);
+                            int n = GetLegalTargets.GetLegalTargets_Move(abilityId, pieceId, scratch, gameIndex);
                             for (int i = 0; i < n; i++)
                             {
                                 int dst = scratch[i];
@@ -102,7 +102,7 @@ public static class OfferProvider
                         }
                     case Pieces.AbilityKind.Shoot:
                         {
-                            int n = LegalityKernals.GetLegalTargets_Shoot(abilityId, pieceId, scratch, gameIndex);
+                            int n = GetLegalTargets.GetLegalTargets_Shoot(abilityId, pieceId, scratch, gameIndex);
                             for (int i = 0; i < n; i++)
                             {
                                 int tgtPid = scratch[i];
@@ -122,7 +122,7 @@ public static class OfferProvider
                         }
                     case Pieces.AbilityKind.CaptureVP:
                         {
-                            if (LegalityKernals.IsLegal_CaptureVP(pieceId, abilityId, gameIndex))
+                            if (IsItLegal.IsLegal_CaptureVP(pieceId, abilityId, gameIndex))
                             {
                                 ushort vpCell = (ushort)bm.GetVictoryPointCellId();
                                 var a = new Action
@@ -140,7 +140,7 @@ public static class OfferProvider
                         }
                     case Pieces.AbilityKind.CoreDamage:
                         {
-                            if (LegalityKernals.IsLegal_CoreDamage(pieceId, abilityId, gameIndex))
+                            if (IsItLegal.IsLegal_CoreDamage(pieceId, abilityId, gameIndex))
                             {
                                 // Determine which adjacent cell is the enemy core and set dstCell accordingly
                                 ushort dstCore = 0;
@@ -171,7 +171,7 @@ public static class OfferProvider
                         break;
                     case Pieces.AbilityKind.Push:
                         {
-                            int n = LegalityKernals.GetLegalTargets_Push(abilityId, pieceId, scratch, gameIndex);
+                            int n = GetLegalTargets.GetLegalTargets_Push(abilityId, pieceId, scratch, gameIndex);
                             for (int i = 0; i < n; i++)
                             {
                                 int tgtPid = scratch[i];
@@ -198,7 +198,7 @@ public static class OfferProvider
                                 if (require > 1)
                                 {
                                     // Cluster check
-                                    int clusterSize = CountClusterOfType(actorType, cell, gameIndex);
+                                    int clusterSize = BmAbilityCac.CountClusterOfType(actorType, cell, gameIndex);
                                     if (clusterSize >= require)
                                     {
                                         // Enumerate legal create destinations for target type
@@ -239,7 +239,7 @@ public static class OfferProvider
                         }
                     case Pieces.AbilityKind.Launcher:
                         {
-                            int n = LegalityKernals.GetLegalTargets_Launcher(abilityId, pieceId, scratch, gameIndex);
+                            int n = GetLegalTargets.GetLegalTargets_Launcher(abilityId, pieceId, scratch, gameIndex);
                             for (int i = 0; i < n; i += 2)
                             {
                                 int tgtPid = scratch[i];
@@ -264,7 +264,7 @@ public static class OfferProvider
                         }
                     case Pieces.AbilityKind.SacrificeFactory:
                         {
-                            int n = LegalityKernals.GetLegalTargets_SacrificeFactory(abilityId, pieceId, scratch, gameIndex);
+                            int n = GetLegalTargets.GetLegalTargets_SacrificeFactory(abilityId, pieceId, scratch, gameIndex);
                             for (int i = 0; i < n; i++)
                             {
                                 int tgtPid = scratch[i];
@@ -285,7 +285,7 @@ public static class OfferProvider
                     case Pieces.AbilityKind.ConversionFactory:
                         //    fix me
                         {
-                            if (LegalityKernals.IsLegal_ConversionFactory(gameState.ps[player].vpTotal))
+                            if (IsItLegal.IsLegal_ConversionFactory(gameState.ps[player].vpTotal))
                             {
                                 var a = new Action
                                 {
@@ -483,7 +483,7 @@ public static class OfferProvider
     private static bool IsInvalid(BoardModel bm, int pieceId) => pieceId == bm.InvalidId;
 
 
-
+    //might move this later to GetLegalTargets
     private static void EmitSpawnerActions(
         in OfferQuery q,
         int abilityId,
@@ -517,7 +517,7 @@ public static class OfferProvider
         if (reqDigit >= 0 && !gameState.ps[player].HasDigit(reqDigit)) return;
 
         // Collect empty, LOS-valid cells within range from launcher
-        int[] empties = bm.GetScratchCellBuffer();
+        int[] empties = Scratch.GetScratchCellBuffer(gameIndex);
         int eCount = 0;
         int cellCount = bm.GetCellCount();
         for (int c = 0; c < cellCount; c++)
@@ -525,7 +525,7 @@ public static class OfferProvider
             if (!bm.IsEmpty(c)) continue;
             int dist = bm.Distance(actorCell, c);
             if (dist < 1 || dist > range) continue;
-            if (!bm.LineOfSightClear(actorCell, c)) continue;
+            if (!BmAbilityCac.LineOfSightClear(actorCell, c, gameIndex)) continue;
             empties[eCount++] = c;
         }
         if (eCount <= 0) return;
@@ -556,6 +556,7 @@ public static class OfferProvider
         }
     }
 
+    //might move this later to GetLegalTargets
     private static void EmitMultiCreatePlacements(
         in OfferQuery q,
         Span<Action> outActions,
@@ -586,7 +587,7 @@ public static class OfferProvider
             if (q.multiCreateBorder && placedCount > 0)
             {
                 bool adjacent = false;
-                int[] neigh = bm.GetScratchCellBuffer();
+                int[] neigh = Scratch.GetScratchCellBuffer(gameIndex);
                 int n = bm.GetNeighbors(cell, neigh);
                 for (int i = 0; i < n; i++)
                 {
@@ -601,7 +602,7 @@ public static class OfferProvider
             }
             else
             {
-                if (!IsCreateGeometryLegal(bm, cell, q.playerId)) continue;
+                if (!BmAbilityCac.IsCreateGeometryLegal(cell, q.playerId, gameIndex)) continue;
             }
             var a = new Action
             {
@@ -617,43 +618,11 @@ public static class OfferProvider
         }
     }
 
-    // ---- Push helpers (local copy of GameActions.ComputePushDestination) ----
 
 
     // ---- GroupBuild helpers ----
-    private static int CountClusterOfType(byte type, int startCell, int gameIndex)
-    {
-        var bm = GameRegistry.game[gameIndex].boardModel;
 
-        if (startCell < 0) return 0;
-        var visited = bm.GetScratchCellBuffer();
-        Array.Clear(visited, 0, visited.Length);
-        int[] queue = bm.GetScratchCellBuffer();
-        int head = 0, tail = 0;
-        queue[tail++] = startCell;
-        visited[startCell] = 1;
-        int count = 0;
-        while (head < tail)
-        {
-            int cell = queue[head++];
-            int pid = bm.GetCellOccupant(cell);
-            if (pid >= 0 && bm.GetPieceType(pid) == type) count++;
-            int[] neigh = bm.GetScratchNeighborBuffer();
-            int n = bm.GetNeighbors(cell, neigh);
-            for (int i = 0; i < n; i++)
-            {
-                int nb = neigh[i];
-                if (nb < 0 || nb >= visited.Length) continue;
-                if (visited[nb] != 0) continue;
-                int nbPid = bm.GetCellOccupant(nb);
-                if (nbPid < 0 || bm.GetPieceType(nbPid) != type) continue;
-                visited[nb] = 1;
-                queue[tail++] = nb;
-            }
-        }
-        return count;
-    }
-
+    //might move this later to GetLegalTargets
     private static void EnumerateGroupBuildCreates(
         in OfferQuery q,
         byte targetType,
@@ -675,7 +644,7 @@ public static class OfferProvider
         for (int cell = 0; cell < cellCount; cell++)
         {
             if (!bm.IsEmpty(cell)) continue;
-            if (!IsCreateGeometryLegal(bm, cell, q.playerId)) continue;
+            if (!BmAbilityCac.IsCreateGeometryLegal(cell, q.playerId, gameIndex)) continue;
             int reqDigit = Pieces.GetRequiredDigit(targetType);
             if (reqDigit >= 0 && !gameState.ps[player].HasDigit(reqDigit)) continue;
             if (!Pieces.IsBuildable(targetType)) continue;
@@ -692,24 +661,5 @@ public static class OfferProvider
         }
     }
 
-    private static bool IsCreateGeometryLegal(BoardModel bm, int cell, byte player)
-    {
-        if (!bm.IsEmpty(cell)) return false;
-        int core = bm.GetPlayerCoreCellId(player);
-        if (cell == core) return true;
-        var scratch = bm.GetScratchCellBuffer();
-        int n = bm.GetNeighbors(core, scratch);
-        for (int i = 0; i < n; i++) if (scratch[i] == cell) return true;
-        int n2 = bm.GetNeighbors(cell, scratch);
-        for (int i = 0; i < n2; i++)
-        {
-            int nb = scratch[i];
-            int pid = bm.GetCellOccupant(nb);
-            if (IsInvalid(bm, pid)) continue;
-            if (bm.GetPieceOwner(pid) != player) continue;
-            byte t = bm.GetPieceType(pid);
-            if (Pieces.IsBuilding(t)) return true;
-        }
-        return false;
-    }
+
 }
