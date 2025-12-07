@@ -14,8 +14,6 @@ public class GameController : MonoBehaviour
 
     public EventManager eventManager;
 
-    public GameActions gameActions;
-
     public bool inspectGame = false;
 
     private int _completedGamesCount = 0;
@@ -110,9 +108,7 @@ public class GameController : MonoBehaviour
         }
 
         gameState = new Game.Core.GameState();
-        gameActions = new GameActions();
-        gameActions.Initialize(board, GameBootstrapper.PiecesData, gameState, ps, eventManager, this);
-        gameState.Initialize(in gameBootstrapper.hub, board, GameBootstrapper.PiecesData, gameBootstrapper.cost, ps, startingPlayer, eventManager, this, gameActions);
+        gameState.Initialize(in gameBootstrapper.hub, board, gameBootstrapper.cost, ps, startingPlayer, eventManager, this, gameIndex);
 
 
         if (inspectGame && config.dbLogging.enabled)
@@ -175,7 +171,7 @@ public class GameController : MonoBehaviour
                         else { policy = new HeuristicPolicy(); }
 
 
-                        agent.Init(in gameBootstrapper.hub, gameState, board, GameBootstrapper.PiecesData, gameBootstrapper.cost, gameBootstrapper.offers, gameActions, policy);
+                        agent.Init(in gameBootstrapper.hub, gameState, board, gameBootstrapper.cost, policy);
                         agent.BindSeat(seat); // (see tiny method below)
                         heuristicControllers[seat] = agent;
                         break;
@@ -222,11 +218,11 @@ public class GameController : MonoBehaviour
 
                         paBridge.BindSeat(seat);
 
-                        paBridge.Init(in gameBootstrapper.hub, gameState, board, GameBootstrapper.PiecesData, gameBootstrapper.cost, gameBootstrapper.offers, gameActions);
+                        paBridge.Init(in gameBootstrapper.hub, gameState, board, gameBootstrapper.cost);
 
                         // Wire everything into the ML controller
 
-                        ml.Init(gameBootstrapper.hub, gameState, board, GameBootstrapper.PiecesData, gameBootstrapper.cost, gameBootstrapper.offers, paBridge, seat, in config.mlRewards);
+                        ml.Init(gameBootstrapper.hub, gameState, board, gameBootstrapper.cost, paBridge, seat, in config.mlRewards);
                         break;
                     }
                 case GameConfigHub.ControlMode.Human:
@@ -254,9 +250,7 @@ public class GameController : MonoBehaviour
                 // inject live systems (same ones agents/ML use)
                 hic.gameState = gameState;
                 hic.boardModel = board;
-                hic.pieces = GameBootstrapper.PiecesData;
                 hic.costEngine = gameBootstrapper.cost;
-                hic.offerProvider = gameBootstrapper.offers;
                 if (hic.boardView == null) hic.boardView = boardView;
                 hic.SetHumanSeat(humanSeat);
             }
@@ -370,8 +364,7 @@ public class GameController : MonoBehaviour
             }
 
             // Reset GameState (reuse same instance so controllers keep references)
-            gameActions.Initialize(board, GameBootstrapper.PiecesData, gameState, ps, eventManager, this);
-            gameState.Initialize(in gameBootstrapper.hub, board, GameBootstrapper.PiecesData, gameBootstrapper.cost, ps, startingPlayer, eventManager, this, gameActions);
+            gameState.Initialize(in gameBootstrapper.hub, board, gameBootstrapper.cost, ps, startingPlayer, eventManager, this);
 
 
             if (inspectGame)

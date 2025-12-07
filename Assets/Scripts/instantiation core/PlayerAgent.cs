@@ -23,10 +23,10 @@ public sealed class PlayerAgent
     // ----- Live systems (read-only handles) -----
     private GameState _gs;               // reducers live here; single mutator authority
     private BoardModel _bm;
-    private Pieces _pcs;
     private CostEngine _cost;
-    private OfferProvider _offers;
     private IBotPolicy _policy;
+
+    private int gameIndex;
 
     private byte _mySeat;
 
@@ -35,25 +35,20 @@ public sealed class PlayerAgent
     private float[] _quotedCosts;
     private byte[] _mask;
 
-    private GameActions gameActions;
-
     /// <summary>Call once from GameBootstrapper after systems are constructed.</summary>
     public void Init(in GameConfigHub hub,
                      GameState gs,
                      BoardModel bm,
-                     Pieces pcs,
                      CostEngine cost,
-                     OfferProvider offers,
-                     GameActions theGameActions)
+                     int theGameIndex)
     {
         _hub = hub;
         _cfg = hub.agent;
         _gs = gs;
         _bm = bm;
-        _pcs = pcs;
         _cost = cost;
-        _offers = offers;
-        gameActions = theGameActions;
+        gameIndex = theGameIndex;
+
 
         // default policy
         _policy = new HeuristicPolicy();
@@ -68,13 +63,10 @@ public sealed class PlayerAgent
     public void Init(in GameConfigHub hub,
                      GameState gs,
                      BoardModel bm,
-                     Pieces pcs,
-                     CostEngine cost,
-                     OfferProvider offers,
-                     GameActions gameActions,
+                     CostEngine cost, int theGameIndex,
                      IBotPolicy policy)
     {
-        Init(in hub, gs, bm, pcs, cost, offers, gameActions);
+        Init(in hub, gs, bm, cost, theGameIndex);
         _policy = policy ?? new HeuristicPolicy();
     }
 
@@ -93,15 +85,15 @@ public sealed class PlayerAgent
     public bool DecideAndAct()
     {
         // Build the query the OfferProvider expects: (bm, pcs, PlayerState snapshot, playerId, cost).
-        gameActions.GetMultiCreateState(out bool mcActive, out byte mcType, out bool mcBorder, out int mcRemaining, out int[] mcCells, out int mcCellCount);
-        var q = new OfferQuery(_bm, _pcs, _gs.CurrentPlayerRef, _gs.CurrentPlayerId, _cost, _gs.PieceLimitEnabled, _gs.pieceLimitPerPlayer,
+        GameActions.GetMultiCreateState(out bool mcActive, out byte mcType, out bool mcBorder, out int mcRemaining, out int[] mcCells, out int mcCellCount, gameIndex);
+        var q = new OfferQuery(_gs.CurrentPlayerId, _cost, _gs.PieceLimitEnabled, _gs.pieceLimitPerPlayer,
             mcActive, mcType, mcBorder, mcRemaining, mcCells, mcCellCount); // :contentReference[oaicite:3]{index=3}
 
         var acts = _actions.AsSpan();
         var costs = _quotedCosts.AsSpan();
         var mask = _mask.AsSpan();
 
-        int total = _offers.BuildActionList(in q, acts, costs, mask);
+        int total = OfferProvider.BuildActionList(in q, acts, costs, mask, gameIndex, _gs.CurrentPlayerId);
         if (total <= 0) return false;
 
         int n = Math.Min(total, _cfg.maxOffersToConsider);
@@ -215,7 +207,7 @@ public sealed class PlayerAgent
             if (pid < 0) { obs[w++] = 0f; continue; }
             byte typ = _bm.GetPieceType(pid);
             int hp = BM_PieceHP(pid);
-            int mh = _pcs.maxHPByType[typ];
+            int mh = Pieces.maxHPByType[typ];
             obs[w++] = Safe01(hp, mh);
         }
 
@@ -226,7 +218,7 @@ public sealed class PlayerAgent
             int pid = BM_PieceAt(id);
             if (pid < 0) { obs[w++] = 0f; continue; }
             byte typ = _bm.GetPieceType(pid);
-            obs[w++] = _pcs.IsBuilding(typ) ? 1f : 0f;
+            obs[w++] = Pieces.IsBuilding(typ) ? 1f : 0f;
         }
 
         // ch8: is VP cell

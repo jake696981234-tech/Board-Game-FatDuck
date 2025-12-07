@@ -19,17 +19,13 @@ public sealed class HumanInteractionController : MonoBehaviour
     [Header("Config & Refs")]
     public InteractionConfig config;
 
-    private GameActions gameActions;
-
     public BoardViewController boardView;   // emits CellClicked(int)
     public GameState gameState;             // your core state (read-only in this skeleton)
     // public OfferProvider offerProvider;  // we'll integrate next pass with your existing OfferProvider API :contentReference[oaicite:7]{index=7}
     // public Pieces pieces;                // for names/icons/costs (aligns with your Pieces registry) :contentReference[oaicite:8]{index=8}
 
     // Core systems used to build offers:
-    public OfferProvider offerProvider;     // assign in inspector
     public BoardModel boardModel;        // assign the same model used by GameState
-    public Pieces pieces;            // your registry (names, flags, etc.)
     public CostEngine costEngine;        // pricing engine used by GameState'
 
     [Header("Canvas/UI")]
@@ -114,10 +110,9 @@ public sealed class HumanInteractionController : MonoBehaviour
 
     #endregion
     #region Boostrap
-    public void ManualAwake(GameActions theGameActions,
+    public void ManualAwake(
     EventManager eventManager)
     {
-        gameActions = theGameActions;
         events = eventManager;
         subscribeMe();
         if (boardView) boardView.CellClicked += OnCellClicked;   // from your BoardViewController
@@ -723,7 +718,7 @@ public sealed class HumanInteractionController : MonoBehaviour
 
             var prefabScript = prefab.GetComponent<FactoryPerTypePayOut>();
             prefabScript.SetValues(
-                pieces.displayNameByType[type],
+                Pieces.displayNameByType[type],
                 payout.PieceTypePayOut[i]
             );
             spawnedPerTypeFactoryPayOutPrefab.Add(prefab);
@@ -754,7 +749,7 @@ public sealed class HumanInteractionController : MonoBehaviour
 
     private void OnBuildItemClicked(BuildItem item)
     {
-        if (pieces.HasConnectors(item.pieceType))
+        if (Pieces.HasConnectors(item.pieceType))
         {
             CachedBuildItemForCreateConnector = item;
             EnterConnectingMode(item);
@@ -838,28 +833,27 @@ public sealed class HumanInteractionController : MonoBehaviour
     private void RebuildOffersForCurrentPlayer()
     {
         _total = _count = 0;
-        if (offerProvider == null || boardModel == null || pieces == null || costEngine == null || gameState == null)
+        if (boardModel == null || costEngine == null || gameState == null)
             return;
 
         // Build the query from live systems (readonly struct → must use constructor)
         var q = new OfferQuery(
             boardModel,
-            pieces,
             gameState.CurrentPlayerRef,
             gameState.CurrentPlayerId,
             costEngine,
             gameState.PieceLimitEnabled,
             gameState.pieceLimitPerPlayer,
-            gameActions.multiCreateActive,
-            gameActions.multiCreateType,
-            gameActions.multiCreateBorder,
-            gameActions.multiCreateRemaining,
-            gameActions.multiCreateCells.ToArray(),
-            gameActions.MultiCreateCellCount
+            gameState.multiCreateActive,
+            gameState.multiCreateType,
+            gameState.multiCreateBorder,
+            gameState.multiCreateRemaining,
+            gameState.multiCreateCells.ToArray(),
+            gameState.MultiCreateCellCount
         );
 
         // Fill the spans (zero-alloc path in OfferProvider). Function returns TOTAL (may exceed cap). :contentReference[oaicite:7]{index=7}
-        _total = offerProvider.BuildActionList(in q, _offers.AsSpan(), _quoted.AsSpan(), _mask.AsSpan());
+        _total = OfferProvider.BuildActionList(in q, _offers.AsSpan(), _quoted.AsSpan(), _mask.AsSpan());
         _count = Mathf.Min(kCap, _total);
     }
 
@@ -908,8 +902,8 @@ public sealed class HumanInteractionController : MonoBehaviour
         var items = new List<BuildItem>(_count);
         if (_count > 0)
         {
-            var names = pieces.displayNameByType;     // assumed from your Pieces registry
-            var paths = pieces.spritePathByType;      // assumed from your Pieces registry
+            var names = Pieces.displayNameByType;     // assumed from your Pieces registry
+            var paths = Pieces.spritePathByType;      // assumed from your Pieces registry
 
             for (int i = 0; i < _count; i++)
             {
@@ -927,7 +921,7 @@ public sealed class HumanInteractionController : MonoBehaviour
                 items.Add(new BuildItem(t, name, path, cost, legal, auxiliary));
             }
         }
-        buildMenu.Show(items, config, pieces);
+        buildMenu.Show(items, config);
     }
 
 
