@@ -3,20 +3,22 @@ using System.Collections.Generic;
 
 public sealed class GameSnapshotComposer
 {
+    // this class can probs also be static
     private readonly BoardGeometry geometry;
     private readonly BoardModel board;
     private readonly Game.Core.GameState state;
-    private readonly Pieces pieces;
+
+    private readonly int gameIndex;
 
     private readonly GameSnapshot staticSnapshot = new();
     private uint versionCounter = 0;
 
-    public GameSnapshotComposer(BoardGeometry g, BoardModel b, Game.Core.GameState s, Pieces p)
+    public GameSnapshotComposer(BoardGeometry g, int theGameIndex)
     {
         geometry = g;
-        board = b;
-        state = s;
-        pieces = p;
+        gameIndex = theGameIndex;
+        state = GameRegistry.game[gameIndex].gameState;
+        board = GameRegistry.game[gameIndex].boardModel;
         BuildStaticGeometry();
     }
 
@@ -45,7 +47,7 @@ public sealed class GameSnapshotComposer
         int i = 0;
         foreach (byte Piece in board.pieceType)
         {
-            if (pieces.HasConnectors(Piece))
+            if (Pieces.HasConnectors(Piece))
             {
                 FilteredPieces.Add(board.pieceConnectorConfig[i]);
             }
@@ -97,8 +99,8 @@ public sealed class GameSnapshotComposer
         }
 
         // per-type UI metadata (safe to share)
-        snapshot.spritePathByType = pieces.spritePathByType;
-        snapshot.displayNameByType = pieces.displayNameByType;
+        snapshot.spritePathByType = Pieces.spritePathByType;
+        snapshot.displayNameByType = Pieces.displayNameByType;
 
         // default owner palette (can replace later)
         snapshot.ownerTintByPlayer = new Color[4] { Color.red, Color.blue, Color.green, Color.silver };

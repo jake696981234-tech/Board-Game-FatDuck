@@ -23,7 +23,6 @@ public sealed class MLAgentController : Agent
     private GameConfigHub _hub;
     private GameState _gs;
     private BoardModel _bm;
-    private CostEngine _cost;      // can be null in structural-only runs
     private PlayerAgent _pa;        // reused for obs + offer build bridge
 
     private int gameIndex;
@@ -56,7 +55,6 @@ public sealed class MLAgentController : Agent
     public void Init(GameConfigHub hub,
                      GameState gs,
                      BoardModel bm,
-                     CostEngine cost,
                      PlayerAgent pa,
                      byte myPlayerId,
                      in Config.MLRewardsAuthoring rewards,
@@ -66,7 +64,6 @@ public sealed class MLAgentController : Agent
         _hub = hub;
         _gs = gs;
         _bm = bm;
-        _cost = cost;
         _pa = pa;
         playerId = myPlayerId;
 
@@ -290,7 +287,7 @@ public sealed class MLAgentController : Agent
     {
         // Build OfferQuery: (bm, pcs, ps, playerId, cost)
         GameActions.GetMultiCreateState(out bool mcActive, out byte mcType, out bool mcBorder, out int mcRemaining, out int[] mcCells, out int mcCellCount, gameIndex);
-        var q = new OfferQuery(playerId, _cost, _gs.PieceLimitEnabled, _gs.pieceLimitPerPlayer,
+        var q = new OfferQuery(playerId, _gs.PieceLimitEnabled, _gs.pieceLimitPerPlayer,
             mcActive, mcType, mcBorder, mcRemaining, mcCells, mcCellCount);
 
         var acts = _actions.AsSpan();

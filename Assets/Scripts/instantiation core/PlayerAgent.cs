@@ -23,7 +23,6 @@ public sealed class PlayerAgent
     // ----- Live systems (read-only handles) -----
     private GameState _gs;               // reducers live here; single mutator authority
     private BoardModel _bm;
-    private CostEngine _cost;
     private IBotPolicy _policy;
 
     private int gameIndex;
@@ -39,14 +38,12 @@ public sealed class PlayerAgent
     public void Init(in GameConfigHub hub,
                      GameState gs,
                      BoardModel bm,
-                     CostEngine cost,
                      int theGameIndex)
     {
         _hub = hub;
         _cfg = hub.agent;
         _gs = gs;
         _bm = bm;
-        _cost = cost;
         gameIndex = theGameIndex;
 
 
@@ -63,10 +60,10 @@ public sealed class PlayerAgent
     public void Init(in GameConfigHub hub,
                      GameState gs,
                      BoardModel bm,
-                     CostEngine cost, int theGameIndex,
+                     int theGameIndex,
                      IBotPolicy policy)
     {
-        Init(in hub, gs, bm, cost, theGameIndex);
+        Init(in hub, gs, bm, theGameIndex);
         _policy = policy ?? new HeuristicPolicy();
     }
 
@@ -86,7 +83,7 @@ public sealed class PlayerAgent
     {
         // Build the query the OfferProvider expects: (bm, pcs, PlayerState snapshot, playerId, cost).
         GameActions.GetMultiCreateState(out bool mcActive, out byte mcType, out bool mcBorder, out int mcRemaining, out int[] mcCells, out int mcCellCount, gameIndex);
-        var q = new OfferQuery(_gs.CurrentPlayerId, _cost, _gs.PieceLimitEnabled, _gs.pieceLimitPerPlayer,
+        var q = new OfferQuery(_gs.CurrentPlayerId, _gs.PieceLimitEnabled, _gs.pieceLimitPerPlayer,
             mcActive, mcType, mcBorder, mcRemaining, mcCells, mcCellCount); // :contentReference[oaicite:3]{index=3}
 
         var acts = _actions.AsSpan();

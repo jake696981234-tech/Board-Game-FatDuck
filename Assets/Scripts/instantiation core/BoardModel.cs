@@ -15,14 +15,14 @@ public partial class BoardModel
     // ---------- Immutable board constants (set once at Init) ----------
     private int _radius;
     private int _cellCount;
-    private int _invalidId;
+    public int _invalidId;
 
     // ---------- Scenario anchors (cell IDs; set at Init) ----------
     private int _vpCellId;
     private int[] _coreCellIdByPlayer; // len = playerCount, cores assumed static
 
     // ---------- Geometry (injected at Init; shared, readonly) ----------
-    private BoardGeometry geo;
+    public BoardGeometry geo;
 
     // Precomputed per-cell shortest-path distances to the configured VP cell
     private int[] _distFromVP;
@@ -39,10 +39,7 @@ public partial class BoardModel
     public int[] pieceCellId;  // [pieceId] -> cellId
     public byte[] pieceType;    // [pieceId] -> type index (semantics live in Pieces.cs)
     public short[] pieceHP;      // [pieceId] -> hp (unit/building maxHP comes from Pieces.cs)
-
-    #region Currently Working on
     public int[] pieceFactoryAux;
-    #endregion
     public byte[] pieceConnectorConfig; // [pieceId] -> connector configuration index (0-63) if hasConnectors, else 0
     public int[] pieceCapitalHP;       // [pieceId] -> current capital HP buff (0 if none)
 
@@ -244,13 +241,6 @@ public partial class BoardModel
         }
         return count;
     }
-
-    public int PieceAt(int cellId) => IsValidCellId(cellId) ? occupantPieceId[cellId] : _invalidId;
-
-    public bool IsAlive(int pieceId) => IsValidPieceId(pieceId);
-    public int PieceOwner(int pieceId) => GetPieceOwner(pieceId);
-    public int PieceCell(int pieceId) => GetPieceCell(pieceId);
-    public byte PieceType(int pieceId) => GetPieceType(pieceId);
     public short PieceHP(int pieceId) => (IsValidPieceId(pieceId) && pieceHP != null) ? pieceHP[pieceId] : (short)0;
     public int PieceFactoryAux(int pieceId) => (IsValidPieceId(pieceId) && pieceFactoryAux != null) ? pieceFactoryAux[pieceId] : 0;
 
@@ -361,10 +351,10 @@ public partial class BoardModel
     // =====================================================================
 
     // Scratch (allocated once) for deterministic BFS/LOS
-    private int[] _q;        // queue
-    private int[] _seen;     // stamp per cell
-    private short[] _dist;   // distance per cell
-    private int _stamp;      // increments per call
+    public int[] _q;        // queue
+    public int[] _seen;     // stamp per cell
+    public short[] _dist;   // distance per cell
+    public int _stamp;      // increments per call
 
     // Public scratch buffers
     private int[] _scratchCells;     // len == CellCount
@@ -384,7 +374,7 @@ public partial class BoardModel
         return _scratchNeighbors;
     }
 
-    private void EnsureScratchAllocated()
+    public void EnsureScratchAllocated()
     {
         if (_q == null || _q.Length != _cellCount) _q = new int[_cellCount];
         if (_seen == null || _seen.Length != _cellCount) _seen = new int[_cellCount];
@@ -396,7 +386,7 @@ public partial class BoardModel
     /// BFS over EMPTY cells only (includes origin if empty).
     /// Deterministic layer order (cellId ascending). Returns total reachable count.
     /// </summary>
-    public int EnumerateReachableEmpty(int originCell, int maxSteps, Span<int> outCells)
+    private int EnumerateReachableEmpty(int originCell, int maxSteps, Span<int> outCells)
     {
         if (!IsValidCellId(originCell) || maxSteps < 0) return 0;
 
@@ -460,86 +450,7 @@ public partial class BoardModel
         }
     }
 
-    /// <summary>
-    /// True if every intermediate cell on the straight hex line is empty (endpoints may be occupied).
-    /// Uses cube-lerp rounding (Red Blob). Requires geo.coordById & geo.idByAxial.
-    /// </summary>
-    public bool LineOfSightClear(int fromCell, int toCell)
-    {
-        if (!IsValidCellId(fromCell) || !IsValidCellId(toCell)) return false;
-        int steps = DistanceCells(fromCell, toCell);
-        if (steps <= 1) return true; // adjacent or same
 
-        var a = geo.coordById[fromCell];
-        var b = geo.coordById[toCell];
-
-        // cube coords
-        double ax = a.q, az = a.r, ay = -ax - az;
-        double bx = b.q, bz = b.r, by = -bx - bz;
-
-        const double EPS = 1e-6;
-        for (int i = 1; i < steps; i++)
-        {
-            double t = (double)i / (double)steps;
-            double x = Lerp(ax + EPS, bx - EPS, t);
-            double y = Lerp(ay + EPS, by - EPS, t);
-            double z = Lerp(az + EPS, bz - EPS, t);
-            CubeRound(x, y, z, out int rx, out int ry, out int rz);
-            var rq = (short)rx; var rr = (short)rz;
-
-            if (!geo.idByAxial.TryGetValue((rq, rr), out int midId))
-                return false; // Off-board—treat as blocked (topology mismatch)
-            if (occupantPieceId[midId] != _invalidId)
-                return false; // blocked by any piece
-        }
-        return true;
-    }
-
-
-    /// <summary>
-    /// Among the 6 neighbors of <paramref name="centerCell"/>, returns the empty cell that is
-    /// closest (by hex distance) to <paramref name="originCell"/>. Ties break by smaller cellId.
-    /// Returns -1 if none are empty.
-    /// </summary>
-    public int FindNearestEmptyAdjacent(int originCell, int centerCell)
-    {
-        if (!IsValidCellId(centerCell)) return _invalidId;
-
-        var neigh = geo.neighborsById[centerCell];
-        int best = _invalidId;
-        int bestDist = int.MaxValue;
-
-        for (int d = 0; d < 6; d++)
-        {
-            int n = neigh[d];
-            if (n < 0) continue;         // off board
-            if (!IsEmpty(n)) continue;    // occupied
-
-            int dist = DistanceCells(originCell, n);
-            if (dist < bestDist || (dist == bestDist && n < best))
-            {
-                best = n;
-                bestDist = dist;
-            }
-        }
-
-        return best;
-    }
-
-
-
-
-
-    private static double Lerp(double a, double b, double t) => a + (b - a) * t;
-
-    private static void CubeRound(double x, double y, double z, out int rx, out int ry, out int rz)
-    {
-        rx = (int)Math.Round(x); ry = (int)Math.Round(y); rz = (int)Math.Round(z);
-        double dx = Math.Abs(rx - x), dy = Math.Abs(ry - y), dz = Math.Abs(rz - z);
-        if (dx > dy && dx > dz) rx = -ry - rz;
-        else if (dy > dz) ry = -rx - rz;
-        else rz = -rx - ry;
-    }
 
     // =====================================================================
     // Convenience queries (optional)

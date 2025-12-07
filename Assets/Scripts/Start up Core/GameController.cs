@@ -172,7 +172,7 @@ public class GameController : MonoBehaviour
                         else { policy = new HeuristicPolicy(); }
 
 
-                        agent.Init(in gameBootstrapper.hub, gameState, board, gameBootstrapper.cost, gameIndex, policy);
+                        agent.Init(in gameBootstrapper.hub, gameState, board, gameIndex, policy);
                         agent.BindSeat(seat); // (see tiny method below)
                         heuristicControllers[seat] = agent;
                         break;
@@ -219,11 +219,11 @@ public class GameController : MonoBehaviour
 
                         paBridge.BindSeat(seat);
 
-                        paBridge.Init(in gameBootstrapper.hub, gameState, board, gameBootstrapper.cost, gameIndex);
+                        paBridge.Init(in gameBootstrapper.hub, gameState, board, gameIndex);
 
                         // Wire everything into the ML controller
 
-                        ml.Init(gameBootstrapper.hub, gameState, board, gameBootstrapper.cost, paBridge, seat, in config.mlRewards, gameIndex);
+                        ml.Init(gameBootstrapper.hub, gameState, board, paBridge, seat, in config.mlRewards, gameIndex);
                         break;
                     }
                 case GameConfigHub.ControlMode.Human:
@@ -251,7 +251,6 @@ public class GameController : MonoBehaviour
                 // inject live systems (same ones agents/ML use)
                 hic.gameState = gameState;
                 hic.boardModel = board;
-                hic.costEngine = gameBootstrapper.cost;
                 if (hic.boardView == null) hic.boardView = boardView;
                 hic.SetHumanSeat(humanSeat);
             }
@@ -260,8 +259,7 @@ public class GameController : MonoBehaviour
             // === Phase B: compose the initial snapshot & push to BoardView ===
             snapshotComposer = new GameSnapshotComposer(
                 geometry,   // local variable from your builder call
-                board,      // BoardModel
-                 gameState,  // Game.Core.GameState
+                gameIndex
              );
 
             currentSnapshot = snapshotComposer.GetSnapshot();
@@ -364,7 +362,7 @@ public class GameController : MonoBehaviour
             }
 
             // Reset GameState (reuse same instance so controllers keep references)
-            gameState.Initialize(in gameBootstrapper.hub, board, gameBootstrapper.cost, ps, startingPlayer, eventManager, this);
+            gameState.Initialize(in gameBootstrapper.hub, board, ps, startingPlayer, eventManager, this, gameIndex);
 
 
             if (inspectGame)

@@ -193,58 +193,7 @@ public static class LegalityKernals
     }
 
 
-    public static int GetLegalTargets_Push(int abilityId, int actorPid, int[] outPieceIds, int gameIndex)
-    {
-        var bm = GameRegistry.game[gameIndex].boardModel;
 
-        // Inline minimal legality similar to GameActions.GetLegalTargets_Push
-        int originCell = bm.GetPieceCell(actorPid);
-        if (originCell < 0) return 0;
-        if (abilityId < 0 ||
-            Pieces.push_TargetsBuildings == null || Pieces.push_TargetsSoldiers == null ||
-            Pieces.push_rangeMax == null || Pieces.push_FriendlyFire == null ||
-            abilityId >= Pieces.push_TargetsBuildings.Length ||
-            abilityId >= Pieces.push_TargetsSoldiers.Length ||
-            abilityId >= Pieces.push_rangeMax.Length ||
-            abilityId >= Pieces.push_FriendlyFire.Length)
-            return 0;
-
-        int actorOwner = bm.GetPieceOwner(actorPid);
-
-        bool allowBuildings = Pieces.push_TargetsBuildings[abilityId];
-        bool allowSoldiers = Pieces.push_TargetsSoldiers[abilityId];
-        int rangeMax = Pieces.push_rangeMax[abilityId];
-        bool allowFriendly = Pieces.push_FriendlyFire[abilityId];
-
-        int cap = outPieceIds != null ? outPieceIds.Length : 0;
-        int count = 0;
-        int cellCount = bm.GetCellCount();
-
-        for (int c = 0; c < cellCount; c++)
-        {
-            int pid = bm.GetCellOccupant(c);
-            if (pid < 0) continue;
-
-            if (!allowFriendly && bm.GetPieceOwner(pid) == actorOwner) continue;
-
-            byte type = bm.GetPieceType(pid);
-            bool isBuilding = Pieces.IsBuilding(type);
-            if (isBuilding && !allowBuildings) continue;
-            if (!isBuilding && !allowSoldiers) continue;
-
-            int dist = bm.Distance(originCell, c);
-            if (dist < 1 || dist > rangeMax) continue;
-            if (!bm.LineOfSightClear(originCell, c)) continue;
-
-            int pushDest = ComputePushDestination(actorPid, pid, abilityId, gameIndex);
-            if (pushDest < 0 || !bm.IsValidCellId(pushDest)) continue;
-
-            if (count < cap) outPieceIds[count] = pid;
-            count++;
-        }
-
-        return count;
-    }
 
 
 
@@ -305,9 +254,59 @@ public static class LegalityKernals
         return write; // count of ints (pairs pid,dst)
     }
 
+    public static int GetLegalTargets_Push(int abilityId, int actorPid, int[] outPieceIds, int gameIndex)
+    {
+        var bm = GameRegistry.game[gameIndex].boardModel;
 
-    #region is legal, to do
-    // to do- need to review and combine methods that are e.g GetLegalTargets_Push & IsLegal_Push. These were taken from gameActions
+        // Inline minimal legality similar to GameActions.GetLegalTargets_Push
+        int originCell = bm.GetPieceCell(actorPid);
+        if (originCell < 0) return 0;
+        if (abilityId < 0 ||
+            Pieces.push_TargetsBuildings == null || Pieces.push_TargetsSoldiers == null ||
+            Pieces.push_rangeMax == null || Pieces.push_FriendlyFire == null ||
+            abilityId >= Pieces.push_TargetsBuildings.Length ||
+            abilityId >= Pieces.push_TargetsSoldiers.Length ||
+            abilityId >= Pieces.push_rangeMax.Length ||
+            abilityId >= Pieces.push_FriendlyFire.Length)
+            return 0;
+
+        int actorOwner = bm.GetPieceOwner(actorPid);
+
+        bool allowBuildings = Pieces.push_TargetsBuildings[abilityId];
+        bool allowSoldiers = Pieces.push_TargetsSoldiers[abilityId];
+        int rangeMax = Pieces.push_rangeMax[abilityId];
+        bool allowFriendly = Pieces.push_FriendlyFire[abilityId];
+
+        int cap = outPieceIds != null ? outPieceIds.Length : 0;
+        int count = 0;
+        int cellCount = bm.GetCellCount();
+
+        for (int c = 0; c < cellCount; c++)
+        {
+            int pid = bm.GetCellOccupant(c);
+            if (pid < 0) continue;
+
+            if (!allowFriendly && bm.GetPieceOwner(pid) == actorOwner) continue;
+
+            byte type = bm.GetPieceType(pid);
+            bool isBuilding = Pieces.IsBuilding(type);
+            if (isBuilding && !allowBuildings) continue;
+            if (!isBuilding && !allowSoldiers) continue;
+
+            int dist = bm.Distance(originCell, c);
+            if (dist < 1 || dist > rangeMax) continue;
+            if (!bm.LineOfSightClear(originCell, c)) continue;
+
+            int pushDest = ComputePushDestination(actorPid, pid, abilityId, gameIndex);
+            if (pushDest < 0 || !bm.IsValidCellId(pushDest)) continue;
+
+            if (count < cap) outPieceIds[count] = pid;
+            count++;
+        }
+
+        return count;
+    }
+
     public static bool IsLegal_Push(int actorPid, int abilityId, in Game.Core.Action a, int gameIndex)
     {
         var bm = GameRegistry.game[gameIndex].boardModel;
@@ -343,6 +342,11 @@ public static class LegalityKernals
         int pushDest = ComputePushDestination(actorPid, targetPid, abilityId, gameIndex);
         return pushDest >= 0 && bm.IsValidCellId(pushDest);
     }
+
+
+
+    #region is legal, to do
+    // to do- need to review and combine methods that are e.g GetLegalTargets_Push & IsLegal_Push. These were taken from gameActions
 
 
     public static bool IsLegal_GroupBuild(int actorPid, int abilityId, in Game.Core.Action a, byte currentPlayer, int gameIndex)
@@ -480,7 +484,7 @@ public static class LegalityKernals
         var gameState = GameRegistry.game[gameIndex].gameState;
         var controller = GameRegistry.game[gameIndex].gameController;
         var bm = GameRegistry.game[gameIndex].boardModel;
- 
+
 
         // EndTurn: always structurally legal
         if (a.kind == EndTurn) return true;
