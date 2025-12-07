@@ -35,7 +35,7 @@ public class EventManager
     #region GameActions 
     //experimental new event system
 
-    public event Action<int> PieceKilled;
+
 
 
 

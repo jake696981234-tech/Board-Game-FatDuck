@@ -98,7 +98,7 @@ public sealed class PlayerAgent
         var costsN = costs.Slice(0, Math.Min(n, costs.Length));
         var maskN = mask.Slice(0, Math.Min(n, mask.Length));
 
-        int chosen = _policy?.PickAction(in q, actsN, costsN, maskN) ?? -1;
+        int chosen = _policy?.PickAction(in q, actsN, costsN, maskN, gameIndex, _gs.CurrentPlayerId) ?? -1;
         if (chosen < 0) chosen = FindEndTurn(actsN);
 
         if (chosen < 0) return false;

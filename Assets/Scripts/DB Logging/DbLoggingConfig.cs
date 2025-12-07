@@ -447,19 +447,21 @@ public static class DbLoggingConfig
         pSimID.Value = simID;
 
 
-        var pcs = PiecesCsvImporter.Import(csvPath, onTypeDefined: (pieceID, pieceName, isBuilding, faction, buildCost) =>
-        {
-            pPieceID.Value = pieceID;
-            pPieceName.Value = pieceName ?? (object)DBNull.Value;
-            pIsBuilding.Value = isBuilding;
-            pFactionName.Value = string.IsNullOrEmpty(faction) ? (object)DBNull.Value : faction;
-            pBaseCost.Value = buildCost == 0 ? (object)DBNull.Value : buildCost; // adjust if 0 is valid
+        // to do- problem to fix, came about when i refactacted pieces to static
 
-            // Capture the new pieceSK and cache it by pieceID
-            object skObj = cmd.ExecuteScalar();
-            int newPieceSK = Convert.ToInt32(skObj);
-            pieceSKByPieceID[pieceID] = newPieceSK;
-        });
+        // var pcs = PiecesCsvImporter.Import(csvPath, onTypeDefined: (pieceID, pieceName, isBuilding, faction, buildCost) =>
+        // {
+        //     pPieceID.Value = pieceID;
+        //     pPieceName.Value = pieceName ?? (object)DBNull.Value;
+        //     pIsBuilding.Value = isBuilding;
+        //     pFactionName.Value = string.IsNullOrEmpty(faction) ? (object)DBNull.Value : faction;
+        //     pBaseCost.Value = buildCost == 0 ? (object)DBNull.Value : buildCost; // adjust if 0 is valid
+
+        //     // Capture the new pieceSK and cache it by pieceID
+        //     object skObj = cmd.ExecuteScalar();
+        //     int newPieceSK = Convert.ToInt32(skObj);
+        //     pieceSKByPieceID[pieceID] = newPieceSK;
+        // });
 
         tx.Commit();
     }

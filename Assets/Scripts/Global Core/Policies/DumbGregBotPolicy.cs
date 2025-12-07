@@ -30,9 +30,13 @@ public sealed class DumbGregBotPolicy : IBotPolicy
     public int PickAction(in OfferQuery q,
                           ReadOnlySpan<Game.Core.Action> acts,
                           ReadOnlySpan<float> costs,
-                          ReadOnlySpan<byte> mask)
+                          ReadOnlySpan<byte> mask,
+                          int gameIndex,
+                          byte playerId)
     {
-        bool firstAction = q.ps.actionIndexThisTurn == 0;
+        var gameState = GameRegistry.game[gameIndex].gameState;
+
+        bool firstAction = gameState.ps[playerId].actionIndexThisTurn == 0;
         int endIdx = FindEndTurn(acts);
 
         // ===== Tier 1: CaptureVP (gated) =====
@@ -59,7 +63,7 @@ public sealed class DumbGregBotPolicy : IBotPolicy
         int bestShootIdx = -1;
         ScanMovesAndShoot(q, acts, costs, mask,
             out bestMoveNB, out secondMoveNB, out bestMoveNBDelta, out bestMoveNBAfter,
-            out bestMoveBld, out bestMoveBldDelta, out bestShootIdx);
+            out bestMoveBld, out bestMoveBldDelta, out bestShootIdx, gameIndex);
 
         if (bestMoveNB >= 0)
         {
@@ -142,14 +146,16 @@ public sealed class DumbGregBotPolicy : IBotPolicy
                                           ReadOnlySpan<byte> mask,
                                           out int bestMoveNB, out int secondMoveNB, out int bestMoveNBDelta, out int bestMoveNBAfter,
                                           out int bestMoveBld, out int bestMoveBldDelta,
-                                          out int bestShootIdx)
+                                          out int bestShootIdx,
+                                          int gameIndex)
     {
+        var bm = GameRegistry.game[gameIndex].boardModel;
+
         bestMoveNB = -1; secondMoveNB = -1; bestMoveNBDelta = 0; bestMoveNBAfter = int.MaxValue;
         bestMoveBld = -1; bestMoveBldDelta = 0; bestShootIdx = -1;
 
         float bestShootCost = float.PositiveInfinity;
 
-        var bm = q.bm; var pcs = q.pcs;
 
         for (int i = 0; i < acts.Length; i++)
         {
@@ -173,7 +179,7 @@ public sealed class DumbGregBotPolicy : IBotPolicy
 
             int pid = bm.GetCellOccupant(src);
             byte typ = bm.GetPieceType(pid);
-            bool isBuilding = pcs.IsBuilding(typ);
+            bool isBuilding = Pieces.IsBuilding(typ);
 
             if (!isBuilding)
             {
@@ -228,7 +234,6 @@ public sealed class DumbGregBotPolicy : IBotPolicy
                                    ReadOnlySpan<byte> mask,
                                    bool mustBeBuilding)
     {
-        var pcs = q.pcs;
         // Compute total weight
         double total = 0;
         for (int i = 0; i < acts.Length; i++)
@@ -236,7 +241,7 @@ public sealed class DumbGregBotPolicy : IBotPolicy
             if (IsMasked(i, mask)) continue;
             ref readonly var a = ref acts[i];
             if (a.kind != ActionKind.Create) continue;
-            bool isB = pcs.IsBuilding(a.pieceType);
+            bool isB = Pieces.IsBuilding(a.pieceType);
             if (mustBeBuilding != isB) continue;
             float c = Cost(costs, i);
             double w = 1.0 / (1.0 + Math.Max(0.0, c));
@@ -249,7 +254,7 @@ public sealed class DumbGregBotPolicy : IBotPolicy
             if (IsMasked(i, mask)) continue;
             ref readonly var a = ref acts[i];
             if (a.kind != ActionKind.Create) continue;
-            bool isB = pcs.IsBuilding(a.pieceType);
+            bool isB = Pieces.IsBuilding(a.pieceType);
             if (mustBeBuilding != isB) continue;
             float c = Cost(costs, i);
             double w = 1.0 / (1.0 + Math.Max(0.0, c));

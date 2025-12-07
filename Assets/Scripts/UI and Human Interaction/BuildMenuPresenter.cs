@@ -15,7 +15,7 @@ public sealed class BuildMenuPresenter : MonoBehaviour
     private readonly List<BuildMenuItemView> _pool = new();
 
 
-    public void Show(IEnumerable<BuildItem> rawItems, InteractionConfig config, Pieces pieces)
+    public void Show(IEnumerable<BuildItem> rawItems, InteractionConfig config)
     {
         IEnumerable<BuildItem> items;
         if (config.GiveRawActionOffers)
@@ -32,7 +32,7 @@ public sealed class BuildMenuPresenter : MonoBehaviour
         foreach (var it in items)
         {
             var view = Ensure(i++);
-            view.Bind(it, OnItemClicked, pieces.isBuildingByType[it.pieceType], pieces.factionNameByType[it.pieceType]);
+            view.Bind(it, OnItemClicked, Pieces.isBuildingByType[it.pieceType], Pieces.factionNameByType[it.pieceType]);
             view.gameObject.SetActive(true);
         }
         for (; i < _pool.Count; i++) _pool[i].gameObject.SetActive(false);

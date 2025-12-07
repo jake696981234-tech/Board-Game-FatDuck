@@ -7,6 +7,8 @@ public interface IBotPolicy
     int PickAction(in OfferQuery q,
                    ReadOnlySpan<Game.Core.Action> acts,
                    ReadOnlySpan<float> costs,
-                   ReadOnlySpan<byte> mask);
+                   ReadOnlySpan<byte> mask,
+                   int gameIndex,
+                    byte playerId);
 }
 

@@ -6,14 +6,16 @@ public sealed class HeuristicPolicy : IBotPolicy
     public int PickAction(in OfferQuery q,
                           ReadOnlySpan<Game.Core.Action> acts,
                           ReadOnlySpan<float> costs,
-                          ReadOnlySpan<byte> mask)
+                          ReadOnlySpan<byte> mask,
+                          int gameIndex,
+                          byte playerId)
     {
         const float EPS = 1e-4f;
         float bestCost = float.PositiveInfinity;
         int bestIdx = -1;
         int bestDist = int.MaxValue;
 
-        var bm = q.bm;
+        var bm = GameRegistry.game[gameIndex].boardModel;
 
         for (int i = 0; i < acts.Length; i++)
         {

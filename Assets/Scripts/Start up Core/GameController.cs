@@ -283,7 +283,7 @@ public class GameController : MonoBehaviour
                 currentSnapshot = snapshotComposer.GetSnapshot(); if (boardView != null) boardView.ApplySnapshot(currentSnapshot);
             };
 
-            hic.ManualAwake(eventManager);
+            hic.ManualAwake(eventManager, gameIndex);
             hic.ManualEnable();
         }
     }

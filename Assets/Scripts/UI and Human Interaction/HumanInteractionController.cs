@@ -26,7 +26,6 @@ public sealed class HumanInteractionController : MonoBehaviour
 
     // Core systems used to build offers:
     public BoardModel boardModel;        // assign the same model used by GameState
-    public CostEngine costEngine;        // pricing engine used by GameState'
 
     [Header("Canvas/UI")]
     public Image backdrop;
@@ -108,11 +107,14 @@ public sealed class HumanInteractionController : MonoBehaviour
 
     public bool IsCurrentPlayer = false;
 
+    private int gameIndex;
+
     #endregion
     #region Boostrap
     public void ManualAwake(
-    EventManager eventManager)
+    EventManager eventManager, int theGameIndex)
     {
+        gameIndex = theGameIndex;
         events = eventManager;
         subscribeMe();
         if (boardView) boardView.CellClicked += OnCellClicked;   // from your BoardViewController
@@ -833,15 +835,12 @@ public sealed class HumanInteractionController : MonoBehaviour
     private void RebuildOffersForCurrentPlayer()
     {
         _total = _count = 0;
-        if (boardModel == null || costEngine == null || gameState == null)
+        if (boardModel == null || gameState == null)
             return;
 
         // Build the query from live systems (readonly struct → must use constructor)
         var q = new OfferQuery(
-            boardModel,
-            gameState.CurrentPlayerRef,
             gameState.CurrentPlayerId,
-            costEngine,
             gameState.PieceLimitEnabled,
             gameState.pieceLimitPerPlayer,
             gameState.multiCreateActive,
@@ -853,7 +852,7 @@ public sealed class HumanInteractionController : MonoBehaviour
         );
 
         // Fill the spans (zero-alloc path in OfferProvider). Function returns TOTAL (may exceed cap). :contentReference[oaicite:7]{index=7}
-        _total = OfferProvider.BuildActionList(in q, _offers.AsSpan(), _quoted.AsSpan(), _mask.AsSpan());
+        _total = OfferProvider.BuildActionList(in q, _offers.AsSpan(), _quoted.AsSpan(), _mask.AsSpan(), gameIndex, gameState.CurrentPlayerId);
         _count = Mathf.Min(kCap, _total);
     }
 
