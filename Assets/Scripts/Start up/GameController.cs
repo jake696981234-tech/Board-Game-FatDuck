@@ -72,13 +72,10 @@ public class GameController : MonoBehaviour
 
     }
 
-
     public Game.Core.GameState gameState;
-
 
     public GameSnapshot currentSnapshot;   // latest snapshot (read-only for views)
     public GameSnapshotComposer snapshotComposer;   // snapshot builder
-
 
     void Start()
     {
@@ -250,12 +247,9 @@ public class GameController : MonoBehaviour
                 }
 
                 // inject live systems (same ones agents/ML use)
-                hic.gameState = gameState;
-                hic.boardModel = board;
                 if (hic.boardView == null) hic.boardView = boardView;
-                hic.SetHumanSeat(humanSeat);
+                UI.SetHumanSeat(humanSeat);
             }
-
 
             // === Phase B: compose the initial snapshot & push to BoardView ===
             snapshotComposer = new GameSnapshotComposer(
@@ -264,8 +258,6 @@ public class GameController : MonoBehaviour
              );
 
             currentSnapshot = snapshotComposer.GetSnapshot();
-
-
 
             if (boardView != null)
             {
@@ -284,8 +276,8 @@ public class GameController : MonoBehaviour
                 currentSnapshot = snapshotComposer.GetSnapshot(); if (boardView != null) boardView.ApplySnapshot(currentSnapshot);
             };
 
-            hic.ManualAwake(eventManager, gameIndex);
-            hic.ManualEnable();
+            UI.ManualAwake(hic, gameIndex);
+            UI.ManualEnable();
         }
     }
 
