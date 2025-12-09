@@ -10,26 +10,24 @@ public sealed class CellView : MonoBehaviour
 
     [Header("Visuals")]
     public SpriteRenderer baseSprite;
-    public GameObject     highlightGO;
+    public GameObject highlightGO;
     public TextMeshPro idLabel;
 
     [Tooltip("Dynamic number shown for VP pool or Core HP on special cells.")]
     public TextMeshPro statusLabel;
 
-    private BoardViewController _controller;
 
-    public void Init(BoardViewController controller)
+    public void Init()
     {
-        _controller = controller;
         SetHighlight(false);
         SetIdVisible(false);
         SetStatusVisible(false);
     }
 
-    public void SetBaseColor(Color c)   { if (baseSprite) baseSprite.color = c; }
-    public void SetHighlight(bool on)   { if (highlightGO) highlightGO.SetActive(on); }
-    public void SetIdVisible(bool on)   { if (idLabel) idLabel.gameObject.SetActive(on); }
-    public void SetIdText(string text)  { if (idLabel) idLabel.text = text; }
+    public void SetBaseColor(Color c) { if (baseSprite) baseSprite.color = c; }
+    public void SetHighlight(bool on) { if (highlightGO) highlightGO.SetActive(on); }
+    public void SetIdVisible(bool on) { if (idLabel) idLabel.gameObject.SetActive(on); }
+    public void SetIdText(string text) { if (idLabel) idLabel.text = text; }
 
     public void SetStatusVisible(bool on)
     {

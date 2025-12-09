@@ -8,7 +8,6 @@ public sealed class GameBootstrapper : MonoBehaviour
 {
     [Header("Authoring")]
     public Config config;     // assign in Inspector
-    public BoardViewController boardView;
 
     public PerGameConfig perGameConfig;
 
@@ -51,9 +50,9 @@ public sealed class GameBootstrapper : MonoBehaviour
         {
             GameObject newGameController = Instantiate(inspectGameController);
             var controller = newGameController.GetComponent<GameController>();
-            
+
             GameRegistry.game[i].gameController = controller;
-            
+
 
             if (controller != null)
             {
@@ -72,8 +71,6 @@ public sealed class GameBootstrapper : MonoBehaviour
             if (config.inspectGame && i == 0)
             {
                 controller.inspectGame = true;
-                if (controller.boardView == null)
-                    controller.boardView = this.boardView;
             }
         }
 

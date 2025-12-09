@@ -111,8 +111,16 @@ namespace Game.Core
         {
             ref var cur = ref ps[currentPlayer];
 
-            if (!FastCheck(a)) return false;
-            if (!IsItLegal.IsStillLegal(in a, currentPlayer, gameIndex)) return false;
+            if (!FastCheck(a))
+            {
+                Debug.Log("FastCheck returned false");
+                return false;
+            }
+            if (!IsItLegal.IsStillLegal(in a, currentPlayer, gameIndex))
+            {
+                Debug.Log("Is Still Legal returned false");
+                return false;
+            }
             events.actionBegin(new ActionContext { ThePlayer = currentPlayer });
 
             CostEngine.CostBreakdown quote = default;
@@ -121,7 +129,10 @@ namespace Game.Core
             if (a.kind != EndTurn && !isMultiPlacement)
             {
                 if (!CostEngine.IsAffordable(in cur, in a, out quote, gameIndex))
+                {
+                    Debug.Log("CostEngine Is Affordable Returned False");
                     return false;
+                }
             }
             else
             {
@@ -181,7 +192,11 @@ namespace Game.Core
                     {
                         if (controller.PieceLimitEnabled && controller.PieceLimitPerPlayer > 0 &&
                             bm.GetPieceCountForPlayer(currentPlayer) >= controller.PieceLimitPerPlayer)
+                        {
+                            Debug.Log("Piece Limit returned false");
                             return false;
+                        }
+
                         GameActions.ApplyCreate(in a, currentPlayer, gameIndex);
                     }
                     break;
@@ -195,7 +210,9 @@ namespace Game.Core
                 case EndTurn: ApplyEndTurn(); break; // unreachable due to early return above
                 case SacrificeFactory: GameActions.ApplySacrificeFactory(in a, currentPlayer, gameIndex); break;
                 case ConversionFactory: GameActions.ApplyConversionFactory(in a, currentPlayer, gameIndex); break;
-                default: return false;
+                default:
+                    Debug.Log("Find Action Match returned false");
+                    return false;
             }
 
             // For non-EndTurn actions, apply costs and advance index
@@ -249,7 +266,6 @@ namespace Game.Core
 
         private bool FastCheck(in Action a)
         {
-            // Allow all known action kinds up to SacrificeFactory; reject only undefined kinds.
             if (a.kind > ConversionFactory) return false;
             if (currentPlayer >= 4) return false;
             return true;

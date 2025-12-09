@@ -15,7 +15,7 @@ public sealed class WallOptionPrefab : MonoBehaviour
     public void WhenButtonPressed()
     {
 
-        HumanInteractionController.howManyWallSelected(CachedWall);
+        UI.howManyWallSelected(CachedWall);
     }
 
     public void SeedData(ushort wall)

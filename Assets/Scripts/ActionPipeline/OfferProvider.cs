@@ -12,6 +12,7 @@ using System.Runtime.CompilerServices;
 using Game.Core;
 using Action = Game.Core.Action;
 using static Game.Core.ActionKind; // import enum values
+using UnityEngine;
 
 public static class OfferProvider
 {
@@ -36,6 +37,7 @@ public static class OfferProvider
         // Multi-create pending: emit only placement actions
         if (q.multiCreateActive && q.multiCreateRemaining > 0)
         {
+            Debug.Log($"Entering MultiCreatePlacements");
             EmitMultiCreatePlacements(q, outActions, outCosts, outMask, ref write, ref total, gameIndex, player);
             // Always offer EndTurn as escape hatch
             var end = new Action
@@ -283,7 +285,6 @@ public static class OfferProvider
                             break;
                         }
                     case Pieces.AbilityKind.ConversionFactory:
-                        //    fix me
                         {
                             if (IsItLegal.IsLegal_ConversionFactory(gameState.ps[player].vpTotal))
                             {

@@ -1,5 +1,6 @@
 using static Game.Core.ActionKind;
 using System;
+using UnityEngine;
 
 public static class IsItLegal
 {
@@ -241,7 +242,11 @@ public static class IsItLegal
             }
 
             // cell must be empty
-            if (bm.GetCellOccupant(a.dstCell) >= 0) return false;
+            if (bm.GetCellOccupant(a.dstCell) >= 0)
+            {
+                Debug.Log("GetCellOccupant returned false");
+                return false;
+            }
 
             // geometry: on core OR adjacent to core OR adjacent to any of your buildings
             bool geomOk = false;
@@ -267,37 +272,77 @@ public static class IsItLegal
                     if (Pieces.IsBuilding(t)) { geomOk = true; break; }
                 }
             }
-            if (!geomOk) return false;
+            if (!geomOk)
+            {
+                Debug.Log("Legal Build Location Returned False");
+                return false;
+            }
 
             // parity with OfferProvider: buildable flag + required digit gate
-            if (!Pieces.IsBuildable(a.pieceType)) return false;
+            if (!Pieces.IsBuildable(a.pieceType))
+            {
+                Debug.Log("buildable flag Returned False");
+                return false;
+            }
             int req = Pieces.GetRequiredDigit(a.pieceType);
-            if (req >= 0 && !gameState.ps[player].HasDigit(req)) return false;
+            if (req >= 0 && !gameState.ps[player].HasDigit(req))
+            {
+                Debug.Log("Required digit gate Returned False");
+                return false;
+            }
 
             // Connector legality: config index is carried in aux
             if (Pieces.HasConnectors(a.pieceType))
             {
                 int cfg = a.aux;
-                if (!Pieces.IsConnectorConfigAllowed(a.pieceType, cfg)) return false;
-                if (!PiecesSides.IsConnectorPlacementLegal(a.dstCell, a.pieceType, cfg, player, gameIndex))
+                if (!Pieces.IsConnectorConfigAllowed(a.pieceType, cfg))
+                {
+                    Debug.Log("IsConnectorConfigAllowed Returned False");
                     return false;
+                }
+                if (!PiecesSides.IsConnectorPlacementLegal(a.dstCell, a.pieceType, cfg, player, gameIndex))
+                {
+                    Debug.Log("IsConnectorPlacementLegal Returned False");
+                    return false;
+                }
             }
             return true;
         }
 
         // Non-Create actions (Move/Shoot/CaptureVP/CoreDamage) – old path:
         int actorPid = bm.GetCellOccupant(a.srcCell);
-        if (actorPid < 0) return false;
-        if (bm.GetPieceOwner(actorPid) != player) return false;
+        if (actorPid < 0)
+        {
+            Debug.Log("Theres no target Returned False");
+            return false;
+        }
+        if (bm.GetPieceOwner(actorPid) != player)
+        {
+            Debug.Log("Piece owner == Piece Actor Returned False");
+            return false;
+        }
 
         byte type = bm.GetPieceType(actorPid);
-        if (a.abilitySlot >= Pieces.AbilitySlotCount(type)) return false;
+        if (a.abilitySlot >= Pieces.AbilitySlotCount(type))
+        {
+            Debug.Log("a.abilitySlot >= Pieces.AbilitySlotCount Returned False");
+            return false;
+        }
+
 
         int abilityId = Pieces.AbilityIdAtSlot(type, a.abilitySlot);
-        if (abilityId < 0) return false;
+        if (abilityId < 0)
+        {
+            Debug.Log("abilityId < 0 Returned False");
+            return false;
+        }
 
         byte kind = Pieces.GetAbilityKind(type, a.abilitySlot);
-        if (kind != a.kind) return false; // slot-kind drift guard
+        if (kind != a.kind)
+        {
+            Debug.Log("kind != a.kind Returned False");
+            return false; // slot-kind drift guard
+        }
 
         int[] targets = Scratch.GetScratchCellBuffer(gameIndex);
         int[] targetsPiece = Scratch.GetScratchCellBuffer(gameIndex);
@@ -305,27 +350,102 @@ public static class IsItLegal
         switch (a.kind)
         {
             case Move:
-                count = GetLegalTargets.GetLegalTargets_Move(actorPid, abilityId, targets, gameIndex);
-                return ContainsFirstN(targets, count, a.dstCell);
+                count = GetLegalTargets.GetLegalTargets_Move(abilityId, actorPid, targets, gameIndex);
+                if (ContainsFirstN(targets, count, a.dstCell))
+                {
+                    return true;
+                }
+                else
+                {
+                    Debug.Log("Move - ContainsFirstN Returned False");
+                    return false; // slot-kind drift guard
+                }
             case Shoot:
-                count = GetLegalTargets.GetLegalTargets_Shoot(actorPid, abilityId, targets, gameIndex);
-                return ContainsFirstN(targets, count, a.aux /* targetPieceId */);
+                count = GetLegalTargets.GetLegalTargets_Shoot(abilityId, actorPid, targets, gameIndex);
+                if (ContainsFirstN(targets, count, a.aux /* targetPieceId */))
+                {
+                    return true;
+                }
+                else
+                {
+                    Debug.Log("Shoot - ContainsFirstN Returned False");
+                    return false; // slot-kind drift guard
+                }
             case Push:
-                return IsLegal_Push(actorPid, abilityId, in a, gameIndex);
+                if (IsLegal_Push(actorPid, abilityId, in a, gameIndex))
+                {
+                    return true;
+                }
+                else
+                {
+                    Debug.Log("Push - ContainsFirstN Returned False");
+                    return false; // slot-kind drift guard
+                }
             case Launcher:
-                return IsLegal_Launcher(actorPid, abilityId, in a, gameIndex);
+                if (IsLegal_Launcher(actorPid, abilityId, in a, gameIndex))
+                {
+                    return true;
+                }
+                else
+                {
+                    Debug.Log("Launcher - ContainsFirstN Returned False");
+                    return false; // slot-kind drift guard
+                }
             case Spawner:
-                return IsLegal_Spawner(actorPid, abilityId, in a, player, gameIndex);
+                if (IsLegal_Spawner(actorPid, abilityId, in a, player, gameIndex))
+                {
+                    return true;
+                }
+                else
+                {
+                    Debug.Log("Spawner - ContainsFirstN Returned False");
+                    return false; // slot-kind drift guard
+                }
             case GroupBuild:
-                return IsLegal_GroupBuild(actorPid, abilityId, in a, player, gameIndex);
+                if (IsLegal_GroupBuild(actorPid, abilityId, in a, player, gameIndex))
+                {
+                    return true;
+                }
+                else
+                {
+                    Debug.Log("GroupBuild - ContainsFirstN Returned False");
+                    return false; // slot-kind drift guard
+                }
             case CaptureVP:
-                return IsLegal_CaptureVP(actorPid, abilityId, gameIndex);
+                if (IsLegal_CaptureVP(actorPid, abilityId, gameIndex))
+                {
+                    return true;
+                }
+                else
+                {
+                    Debug.Log("CaptureVP - ContainsFirstN Returned False");
+                    return false; // slot-kind drift guard
+                }
             case CoreDamage:
-                return IsLegal_CoreDamage(actorPid, abilityId, gameIndex);
+                if (IsLegal_CoreDamage(actorPid, abilityId, gameIndex))
+                {
+                    return true;
+                }
+                else
+                {
+                    Debug.Log("CoreDamage - ContainsFirstN Returned False");
+                    return false; // slot-kind drift guard
+                }
             case SacrificeFactory:
-                count = GetLegalTargets.GetLegalTargets_SacrificeFactory(actorPid, abilityId, targetsPiece, gameIndex);
-                return ContainsFirstN(targets, count, a.aux /* targetPieceId */);
+                count = GetLegalTargets.GetLegalTargets_SacrificeFactory(abilityId, actorPid, targetsPiece, gameIndex);
+                if (ContainsFirstN(targets, count, a.aux /* targetPieceId */))
+                {
+                    return true;
+                }
+                else
+                {
+                    Debug.Log("SacrificeFactory - ContainsFirstN Returned False");
+                    return false; // slot-kind drift guard
+                }
+            case ConversionFactory:
+                return IsLegal_ConversionFactory(gameState.ps[player].vpTotal);
             default:
+                Debug.Log("Is Legal X Function returned false");
                 return false;
         }
     }

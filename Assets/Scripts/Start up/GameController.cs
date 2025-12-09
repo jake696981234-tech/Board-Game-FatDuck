@@ -8,10 +8,7 @@ public class GameController : MonoBehaviour
     public Config config;     // assign in Inspector
     public GameBootstrapper gameBootstrapper;
     public int gameIndex;
-
     public PerGameConfig perGameConfig;
-
-    public BoardViewController boardView;           // assign in Inspector
 
     public EventManager eventManager;
 
@@ -246,9 +243,8 @@ public class GameController : MonoBehaviour
                     if (GameBootstrapper.hub.playerControl[s] == GameConfigHub.ControlMode.Human) { humanSeat = s; break; }
                 }
 
-                // inject live systems (same ones agents/ML use)
-                if (hic.boardView == null) hic.boardView = boardView;
-                UI.SetHumanSeat(humanSeat);
+                UIBridge.Init(hic, gameIndex, humanSeat);
+
             }
 
             // === Phase B: compose the initial snapshot & push to BoardView ===
@@ -257,27 +253,18 @@ public class GameController : MonoBehaviour
                 gameIndex
              );
 
-            currentSnapshot = snapshotComposer.GetSnapshot();
+            // currentSnapshot = snapshotComposer.GetSnapshot();
 
-            if (boardView != null)
-            {
-                boardView.ApplySnapshot(currentSnapshot);
-            }
-
-            else
-            {
-                Debug.LogWarning("[׸] BoardView not assigned in Bootstrapper (Phase B).");
-            }
-
+            // UIBridge.ApplySnapshot(currentSnapshot);
 
             // Rebuild/push snapshot after every successful action
             gameState.OnActionExecuted += () =>
             {
-                currentSnapshot = snapshotComposer.GetSnapshot(); if (boardView != null) boardView.ApplySnapshot(currentSnapshot);
+                currentSnapshot = snapshotComposer.GetSnapshot();
+                UIBridge.ApplySnapshot(currentSnapshot);
             };
 
-            UI.ManualAwake(hic, gameIndex);
-            UI.ManualEnable();
+
         }
     }
 
@@ -365,7 +352,7 @@ public class GameController : MonoBehaviour
                 if (snapshotComposer != null)
                 {
                     currentSnapshot = snapshotComposer.GetSnapshot();
-                    if (boardView != null) boardView.ApplySnapshot(currentSnapshot);
+                    UIBridge.ApplySnapshot(currentSnapshot);
                 }
             }
 

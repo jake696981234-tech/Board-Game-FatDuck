@@ -7,6 +7,7 @@ using UnityEngine.UI;
 using UnityEngine.InputSystem;
 using Game.Core; // for GameState
 using System.Linq;
+using System.Collections;
 
 public sealed class HumanInteractionController : MonoBehaviour
 {
@@ -15,15 +16,13 @@ public sealed class HumanInteractionController : MonoBehaviour
     [Header("Config & Refs")]
     public InteractionConfig config;
 
-    public BoardViewController boardView;   // emits CellClicked(int)
-
     [Header("Canvas/UI")]
     public Image backdrop;
     public Image panelBackDrop;
     public GameObject blockInputOverlay;
 
-    public TMP_Text turnStatusText;
-    public TMP_Text budgetText;
+    // public TMP_Text turnStatusText;
+    // public TMP_Text budgetText;
     public Button endTurnButton;
 
     [Header("Panels")]
@@ -91,19 +90,50 @@ public sealed class HumanInteractionController : MonoBehaviour
     public GameObject PerTypeFactoryPayOutPrefab;
     public RectTransform PerTypeFactoryPayOutRoot;
 
+    //Stuff from Baoard Controller
+    [Header("Scene/Hierarchy")]
+    public Transform cellRoot;
+    public Transform pieceRoot;
+
+    [Header("Prefabs")]
+    public PieceView piecePrefab;
 
 
+    [Header("Toggles")]
+    public bool showCellIds = false;
+    public bool showPieceHP = true;
+    [Tooltip("When enabled, logs connector masks for each piece as snapshots are applied.")]
+    public bool logConnectorMasks = false;
+
+    //I dont think i need this
+    //[SerializeField, Range(0, 3)] public static byte _humanPlayer = 0; // bound by bootstrapper 
     #endregion
-    #region Boostrap
-    
 
-    
 
+    #region monoBehavour Util 
+
+    public void Update()
+    {
+        UIInput.UpdateMe();
+    }
+    public void EnqueueSnapshotForDelayedApply(GameSnapshot s)
+    {
+        UIBridge._pendingSnapshots.Enqueue(s);
+        if (UIBridge._applyQueueRoutine == null)
+        {
+            UIBridge._applyQueueRoutine = StartCoroutine(ApplyQueueRoutine());
+        }
+    }
+
+    public static IEnumerator ApplyQueueRoutine()
+    {
+        while (UIBridge._pendingSnapshots.Count > 0)
+        {
+            var next = UIBridge._pendingSnapshots.Dequeue();
+            showBoard.ApplySnapshotData(next);
+            yield return new WaitForSeconds(UI.hic.config.TimeDelayOnActions);
+        }
+        UIBridge._applyQueueRoutine = null;
+    }
     #endregion
-
-    // ---------- runtime state ----------
-
-    #region Alloc Runtime Data
-    
-
 }

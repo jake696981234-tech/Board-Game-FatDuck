@@ -2,21 +2,22 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// Forwards a UI Button click on a cell to BoardViewController.NotifyCellClicked(cellId).
+/// Forwards a UI Button click on a cell to UIInput.OnCellClicked(cellId).
+/// Ensures the world-space canvas is ready to receive events (camera + raycaster).
 /// </summary>
 [RequireComponent(typeof(Button))]
+[RequireComponent(typeof(Canvas))]
+[RequireComponent(typeof(UnityEngine.UI.GraphicRaycaster))]
 public sealed class CellButtonClickForwarder : MonoBehaviour
 {
     public CellView cell;                    // assign (or auto-find parent)
-    public BoardViewController boardView;    // assign (or auto-find parent)
 
     Button _btn;
 
     void Awake()
     {
         _btn = GetComponent<Button>();
-        if (!cell)      cell      = GetComponentInParent<CellView>();
-        if (!boardView) boardView = GetComponentInParent<BoardViewController>();
+        if (!cell) cell = GetComponentInParent<CellView>();
 
         _btn.onClick.RemoveAllListeners();
         _btn.onClick.AddListener(OnClicked);
@@ -24,6 +25,6 @@ public sealed class CellButtonClickForwarder : MonoBehaviour
 
     void OnClicked()
     {
-        if (cell && boardView) boardView.NotifyCellClicked(cell.cellId);
+        if (cell) UIInput.OnCellClicked(cell.cellId);
     }
 }

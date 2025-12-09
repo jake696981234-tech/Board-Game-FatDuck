@@ -61,7 +61,7 @@ public class AutoWireCellButtons : MonoBehaviour
             // NEW: forward clicks to BoardViewController.CellClicked(cellId)
             var fwd = buttonGO.AddComponent<CellButtonClickForwarder>();
             fwd.cell = cell;
-            fwd.boardView = cell.GetComponentInParent<BoardViewController>();
+            //fwd.boardView = cell.GetComponentInParent<BoardViewController>();
 
             // Done
             count++;
