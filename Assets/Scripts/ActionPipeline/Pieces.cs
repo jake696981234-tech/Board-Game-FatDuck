@@ -47,6 +47,7 @@ public static class Pieces
     public static short[] maxHPByType;           // [type] -> max HP
     public static int[][] codeDigitsByType;      // [type] -> prerequisite digits (optional)
 
+    
     // --- Digits (Plan B): per-type grant; per-type requirement already lives in codeDigitsByType ---
     public static sbyte[] grantsDigitByType; // [type] -> -1 = none, else 0..9
 

@@ -509,14 +509,14 @@ public static class GameStateUtilities
         var bm = GameRegistry.game[gameIndex].boardModel;
 
         Span<int> protectedpieces = stackalloc int[240];
-        int numberOfProtectedPieces = Game.Core.GameActions.ProtectedBySanctuary(protectedpieces, gameIndex);
+        int numberOfProtectedPieces = PassiveActions.ProtectedBySanctuary(protectedpieces, gameIndex);
 
         int removed = 0;
         for (int pid = bm.pieceCount - 1; pid >= 0; pid--)
         {
             byte t = bm.pieceType[pid];
             bool isBuilding = Pieces.IsBuilding(t); // assumes Pieces exposes this
-            if (isBuilding || Game.Core.GameActions.IsPieceApartOfSpan(pid, protectedpieces, numberOfProtectedPieces)) continue;
+            if (isBuilding || PassiveActions.IsPieceApartOfSpan(pid, protectedpieces, numberOfProtectedPieces)) continue;
 
             // Free row (handles occupancy + swap-back)
             bm.FreeRowSwapBack(pid);

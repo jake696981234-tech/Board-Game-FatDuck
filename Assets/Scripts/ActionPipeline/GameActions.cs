@@ -45,29 +45,35 @@ namespace Game.Core
             RefreshConnectorState(gameIndex);
         }
 
-        public static void ApplySacrificeFactory(in Action theAction, byte player, int gameIndex)
+        public static void ApplyCaptureVP(in Action theAction, byte player, int gameIndex)
         {
-            var bm = GameRegistry.game[gameIndex].boardModel;
-            var events = GameRegistry.game[gameIndex].eventManager;
-
-            int victimID = theAction.aux;
-            if (victimID < 0) return;
-            int Pieceid = bm.GetCellOccupant(theAction.srcCell);
-            bm.pieceFactoryAux[Pieceid] += GetSacrificeFactoryAmount(in theAction, gameIndex);
-
-            pieceKilled(victimID, gameIndex); ;
-            RefreshConnectorState(gameIndex);
-        }
-
-        public static void ApplyConversionFactory(in Action theAction, byte player, int gameIndex)
-        {
-            var bm = GameRegistry.game[gameIndex].boardModel;
             var gameState = GameRegistry.game[gameIndex].gameState;
 
-            int Pieceid = bm.GetCellOccupant(theAction.srcCell);
+            gameState.ps[player].OnCaptureVP();
+            gameState.AddCenterVictoryPoints(-1);
+        }
 
-            gameState.ps[player].vpTotal--;
-            bm.pieceFactoryAux[Pieceid] += GetConversionFactoryAmount(theAction, gameIndex);
+        public static void ApplyCoreDamage(in Action theAction, byte player, int gameIndex)
+        {
+            var gameState = GameRegistry.game[gameIndex].gameState;
+            var bm = GameRegistry.game[gameIndex].boardModel;
+
+            gameState.ps[player].OnCoreDamage();
+
+            int actorPid = bm.GetCellOccupant(theAction.srcCell);
+            if (actorPid < 0) return;
+
+            int actorCell = bm.GetPieceCell(actorPid);
+            byte enemy = bm.OwnerOfCoreCell(actorCell);
+            if (enemy >= 4) return;
+
+            byte typ = bm.GetPieceType(actorPid);
+            int abi = Pieces.AbilityIdAtSlot(typ, theAction.abilitySlot);
+            short dmg = (short)((abi >= 0 && abi < Pieces.damage.Length) ? Pieces.damage[abi] : 0);
+
+            int hp = gameState.GetCoreHealth(enemy);
+            gameState.SetCoreHealth(enemy, hp - dmg);
+            gameState.TryEliminatePlayer(enemy);
         }
 
         public static void ApplyCreate(in Action theAction, byte player, int gameIndex)
@@ -101,38 +107,39 @@ namespace Game.Core
             RefreshConnectorState(gameIndex);
         }
 
+        //ENDTURN = 5
 
-        public static void ApplyMultiCreatePlacement(in Action a, byte p, int gameIndex)
+        public static void ApplyPush(in Action theAction, byte player, int gameIndex)
         {
             var bm = GameRegistry.game[gameIndex].boardModel;
-            var gameState = GameRegistry.game[gameIndex].gameState;
+            var events = GameRegistry.game[gameIndex].eventManager;
 
-            if (!gameState.multiCreateActive || a.pieceType != gameState.multiCreateType) return;
-            int cell = a.dstCell;
-            if (!bm.IsEmpty(cell)) return;
-            // Place the piece
-            int pid = bm.AllocateRow();
-            bm.PlacePieceRow(pid, p, (byte)a.pieceType, cell, Pieces.maxHPByType[a.pieceType]);
-            int g = Pieces.GrantsDigit((byte)a.pieceType);
-            if (g >= 0) gameState.ps[p].GrantDigit(g);
-            // Reuse connector config from the initial piece if the type has connectors
-            if (Pieces.HasConnectors(a.pieceType) && gameState.multiCreateCells.Count > 0)
+            int victimID = theAction.aux;
+            if (victimID < 0) return;
+
+            int actorPid = bm.GetCellOccupant(theAction.srcCell);
+            if (actorPid < 0) return;
+
+            byte actorType = bm.GetPieceType(actorPid);
+            int abilityId = Pieces.AbilityIdAtSlot(actorType, theAction.abilitySlot);
+            if (abilityId < 0) return;
+
+            short dmg = GetAbilityDamage(in theAction, gameIndex);
+            bool killed = ApplyDamageWithCapital(theAction.srcCell, victimID, dmg, gameIndex);
+            if (killed)
             {
-                // initial placed piece is at index 0 in multiCreateCells
-                int primaryCell = gameState.multiCreateCells[0];
-                int primaryPid = bm.GetCellOccupant(primaryCell);
-                if (primaryPid >= 0)
-                    bm.pieceConnectorConfig[pid] = bm.pieceConnectorConfig[primaryPid];
+                // Revoke digit from the defender's owner if this type granted one
+                pieceKilled(victimID, gameIndex);
             }
-            gameState.multiCreateCells.Add(cell);
-            gameState.multiCreateRemaining = Math.Max(0, gameState.multiCreateRemaining - 1);
-            if (gameState.multiCreateRemaining <= 0)
+            else
             {
-                gameState.multiCreateActive = false;
-                gameState.multiCreateCells.Clear();
+                int pushedCellID = BmAbilityCac.ComputePushDestination(actorPid, victimID, abilityId, gameIndex);
+                bm.MovePieceRow(victimID, pushedCellID);
             }
             RefreshConnectorState(gameIndex);
         }
+
+
 
 
         public static void ApplyGroupBuild(in Action a, byte p, int gameIndex)
@@ -170,6 +177,45 @@ namespace Game.Core
             RefreshConnectorState(gameIndex);
         }
 
+        public static void ApplyUpgrade(in Action a, byte p, int gameIndex)
+        {
+            var bm = GameRegistry.game[gameIndex].boardModel;
+            var gameState = GameRegistry.game[gameIndex].gameState;
+
+            int actorPid = bm.GetCellOccupant(a.srcCell);
+            if (actorPid < 0) return;
+            byte actorType = bm.GetPieceType(actorPid);
+            int targetType = Pieces.upgradeTargetType[actorType];
+            if (targetType < 0 || targetType >= Pieces.typeCount) return;
+
+            // Preserve connector config
+            byte oldConfig = bm.pieceConnectorConfig[actorPid];
+
+            // Revoke digit from old type if it granted one
+            int gOld = Pieces.GrantsDigit(actorType);
+            if (gOld >= 0) gameState.ps[p].RevokeDigit(gOld);
+
+            // Replace type and reset HP
+            bm.pieceType[actorPid] = (byte)targetType;
+            bm.pieceHP[actorPid] = Pieces.maxHPByType[targetType];
+            bm.pieceConnectorConfig[actorPid] = oldConfig;
+
+            // Grant digit for new type
+            int gNew = Pieces.GrantsDigit((byte)targetType);
+            if (gNew >= 0) gameState.ps[p].GrantDigit(gNew);
+
+            // No connector refresh per requirement
+        }
+
+        public static void ApplyLauncher(in Action a, byte p, int gameIndex)
+        {
+            var bm = GameRegistry.game[gameIndex].boardModel;
+
+            int targetPid = a.aux;
+            if (targetPid < 0) return;
+            bm.MovePieceRow(targetPid, a.dstCell);
+            RefreshConnectorState(gameIndex);
+        }
 
         public static void ApplySpawner(in Action a, byte p, int gameIndex)
         {
@@ -248,231 +294,68 @@ namespace Game.Core
             RefreshConnectorState(gameIndex);
         }
 
-
-        public static void ApplyUpgrade(in Action a, byte p, int gameIndex)
-        {
-            var bm = GameRegistry.game[gameIndex].boardModel;
-            var gameState = GameRegistry.game[gameIndex].gameState;
-
-            int actorPid = bm.GetCellOccupant(a.srcCell);
-            if (actorPid < 0) return;
-            byte actorType = bm.GetPieceType(actorPid);
-            int targetType = Pieces.upgradeTargetType[actorType];
-            if (targetType < 0 || targetType >= Pieces.typeCount) return;
-
-            // Preserve connector config
-            byte oldConfig = bm.pieceConnectorConfig[actorPid];
-
-            // Revoke digit from old type if it granted one
-            int gOld = Pieces.GrantsDigit(actorType);
-            if (gOld >= 0) gameState.ps[p].RevokeDigit(gOld);
-
-            // Replace type and reset HP
-            bm.pieceType[actorPid] = (byte)targetType;
-            bm.pieceHP[actorPid] = Pieces.maxHPByType[targetType];
-            bm.pieceConnectorConfig[actorPid] = oldConfig;
-
-            // Grant digit for new type
-            int gNew = Pieces.GrantsDigit((byte)targetType);
-            if (gNew >= 0) gameState.ps[p].GrantDigit(gNew);
-
-            // No connector refresh per requirement
-        }
-
-
-        public static void ApplyLauncher(in Action a, byte p, int gameIndex)
-        {
-            var bm = GameRegistry.game[gameIndex].boardModel;
-
-            int targetPid = a.aux;
-            if (targetPid < 0) return;
-            bm.MovePieceRow(targetPid, a.dstCell);
-            RefreshConnectorState(gameIndex);
-        }
-
-
-
-        public static void ApplyCaptureVP(in Action theAction, byte player, int gameIndex)
-        {
-            var gameState = GameRegistry.game[gameIndex].gameState;
-
-            gameState.ps[player].OnCaptureVP();
-            gameState.AddCenterVictoryPoints(-1);
-        }
-
-        public static void ApplyCoreDamage(in Action theAction, byte player, int gameIndex)
-        {
-            var gameState = GameRegistry.game[gameIndex].gameState;
-            var bm = GameRegistry.game[gameIndex].boardModel;
-
-            gameState.ps[player].OnCoreDamage();
-
-            int actorPid = bm.GetCellOccupant(theAction.srcCell);
-            if (actorPid < 0) return;
-
-            int actorCell = bm.GetPieceCell(actorPid);
-            byte enemy = bm.OwnerOfCoreCell(actorCell);
-            if (enemy >= 4) return;
-
-            byte typ = bm.GetPieceType(actorPid);
-            int abi = Pieces.AbilityIdAtSlot(typ, theAction.abilitySlot);
-            short dmg = (short)((abi >= 0 && abi < Pieces.damage.Length) ? Pieces.damage[abi] : 0);
-
-            int hp = gameState.GetCoreHealth(enemy);
-            gameState.SetCoreHealth(enemy, hp - dmg);
-            gameState.TryEliminatePlayer(enemy);
-        }
-
-        public static void ApplyPush(in Action theAction, byte player, int gameIndex)
+        public static void ApplySacrificeFactory(in Action theAction, byte player, int gameIndex)
         {
             var bm = GameRegistry.game[gameIndex].boardModel;
             var events = GameRegistry.game[gameIndex].eventManager;
 
             int victimID = theAction.aux;
             if (victimID < 0) return;
+            int Pieceid = bm.GetCellOccupant(theAction.srcCell);
+            bm.pieceFactoryAux[Pieceid] += GetSacrificeFactoryAmount(in theAction, gameIndex);
 
-            int actorPid = bm.GetCellOccupant(theAction.srcCell);
-            if (actorPid < 0) return;
+            pieceKilled(victimID, gameIndex); ;
+            RefreshConnectorState(gameIndex);
+        }
 
-            byte actorType = bm.GetPieceType(actorPid);
-            int abilityId = Pieces.AbilityIdAtSlot(actorType, theAction.abilitySlot);
-            if (abilityId < 0) return;
+        public static void ApplyConversionFactory(in Action theAction, byte player, int gameIndex)
+        {
+            var bm = GameRegistry.game[gameIndex].boardModel;
+            var gameState = GameRegistry.game[gameIndex].gameState;
 
-            short dmg = GetAbilityDamage(in theAction, gameIndex);
-            bool killed = ApplyDamageWithCapital(theAction.srcCell, victimID, dmg, gameIndex);
-            if (killed)
+            int Pieceid = bm.GetCellOccupant(theAction.srcCell);
+
+            gameState.ps[player].vpTotal--;
+            bm.pieceFactoryAux[Pieceid] += GetConversionFactoryAmount(theAction, gameIndex);
+        }
+
+
+        public static void ApplyMultiCreatePlacement(in Action a, byte p, int gameIndex)
+        {
+            var bm = GameRegistry.game[gameIndex].boardModel;
+            var gameState = GameRegistry.game[gameIndex].gameState;
+
+            if (!gameState.multiCreateActive || a.pieceType != gameState.multiCreateType) return;
+            int cell = a.dstCell;
+            if (!bm.IsEmpty(cell)) return;
+            // Place the piece
+            int pid = bm.AllocateRow();
+            bm.PlacePieceRow(pid, p, (byte)a.pieceType, cell, Pieces.maxHPByType[a.pieceType]);
+            int g = Pieces.GrantsDigit((byte)a.pieceType);
+            if (g >= 0) gameState.ps[p].GrantDigit(g);
+            // Reuse connector config from the initial piece if the type has connectors
+            if (Pieces.HasConnectors(a.pieceType) && gameState.multiCreateCells.Count > 0)
             {
-                // Revoke digit from the defender's owner if this type granted one
-                pieceKilled(victimID, gameIndex);
+                // initial placed piece is at index 0 in multiCreateCells
+                int primaryCell = gameState.multiCreateCells[0];
+                int primaryPid = bm.GetCellOccupant(primaryCell);
+                if (primaryPid >= 0)
+                    bm.pieceConnectorConfig[pid] = bm.pieceConnectorConfig[primaryPid];
             }
-            else
+            gameState.multiCreateCells.Add(cell);
+            gameState.multiCreateRemaining = Math.Max(0, gameState.multiCreateRemaining - 1);
+            if (gameState.multiCreateRemaining <= 0)
             {
-                int pushedCellID = BmAbilityCac.ComputePushDestination(actorPid, victimID, abilityId, gameIndex);
-                bm.MovePieceRow(victimID, pushedCellID);
+                gameState.multiCreateActive = false;
+                gameState.multiCreateCells.Clear();
             }
             RefreshConnectorState(gameIndex);
         }
 
 
-
-
-
-        public static float[] ComputePlayersFactoryIncome(int gameIndex)
-        {
-            float[] perPlayerFactoryIncome = new float[4];
-            Array.Clear(perPlayerFactoryIncome, 0, 4);
-
-            for (int i = 0; i < 4; i++)
-            {
-                PerPiecePayout income = ComputeDetailedPlayerFactoryIncome(i, gameIndex);
-                float total = 0f;
-
-                for (int c = 0; c < income.payout.Length; i++)
-                {
-                    total += income.payout[c];
-                }
-                perPlayerFactoryIncome[i] = total;
-            }
-            return perPlayerFactoryIncome;
-        }
-
-        public static PerPiecePayout ComputeDetailedPlayerFactoryIncome(int playerId, int gameIndex)
-        {
-            var gameState = GameRegistry.game[gameIndex].gameState;
-            var bm = GameRegistry.game[gameIndex].boardModel;
-
-            // Build per-piece payouts for a single player (type, whether grouped, payout per type)
-            var pieceTypes = new List<int>();
-            var isGroups = new List<bool>();
-            var payouts = new List<float>();
-
-            // Ensure round number is at least 1
-            int roundNum = Math.Max(1, gameState.currentRoundNumber);
-            var counts = GameState.SnapshotOwnerTypeCounts(bm); // map of (owner,type) -> count
-
-            foreach (var kv in counts)
-            {
-                if (kv.Key.owner != playerId)
-                    continue;
-
-                int owner = kv.Key.owner;
-                if (owner < 0 || owner >= gameState.ps.Length) continue;
-
-                int type = kv.Key.type;
-                int count = kv.Value;
-
-                int factoryAid = GetFactoryAbilityId((byte)type); // ability slot that grants factory income
-                if (factoryAid < 0) continue;
-
-                float AuxPayout = AuxFactoryPayout(owner, type, gameIndex);
-
-                int baseAmt = (factoryAid < Pieces.factory_amount.Length)
-                    ? Pieces.factory_amount[factoryAid]
-                    : 0;
-                if (baseAmt == 0 && AuxPayout == 0) continue;
-
-                // Flags for scaling
-                bool roundMul = factoryAid < Pieces.factory_roundMultiplier.Length
-                             && Pieces.factory_roundMultiplier[factoryAid];
-
-                bool group = factoryAid < Pieces.factory_group.Length
-                          && Pieces.factory_group[factoryAid];
-
-                int groupAmt = (factoryAid < Pieces.factory_groupAmount.Length)
-                    ? Pieces.factory_groupAmount[factoryAid]
-                    : 1;
-
-                int pay = baseAmt;
-                if (roundMul) pay *= roundNum;
-
-                float payout;
-                if (group)
-                {
-                    int groups = count / Math.Max(1, groupAmt); // pay per full group
-                    payout = pay * groups + AuxPayout;
-                }
-                else
-                {
-                    payout = pay * count + AuxPayout; // pay per individual piece
-                }
-
-                if (payout == 0)
-                    continue;
-
-                pieceTypes.Add(type);
-                isGroups.Add(group);
-                payouts.Add(payout);
-            }
-
-            // Convert lists to arrays for the struct
-            return new PerPiecePayout(
-                pieceTypes.ToArray(),
-                isGroups.ToArray(),
-                payouts.ToArray()
-            );
-        }
-
-        private static float AuxFactoryPayout(int playerId, int thisType, int gameIndex)
-        {
-            var bm = GameRegistry.game[gameIndex].boardModel;
-
-            float payOut = 0;
-
-            for (int pid = 0; pid < bm.pieceCount; pid++)
-            {
-                byte type = bm.GetPieceType(pid);
-                if (thisType != type) continue;
-                if (!Pieces.HasAbilityKind(type, Pieces.AbilityKind.Factory)) continue;
-                if (bm.pieceOwner[pid] != playerId) continue;
-
-                payOut += bm.pieceFactoryAux[pid];
-            }
-            return payOut;
-        }
-
-
         #endregion
         #region ApplyHelpers
+
 
 
         private static void pieceKilled(int victim, int gameIndex)
@@ -596,17 +479,7 @@ namespace Game.Core
             return (abi >= 0 && abi < Pieces.conversionFactory_amount.Length) ? Pieces.conversionFactory_amount[abi] : 0;
         }
 
-        private static int GetFactoryAbilityId(byte type)
-        {
-            int limit = Pieces.AbilitySlotCount(type);
-            for (int s = 0; s < limit; s++)
-            {
-                int aid = Pieces.AbilityIdAtSlot(type, s);
-                if (aid >= 0 && Pieces.abilityKind[aid] == Pieces.AbilityKind.Factory)
-                    return aid;
-            }
-            return -1;
-        }
+        
 
         private static List<int> CollectClusterCells(byte type, int startCell, int gameIndex)
         {
@@ -664,79 +537,6 @@ namespace Game.Core
 
 
         //Helper to call methods for applyActions easier
-
-
-        public static int ProtectedBySanctuary(Span<int> outPieceIds, int gameIndex)
-        {
-            var bm = GameRegistry.game[gameIndex].boardModel;
-            var gameState = GameRegistry.game[gameIndex].gameState;
-
-            gameState.dublicateFilter.Clear();
-            Span<int> protectedpieces = stackalloc int[240];
-            int foundPieces = 0;
-
-            for (int pid = 0; pid < bm.pieceCount; pid++)
-            {
-                byte type = bm.GetPieceType(pid);
-                int sanctuaryRange = -1;
-
-                // Find a Sanctuary ability on this type and grab its range
-                int slotLimit = Pieces.AbilitySlotCount(type);
-                for (int s = 0; s < slotLimit; s++)
-                {
-                    int aid = Pieces.AbilityIdAtSlot(type, s);
-                    if (aid < 0 || aid >= Pieces.sanctuary_enabled.Length) continue;
-                    if (Pieces.abilityKind[aid] != Pieces.AbilityKind.Sanctuary) continue;
-                    if (!Pieces.sanctuary_enabled[aid]) continue;
-                    sanctuaryRange = (aid < Pieces.Sanctuary_range.Length) ? Pieces.Sanctuary_range[aid] : -1;
-                    break;
-                }
-
-                if (sanctuaryRange < 0) continue;
-                int centerCell = bm.pieceCellId[pid];
-                if (centerCell < 0) continue;
-
-                for (int range = 0; range <= sanctuaryRange; range++)
-                {
-                    int found = BmAbilityCac.pieceIdsRingAroundCell(centerCell, range, protectedpieces, gameIndex);
-
-                    if (found <= 0) continue;
-
-                    for (int pp = 0; pp < found; pp++)
-                    {
-                        if (gameState.dublicateFilter.Add(protectedpieces[pp]))
-                        {
-                            outPieceIds[foundPieces] = protectedpieces[pp];
-                            foundPieces++;
-                        }
-                    }
-                }
-            }
-            return foundPieces;
-        }
-
-        private static bool IsPieceProtectedBySanctuary(int pieceId, int gameIndex)
-        {
-            Span<int> protectedpieces = stackalloc int[240];
-            int numberOfProtectedPieces = ProtectedBySanctuary(protectedpieces, gameIndex);
-
-            for (int i = 0; i < numberOfProtectedPieces; i++)
-            {
-                if (pieceId != protectedpieces[i]) continue;
-                return true;
-            }
-            return false;
-        }
-
-        public static bool IsPieceApartOfSpan(int PieceId, Span<int> inPieceIds, int spanLength)
-        {
-            for (int i = 0; i < spanLength; i++)
-            {
-                if (PieceId != inPieceIds[i]) continue;
-                return true;
-            }
-            return false;
-        }
 
 
     }
