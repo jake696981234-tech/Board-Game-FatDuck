@@ -49,26 +49,19 @@ public static class PassiveActions
             int type = kv.Key.type;
             int count = kv.Value;
 
-            int factoryAid = GetFactoryAbilityId((byte)type); // ability slot that grants factory income
-            if (factoryAid < 0) continue;
+            if (!PieceDefinition.factory_enabled[type]) continue;
 
             float AuxPayout = AuxFactoryPayout(owner, type, gameIndex);
 
-            int baseAmt = (factoryAid < Pieces.factory_amount.Length)
-                ? Pieces.factory_amount[factoryAid]
-                : 0;
+            int baseAmt = PieceDefinition.factory_amount[type];
             if (baseAmt == 0 && AuxPayout == 0) continue;
 
             // Flags for scaling
-            bool roundMul = factoryAid < Pieces.factory_roundMultiplier.Length
-                         && Pieces.factory_roundMultiplier[factoryAid];
+            bool roundMul = PieceDefinition.factory_roundMultiplier[type];
 
-            bool group = factoryAid < Pieces.factory_group.Length
-                      && Pieces.factory_group[factoryAid];
+            bool group = PieceDefinition.factory_group[type];
 
-            int groupAmt = (factoryAid < Pieces.factory_groupAmount.Length)
-                ? Pieces.factory_groupAmount[factoryAid]
-                : 1;
+            int groupAmt = PieceDefinition.factory_groupAmount[type];
 
             int pay = baseAmt;
             if (roundMul) pay *= roundNum;
@@ -100,17 +93,7 @@ public static class PassiveActions
         );
     }
 
-    private static int GetFactoryAbilityId(byte type)
-    {
-        int limit = Pieces.AbilitySlotCount(type);
-        for (int s = 0; s < limit; s++)
-        {
-            int aid = Pieces.AbilityIdAtSlot(type, s);
-            if (aid >= 0 && Pieces.abilityKind[aid] == Pieces.AbilityKind.Factory)
-                return aid;
-        }
-        return -1;
-    }
+
 
     private static float AuxFactoryPayout(int playerId, int thisType, int gameIndex)
     {
@@ -118,14 +101,13 @@ public static class PassiveActions
 
         float payOut = 0;
 
-        for (int pid = 0; pid < bm.pieceCount; pid++)
+        for (int pieceId = 0; pieceId < bm.pieceCount; pieceId++)
         {
-            byte type = bm.GetPieceType(pid);
+            byte type = bm.GetPieceType(pieceId);
             if (thisType != type) continue;
-            if (!Pieces.HasAbilityKind(type, Pieces.AbilityKind.Factory)) continue;
-            if (bm.pieceOwner[pid] != playerId) continue;
+            if (bm.pieceOwner[pieceId] != playerId) continue;
 
-            payOut += bm.pieceFactoryAux[pid];
+            payOut += bm.pieceFactoryAux[pieceId];
         }
         return payOut;
     }
@@ -148,16 +130,9 @@ public static class PassiveActions
             int sanctuaryRange = -1;
 
             // Find a Sanctuary ability on this type and grab its range
-            int slotLimit = Pieces.AbilitySlotCount(type);
-            for (int s = 0; s < slotLimit; s++)
-            {
-                int aid = Pieces.AbilityIdAtSlot(type, s);
-                if (aid < 0 || aid >= Pieces.sanctuary_enabled.Length) continue;
-                if (Pieces.abilityKind[aid] != Pieces.AbilityKind.Sanctuary) continue;
-                if (!Pieces.sanctuary_enabled[aid]) continue;
-                sanctuaryRange = (aid < Pieces.Sanctuary_range.Length) ? Pieces.Sanctuary_range[aid] : -1;
-                break;
-            }
+
+            if (!PieceDefinition.sanctuary_enabled[type]) continue;
+            sanctuaryRange = PieceDefinition.sanctuary_range[type];
 
             if (sanctuaryRange < 0) continue;
             int centerCell = bm.pieceCellId[pid];

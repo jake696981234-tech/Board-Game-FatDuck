@@ -4,6 +4,8 @@ public static class PieceDefinition
 {
     public static int typeCount;
 
+    public static int howManyActiveAbiltiesAPieceHas;
+
     #region UI
     public static string[] displayNameByType;
     public static string[] factionNameByType;
@@ -37,13 +39,14 @@ public static class PieceDefinition
     public static int[] groupBuildTargetType;     // [type] -> type id to create
     public static int[] groupBuildRequireNumber;  // [type] -> required count in cluster
     public static bool[] groupBuildDeletion;       // [type] -> delete contributors on build
+    public static int[] groupBuild_botSurcharge;
 
     #endregion
     #region Upgrade
 
     public static bool[] upgradeEnabled;           // [type] -> can perform upgrade
     public static int[] upgradeTargetType;        // [type] -> replace with this type
-
+    public static int[] upgrade_botSurcharge;
     #endregion
     #region launcher
 
@@ -52,6 +55,8 @@ public static class PieceDefinition
     public static int[] launcher_outputRange;     // [ability] -> range from launcher to drop target
     public static bool[] launcher_friendlyFire;    // [ability] -> can launch friendlies
     public static bool[] launcher_enemyFire;       // [ability] -> can launch enemies
+    public static int[] launcher_botSurcharge;
+
 
     #endregion
     #region Push
@@ -73,6 +78,7 @@ public static class PieceDefinition
     public static int[] spawn_targetType;         // [ability] -> type to create
     public static int[] spawn_range;              // [ability] -> spawn range
     public static bool[] spawn_onlyOncePerTurn;    // [ability] -> once-per-turn gate
+    public static int[] spawn_botSurcharge;
 
     #endregion
     #region multiCreate
@@ -94,7 +100,7 @@ public static class PieceDefinition
     #region sanctuary
 
     public static bool[] sanctuary_enabled;
-    public static int[] Sanctuary_range;
+    public static int[] sanctuary_range;
 
 
     #endregion
@@ -121,6 +127,7 @@ public static class PieceDefinition
     public static int[] shoot_rangeMin;                // [abilityId]
     public static int[] shoot_rangeMax;                // [abilityId]
     public static int[] shoot_damage;                  // [abilityId]
+    public static int[] shoot_botSurcharge;
 
     #endregion
     #region Move
@@ -129,19 +136,27 @@ public static class PieceDefinition
     public static int[] move_rangeMax;                // [abilityId]
     public static int[] move_damage;                  // [abilityId]
 
+    public static int[] move_botSurcharge;
+
     #endregion
     #region sacrifice Factory
     public static bool[] sacrificeFactory_enabled;
     public static int[] sacrificeFactory_amount; // [abilityId] -> amount to add when sacrificing
     public static int[] sacrificeFactory_rangeMin;
     public static int[] sacrificeFactory_rangeMax;
+    public static int[] sacrificeFactory_botSurcharge;
 
     #endregion
     #region capture
 
     public static bool[] captureVP_enabled; //addition
+    public static int[] captureVP_botSurcharge;
+
     public static bool[] coreDamage_enabled; //addition
     public static int[] coreDamage_damage; //addition
+    public static int[] coreDamage_botSurcharge;
+
+
 
     #endregion
     #region probs delete these

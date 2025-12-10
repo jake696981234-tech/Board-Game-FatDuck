@@ -28,33 +28,44 @@ public static class CostEngine
         int k = gameState.ps[player].actionIndexThisTurn; // before taking this action
         int turnFee = (k == 0) ? 0 : RoundToInt(baseActionCost * MathF.Pow(actionGrowthFactor, k - 1));
 
-        // Resolve ability once. EndTurn has no ability.
-        int abilityId = ResolveAbilityId(a, gameIndex);
 
         // Ability surcharge: none for EndTurn/invalid.
-        int abilityCost = 0;
-        if (a.kind != ActionKind.EndTurn && a.kind != ActionKind.Create && abilityId >= 0)
+        int botSurcharge = 0;
+
+        if (gameState.ps[player].applyBotSurcharges)
         {
-            abilityCost = Pieces.AbilitySurcharge(abilityId, applyBotSurcharges: gameState.ps[player].applyBotSurcharges);
+            botSurcharge = a.kind switch
+            {
+                (byte)Pieces.AbilityKind.Move => PieceDefinition.move_botSurcharge[a.pieceType],
+                (byte)Pieces.AbilityKind.Shoot => PieceDefinition.shoot_botSurcharge[a.pieceType],
+                (byte)Pieces.AbilityKind.CaptureVP => PieceDefinition.captureVP_botSurcharge[a.pieceType],
+                (byte)Pieces.AbilityKind.CoreDamage => PieceDefinition.coreDamage_botSurcharge[a.pieceType],
+                (byte)Pieces.AbilityKind.GroupBuild => PieceDefinition.groupBuild_botSurcharge[a.pieceType],
+                (byte)Pieces.AbilityKind.Upgrade => PieceDefinition.upgrade_botSurcharge[a.pieceType],
+                (byte)Pieces.AbilityKind.Launcher => PieceDefinition.launcher_botSurcharge[a.pieceType],
+                (byte)Pieces.AbilityKind.Spawner => PieceDefinition.spawn_botSurcharge[a.pieceType],
+                (byte)Pieces.AbilityKind.SacrificeFactory => PieceDefinition.sacrificeFactory_botSurcharge[a.pieceType],
+                (byte)Pieces.AbilityKind.ConversionFactory => PieceDefinition.conversionFactory_botSurcharge[a.pieceType],
+                _ => 0
+            };
         }
+
 
 
         // Build cost: Create or Spawner actions.
         int buildCost = 0;
         if (a.kind == ActionKind.Create)
         {
-            buildCost = Pieces.GetBuildCost(a.pieceType); // new accessor on Pieces
+            buildCost = PieceDefinition.buildCostByType[a.pieceType]; // new accessor on Pieces
         }
-        else if (a.kind == ActionKind.Spawner && abilityId >= 0)
+        else if (a.kind == ActionKind.Spawner)
         {
-            int targetType = (abilityId < Pieces.spawn_targetType.Length) ? Pieces.spawn_targetType[abilityId] : -1;
-            int amount = (abilityId < Pieces.spawn_pieceAmount.Length) ? Pieces.spawn_pieceAmount[abilityId] : 0;
-            if (targetType >= 0 && amount > 0)
-                buildCost = Pieces.GetBuildCost((byte)targetType) * amount;
+            int targetType = PieceDefinition.spawn_targetType[a.pieceType];
+            int amount = PieceDefinition.spawn_pieceAmount[a.pieceType];
+            if (targetType >= 0 && amount > 0) buildCost = PieceDefinition.buildCostByType[targetType] * amount;
         }
 
-
-        return turnFee + abilityCost + buildCost;
+        return turnFee + botSurcharge + buildCost;
     }
 
     /// <summary>
@@ -83,23 +94,7 @@ public static class CostEngine
     }
 
     // -------------------- Internals --------------------
-    /// <summary>
-    /// Resolve abilityId from the action's (srcCell → pieceId → type) + abilitySlot.
-    /// Returns -1 for EndTurn or if any part of the chain is invalid. No allocations.
-    /// </summary>
-    public static int ResolveAbilityId(in Action a, int gameIndex)
-    {
-        var bm = GameRegistry.game[gameIndex].boardModel;
 
-        if (a.kind == ActionKind.EndTurn) return -1;
-        if (a.srcCell == (ushort)0xFFFF) return -1; // per Action.cs contract
-
-        int pieceId = bm.GetCellOccupant(a.srcCell);
-        if (pieceId < 0) return -1;
-
-        byte type = (byte)bm.GetPieceType(pieceId); // explicit cast for BM APIs that return int
-        return Pieces.AbilityIdAtSlot(type, a.abilitySlot);
-    }
 
     private static int RoundToInt(float value)
     {
@@ -126,20 +121,40 @@ public static class CostEngine
         // Turn fee
         int k = cur.actionIndexThisTurn;
         int turnFee = (k == 0) ? 0 : RoundToInt(baseActionCost * MathF.Pow(actionGrowthFactor, k - 1));
-        // Ability surcharge (non-EndTurn/Create)
-        int abilityCost = 0;
-        int abilityId = ResolveAbilityId(a, gameIndex);
-        if (a.kind != ActionKind.EndTurn && a.kind != ActionKind.Create && abilityId >= 0)
-            abilityCost = Pieces.AbilitySurcharge(abilityId, applyBotSurcharges: cur.applyBotSurcharges);
-        // Build cost (Create only)
-        int buildCost = (a.kind == ActionKind.Create) ? Pieces.GetBuildCost(a.pieceType) : 0;
-        if (a.kind == ActionKind.Spawner && abilityId >= 0)
+        // botSurcharge surcharge (non-EndTurn/Create)
+        int botSurcharge = 0;
+        if (cur.applyBotSurcharges)
         {
-            int targetType = (abilityId < Pieces.spawn_targetType.Length) ? Pieces.spawn_targetType[abilityId] : -1;
-            int amount = (abilityId < Pieces.spawn_pieceAmount.Length) ? Pieces.spawn_pieceAmount[abilityId] : 0;
-            if (targetType >= 0 && amount > 0) buildCost = Pieces.GetBuildCost((byte)targetType) * amount;
+            botSurcharge = a.kind switch
+            {
+                (byte)Pieces.AbilityKind.Move => PieceDefinition.move_botSurcharge[a.pieceType],
+                (byte)Pieces.AbilityKind.Shoot => PieceDefinition.shoot_botSurcharge[a.pieceType],
+                (byte)Pieces.AbilityKind.CaptureVP => PieceDefinition.captureVP_botSurcharge[a.pieceType],
+                (byte)Pieces.AbilityKind.CoreDamage => PieceDefinition.coreDamage_botSurcharge[a.pieceType],
+                (byte)Pieces.AbilityKind.GroupBuild => PieceDefinition.groupBuild_botSurcharge[a.pieceType],
+                (byte)Pieces.AbilityKind.Upgrade => PieceDefinition.upgrade_botSurcharge[a.pieceType],
+                (byte)Pieces.AbilityKind.Launcher => PieceDefinition.launcher_botSurcharge[a.pieceType],
+                (byte)Pieces.AbilityKind.Spawner => PieceDefinition.spawn_botSurcharge[a.pieceType],
+                (byte)Pieces.AbilityKind.SacrificeFactory => PieceDefinition.sacrificeFactory_botSurcharge[a.pieceType],
+                (byte)Pieces.AbilityKind.ConversionFactory => PieceDefinition.conversionFactory_botSurcharge[a.pieceType],
+                _ => 0
+            };
         }
-        return new CostBreakdown(turnFee, abilityCost, buildCost);
+
+        int buildCost = 0;
+        // Build cost (Create only)
+        if (a.kind == ActionKind.Create)
+        {
+            buildCost = PieceDefinition.buildCostByType[a.pieceType];
+        }
+
+        if (a.kind == ActionKind.Spawner)
+        {
+            int targetType = PieceDefinition.spawn_targetType[a.pieceType];
+            int amount = PieceDefinition.spawn_pieceAmount[a.pieceType];
+            if (targetType >= 0 && amount > 0) buildCost = PieceDefinition.buildCostByType[targetType] * amount;
+        }
+        return new CostBreakdown(turnFee, botSurcharge, buildCost);
     }
 
 

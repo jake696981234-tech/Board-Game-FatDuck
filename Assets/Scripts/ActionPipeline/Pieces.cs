@@ -204,8 +204,8 @@ public static class Pieces
     }
 
     // ——— Plan B: Create is decoupled — per-type build info
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int GetBuildCost(byte type) => buildCostByType[type];
+    // [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    // public static int GetBuildCost(byte type) => buildCostByType[type];
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     // public static bool IsBuildable(byte type)
@@ -226,12 +226,12 @@ public static class Pieces
     /// Plan B pricing: only botThinkSurcharge is used. If applyBotSurcharges=false, returns 0.
     /// (baseSurcharge is ignored to avoid affecting training.)
     /// </summary>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int AbilitySurcharge(int abilityId, bool applyBotSurcharges)
-    {
-        if (!applyBotSurcharges) return 0;
-        return (abilityId >= 0 && abilityId < botThinkSurcharge.Length) ? botThinkSurcharge[abilityId] : 0;
-    }
+    // [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    // public static int AbilitySurcharge(int abilityId, bool applyBotSurcharges)
+    // {
+    //     if (!applyBotSurcharges) return 0;
+    //     return (abilityId >= 0 && abilityId < botThinkSurcharge.Length) ? botThinkSurcharge[abilityId] : 0;
+    // }
 
 
 

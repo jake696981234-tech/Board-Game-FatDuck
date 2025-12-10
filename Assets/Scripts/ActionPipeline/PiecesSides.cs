@@ -35,7 +35,7 @@ public static class PiecesSides
             int nbPid = bm.GetCellOccupant(nbCell);
             if (nbPid < 0) continue;
             byte nbType = bm.GetPieceType(nbPid);
-            bool nbHasConn = Pieces.HasConnectors(nbType);
+            bool nbHasConn = PieceDefinition.connectors_enabled[nbType];
             int nbConfig = nbHasConn ? bm.pieceConnectorConfig[nbPid] : 0;
 
             bool ourConn = IsConnectorSide(configIndex, i);
@@ -45,11 +45,11 @@ public static class PiecesSides
             if (ourConn != nbConn && (ourConn || nbConn)) return false;
         }
 
-        if (!Pieces.ConnectorNeedsCapital(type))
+        if (!PieceDefinition.connectorNeedsCapital[type])
             return true;
 
         // If this piece is itself a capital, connectivity is satisfied.
-        if (Pieces.ConnectorIsCapital(type))
+        if (PieceDefinition.connectorIsCapital[type])
             return true;
 
         // BFS through connector edges to find any capital.
@@ -85,11 +85,11 @@ public static class PiecesSides
             {
                 if (pid < 0) continue;
                 type = bm.GetPieceType(pid);
-                if (!Pieces.HasConnectors(type)) continue;
+                if (!PieceDefinition.connectors_enabled[type]) continue;
                 config = bm.pieceConnectorConfig[pid];
             }
 
-            if (Pieces.ConnectorIsCapital(type) && bm.GetPieceOwner(pid) == playerId)
+            if (PieceDefinition.connectorIsCapital[type] && bm.GetPieceOwner(pid) == playerId)
                 return true;
 
             int[] neigh = Scratch.GetScratchNeighborBuffer(gameIndex);
@@ -108,7 +108,7 @@ public static class PiecesSides
                     continue; // empty breaks chain
 
                 nbType = bm.GetPieceType(nbPid);
-                if (!Pieces.HasConnectors(nbType))
+                if (!PieceDefinition.connectors_enabled[type])
                     continue; // neighbor with no connectors counts as wall
 
                 nbConfig = bm.pieceConnectorConfig[nbPid];
@@ -139,7 +139,7 @@ public static class PiecesSides
         {
             if (visited[pid]) continue;
             byte t = bm.pieceType[pid];
-            if (!Pieces.HasConnectors(t)) continue;
+            if (!PieceDefinition.connectors_enabled[t]) continue;
 
             // BFS over connector edges
             List<int> comp = new List<int>(8);
@@ -155,8 +155,8 @@ public static class PiecesSides
                 comp.Add(cur);
                 byte ct = bm.pieceType[cur];
                 int cfg = bm.pieceConnectorConfig[cur];
-                if (Pieces.ConnectorIsCapital(ct)) hasCapital = true;
-                int capHp = Pieces.ConnectorCapitalHealth(ct);
+                if (PieceDefinition.connectorIsCapital[ct]) hasCapital = true;
+                int capHp = PieceDefinition.connectorCapitalHealth[ct];
                 if (capHp > maxCapHp) maxCapHp = capHp;
 
                 int cell = bm.pieceCellId[cur];
@@ -169,7 +169,7 @@ public static class PiecesSides
                     if (nbPid < 0) continue;
                     if (visited[nbPid]) continue;
                     byte nt = bm.pieceType[nbPid];
-                    if (!Pieces.HasConnectors(nt)) continue;
+                    if (!PieceDefinition.connectors_enabled[nt]) continue;
                     int nCfg = bm.pieceConnectorConfig[nbPid];
 
                     bool ourConn = IsConnectorSide(cfg, d);
@@ -185,7 +185,7 @@ public static class PiecesSides
             foreach (int id in comp)
             {
                 bm.pieceCapitalHP[id] = appliedHp;
-                if (appliedHp == 0 && Pieces.ConnectorNeedsCapital(bm.pieceType[id]))
+                if (appliedHp == 0 && PieceDefinition.connectorNeedsCapital[bm.pieceType[id]])
                 {
                     toDestroy ??= new List<int>();
                     toDestroy.Add(id);
