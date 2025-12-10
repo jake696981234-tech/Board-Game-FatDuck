@@ -5,9 +5,9 @@ using System.IO;
 using System.Text;
 
 
-public static class piecesCSVImporterVTwo
+public static class PiecesCsvImporter
 {
-    public static void Import(string pathToPiecesCsv, Action<int, string, bool, string, int> onTypeDefined = null)
+    public static void Import(string pathToPiecesCsv)
     {
         if (!File.Exists(pathToPiecesCsv))
             throw new FileNotFoundException($"pieces.csv not found: {pathToPiecesCsv}");
@@ -28,8 +28,7 @@ public static class piecesCSVImporterVTwo
         int typeCount = rows.Count;
 
 
-        PieceDefinition.Allocate(typeCount);
-        PieceDefinition.typeCount = typeCount;
+        Allocate(typeCount);
 
         var H = BuildHeaderIndex(headers);
 
@@ -52,8 +51,8 @@ public static class piecesCSVImporterVTwo
 
             #endregion
             #region Digits
-            PieceDefinition.codeDigitsByType[typeId] = GetInt(cols, H, "codeDigitsByType", defaultValue: 0);
-            PieceDefinition.grantsDigitByType[typeId] = GetInt(cols, H, "grantsDigitByType", defaultValue: 0);
+            PieceDefinition.codeDigitsByType[typeId] = GetInt(cols, H, "codeDigitsByType", defaultValue: -1);
+            PieceDefinition.grantsDigitByType[typeId] = GetInt(cols, H, "grantsDigitByType", defaultValue: -1);
 
             #endregion
             #region Connectors
@@ -406,8 +405,7 @@ public static class piecesCSVImporterVTwo
         PieceDefinition.coreDamage_damage = new int[count];
         PieceDefinition.coreDamage_botSurcharge = new int[count];
 
-
-        // etc. for anything else you add
+        #endregion
     }
 
 }

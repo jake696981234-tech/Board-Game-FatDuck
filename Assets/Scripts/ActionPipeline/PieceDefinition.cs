@@ -4,7 +4,6 @@ public static class PieceDefinition
 {
     public static int typeCount;
 
-    public static int howManyActiveAbiltiesAPieceHas;
 
     #region UI
     public static string[] displayNameByType;
@@ -156,14 +155,6 @@ public static class PieceDefinition
     public static int[] coreDamage_damage; //addition
     public static int[] coreDamage_botSurcharge;
 
-
-
     #endregion
-    #region probs delete these
-    public static string[] idByType;             // [type] -> stable id (tooling)
 
-
-    // used to be in Generic params
-    public static int[] customParam;             // [abilityId]
-    #endregion
 }
