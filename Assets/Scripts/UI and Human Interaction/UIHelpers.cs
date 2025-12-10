@@ -43,7 +43,7 @@ public static class UIHelpers
             if (Aux != null && a.aux != Aux) continue;
 
             if (a.pieceType != type) continue;
-            if (a.dstCell != dst) continue;
+            if (a.TargetCellId != dst) continue;
             if (UIBridge._mask[i] == 0) continue;
             return i;
         }
@@ -83,9 +83,9 @@ public static class UIHelpers
             }
 
             if (a.kind != kind) continue;
-            if (a.srcCell != src) continue;
+            if (a.ActorsCellId != src) continue;
             if (a.pieceType != type) continue;
-            if (a.dstCell != dst) continue;
+            if (a.TargetCellId != dst) continue;
             if (UIBridge._mask[i] == 0) continue;
             return i;
         }
@@ -116,7 +116,7 @@ public static class UIHelpers
             var a = UIBridge._offers[i];
             if (UIBridge._mask[i] == 0) continue;                    // illegal/masked
             if (a.kind == Game.Core.ActionKind.EndTurn) continue; // non-piece; ignore
-            if (a.srcCell != src) continue;
+            if (a.ActorsCellId != src) continue;
             return true;
         }
         return false;
@@ -138,7 +138,7 @@ public static class UIHelpers
 
             if (a.pieceType != pieceType) continue;
             if (UIBridge._mask[i] == 0) continue; // masked out = illegal/unaffordable
-            _createTargetsBuffer.Add(a.dstCell);
+            _createTargetsBuffer.Add(a.TargetCellId);
         }
         return _createTargetsBuffer;
     }
@@ -152,14 +152,14 @@ public static class UIHelpers
 
         var seed = UIBridge._offers[idx];
         var kind = seed.kind;
-        var src = seed.srcCell;
+        var src = seed.ActorsCellId;
         var type = seed.pieceType;
 
         for (int i = 0; i < UIBridge._count; i++)
         {
             var a = UIBridge._offers[i];
             if (a.kind != kind) continue;
-            if (a.srcCell != src) continue;
+            if (a.ActorsCellId != src) continue;
             if (a.pieceType != type) continue;
             if (UIBridge._mask[i] == 0) continue; // masked out = illegal
 
@@ -169,7 +169,7 @@ public static class UIHelpers
             }
             else
             {
-                _targetsBuffer.Add(a.dstCell);
+                _targetsBuffer.Add(a.TargetCellId);
             }
         }
         return _targetsBuffer;
@@ -180,20 +180,20 @@ public static class UIHelpers
     {
         switch (a.kind)
         {
-            case Game.Core.ActionKind.Move: return $"Move {a.srcCell} → {a.dstCell}";
-            case Game.Core.ActionKind.Shoot: return $"Shoot {a.srcCell} → {a.dstCell}";
-            case Game.Core.ActionKind.Create: return $"Create {a.pieceType} @ {a.dstCell}";
-            case Game.Core.ActionKind.CaptureVP: return $"Capture VP @ {a.dstCell}";
-            case Game.Core.ActionKind.CoreDamage: return $"Core Damage @ {a.dstCell}";
-            case Game.Core.ActionKind.Push: return $"Push target @ {a.dstCell}";
-            case Game.Core.ActionKind.GroupBuild: return $"Group Build {a.pieceType} @ {a.dstCell}";
-            case Game.Core.ActionKind.Upgrade: return $"Upgrade → {a.pieceType} @ {a.dstCell}";
-            case Game.Core.ActionKind.Launcher: return $"Launch {a.aux} → {a.dstCell}";
-            case Game.Core.ActionKind.Spawner: return $"Spawn x? {a.pieceType} @ {a.dstCell}";
-            case Game.Core.ActionKind.SacrificeFactory: return $"Sacrifice Factory {a.srcCell} → {a.dstCell}";
+            case Game.Core.ActionKind.Move: return $"Move {a.ActorsCellId} → {a.TargetCellId}";
+            case Game.Core.ActionKind.Shoot: return $"Shoot {a.ActorsCellId} → {a.TargetCellId}";
+            case Game.Core.ActionKind.Create: return $"Create {a.pieceType} @ {a.TargetCellId}";
+            case Game.Core.ActionKind.CaptureVP: return $"Capture VP @ {a.TargetCellId}";
+            case Game.Core.ActionKind.CoreDamage: return $"Core Damage @ {a.TargetCellId}";
+            case Game.Core.ActionKind.Push: return $"Push target @ {a.TargetCellId}";
+            case Game.Core.ActionKind.GroupBuild: return $"Group Build {a.pieceType} @ {a.TargetCellId}";
+            case Game.Core.ActionKind.Upgrade: return $"Upgrade → {a.pieceType} @ {a.TargetCellId}";
+            case Game.Core.ActionKind.Launcher: return $"Launch {a.aux} → {a.TargetCellId}";
+            case Game.Core.ActionKind.Spawner: return $"Spawn x? {a.pieceType} @ {a.TargetCellId}";
+            case Game.Core.ActionKind.SacrificeFactory: return $"Sacrifice Factory {a.ActorsCellId} → {a.TargetCellId}";
             case Game.Core.ActionKind.ConversionFactory: return $"ConversionFactory";
             case Game.Core.ActionKind.EndTurn: return "End Turn";
-            default: return $"{a.kind} [{a.srcCell}->{a.dstCell}]";
+            default: return $"{a.kind} [{a.ActorsCellId}->{a.TargetCellId}]";
         }
     }
 

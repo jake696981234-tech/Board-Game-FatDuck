@@ -119,7 +119,7 @@ public static class UIInput
                 if (UIHelpers._selectedActionIndex >= 0)
                 {
                     var seed = UIBridge._offers[UIHelpers._selectedActionIndex];
-                    int idx = UIHelpers.FindConcreteAction(seed.kind, seed.srcCell, seed.pieceType, (ushort)cellId);
+                    int idx = UIHelpers.FindConcreteAction(seed.kind, seed.ActorsCellId, seed.pieceType, (ushort)cellId);
                     if (idx >= 0) { UIBridge.PerformActionIndex(idx); }
                     // Clear highlights regardless (perform may change board)
                     showBoard.ClearHighlights();
@@ -142,7 +142,7 @@ public static class UIInput
     #region Prefab Clicked
     private static void OnBuildItemClicked(BuildItem item)
     {
-        if (Pieces.HasConnectors(item.pieceType))
+        if (PieceDefinition.connectors_enabled[item.pieceType])
         {
             UIHelpers.CachedBuildItemForCreateConnector = item;
             UIModes.EnterConnectingMode(item);

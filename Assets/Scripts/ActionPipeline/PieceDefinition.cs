@@ -17,12 +17,12 @@ public static class PieceDefinition
     public static bool[] isBuildingByType;      // [type] -> true => Building, false => Soldier (kept as bool for existing callers)
     public static bool[] buildableByType;       // [type] -> 0/1 flag; default 1
     public static int[] buildCostByType;       // [type] -> cost to Create this type
-    public static short[] maxHPByType;           // [type] -> max HP
+    public static int[] maxHPByType;           // [type] -> max HP
 
     #endregion
     #region Digits
-    public static int[][] codeDigitsByType;      // [type] -> prerequisite digits (optional)
-    public static sbyte[] grantsDigitByType; // [type] -> -1 = none, else 0..9
+    public static int[] codeDigitsByType;      // [type] -> prerequisite digits (optional)
+    public static int[] grantsDigitByType; // [type] -> -1 = none, else 0..9
 
     #endregion
     #region Connectors
@@ -31,7 +31,7 @@ public static class PieceDefinition
     public static bool[] connectorNeedsCapital;    // [type] -> true if placement requires capital connectivity
     public static bool[] connectorIsCapital;       // [type] -> true if this type counts as a capital
     public static int[] connectorCapitalHealth;   // [type] -> capital health contribution for connected component
-    public static ulong[] connectorAllowedMasks;    // [type] -> bitmask of allowed 6-bit side configs (bit i -> config i allowed)
+    public static int[] connectorAllowedMasks;    // [type] -> bitmask of allowed 6-bit side configs (bit i -> config i allowed)
 
     #endregion
     #region Group Build
@@ -161,8 +161,7 @@ public static class PieceDefinition
     #endregion
     #region probs delete these
     public static string[] idByType;             // [type] -> stable id (tooling)
-    public static string[] moveUIColorHexByType;
-    public static string[] shootUIColorHexByType;
+
 
     // used to be in Generic params
     public static int[] customParam;             // [abilityId]

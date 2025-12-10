@@ -151,7 +151,7 @@ namespace Game.Core
             }
             else if (a.kind != EndTurn)
             {
-                int actorPid = bm.GetCellOccupant(a.srcCell);
+                int actorPid = bm.GetCellOccupant(a.ActorsCellId);
                 if (actorPid >= 0)
                     pieceTypeForLog = bm.GetPieceType(actorPid);
             }

@@ -10,8 +10,8 @@ public static class ShowRightPanel
         var items = new List<BuildItem>(UIBridge._count);
         if (UIBridge._count > 0)
         {
-            var names = Pieces.displayNameByType;     // assumed from your Pieces registry
-            var paths = Pieces.spritePathByType;      // assumed from your Pieces registry
+            var names = PieceDefinition.displayNameByType;     // assumed from your Pieces registry
+            var paths = PieceDefinition.spritePathByType;      // assumed from your Pieces registry
 
             for (int i = 0; i < UIBridge._count; i++)
             {
@@ -58,7 +58,7 @@ public static class ShowRightPanel
             {
                 var a = UIBridge._offers[i];
                 if (a.kind == Game.Core.ActionKind.EndTurn) continue; // exclude non-piece actions
-                if (a.srcCell != (ushort)cell) continue;               // only actions from this piece
+                if (a.ActorsCellId != (ushort)cell) continue;               // only actions from this piece
 
                 // Show only one Move per selected piece unless raw offers requested
                 if (a.kind == Game.Core.ActionKind.Move && !UI.hic.config.GiveRawActionOffers)
