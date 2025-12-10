@@ -208,10 +208,10 @@ public static class Pieces
     public static int GetBuildCost(byte type) => buildCostByType[type];
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool IsBuildable(byte type)
-    {
-        return type >= 0 && type < buildableByType.Length && buildableByType[type] != 0;
-    }
+    // public static bool IsBuildable(byte type)
+    // {
+    //     return type >= 0 && type < buildableByType.Length && buildableByType[type] != 0;
+    // }
 
     // ——— Legacy helper: expose created type from an ability id (not used for Create in Plan B)
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

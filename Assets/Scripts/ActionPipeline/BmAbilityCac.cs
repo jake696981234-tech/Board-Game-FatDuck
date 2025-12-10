@@ -233,8 +233,8 @@ public static class BmAbilityCac
 
     public static int ComputePushDestination(
       int actorPieceId,
+      int actorType,
       int targetPieceId,
-      int abilityId,
       int gameIndex)
     {
         var bm = GameRegistry.game[gameIndex].boardModel;
@@ -245,16 +245,12 @@ public static class BmAbilityCac
         if (actorCell < 0 || targetCell < 0)
             return bm.InvalidId;
 
-        if (abilityId < 0 ||
-            Pieces.push_PushAmount == null || Pieces.push_pull == null ||
-            abilityId >= Pieces.push_PushAmount.Length || abilityId >= Pieces.push_pull.Length)
-            return bm.InvalidId;
 
-        int pushAmount = Pieces.push_PushAmount[abilityId];
+        int pushAmount = PieceDefinition.push_PushAmount[actorType];
         if (pushAmount <= 0)
             return bm.InvalidId;
 
-        bool isPull = Pieces.push_pull[abilityId];
+        bool isPull = PieceDefinition.push_pull[actorType];
 
         int dir = isPull
             ? GetDirectionIndex(targetCell, actorCell, gameIndex)
@@ -402,7 +398,7 @@ public static class BmAbilityCac
             if (pid < 0) continue;
             if (bm.GetPieceOwner(pid) != player) continue;
             byte t = bm.GetPieceType(pid);
-            if (Pieces.IsBuilding(t)) return true;
+            if (PieceDefinition.isBuildingByType[t]) return true;
         }
         return false;
     }

@@ -55,7 +55,7 @@ namespace Game.Core
         }
 
         public override string ToString()
-            => $"Action(kind={kind}, slot={abilitySlot}, type={pieceType}, src={srcCell}, dst={dstCell}, aux={aux})";
+            => $"Action(kind={kind}, type={pieceType}, src={ActorsCellId}, dst={TargetCellId}, aux={aux})";
     }
 
     /// <summary>

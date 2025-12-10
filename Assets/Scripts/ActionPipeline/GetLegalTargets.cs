@@ -126,7 +126,7 @@ public static class GetLegalTargets
         return count;
     }
 
-    public static int GetLegalTargets_SacrificeFactory(int abilityId, int actorPieceId, int[] outTargets, int gameIndex)
+    public static int GetLegalTargets_SacrificeFactory(int actorPieceId, int actorType, int[] outTargets, int gameIndex)
     {
         var bm = GameRegistry.game[gameIndex].boardModel;
 
@@ -134,8 +134,9 @@ public static class GetLegalTargets
         if (originCell < 0) return 0;
         int actorOwner = bm.GetPieceOwner(actorPieceId);
 
-        int rmin = (abilityId >= 0 && abilityId < Pieces.rangeMin.Length) ? Pieces.rangeMin[abilityId] : 0;
-        int rmax = (abilityId >= 0 && abilityId < Pieces.rangeMax.Length) ? Pieces.rangeMax[abilityId] : 0;
+        int rmin = PieceDefinition.sacrificeFactory_rangeMin[actorType];
+        int rmax = PieceDefinition.sacrificeFactory_rangeMax[actorType];
+
         if (rmax < rmin) { int t = rmax; rmax = rmin; rmin = t; }
 
         int cap = outTargets != null ? outTargets.Length : 0;
@@ -159,19 +160,15 @@ public static class GetLegalTargets
     }
 
 
-    public static int GetLegalTargets_Launcher(int abilityId, int actorPid, int[] outPairs, int gameIndex)
+    public static int GetLegalTargets_Launcher(int actorPid, int actorType, int[] outPairs, int gameIndex)
     {
         var bm = GameRegistry.game[gameIndex].boardModel;
 
-        if (abilityId < 0 ||
-            Pieces.launcher_inputRange == null || Pieces.launcher_outputRange == null ||
-            Pieces.launcher_friendlyFire == null || Pieces.launcher_enemyFire == null)
-            return 0;
 
-        int inputRange = Pieces.launcher_inputRange[abilityId];
-        int outputRange = Pieces.launcher_outputRange[abilityId];
-        bool allowFriendly = Pieces.launcher_friendlyFire[abilityId];
-        bool allowEnemy = Pieces.launcher_enemyFire[abilityId];
+        int inputRange = PieceDefinition.launcher_inputRange[actorType];
+        int outputRange = PieceDefinition.launcher_outputRange[actorType];
+        bool allowFriendly = PieceDefinition.launcher_friendlyFire[actorType];
+        bool allowEnemy = PieceDefinition.launcher_enemyFire[actorType];
 
         int originCell = bm.GetPieceCell(actorPid);
         if (originCell < 0) return 0;
@@ -215,28 +212,21 @@ public static class GetLegalTargets
         return write; // count of ints (pairs pid,dst)
     }
 
-    public static int GetLegalTargets_Push(int abilityId, int actorPid, int[] outPieceIds, int gameIndex)
+    public static int GetLegalTargets_Push(int actorPieceId, int actorType, int[] outPieceIds, int gameIndex)
     {
         var bm = GameRegistry.game[gameIndex].boardModel;
 
         // Inline minimal legality similar to GameActions.GetLegalTargets_Push
-        int originCell = bm.GetPieceCell(actorPid);
+        int originCell = bm.GetPieceCell(actorPieceId);
         if (originCell < 0) return 0;
-        if (abilityId < 0 ||
-            Pieces.push_TargetsBuildings == null || Pieces.push_TargetsSoldiers == null ||
-            Pieces.push_rangeMax == null || Pieces.push_FriendlyFire == null ||
-            abilityId >= Pieces.push_TargetsBuildings.Length ||
-            abilityId >= Pieces.push_TargetsSoldiers.Length ||
-            abilityId >= Pieces.push_rangeMax.Length ||
-            abilityId >= Pieces.push_FriendlyFire.Length)
-            return 0;
 
-        int actorOwner = bm.GetPieceOwner(actorPid);
 
-        bool allowBuildings = Pieces.push_TargetsBuildings[abilityId];
-        bool allowSoldiers = Pieces.push_TargetsSoldiers[abilityId];
-        int rangeMax = Pieces.push_rangeMax[abilityId];
-        bool allowFriendly = Pieces.push_FriendlyFire[abilityId];
+        int actorOwner = bm.GetPieceOwner(actorPieceId);
+
+        bool allowBuildings = PieceDefinition.push_TargetsBuildings[actorType];
+        bool allowSoldiers = PieceDefinition.push_TargetsSoldiers[actorType];
+        int rangeMax = PieceDefinition.push_rangeMax[actorType];
+        bool allowFriendly = PieceDefinition.push_FriendlyFire[actorType];
 
         int cap = outPieceIds != null ? outPieceIds.Length : 0;
         int count = 0;
@@ -244,13 +234,13 @@ public static class GetLegalTargets
 
         for (int c = 0; c < cellCount; c++)
         {
-            int pid = bm.GetCellOccupant(c);
-            if (pid < 0) continue;
+            int victimId = bm.GetCellOccupant(c);
+            if (victimId < 0) continue;
 
-            if (!allowFriendly && bm.GetPieceOwner(pid) == actorOwner) continue;
+            if (!allowFriendly && bm.GetPieceOwner(victimId) == actorOwner) continue;
 
-            byte type = bm.GetPieceType(pid);
-            bool isBuilding = Pieces.IsBuilding(type);
+            byte type = bm.GetPieceType(victimId);
+            bool isBuilding = PieceDefinition.isBuildingByType[actorType];
             if (isBuilding && !allowBuildings) continue;
             if (!isBuilding && !allowSoldiers) continue;
 
@@ -258,10 +248,10 @@ public static class GetLegalTargets
             if (dist < 1 || dist > rangeMax) continue;
             if (!BmAbilityCac.LineOfSightClear(originCell, c, gameIndex)) continue;
 
-            int pushDest = BmAbilityCac.ComputePushDestination(actorPid, pid, abilityId, gameIndex);
+            int pushDest = BmAbilityCac.ComputePushDestination(actorPieceId, actorType, victimId, gameIndex);
             if (pushDest < 0 || !bm.IsValidCellId(pushDest)) continue;
 
-            if (count < cap) outPieceIds[count] = pid;
+            if (count < cap) outPieceIds[count] = victimId;
             count++;
         }
 

@@ -2,8 +2,7 @@
 
 public static class PieceDefinition
 {
-    //This is the field you update
-    public readonly static int NumberOfActiveAbilities = 12;
+    public static int typeCount;
 
     #region UI
     public static string[] displayNameByType;
@@ -14,7 +13,7 @@ public static class PieceDefinition
     #endregion
     #region General Fields
     public static bool[] isBuildingByType;      // [type] -> true => Building, false => Soldier (kept as bool for existing callers)
-    public static byte[] buildableByType;       // [type] -> 0/1 flag; default 1
+    public static bool[] buildableByType;       // [type] -> 0/1 flag; default 1
     public static int[] buildCostByType;       // [type] -> cost to Create this type
     public static short[] maxHPByType;           // [type] -> max HP
 
@@ -26,7 +25,7 @@ public static class PieceDefinition
     #endregion
     #region Connectors
 
-    public static bool[] hasConnectorsByType;      // [type] -> true if this type uses connector/wall sides
+    public static bool[] connectors_enabled;      // [type] -> true if this type uses connector/wall sides
     public static bool[] connectorNeedsCapital;    // [type] -> true if placement requires capital connectivity
     public static bool[] connectorIsCapital;       // [type] -> true if this type counts as a capital
     public static int[] connectorCapitalHealth;   // [type] -> capital health contribution for connected component
@@ -34,7 +33,7 @@ public static class PieceDefinition
 
     #endregion
     #region Group Build
-    public static bool[] groupBuildEnabled;        // [type] -> can this type perform group build
+    public static bool[] groupBuild_enabled;        // [type] -> can this type perform group build
     public static int[] groupBuildTargetType;     // [type] -> type id to create
     public static int[] groupBuildRequireNumber;  // [type] -> required count in cluster
     public static bool[] groupBuildDeletion;       // [type] -> delete contributors on build
@@ -118,14 +117,14 @@ public static class PieceDefinition
     #region shoot
     // this needs to re done- used to be Generic params
     //this is all addition
-    public static bool[] shootEnabled;
+    public static bool[] shoot_enabled;
     public static int[] shoot_rangeMin;                // [abilityId]
     public static int[] shoot_rangeMax;                // [abilityId]
     public static int[] shoot_damage;                  // [abilityId]
 
     #endregion
     #region Move
-    public static bool[] Shoot_enabled;
+    public static bool[] move_enabled; //addition
     public static int[] move_rangeMin;                // [abilityId]
     public static int[] move_rangeMax;                // [abilityId]
     public static int[] move_damage;                  // [abilityId]
@@ -134,11 +133,14 @@ public static class PieceDefinition
     #region sacrifice Factory
     public static bool[] sacrificeFactory_enabled;
     public static int[] sacrificeFactory_amount; // [abilityId] -> amount to add when sacrificing
+    public static int[] sacrificeFactory_rangeMin;
+    public static int[] sacrificeFactory_rangeMax;
 
     #endregion
-    #region sacrifice Factory
+    #region capture
 
-    public static bool[] captureVP_enabled;
+    public static bool[] captureVP_enabled; //addition
+    public static bool[] coreDamage_enabled; //addition
 
     #endregion
     #region probs delete these
