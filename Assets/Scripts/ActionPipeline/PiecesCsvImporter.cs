@@ -27,7 +27,8 @@
 // botThinkSurcharge_move,botThinkSurcharge_shoot,botThinkSurcharge_capture,botThinkSurcharge_core,
 // buildable,maxHP,sanctuary_enabled,Sanctuary_range,
 // SacrificeFactory_enabled,SacrificeFactory_MinRange,SacrificeFactory_MaxRange,SacrificeFactory_Amount,SacrificeFactory_BotSurcharges,
-// ConversionFactory_enabled,ConversionFactory_CoreHealth,ConversionFactory_VP,ConversionFactory_Amount,ConversionFactory_BotSurcharge
+// ConversionFactory_enabled,ConversionFactory_CoreHealth,ConversionFactory_VP,ConversionFactory_Amount,ConversionFactory_BotSurcharge,
+// eat_enabled,eat_amount
 //
 // Public API
 // ----------
@@ -116,6 +117,8 @@ public static class PiecesCsvImporter
         bool[] conversionFactoryVpByType = new bool[typeCount];
         int[] conversionFactoryAmountByType = new int[typeCount];
         int[] conversionFactoryBotSurchargeByType = new int[typeCount];
+        bool[] eatEnabledByType = new bool[typeCount];
+        int[] eatAmountByType = new int[typeCount];
 
         // Worst-case: each row can enable many abilities (Move,Shoot,Capture,Core,Push,GroupBuild,Upgrade,Launcher,Spawner,Factory,Sanctuary, etc.)
         int abilityEstimate = Math.Max(10, typeCount * 10);
@@ -199,6 +202,8 @@ public static class PiecesCsvImporter
             bool conversionFactoryVp = GetBool(cols, H, "ConversionFactory_VP", false);
             int conversionFactoryAmount = GetInt(cols, H, "ConversionFactory_Amount", 0);
             int conversionFactoryBotSurcharge = GetInt(cols, H, "ConversionFactory_BotSurcharge", 0);
+            bool eatEnabled = GetBool(cols, H, "eat_enabled", GetBool(cols, H, "EatEnabled", false));
+            int eatAmount = GetInt(cols, H, "eat_amount", GetInt(cols, H, "Eat_Amount", 0));
 
             // Map to backing arrays if present in schema
             if (typeId < Pieces.idByType.Length) Pieces.idByType[typeId] = name;
@@ -283,6 +288,8 @@ public static class PiecesCsvImporter
             conversionFactoryVpByType[typeId] = conversionFactoryVp;
             conversionFactoryAmountByType[typeId] = conversionFactoryAmount;
             conversionFactoryBotSurchargeByType[typeId] = conversionFactoryBotSurcharge;
+            eatEnabledByType[typeId] = eatEnabled;
+            eatAmountByType[typeId] = eatAmount;
 
             // digitsRequired → store as single-element codeDigits list if your schema expects int[]
             if (typeId < Pieces.codeDigitsByType.Length)
@@ -353,6 +360,8 @@ public static class PiecesCsvImporter
             bool conversionFactoryVp = conversionFactoryVpByType[typeId];
             int conversionFactoryAmount = conversionFactoryAmountByType[typeId];
             int conversionFactoryBotSurcharge = conversionFactoryBotSurchargeByType[typeId];
+            bool eatEnabled = eatEnabledByType[typeId];
+            int eatAmount = eatAmountByType[typeId];
 
             // MOVE
             if (GetBool(cols, H, "move_enabled", false))
@@ -486,6 +495,16 @@ public static class PiecesCsvImporter
                     factoryGroupAmount,
                     ref nextAbilityId,
                     botSurcharge: factoryBotS);
+                Pieces.AddAbilitySlot((byte)typeId, abilityId);
+            }
+
+            // EAT (passive)
+            if (eatEnabled)
+            {
+                int abilityId = DefineSynthAbility_Eat(
+                    typeName,
+                    eatAmount,
+                    ref nextAbilityId);
                 Pieces.AddAbilitySlot((byte)typeId, abilityId);
             }
 
@@ -739,6 +758,23 @@ public static class PiecesCsvImporter
         if (a < Pieces.factory_group.Length) Pieces.factory_group[a] = group;
         if (a < Pieces.factory_groupAmount.Length) Pieces.factory_groupAmount[a] = Math.Max(1, groupAmount);
         if (a < Pieces.botThinkSurcharge.Length) Pieces.botThinkSurcharge[a] = botSurcharge;
+        if (a < Pieces.buildTypeId.Length) Pieces.buildTypeId[a] = -1;
+        return a;
+    }
+
+    private static int DefineSynthAbility_Eat(
+        string typeName,
+        int amount,
+        ref int nextA)
+    {
+        int a = nextA++;
+        string name = $"Eat@{typeName}";
+        Pieces.DefineAbility(a, name, Pieces.AbilityKind.Eat, Pieces.TargetKind.None);
+        if (a < Pieces.rangeMin.Length) Pieces.rangeMin[a] = 0;
+        if (a < Pieces.rangeMax.Length) Pieces.rangeMax[a] = 0;
+        if (a < Pieces.eat_enabled.Length) Pieces.eat_enabled[a] = true;
+        if (a < Pieces.eat_amount.Length) Pieces.eat_amount[a] = amount;
+        if (a < Pieces.botThinkSurcharge.Length) Pieces.botThinkSurcharge[a] = 0;
         if (a < Pieces.buildTypeId.Length) Pieces.buildTypeId[a] = -1;
         return a;
     }

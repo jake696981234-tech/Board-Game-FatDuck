@@ -24,7 +24,7 @@ public static class PassiveActions
         return perPlayerFactoryIncome;
     }
 
-    private static PerPiecePayout ComputeDetailedPlayerFactoryIncome(int playerId, int gameIndex)
+    public static PerPiecePayout ComputeDetailedPlayerFactoryIncome(int playerId, int gameIndex)
     {
         var gameState = GameRegistry.game[gameIndex].gameState;
         var bm = GameRegistry.game[gameIndex].boardModel;

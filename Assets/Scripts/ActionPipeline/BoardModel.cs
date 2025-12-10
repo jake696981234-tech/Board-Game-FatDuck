@@ -109,6 +109,11 @@ public partial class BoardModel
 
     public int GetCellCount() => _cellCount; // The Places that refrence this can should refrence the struct directly
 
+    public int GetPieceTypeFromCell(int cellId)
+    {
+        return pieceType[GetCellOccupant(cellId)];
+    }
+
     public int GetCellOccupant(int cellId)
         => (IsValidCellId(cellId) && occupantPieceId != null) ? occupantPieceId[cellId] : _invalidId;
 

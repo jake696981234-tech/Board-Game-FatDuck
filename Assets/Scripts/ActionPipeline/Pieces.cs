@@ -32,8 +32,8 @@ public static class Pieces
         ConversionFactory = 12,
         Factory = 11,
         Sanctuary = 12,
-        Custom1 = 13,
-        Custom2 = 14
+        Eat = 13,
+        Custom2 = 14,
     }
     public enum TargetKind : byte { None = 0, Cell = 1, Piece = 2 }
 
@@ -47,7 +47,6 @@ public static class Pieces
     public static short[] maxHPByType;           // [type] -> max HP
     public static int[][] codeDigitsByType;      // [type] -> prerequisite digits (optional)
 
-    
     // --- Digits (Plan B): per-type grant; per-type requirement already lives in codeDigitsByType ---
     public static sbyte[] grantsDigitByType; // [type] -> -1 = none, else 0..9
 
@@ -97,6 +96,8 @@ public static class Pieces
     public static bool[] conversionFactory_vp;         // [ability] -> convert to VP
     public static int[] conversionFactory_amount;      // [ability] -> amount converted
     public static int[] conversionFactory_botSurcharge; // [ability] -> bot surcharge
+    public static bool[] eat_enabled;                  // [ability] -> eat passive enabled
+    public static int[] eat_amount;                    // [ability] -> eat amount
 
     // Name maps (optional)
     public static Dictionary<string, int> typeIndexByName;
@@ -312,6 +313,12 @@ public static class Pieces
         if (factory_groupAmount == null || factory_groupAmount.Length != abilityCount) return "factory_groupAmount not allocated or wrong size.";
         if (sanctuary_enabled == null || sanctuary_enabled.Length != abilityCount) return "sanctuary_enabled not allocated or wrong size.";
         if (Sanctuary_range == null || Sanctuary_range.Length != abilityCount) return "Sanctuary_range not allocated or wrong size.";
+        if (conversionFactory_coreHealth == null || conversionFactory_coreHealth.Length != abilityCount) return "conversionFactory_coreHealth not allocated or wrong size.";
+        if (conversionFactory_vp == null || conversionFactory_vp.Length != abilityCount) return "conversionFactory_vp not allocated or wrong size.";
+        if (conversionFactory_amount == null || conversionFactory_amount.Length != abilityCount) return "conversionFactory_amount not allocated or wrong size.";
+        if (conversionFactory_botSurcharge == null || conversionFactory_botSurcharge.Length != abilityCount) return "conversionFactory_botSurcharge not allocated or wrong size.";
+        if (eat_enabled == null || eat_enabled.Length != abilityCount) return "eat_enabled not allocated or wrong size.";
+        if (eat_amount == null || eat_amount.Length != abilityCount) return "eat_amount not allocated or wrong size.";
         if (push_TargetsBuildings == null || push_TargetsBuildings.Length != abilityCount) return "push_TargetsBuildings not allocated or wrong size.";
         if (push_TargetsSoldiers == null || push_TargetsSoldiers.Length != abilityCount) return "push_TargetsSoldiers not allocated or wrong size.";
         if (push_rangeMax == null || push_rangeMax.Length != abilityCount) return "push_rangeMax not allocated or wrong size.";
@@ -420,6 +427,8 @@ public static class Pieces
         conversionFactory_vp = new bool[abilityCount];
         conversionFactory_amount = new int[abilityCount];
         conversionFactory_botSurcharge = new int[abilityCount];
+        eat_enabled = new bool[abilityCount];
+        eat_amount = new int[abilityCount];
         multiCreate_enabledByType = new bool[typeCount];
         multiCreate_amountByType = new int[typeCount];
         multiCreate_boarderingByType = new bool[typeCount];

@@ -110,7 +110,7 @@ public sealed class GameSnapshotComposer
         snapshot.PerEndRoundPayOut = new CurrentEndRoundPayOut[4];
         for (byte p = 0; p < 4; p++)
         {
-            PerPiecePayout EndRoundPayOut = Game.Core.GameActions.ComputeDetailedPlayerFactoryIncome(p, gameIndex);
+            PerPiecePayout EndRoundPayOut = PassiveActions.ComputeDetailedPlayerFactoryIncome(p, gameIndex);
 
             snapshot.PerEndRoundPayOut[p] = new CurrentEndRoundPayOut(EndRoundPayOut.pieceType,
                                                                         EndRoundPayOut.isGroup,

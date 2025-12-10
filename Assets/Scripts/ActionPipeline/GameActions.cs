@@ -40,7 +40,7 @@ namespace Game.Core
             if (killed)
             {
                 // Revoke digit from the defender's owner if this type granted one
-                pieceKilled(victimID, gameIndex);
+                pieceKilled(victimID, gameIndex, theAction);
             }
             RefreshConnectorState(gameIndex);
         }
@@ -129,7 +129,7 @@ namespace Game.Core
             if (killed)
             {
                 // Revoke digit from the defender's owner if this type granted one
-                pieceKilled(victimID, gameIndex);
+                pieceKilled(victimID, gameIndex, theAction);
             }
             else
             {
@@ -142,20 +142,20 @@ namespace Game.Core
 
 
 
-        public static void ApplyGroupBuild(in Action a, byte p, int gameIndex)
+        public static void ApplyGroupBuild(in Action theAction, byte p, int gameIndex)
         {
             var gameState = GameRegistry.game[gameIndex].gameState;
             var bm = GameRegistry.game[gameIndex].boardModel;
             var events = GameRegistry.game[gameIndex].eventManager;
 
-            int targetType = a.pieceType;
-            int dst = a.dstCell;
+            int targetType = theAction.pieceType;
+            int dst = theAction.dstCell;
             int pid = bm.AllocateRow();
             bm.PlacePieceRow(pid, p, (byte)targetType, dst, Pieces.maxHPByType[targetType]);
             int g = Pieces.GrantsDigit((byte)targetType);
             if (g >= 0) gameState.ps[p].GrantDigit(g);
 
-            int srcCell = a.srcCell;
+            int srcCell = theAction.srcCell;
             int actorPid = bm.GetCellOccupant(srcCell);
             if (actorPid >= 0)
             {
@@ -169,7 +169,7 @@ namespace Game.Core
                     {
                         int cell = list[i];
                         int victim = bm.GetCellOccupant(cell);
-                        if (victim >= 0) pieceKilled(victim, gameIndex);
+                        if (victim >= 0) pieceKilled(victim, gameIndex, theAction);
                     }
                 }
             }
@@ -304,7 +304,7 @@ namespace Game.Core
             int Pieceid = bm.GetCellOccupant(theAction.srcCell);
             bm.pieceFactoryAux[Pieceid] += GetSacrificeFactoryAmount(in theAction, gameIndex);
 
-            pieceKilled(victimID, gameIndex); ;
+            pieceKilled(victimID, gameIndex, theAction);
             RefreshConnectorState(gameIndex);
         }
 
@@ -371,6 +371,18 @@ namespace Game.Core
             RefreshConnectorState(gameIndex);
         }
 
+        private static void pieceKilled(int victim, int gameIndex, Action theAction)
+        {
+            var bm = GameRegistry.game[gameIndex].boardModel;
+
+            int Pieceid = bm.GetCellOccupant(theAction.srcCell);
+
+            bm.pieceFactoryAux[Pieceid] += GetEatAmount(theAction, gameIndex);
+
+            pieceKilled(victim, gameIndex);
+        }
+
+
         private static bool ApplyDamageWithCapital(int attackerCell, int targetPid, short dmg, int gameIndex)
         {
             var bm = GameRegistry.game[gameIndex].boardModel;
@@ -415,35 +427,29 @@ namespace Game.Core
             if (toDestroy == null) return;
             for (int i = 0; i < toDestroy.Count; i++)
             {
-                int pid = toDestroy[i];
-                if (bm.IsValidPieceId(pid))
-                    pieceKilled(pid, gameIndex);
+                int victimID = toDestroy[i];
+                if (bm.IsValidPieceId(victimID))
+                    pieceKilled(victimID, gameIndex);
             }
         }
 
 
 
-        private static void ResolveMelee(int actorPid, int defenderPid, in Action a, int gameIndex)
+        private static void ResolveMelee(int actorPid, int victimID, in Action theAction, int gameIndex)
         {
             var bm = GameRegistry.game[gameIndex].boardModel;
             var gameState = GameRegistry.game[gameIndex].gameState;
 
-            short dmg = GetAbilityDamage(in a, gameIndex);
-            bool killed = ApplyDamageWithCapital(actorPid, defenderPid, dmg, gameIndex);
+            short dmg = GetAbilityDamage(in theAction, gameIndex);
+            bool killed = ApplyDamageWithCapital(actorPid, victimID, dmg, gameIndex);
             if (killed)
             {
-                // Revoke digit from the defender's owner if this type granted one
-                int deadOwner = bm.GetPieceOwner(defenderPid);
-                byte deadType = bm.GetPieceType(defenderPid);
-                int g = Pieces.GrantsDigit(deadType);
-                if (g >= 0) gameState.ps[deadOwner].RevokeDigit(g);
-                bm.FreeRowSwapBack(defenderPid);
-                bm.MovePieceRow(actorPid, a.dstCell);
+                pieceKilled(victimID, gameIndex, theAction);
             }
             else
             {
-                int origin = a.srcCell;
-                int best = BmAbilityCac.FindNearestEmptyAdjacent(origin, bm.GetPieceCell(defenderPid), gameIndex);
+                int origin = theAction.srcCell;
+                int best = BmAbilityCac.FindNearestEmptyAdjacent(origin, bm.GetPieceCell(victimID), gameIndex);
                 if (best >= 0) bm.MovePieceRow(actorPid, best);
             }
             // Connector state refresh happens in GameActions after move/shoot/push/kill
@@ -479,7 +485,17 @@ namespace Game.Core
             return (abi >= 0 && abi < Pieces.conversionFactory_amount.Length) ? Pieces.conversionFactory_amount[abi] : 0;
         }
 
-        
+        private static int GetEatAmount(in Action a, int gameIndex)
+        {
+            var bm = GameRegistry.game[gameIndex].boardModel;
+
+            int pid = bm.GetCellOccupant(a.srcCell);
+            byte typ = bm.GetPieceType(pid);
+            int abi = Pieces.AbilityIdAtSlot(typ, a.abilitySlot);
+            return (abi >= 0 && abi < Pieces.eat_amount.Length) ? Pieces.eat_amount[abi] : 0;
+        }
+
+
 
         private static List<int> CollectClusterCells(byte type, int startCell, int gameIndex)
         {

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Config
   m_EditorClassIdentifier: Assembly-CSharp::Config
   agent:
-    maxOffersToConsider: 1500
+    maxOffersToConsider: 10000
     rolloutDepth: 0
     thinkBudgetMs: 5
   observations:
@@ -62,7 +62,7 @@ MonoBehaviour:
     endTurnPenalty: 0
   autoSim:
     autoRestartOnGameOver: 1
-    maxAutoGames: 10000000
+    maxAutoGames: 1
   board:
     radius: 8
     invalidId: -1
