@@ -13,17 +13,17 @@ namespace Game.Core
         {
             var bm = GameRegistry.game[gameIndex].boardModel;
 
-            int actorPid = bm.GetCellOccupant(theAction.srcCell);
+            int actorPid = bm.GetCellOccupant(theAction.ActorsCellId);
             if (actorPid < 0) return;
-            int dstOcc = bm.GetCellOccupant(theAction.dstCell);
+            int dstOcc = bm.GetCellOccupant(theAction.ActorsCellId);
             if (dstOcc >= 0)
             {
                 ResolveMelee(actorPid, dstOcc, in theAction, gameIndex);
-                bm.MovePieceRow(actorPid, theAction.dstCell);
+                bm.MovePieceRow(actorPid, theAction.ActorsCellId);
             }
             else
             {
-                bm.MovePieceRow(actorPid, theAction.dstCell);
+                bm.MovePieceRow(actorPid, theAction.TargetCellId);
             }
             RefreshConnectorState(gameIndex);
         }
@@ -35,8 +35,8 @@ namespace Game.Core
 
             int victimID = theAction.aux;
             if (victimID < 0) return;
-            short dmg = GetAbilityDamage(in theAction, gameIndex);
-            bool killed = ApplyDamageWithCapital(theAction.srcCell, victimID, dmg, gameIndex);
+            int dmg = PieceDefinition.shoot_damage[theAction.pieceType];
+            bool killed = ApplyDamageWithCapital(theAction.ActorsCellId, victimID, dmg, gameIndex);
             if (killed)
             {
                 // Revoke digit from the defender's owner if this type granted one
@@ -60,7 +60,7 @@ namespace Game.Core
 
             gameState.ps[player].OnCoreDamage();
 
-            int actorPid = bm.GetCellOccupant(theAction.srcCell);
+            int actorPid = bm.GetCellOccupant(theAction.ActorsCellId);
             if (actorPid < 0) return;
 
             int actorCell = bm.GetPieceCell(actorPid);
@@ -68,8 +68,7 @@ namespace Game.Core
             if (enemy >= 4) return;
 
             byte typ = bm.GetPieceType(actorPid);
-            int abi = Pieces.AbilityIdAtSlot(typ, theAction.abilitySlot);
-            short dmg = (short)((abi >= 0 && abi < Pieces.damage.Length) ? Pieces.damage[abi] : 0);
+            int dmg = PieceDefinition.coreDamage_damage[typ];
 
             int hp = gameState.GetCoreHealth(enemy);
             gameState.SetCoreHealth(enemy, hp - dmg);
@@ -83,24 +82,24 @@ namespace Game.Core
 
 
             int pid = bm.AllocateRow();
-            bm.PlacePieceRow(pid, player, (byte)theAction.pieceType, theAction.dstCell, Pieces.maxHPByType[theAction.pieceType]);
+            bm.PlacePieceRow(pid, player, (byte)theAction.pieceType, theAction.TargetCellId, PieceDefinition.maxHPByType[theAction.pieceType]);
             // Set connector config if applicable (Create uses aux for config index)
             bm.pieceConnectorConfig[pid] = (byte)theAction.aux;
             // Grant digit if this type provides one
             int g = Pieces.GrantsDigit((byte)theAction.pieceType);
             if (g >= 0) gameState.ps[player].GrantDigit(g);
 
-            if (Pieces.multiCreate_enabledByType[theAction.pieceType])
+            if (PieceDefinition.multiCreate_enabledByType[theAction.pieceType])
             {
-                int total = Math.Max(1, Pieces.multiCreate_amountByType[theAction.pieceType]);
+                int total = Math.Max(1, PieceDefinition.multiCreate_amountByType[theAction.pieceType]);
                 if (total > 1)
                 {
                     gameState.multiCreateActive = true;
                     gameState.multiCreateType = (byte)theAction.pieceType;
-                    gameState.multiCreateBorder = Pieces.multiCreate_boarderingByType[theAction.pieceType];
+                    gameState.multiCreateBorder = PieceDefinition.multiCreate_boarderingByType[theAction.pieceType];
                     gameState.multiCreateRemaining = total - 1;
                     gameState.multiCreateCells.Clear();
-                    gameState.multiCreateCells.Add(theAction.dstCell);
+                    gameState.multiCreateCells.Add(theAction.TargetCellId);
                 }
             }
 
@@ -117,15 +116,13 @@ namespace Game.Core
             int victimID = theAction.aux;
             if (victimID < 0) return;
 
-            int actorPid = bm.GetCellOccupant(theAction.srcCell);
+            int actorPid = bm.GetCellOccupant(theAction.ActorsCellId);
             if (actorPid < 0) return;
 
             byte actorType = bm.GetPieceType(actorPid);
-            int abilityId = Pieces.AbilityIdAtSlot(actorType, theAction.abilitySlot);
-            if (abilityId < 0) return;
 
-            short dmg = GetAbilityDamage(in theAction, gameIndex);
-            bool killed = ApplyDamageWithCapital(theAction.srcCell, victimID, dmg, gameIndex);
+            int dmg = PieceDefinition.shoot_damage[theAction.pieceType];
+            bool killed = ApplyDamageWithCapital(theAction.ActorsCellId, victimID, dmg, gameIndex);
             if (killed)
             {
                 // Revoke digit from the defender's owner if this type granted one
@@ -133,7 +130,7 @@ namespace Game.Core
             }
             else
             {
-                int pushedCellID = BmAbilityCac.ComputePushDestination(actorPid, victimID, abilityId, gameIndex);
+                int pushedCellID = BmAbilityCac.ComputePushDestination(actorPid, actorType, victimID, gameIndex);
                 bm.MovePieceRow(victimID, pushedCellID);
             }
             RefreshConnectorState(gameIndex);
@@ -149,21 +146,21 @@ namespace Game.Core
             var events = GameRegistry.game[gameIndex].eventManager;
 
             int targetType = theAction.pieceType;
-            int dst = theAction.dstCell;
+            int dst = theAction.TargetCellId;
             int pid = bm.AllocateRow();
-            bm.PlacePieceRow(pid, p, (byte)targetType, dst, Pieces.maxHPByType[targetType]);
+            bm.PlacePieceRow(pid, p, (byte)targetType, dst, PieceDefinition.maxHPByType[targetType]);
             int g = Pieces.GrantsDigit((byte)targetType);
             if (g >= 0) gameState.ps[p].GrantDigit(g);
 
-            int srcCell = theAction.srcCell;
-            int actorPid = bm.GetCellOccupant(srcCell);
+            int ActorsCellId = theAction.ActorsCellId;
+            int actorPid = bm.GetCellOccupant(ActorsCellId);
             if (actorPid >= 0)
             {
                 byte actorType = bm.GetPieceType(actorPid);
-                if (Pieces.groupBuildDeletion[actorType])
+                if (PieceDefinition.groupBuildDeletion[actorType])
                 {
-                    var list = CollectClusterCells(actorType, srcCell, gameIndex);
-                    int need = Pieces.groupBuildRequireNumber[actorType];
+                    var list = CollectClusterCells(actorType, ActorsCellId, gameIndex);
+                    int need = PieceDefinition.groupBuildRequireNumber[actorType];
                     list.Sort();
                     for (int i = 0; i < need && i < list.Count; i++)
                     {
@@ -182,11 +179,11 @@ namespace Game.Core
             var bm = GameRegistry.game[gameIndex].boardModel;
             var gameState = GameRegistry.game[gameIndex].gameState;
 
-            int actorPid = bm.GetCellOccupant(a.srcCell);
+            int actorPid = bm.GetCellOccupant(a.ActorsCellId);
             if (actorPid < 0) return;
             byte actorType = bm.GetPieceType(actorPid);
-            int targetType = Pieces.upgradeTargetType[actorType];
-            if (targetType < 0 || targetType >= Pieces.typeCount) return;
+            int targetType = PieceDefinition.upgradeTargetType[actorType];
+            if (targetType < 0 || targetType >= PieceDefinition.typeCount) return;
 
             // Preserve connector config
             byte oldConfig = bm.pieceConnectorConfig[actorPid];
@@ -197,7 +194,7 @@ namespace Game.Core
 
             // Replace type and reset HP
             bm.pieceType[actorPid] = (byte)targetType;
-            bm.pieceHP[actorPid] = Pieces.maxHPByType[targetType];
+            bm.pieceHP[actorPid] = PieceDefinition.maxHPByType[targetType];
             bm.pieceConnectorConfig[actorPid] = oldConfig;
 
             // Grant digit for new type
@@ -213,25 +210,24 @@ namespace Game.Core
 
             int targetPid = a.aux;
             if (targetPid < 0) return;
-            bm.MovePieceRow(targetPid, a.dstCell);
+            bm.MovePieceRow(targetPid, a.TargetCellId);
             RefreshConnectorState(gameIndex);
         }
 
-        public static void ApplySpawner(in Action a, byte p, int gameIndex)
+        public static void ApplySpawner(in Action theAction, byte currentPlayer, int gameIndex)
         {
             var gameState = GameRegistry.game[gameIndex].gameState;
 
             var controller = GameRegistry.game[gameIndex].gameController;
             var bm = GameRegistry.game[gameIndex].boardModel;
 
-            int actorPid = bm.GetCellOccupant(a.srcCell);
+            int actorPid = bm.GetCellOccupant(theAction.ActorsCellId);
             if (actorPid < 0) return;
-            int abilityId = Pieces.AbilityIdAtSlot(bm.GetPieceType(actorPid), a.abilitySlot);
-            if (abilityId < 0) return;
 
-            int targetType = Pieces.spawn_targetType[abilityId];
-            int amount = Pieces.spawn_pieceAmount[abilityId];
-            int range = Pieces.spawn_range[abilityId];
+
+            int targetType = PieceDefinition.spawn_targetType[theAction.pieceType];
+            int amount = PieceDefinition.spawn_pieceAmount[theAction.pieceType];
+            int range = PieceDefinition.spawn_range[theAction.pieceType];
 
             int origin = bm.GetPieceCell(actorPid);
             int[] empties = Scratch.GetScratchCellBuffer(gameIndex);
@@ -249,18 +245,18 @@ namespace Game.Core
 
             int availableLimit = int.MaxValue;
             if (controller.PieceLimitEnabled && controller.PieceLimitPerPlayer > 0)
-                availableLimit = controller.PieceLimitPerPlayer - bm.GetPieceCountForPlayer(p);
+                availableLimit = controller.PieceLimitPerPlayer - bm.GetPieceCountForPlayer(currentPlayer);
 
             int canCreate = Math.Min(amount, Math.Min(eCount, Math.Max(0, availableLimit)));
             if (canCreate <= 0) return;
 
-            // Prefer the chosen cell (a.dstCell) if still legal; then fill remaining
+            // Prefer the chosen cell (a.TargetCellId) if still legal; then fill remaining
             int spawned = 0;
 
             bool ChosenCellIsLegal = false;
             for (int i = 0; i < eCount; i++)
             {
-                if (empties[i] == a.dstCell)
+                if (empties[i] == theAction.TargetCellId)
                 {
                     ChosenCellIsLegal = true;
                     break;
@@ -270,25 +266,25 @@ namespace Game.Core
             if (ChosenCellIsLegal && spawned < canCreate)
             {
                 int pid = bm.AllocateRow();
-                bm.PlacePieceRow(pid, p, (byte)targetType, a.dstCell, Pieces.maxHPByType[targetType]);
+                bm.PlacePieceRow(pid, currentPlayer, (byte)targetType, theAction.TargetCellId, PieceDefinition.maxHPByType[targetType]);
                 int g = Pieces.GrantsDigit((byte)targetType);
-                if (g >= 0) gameState.ps[p].GrantDigit(g);
+                if (g >= 0) gameState.ps[currentPlayer].GrantDigit(g);
                 spawned++;
             }
 
             for (int i = 0; i < eCount && spawned < canCreate; i++)
             {
                 int cell = empties[i];
-                if (cell == a.dstCell) continue; // already used chosen cell
+                if (cell == theAction.TargetCellId) continue; // already used chosen cell
                 int pid = bm.AllocateRow();
-                bm.PlacePieceRow(pid, p, (byte)targetType, cell, Pieces.maxHPByType[targetType]);
+                bm.PlacePieceRow(pid, currentPlayer, (byte)targetType, cell, PieceDefinition.maxHPByType[targetType]);
                 int g = Pieces.GrantsDigit((byte)targetType);
-                if (g >= 0) gameState.ps[p].GrantDigit(g);
+                if (g >= 0) gameState.ps[currentPlayer].GrantDigit(g);
                 spawned++;
             }
 
             // Mark once-per-turn flag
-            if (Pieces.spawn_onlyOncePerTurn[abilityId])
+            if (PieceDefinition.spawn_onlyOncePerTurn[theAction.pieceType])
                 bm.spawnerUsedThisTurn.Add(actorPid);
 
             RefreshConnectorState(gameIndex);
@@ -301,8 +297,8 @@ namespace Game.Core
 
             int victimID = theAction.aux;
             if (victimID < 0) return;
-            int Pieceid = bm.GetCellOccupant(theAction.srcCell);
-            bm.pieceFactoryAux[Pieceid] += GetSacrificeFactoryAmount(in theAction, gameIndex);
+            int Pieceid = bm.GetCellOccupant(theAction.ActorsCellId);
+            bm.pieceFactoryAux[Pieceid] += PieceDefinition.sacrificeFactory_amount[theAction.pieceType];
 
             pieceKilled(victimID, gameIndex, theAction);
             RefreshConnectorState(gameIndex);
@@ -313,10 +309,10 @@ namespace Game.Core
             var bm = GameRegistry.game[gameIndex].boardModel;
             var gameState = GameRegistry.game[gameIndex].gameState;
 
-            int Pieceid = bm.GetCellOccupant(theAction.srcCell);
+            int Pieceid = bm.GetCellOccupant(theAction.ActorsCellId);
 
             gameState.ps[player].vpTotal--;
-            bm.pieceFactoryAux[Pieceid] += GetConversionFactoryAmount(theAction, gameIndex);
+            bm.pieceFactoryAux[Pieceid] += PieceDefinition.conversionFactory_amount[theAction.pieceType];
         }
 
 
@@ -326,15 +322,15 @@ namespace Game.Core
             var gameState = GameRegistry.game[gameIndex].gameState;
 
             if (!gameState.multiCreateActive || a.pieceType != gameState.multiCreateType) return;
-            int cell = a.dstCell;
+            int cell = a.TargetCellId;
             if (!bm.IsEmpty(cell)) return;
             // Place the piece
             int pid = bm.AllocateRow();
-            bm.PlacePieceRow(pid, p, (byte)a.pieceType, cell, Pieces.maxHPByType[a.pieceType]);
+            bm.PlacePieceRow(pid, p, (byte)a.pieceType, cell, PieceDefinition.maxHPByType[a.pieceType]);
             int g = Pieces.GrantsDigit((byte)a.pieceType);
             if (g >= 0) gameState.ps[p].GrantDigit(g);
             // Reuse connector config from the initial piece if the type has connectors
-            if (Pieces.HasConnectors(a.pieceType) && gameState.multiCreateCells.Count > 0)
+            if (PieceDefinition.connectors_enabled[a.pieceType] && gameState.multiCreateCells.Count > 0)
             {
                 // initial placed piece is at index 0 in multiCreateCells
                 int primaryCell = gameState.multiCreateCells[0];
@@ -375,22 +371,22 @@ namespace Game.Core
         {
             var bm = GameRegistry.game[gameIndex].boardModel;
 
-            int Pieceid = bm.GetCellOccupant(theAction.srcCell);
+            int Pieceid = bm.GetCellOccupant(theAction.ActorsCellId);
 
-            bm.pieceFactoryAux[Pieceid] += GetEatAmount(theAction, gameIndex);
+            bm.pieceFactoryAux[Pieceid] += PieceDefinition.eat_amount[theAction.pieceType];
 
             pieceKilled(victim, gameIndex);
         }
 
 
-        private static bool ApplyDamageWithCapital(int attackerCell, int targetPid, short dmg, int gameIndex)
+        private static bool ApplyDamageWithCapital(int attackerCell, int targetPid, int dmg, int gameIndex)
         {
             var bm = GameRegistry.game[gameIndex].boardModel;
 
             if (targetPid < 0 || dmg <= 0) return false;
 
             int incomingDir = BmAbilityCac.GetDirectionIndex(attackerCell, bm.GetPieceCell(targetPid), gameIndex);
-            if (incomingDir >= 0 && Pieces.HasConnectors(bm.GetPieceType(targetPid)))
+            if (incomingDir >= 0 && PieceDefinition.connectors_enabled[bm.GetPieceType(targetPid)])
             {
                 int hitSide = PiecesSides.OppositeDir(incomingDir);
                 bool sideIsConnector = PiecesSides.IsConnectorSide(bm.pieceConnectorConfig[targetPid], hitSide);
@@ -440,7 +436,7 @@ namespace Game.Core
             var bm = GameRegistry.game[gameIndex].boardModel;
             var gameState = GameRegistry.game[gameIndex].gameState;
 
-            short dmg = GetAbilityDamage(in theAction, gameIndex);
+            int dmg = PieceDefinition.shoot_damage[theAction.pieceType];
             bool killed = ApplyDamageWithCapital(actorPid, victimID, dmg, gameIndex);
             if (killed)
             {
@@ -448,52 +444,13 @@ namespace Game.Core
             }
             else
             {
-                int origin = theAction.srcCell;
+                int origin = theAction.ActorsCellId;
                 int best = BmAbilityCac.FindNearestEmptyAdjacent(origin, bm.GetPieceCell(victimID), gameIndex);
                 if (best >= 0) bm.MovePieceRow(actorPid, best);
             }
             // Connector state refresh happens in GameActions after move/shoot/push/kill
         }
 
-        private static short GetAbilityDamage(in Action a, int gameIndex)
-        {
-            var bm = GameRegistry.game[gameIndex].boardModel;
-
-            int pid = bm.GetCellOccupant(a.srcCell);
-            byte typ = bm.GetPieceType(pid);
-            int abi = Pieces.AbilityIdAtSlot(typ, a.abilitySlot);
-            return (short)((abi >= 0 && abi < Pieces.damage.Length) ? Pieces.damage[abi] : 0);
-        }
-
-        private static int GetSacrificeFactoryAmount(in Action a, int gameIndex)
-        {
-            var bm = GameRegistry.game[gameIndex].boardModel;
-
-            int pid = bm.GetCellOccupant(a.srcCell);
-            byte typ = bm.GetPieceType(pid);
-            int abi = Pieces.AbilityIdAtSlot(typ, a.abilitySlot);
-            return (abi >= 0 && abi < Pieces.sacrificeFactory_amount.Length) ? Pieces.sacrificeFactory_amount[abi] : 0;
-        }
-
-        private static int GetConversionFactoryAmount(in Action a, int gameIndex)
-        {
-            var bm = GameRegistry.game[gameIndex].boardModel;
-
-            int pid = bm.GetCellOccupant(a.srcCell);
-            byte typ = bm.GetPieceType(pid);
-            int abi = Pieces.AbilityIdAtSlot(typ, a.abilitySlot);
-            return (abi >= 0 && abi < Pieces.conversionFactory_amount.Length) ? Pieces.conversionFactory_amount[abi] : 0;
-        }
-
-        private static int GetEatAmount(in Action a, int gameIndex)
-        {
-            var bm = GameRegistry.game[gameIndex].boardModel;
-
-            int pid = bm.GetCellOccupant(a.srcCell);
-            byte typ = bm.GetPieceType(pid);
-            int abi = Pieces.AbilityIdAtSlot(typ, a.abilitySlot);
-            return (abi >= 0 && abi < Pieces.eat_amount.Length) ? Pieces.eat_amount[abi] : 0;
-        }
 
 
 

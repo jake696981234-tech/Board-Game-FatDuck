@@ -141,6 +141,7 @@ public static class PieceDefinition
 
     public static bool[] captureVP_enabled; //addition
     public static bool[] coreDamage_enabled; //addition
+    public static int[] coreDamage_damage; //addition
 
     #endregion
     #region probs delete these
