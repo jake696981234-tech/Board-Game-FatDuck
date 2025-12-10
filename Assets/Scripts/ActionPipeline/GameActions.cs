@@ -86,7 +86,7 @@ namespace Game.Core
             // Set connector config if applicable (Create uses aux for config index)
             bm.pieceConnectorConfig[pid] = (byte)theAction.aux;
             // Grant digit if this type provides one
-            int g = Pieces.GrantsDigit((byte)theAction.pieceType);
+            int g = PieceDefinition.grantsDigitByType[(byte)theAction.pieceType];
             if (g >= 0) gameState.ps[player].GrantDigit(g);
 
             if (PieceDefinition.multiCreate_enabledByType[theAction.pieceType])
@@ -149,7 +149,7 @@ namespace Game.Core
             int dst = theAction.TargetCellId;
             int pid = bm.AllocateRow();
             bm.PlacePieceRow(pid, p, (byte)targetType, dst, PieceDefinition.maxHPByType[targetType]);
-            int g = Pieces.GrantsDigit((byte)targetType);
+            int g = PieceDefinition.grantsDigitByType[(byte)targetType];
             if (g >= 0) gameState.ps[p].GrantDigit(g);
 
             int ActorsCellId = theAction.ActorsCellId;
@@ -189,7 +189,7 @@ namespace Game.Core
             byte oldConfig = bm.pieceConnectorConfig[actorPid];
 
             // Revoke digit from old type if it granted one
-            int gOld = Pieces.GrantsDigit(actorType);
+            int gOld = PieceDefinition.grantsDigitByType[actorType];
             if (gOld >= 0) gameState.ps[p].RevokeDigit(gOld);
 
             // Replace type and reset HP
@@ -198,7 +198,7 @@ namespace Game.Core
             bm.pieceConnectorConfig[actorPid] = oldConfig;
 
             // Grant digit for new type
-            int gNew = Pieces.GrantsDigit((byte)targetType);
+            int gNew = PieceDefinition.grantsDigitByType[(byte)targetType];
             if (gNew >= 0) gameState.ps[p].GrantDigit(gNew);
 
             // No connector refresh per requirement
@@ -267,7 +267,7 @@ namespace Game.Core
             {
                 int pid = bm.AllocateRow();
                 bm.PlacePieceRow(pid, currentPlayer, (byte)targetType, theAction.TargetCellId, PieceDefinition.maxHPByType[targetType]);
-                int g = Pieces.GrantsDigit((byte)targetType);
+                int g = PieceDefinition.grantsDigitByType[(byte)targetType];
                 if (g >= 0) gameState.ps[currentPlayer].GrantDigit(g);
                 spawned++;
             }
@@ -278,7 +278,7 @@ namespace Game.Core
                 if (cell == theAction.TargetCellId) continue; // already used chosen cell
                 int pid = bm.AllocateRow();
                 bm.PlacePieceRow(pid, currentPlayer, (byte)targetType, cell, PieceDefinition.maxHPByType[targetType]);
-                int g = Pieces.GrantsDigit((byte)targetType);
+                int g = PieceDefinition.grantsDigitByType[(byte)targetType];
                 if (g >= 0) gameState.ps[currentPlayer].GrantDigit(g);
                 spawned++;
             }
@@ -316,21 +316,21 @@ namespace Game.Core
         }
 
 
-        public static void ApplyMultiCreatePlacement(in Action a, byte p, int gameIndex)
+        public static void ApplyMultiCreatePlacement(in Action theAction, byte p, int gameIndex)
         {
             var bm = GameRegistry.game[gameIndex].boardModel;
             var gameState = GameRegistry.game[gameIndex].gameState;
 
-            if (!gameState.multiCreateActive || a.pieceType != gameState.multiCreateType) return;
-            int cell = a.TargetCellId;
+            if (!gameState.multiCreateActive || theAction.pieceType != gameState.multiCreateType) return;
+            int cell = theAction.TargetCellId;
             if (!bm.IsEmpty(cell)) return;
             // Place the piece
             int pid = bm.AllocateRow();
-            bm.PlacePieceRow(pid, p, (byte)a.pieceType, cell, PieceDefinition.maxHPByType[a.pieceType]);
-            int g = Pieces.GrantsDigit((byte)a.pieceType);
+            bm.PlacePieceRow(pid, p, (byte)theAction.pieceType, cell, PieceDefinition.maxHPByType[theAction.pieceType]);
+            int g = PieceDefinition.grantsDigitByType[(byte)theAction.pieceType];
             if (g >= 0) gameState.ps[p].GrantDigit(g);
             // Reuse connector config from the initial piece if the type has connectors
-            if (PieceDefinition.connectors_enabled[a.pieceType] && gameState.multiCreateCells.Count > 0)
+            if (PieceDefinition.connectors_enabled[theAction.pieceType] && gameState.multiCreateCells.Count > 0)
             {
                 // initial placed piece is at index 0 in multiCreateCells
                 int primaryCell = gameState.multiCreateCells[0];
@@ -361,7 +361,7 @@ namespace Game.Core
 
             int deadOwner = bm.GetPieceOwner(victim);
             byte deadType = bm.GetPieceType(victim);
-            int g = Pieces.GrantsDigit(deadType);
+            int g = PieceDefinition.grantsDigitByType[deadType];
             if (g >= 0) gameState.ps[deadOwner].RevokeDigit(g);
             bm.FreeRowSwapBack(victim);
             RefreshConnectorState(gameIndex);

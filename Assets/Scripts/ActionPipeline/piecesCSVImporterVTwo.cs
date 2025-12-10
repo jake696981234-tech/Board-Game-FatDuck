@@ -47,7 +47,7 @@ public static class PiecesCsvImporter
             PieceDefinition.isBuildingByType[typeId] = GetBool(cols, H, "isBuildingByType", defaultValue: false);
             PieceDefinition.buildableByType[typeId] = GetBool(cols, H, "buildableByType", defaultValue: true);
             PieceDefinition.buildCostByType[typeId] = GetInt(cols, H, "buildCostByType", defaultValue: 0);
-            PieceDefinition.maxHPByType[typeId] = GetInt(cols, H, "maxHPByType", defaultValue: 0);
+            PieceDefinition.maxHPByType[typeId] = (short)ClampToShort(GetInt(cols, H, "maxHPByType", defaultValue: 0));
 
             #endregion
             #region Digits
@@ -60,7 +60,7 @@ public static class PiecesCsvImporter
             PieceDefinition.connectorNeedsCapital[typeId] = GetBool(cols, H, "connectorNeedsCapital", defaultValue: false);
             PieceDefinition.connectorIsCapital[typeId] = GetBool(cols, H, "connectorIsCapital", defaultValue: false);
             PieceDefinition.connectorCapitalHealth[typeId] = GetInt(cols, H, "connectorCapitalHealth", defaultValue: 0);
-            PieceDefinition.connectorAllowedMasks[typeId] = GetInt(cols, H, "connectorAllowedMasks", defaultValue: 0);
+            PieceDefinition.connectorAllowedMasks[typeId] = ParseConnectorMask(Get(cols, H, "connector_masks", defaultValue: string.Empty));
 
             #endregion
             #region Group Build
@@ -267,6 +267,24 @@ public static class PiecesCsvImporter
         return defaultValue;
     }
 
+    private static ulong ParseConnectorMask(string s)
+    {
+        if (string.IsNullOrWhiteSpace(s)) return 0UL;
+        ulong mask = 0UL;
+        var parts = s.Split(new[] { ';', ',', '|' }, StringSplitOptions.RemoveEmptyEntries);
+        foreach (var part in parts)
+        {
+            if (int.TryParse(part.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out int idx))
+            {
+                if (idx >= 0 && idx < 64)
+                    mask |= (1UL << idx);
+            }
+        }
+        return mask;
+    }
+
+    private static int ClampToShort(int v) => Math.Max(short.MinValue, Math.Min(short.MaxValue, v));
+
     public static void Allocate(int count)
     {
         PieceDefinition.typeCount = count;
@@ -281,7 +299,7 @@ public static class PiecesCsvImporter
         PieceDefinition.isBuildingByType = new bool[count];
         PieceDefinition.buildableByType = new bool[count];
         PieceDefinition.buildCostByType = new int[count];
-        PieceDefinition.maxHPByType = new int[count];
+        PieceDefinition.maxHPByType = new short[count];
 
         #endregion
         #region Digits
@@ -295,7 +313,7 @@ public static class PiecesCsvImporter
         PieceDefinition.connectorNeedsCapital = new bool[count];
         PieceDefinition.connectorIsCapital = new bool[count];
         PieceDefinition.connectorCapitalHealth = new int[count];
-        PieceDefinition.connectorAllowedMasks = new int[count];
+        PieceDefinition.connectorAllowedMasks = new ulong[count];
 
         #endregion
         #region Group Build

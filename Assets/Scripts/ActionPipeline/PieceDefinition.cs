@@ -16,7 +16,7 @@ public static class PieceDefinition
     public static bool[] isBuildingByType;      // [type] -> true => Building, false => Soldier (kept as bool for existing callers)
     public static bool[] buildableByType;       // [type] -> 0/1 flag; default 1
     public static int[] buildCostByType;       // [type] -> cost to Create this type
-    public static int[] maxHPByType;           // [type] -> max HP
+    public static short[] maxHPByType;           // [type] -> max HP
 
     #endregion
     #region Digits
@@ -30,7 +30,7 @@ public static class PieceDefinition
     public static bool[] connectorNeedsCapital;    // [type] -> true if placement requires capital connectivity
     public static bool[] connectorIsCapital;       // [type] -> true if this type counts as a capital
     public static int[] connectorCapitalHealth;   // [type] -> capital health contribution for connected component
-    public static int[] connectorAllowedMasks;    // [type] -> bitmask of allowed 6-bit side configs (bit i -> config i allowed)
+    public static ulong[] connectorAllowedMasks;    // [type] -> bitmask of allowed 6-bit side configs (bit i -> config i allowed)
 
     #endregion
     #region Group Build
