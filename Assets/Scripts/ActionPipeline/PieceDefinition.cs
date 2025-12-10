@@ -2,6 +2,9 @@
 
 public static class PieceDefinition
 {
+    //This is the field you update
+    public readonly static int NumberOfActiveAbilities = 12;
+
     #region UI
     public static string[] displayNameByType;
     public static string[] factionNameByType;
@@ -122,13 +125,20 @@ public static class PieceDefinition
 
     #endregion
     #region Move
-
-    //this also needs to be filled in
+    public static bool[] Shoot_enabled;
+    public static int[] move_rangeMin;                // [abilityId]
+    public static int[] move_rangeMax;                // [abilityId]
+    public static int[] move_damage;                  // [abilityId]
 
     #endregion
     #region sacrifice Factory
     public static bool[] sacrificeFactory_enabled;
     public static int[] sacrificeFactory_amount; // [abilityId] -> amount to add when sacrificing
+
+    #endregion
+    #region sacrifice Factory
+
+    public static bool[] captureVP_enabled;
 
     #endregion
     #region probs delete these

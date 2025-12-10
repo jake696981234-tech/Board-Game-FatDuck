@@ -18,9 +18,6 @@ namespace Game.Core
         /// <summary>Action family. See <see cref=""/> for stable codes.</summary>
         public byte kind;        // 0..6
 
-        /// <summary>Ability slot index on the actor's piece type (0..MaxSlots-1). 0 for EndTurn.</summary>
-        public byte abilitySlot;
-
         /// <summary>
         /// For Create: the type to build (casted to byte by OfferProvider).
         /// Otherwise 0.
@@ -30,14 +27,16 @@ namespace Game.Core
         /// <summary>
         /// Actor’s cell id.
         /// For EndTurn, use 0xFFFF sentinel.
+        /// used to src
         /// </summary>
-        public ushort srcCell;
+        public ushort ActorsCellId;
 
         /// <summary>
         /// Target cell id:
         /// Move/Create/Shoot → destination; CaptureVP → VP cell; CoreDamage/EndTurn → 0 (or core later).
         /// </summary>
-        public ushort dstCell;
+        /// used to dst
+        public ushort TargetCellId;
 
         /// <summary>
         /// Auxiliary ID when needed.
@@ -46,13 +45,12 @@ namespace Game.Core
         public ushort aux;
 
         /// <summary>Convenience constructor (optional).</summary>
-        public Action(byte kind, byte slot, byte pieceType, ushort src, ushort dst, ushort aux = 0)
+        public Action(byte kind, byte pieceType, ushort actorsCellId, ushort targetCellId, ushort aux = 0)
         {
             this.kind = kind;
-            this.abilitySlot = slot;
             this.pieceType = pieceType;
-            this.srcCell = src;
-            this.dstCell = dst;
+            this.ActorsCellId = actorsCellId;
+            this.TargetCellId = targetCellId;
             this.aux = aux;
         }
 

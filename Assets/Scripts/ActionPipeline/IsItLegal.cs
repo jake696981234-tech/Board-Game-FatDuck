@@ -178,7 +178,7 @@ public static class IsItLegal
     /// <summary>
     /// CAPTURE VP (targetless): legal if actor stands on VP cell.
     /// </summary>
-    public static bool IsLegal_CaptureVP(int actorPieceId, int abilityId, int gameIndex)
+    public static bool IsLegal_CaptureVP(int actorPieceId, int gameIndex)
     {
         var bm = GameRegistry.game[gameIndex].boardModel;
 

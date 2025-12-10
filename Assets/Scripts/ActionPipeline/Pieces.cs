@@ -30,109 +30,109 @@ public static class Pieces
         Spawner = 10,
         SacrificeFactory = 11,
         ConversionFactory = 12,
-        Factory = 11,
-        Sanctuary = 12,
-        Eat = 13,
-        Custom2 = 14,
+        Factory = 13,
+        Sanctuary = 14,
+        Eat = 15,
+        Custom2 = 16,
     }
     public enum TargetKind : byte { None = 0, Cell = 1, Piece = 2 }
 
     // ====== Type registry (dense indices 0..typeCount-1) ======
-    public static int typeCount;
+    // public static int typeCount;
 
-    // Per-type fields
-    public static bool[] isBuildingByType;      // [type] -> true => Building, false => Soldier (kept as bool for existing callers)
-    public static byte[] buildableByType;       // [type] -> 0/1 flag; default 1
-    public static int[] buildCostByType;       // [type] -> cost to Create this type
-    public static short[] maxHPByType;           // [type] -> max HP
-    public static int[][] codeDigitsByType;      // [type] -> prerequisite digits (optional)
+    // // Per-type fields
+    // public static bool[] isBuildingByType;      // [type] -> true => Building, false => Soldier (kept as bool for existing callers)
+    // public static byte[] buildableByType;       // [type] -> 0/1 flag; default 1
+    // public static int[] buildCostByType;       // [type] -> cost to Create this type
+    // public static short[] maxHPByType;           // [type] -> max HP
+    // public static int[][] codeDigitsByType;      // [type] -> prerequisite digits (optional)
 
-    // --- Digits (Plan B): per-type grant; per-type requirement already lives in codeDigitsByType ---
-    public static sbyte[] grantsDigitByType; // [type] -> -1 = none, else 0..9
+    // // --- Digits (Plan B): per-type grant; per-type requirement already lives in codeDigitsByType ---
+    // public static sbyte[] grantsDigitByType; // [type] -> -1 = none, else 0..9
 
-    // Human-only (UI/debug/tooling)
-    public static string[] idByType;             // [type] -> stable id (tooling)
-    public static string[] displayNameByType;
-    public static string[] factionNameByType;
-    public static string[] spritePathByType;
-    public static string[] moveUIColorHexByType;
-    public static string[] shootUIColorHexByType;
-    public static bool[] hasConnectorsByType;      // [type] -> true if this type uses connector/wall sides
-    public static bool[] connectorNeedsCapital;    // [type] -> true if placement requires capital connectivity
-    public static bool[] connectorIsCapital;       // [type] -> true if this type counts as a capital
-    public static int[] connectorCapitalHealth;   // [type] -> capital health contribution for connected component
-    public static ulong[] connectorAllowedMasks;    // [type] -> bitmask of allowed 6-bit side configs (bit i -> config i allowed)
-    public static bool[] groupBuildEnabled;        // [type] -> can this type perform group build
-    public static int[] groupBuildTargetType;     // [type] -> type id to create
-    public static int[] groupBuildRequireNumber;  // [type] -> required count in cluster
-    public static bool[] groupBuildDeletion;       // [type] -> delete contributors on build
-    public static bool[] upgradeEnabled;           // [type] -> can perform upgrade
-    public static int[] upgradeTargetType;        // [type] -> replace with this type
-    public static int[] launcher_inputRange;      // [ability] -> range to pick a piece
-    public static int[] launcher_outputRange;     // [ability] -> range from launcher to drop target
-    public static bool[] launcher_friendlyFire;    // [ability] -> can launch friendlies
-    public static bool[] launcher_enemyFire;       // [ability] -> can launch enemies
-    public static bool[] push_TargetsBuildings;    // [ability] -> push can target buildings
-    public static bool[] push_TargetsSoldiers;     // [ability] -> push can target soldiers
-    public static int[] push_rangeMax;            // [ability] -> input range for push
-    public static int[] push_PushAmount;          // [ability] -> displacement distance
-    public static bool[] push_pull;                // [ability] -> invert direction
-    public static bool[] push_FriendlyFire;        // [ability] -> allow friendlies
-    public static int[] push_damage;              // [ability] -> damage on push
-    public static int[] spawn_pieceAmount;        // [ability] -> how many pieces to create
-    public static int[] spawn_targetType;         // [ability] -> type to create
-    public static int[] spawn_range;              // [ability] -> spawn range
-    public static bool[] spawn_onlyOncePerTurn;    // [ability] -> once-per-turn gate
-    public static bool[] multiCreate_enabledByType; // [type] -> multi-create hook
-    public static int[] multiCreate_amountByType;  // [type] -> how many total (including primary)
-    public static bool[] multiCreate_boarderingByType; // [type] -> require new pieces to border each other
-    public static int[] factory_amount;           // [ability] -> payout amount
-    public static bool[] factory_roundMultiplier;  // [ability] -> multiply by round number
-    public static bool[] factory_group;            // [ability] -> requires groups
-    public static int[] factory_groupAmount;      // [ability] -> size of each group
-    public static bool[] sanctuary_enabled;
-    public static int[] Sanctuary_range;
-    public static bool[] conversionFactory_coreHealth; // [ability] -> convert to core health
-    public static bool[] conversionFactory_vp;         // [ability] -> convert to VP
-    public static int[] conversionFactory_amount;      // [ability] -> amount converted
-    public static int[] conversionFactory_botSurcharge; // [ability] -> bot surcharge
-    public static bool[] eat_enabled;                  // [ability] -> eat passive enabled
-    public static int[] eat_amount;                    // [ability] -> eat amount
+    // // Human-only (UI/debug/tooling)
+    // public static string[] idByType;             // [type] -> stable id (tooling)
+    // public static string[] displayNameByType;
+    // public static string[] factionNameByType;
+    // public static string[] spritePathByType;
+    // public static string[] moveUIColorHexByType;
+    // public static string[] shootUIColorHexByType;
+    // public static bool[] hasConnectorsByType;      // [type] -> true if this type uses connector/wall sides
+    // public static bool[] connectorNeedsCapital;    // [type] -> true if placement requires capital connectivity
+    // public static bool[] connectorIsCapital;       // [type] -> true if this type counts as a capital
+    // public static int[] connectorCapitalHealth;   // [type] -> capital health contribution for connected component
+    // public static ulong[] connectorAllowedMasks;    // [type] -> bitmask of allowed 6-bit side configs (bit i -> config i allowed)
+    // public static bool[] groupBuildEnabled;        // [type] -> can this type perform group build
+    // public static int[] groupBuildTargetType;     // [type] -> type id to create
+    // public static int[] groupBuildRequireNumber;  // [type] -> required count in cluster
+    // public static bool[] groupBuildDeletion;       // [type] -> delete contributors on build
+    // public static bool[] upgradeEnabled;           // [type] -> can perform upgrade
+    // public static int[] upgradeTargetType;        // [type] -> replace with this type
+    // public static int[] launcher_inputRange;      // [ability] -> range to pick a piece
+    // public static int[] launcher_outputRange;     // [ability] -> range from launcher to drop target
+    // public static bool[] launcher_friendlyFire;    // [ability] -> can launch friendlies
+    // public static bool[] launcher_enemyFire;       // [ability] -> can launch enemies
+    // public static bool[] push_TargetsBuildings;    // [ability] -> push can target buildings
+    // public static bool[] push_TargetsSoldiers;     // [ability] -> push can target soldiers
+    // public static int[] push_rangeMax;            // [ability] -> input range for push
+    // public static int[] push_PushAmount;          // [ability] -> displacement distance
+    // public static bool[] push_pull;                // [ability] -> invert direction
+    // public static bool[] push_FriendlyFire;        // [ability] -> allow friendlies
+    // public static int[] push_damage;              // [ability] -> damage on push
+    // public static int[] spawn_pieceAmount;        // [ability] -> how many pieces to create
+    // public static int[] spawn_targetType;         // [ability] -> type to create
+    // public static int[] spawn_range;              // [ability] -> spawn range
+    // public static bool[] spawn_onlyOncePerTurn;    // [ability] -> once-per-turn gate
+    // public static bool[] multiCreate_enabledByType; // [type] -> multi-create hook
+    // public static int[] multiCreate_amountByType;  // [type] -> how many total (including primary)
+    // public static bool[] multiCreate_boarderingByType; // [type] -> require new pieces to border each other
+    // public static int[] factory_amount;           // [ability] -> payout amount
+    // public static bool[] factory_roundMultiplier;  // [ability] -> multiply by round number
+    // public static bool[] factory_group;            // [ability] -> requires groups
+    // public static int[] factory_groupAmount;      // [ability] -> size of each group
+    // public static bool[] sanctuary_enabled;
+    // public static int[] Sanctuary_range;
+    // public static bool[] conversionFactory_coreHealth; // [ability] -> convert to core health
+    // public static bool[] conversionFactory_vp;         // [ability] -> convert to VP
+    // public static int[] conversionFactory_amount;      // [ability] -> amount converted
+    // public static int[] conversionFactory_botSurcharge; // [ability] -> bot surcharge
+    // public static bool[] eat_enabled;                  // [ability] -> eat passive enabled
+    // public static int[] eat_amount;                    // [ability] -> eat amount
 
-    // Name maps (optional)
-    public static Dictionary<string, int> typeIndexByName;
-    public static string[] typeNameByIndex;
+    // // Name maps (optional)
+    // public static Dictionary<string, int> typeIndexByName;
+    // public static string[] typeNameByIndex;
 
-    // ====== Ability catalog (dense indices 0..abilityCount-1) ======
-    public static int abilityCount;
+    // // ====== Ability catalog (dense indices 0..abilityCount-1) ======
+    // public static int abilityCount;
 
-    public static AbilityKind[] abilityKind;     // [abilityId]
-    public static TargetKind[] targetKind;      // [abilityId]
+    // public static AbilityKind[] abilityKind;     // [abilityId]
+    // public static TargetKind[] targetKind;      // [abilityId]
 
-    // Generic params (unused = 0)
-    public static int[] rangeMin;                // [abilityId]
-    public static int[] rangeMax;                // [abilityId]
-    public static int[] areaRadius;              // [abilityId]
-    public static int[] damage;                  // [abilityId]
-    public static int[] customParam;             // [abilityId]
-    public static int[] sacrificeFactory_amount; // [abilityId] -> amount to add when sacrificing
+    // // Generic params (unused = 0)
+    // public static int[] rangeMin;                // [abilityId]
+    // public static int[] rangeMax;                // [abilityId]
+    // public static int[] areaRadius;              // [abilityId]
+    // public static int[] damage;                  // [abilityId]
+    // public static int[] customParam;             // [abilityId]
+    // public static int[] sacrificeFactory_amount; // [abilityId] -> amount to add when sacrificing
 
-    // NOTE: In Plan B, Create is NOT an ability. We keep buildTypeId only for legacy reads;
-    // new OfferProvider should not depend on it for Create.
-    public static int[] buildTypeId;             // [abilityId] -> type index (legacy; not used for Create in Plan B)
+    // // NOTE: In Plan B, Create is NOT an ability. We keep buildTypeId only for legacy reads;
+    // // new OfferProvider should not depend on it for Create.
+    // public static int[] buildTypeId;             // [abilityId] -> type index (legacy; not used for Create in Plan B)
 
-    // Pricing surcharges (bot-only in Plan B)
-    public static int[] baseSurcharge;           // legacy; ignored by AbilitySurcharge()
-    public static int[] botThinkSurcharge;       // [abilityId] -> bot-only surcharge
+    // // Pricing surcharges (bot-only in Plan B)
+    // public static int[] baseSurcharge;           // legacy; ignored by AbilitySurcharge()
+    // public static int[] botThinkSurcharge;       // [abilityId] -> bot-only surcharge
 
-    // Ability name maps (optional)
-    public static Dictionary<string, int> abilityIndexByName;
-    public static string[] abilityNameByIndex;
+    // // Ability name maps (optional)
+    // public static Dictionary<string, int> abilityIndexByName;
+    // public static string[] abilityNameByIndex;
 
-    // ====== Fixed-width ability slots per TYPE ======
-    public static int maxAbilitySlots = 7;       // slot 0: Move, 1: Shoot, 2: CaptureVP, 3: CoreDamage, others for custom
-    public static int[] abilityIdByTypeSlot;     // [type * maxAbilitySlots + slot] -> abilityId or -1
-    public static int[] abilitySlotCount;        // [type] -> # valid slots (0..maxAbilitySlots)
+    // // ====== Fixed-width ability slots per TYPE ======
+    // public static int maxAbilitySlots = 7;       // slot 0: Move, 1: Shoot, 2: CaptureVP, 3: CoreDamage, others for custom
+    // public static int[] abilityIdByTypeSlot;     // [type * maxAbilitySlots + slot] -> abilityId or -1
+    // public static int[] abilitySlotCount;        // [type] -> # valid slots (0..maxAbilitySlots)
 
     // --------- Accessors / helpers (O(1), zero-alloc) ----------
 
@@ -151,43 +151,43 @@ public static class Pieces
     }
 
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int AbilitySlotCount(byte type) => abilitySlotCount[type];
+    // [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    // public static int AbilitySlotCount(byte type) => abilitySlotCount[type];
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int AbilityIdAtSlot(byte type, int slot)
-    {
-        if ((uint)slot >= (uint)maxAbilitySlots) return -1;
-        return abilityIdByTypeSlot[type * maxAbilitySlots + slot];
-    }
+    // [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    // public static int AbilityIdAtSlot(byte type, int slot)
+    // {
+    //     if ((uint)slot >= (uint)maxAbilitySlots) return -1;
+    //     return abilityIdByTypeSlot[type * maxAbilitySlots + slot];
+    // }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool TryGetSlotIndexForAbility(byte type, int abilityId, out int slot)
-    {
-        int baseIdx = type * maxAbilitySlots;
-        int limit = abilitySlotCount[type];
-        for (int s = 0; s < limit; s++)
-        {
-            if (abilityIdByTypeSlot[baseIdx + s] == abilityId) { slot = s; return true; }
-        }
-        slot = -1; return false;
-    }
+    // [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    // public static bool TryGetSlotIndexForAbility(byte type, int abilityId, out int slot)
+    // {
+    //     int baseIdx = type * maxAbilitySlots;
+    //     int limit = abilitySlotCount[type];
+    //     for (int s = 0; s < limit; s++)
+    //     {
+    //         if (abilityIdByTypeSlot[baseIdx + s] == abilityId) { slot = s; return true; }
+    //     }
+    //     slot = -1; return false;
+    // }
 
-    public static bool HasAbilityKind(byte type, AbilityKind kind)
-    {
-        int limit = AbilitySlotCount(type);
-        for (int s = 0; s < limit; s++)
-        {
-            int aid = AbilityIdAtSlot(type, s);
-            if (aid < 0) continue;
-            if (AbilityKindOf(aid) == kind) return true;
-        }
-        return false;
-    }
+    // public static bool HasAbilityKind(byte type, AbilityKind kind)
+    // {
+    //     int limit = AbilitySlotCount(type);
+    //     for (int s = 0; s < limit; s++)
+    //     {
+    //         int aid = AbilityIdAtSlot(type, s);
+    //         if (aid < 0) continue;
+    //         if (AbilityKindOf(aid) == kind) return true;
+    //     }
+    //     return false;
+    // }
 
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static AbilityKind AbilityKindOf(int abilityId) => abilityKind[abilityId];
+    // [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    // public static AbilityKind AbilityKindOf(int abilityId) => abilityKind[abilityId];
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static TargetKind TargetKindOf(int abilityId) => targetKind[abilityId];
@@ -235,37 +235,37 @@ public static class Pieces
 
 
 
-    // ====== Metadata helpers ======
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool IsBuilding(byte type)
-    {
-        return type >= 0 && type < isBuildingByType.Length && isBuildingByType[type];
-    }
+    // // ====== Metadata helpers ======
+    // [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    // public static bool IsBuilding(byte type)
+    // {
+    //     return type >= 0 && type < isBuildingByType.Length && isBuildingByType[type];
+    // }
 
-    // ====== Connector helpers ======
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool HasConnectors(byte type)
-    {
-        return type < hasConnectorsByType.Length && hasConnectorsByType[type];
-    }
+    // // ====== Connector helpers ======
+    // [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    // public static bool HasConnectors(byte type)
+    // {
+    //     return type < hasConnectorsByType.Length && hasConnectorsByType[type];
+    // }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool ConnectorNeedsCapital(byte type)
-    {
-        return type < connectorNeedsCapital.Length && connectorNeedsCapital[type];
-    }
+    // [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    // public static bool ConnectorNeedsCapital(byte type)
+    // {
+    //     return type < connectorNeedsCapital.Length && connectorNeedsCapital[type];
+    // }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool ConnectorIsCapital(byte type)
-    {
-        return type < connectorIsCapital.Length && connectorIsCapital[type];
-    }
+    // [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    // public static bool ConnectorIsCapital(byte type)
+    // {
+    //     return type < connectorIsCapital.Length && connectorIsCapital[type];
+    // }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int ConnectorCapitalHealth(byte type)
-    {
-        return type < connectorCapitalHealth.Length ? connectorCapitalHealth[type] : 0;
-    }
+    // [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    // public static int ConnectorCapitalHealth(byte type)
+    // {
+    //     return type < connectorCapitalHealth.Length ? connectorCapitalHealth[type] : 0;
+    // }
 
     /// <summary>
     /// Returns true if the given 0..63 configuration index is allowed for this type.

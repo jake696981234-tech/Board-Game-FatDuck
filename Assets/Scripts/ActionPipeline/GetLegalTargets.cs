@@ -10,15 +10,15 @@ public static class GetLegalTargets
     /// MOVE structural legality: empty-only reachability; melee-on-move targets among enemies adjacent to reachable cells.
     /// Uses BoardModel's zero-alloc helpers (EnumerateReachableEmpty, GetNeighbors, etc.).
     /// </summary>
-    public static int GetLegalTargets_Move(int abilityId, int actorPieceId, int[] outTargets, int gameIndex)
+    public static int GetLegalTargets_Move(int actorPieceId, int actorType, int[] outTargets, int gameIndex)
     {
         var bm = GameRegistry.game[gameIndex].boardModel;
 
         int originCell = bm.GetPieceCell(actorPieceId);
         if (originCell < 0) return 0;
 
-        int rmin = (abilityId >= 0 && abilityId < Pieces.rangeMin.Length) ? Pieces.rangeMin[abilityId] : 0;
-        int rmax = (abilityId >= 0 && abilityId < Pieces.rangeMax.Length) ? Pieces.rangeMax[abilityId] : 0;
+        int rmin = PieceDefinition.move_rangeMin[actorType];
+        int rmax = PieceDefinition.move_rangeMax[actorType];
         if (rmax < rmin) { int t = rmax; rmax = rmin; rmin = t; }
 
         int count = 0;
@@ -47,14 +47,14 @@ public static class GetLegalTargets
         if (rmin <= 1 && 1 <= rmax)
         {
             int[] neigh0 = Scratch.GetScratchNeighborBuffer(gameIndex);
-            int n0 = bm.GetNeighbors(originCell, neigh0);
+            int Neighbors = bm.GetNeighbors(originCell, neigh0);
             int actorOwner0 = bm.GetPieceOwner(actorPieceId);
-            for (int n = 0; n < n0; n++)
+            for (int NeighborNumber = 0; NeighborNumber < Neighbors; NeighborNumber++)
             {
-                int tgt = neigh0[n];
-                int pid = bm.GetCellOccupant(tgt);
-                if (pid < 0) continue;
-                if (bm.GetPieceOwner(pid) == actorOwner0) continue;
+                int tgt = neigh0[NeighborNumber];
+                int victimId = bm.GetCellOccupant(tgt);
+                if (victimId < 0) continue;
+                if (bm.GetPieceOwner(victimId) == actorOwner0) continue;
                 // de-dup within melee segment
                 bool seen = false;
                 for (int k = meleeStart; k < count && k < cap; k++) { if (outTargets[k] == tgt) { seen = true; break; } }
@@ -72,8 +72,8 @@ public static class GetLegalTargets
             int nCount = bm.GetNeighbors(approach, neigh);
             for (int n = 0; n < nCount; n++)
             {
-                int tgtCell = neigh[n];
-                int pid = bm.GetCellOccupant(tgtCell);
+                int targetCell = neigh[n];
+                int pid = bm.GetCellOccupant(targetCell);
                 if (pid < 0) continue;
                 if (bm.GetPieceOwner(pid) == actorOwner) continue;
                 int total = steps + 1;
@@ -81,10 +81,10 @@ public static class GetLegalTargets
 
                 // de-dup within melee segment
                 bool seen = false;
-                for (int k = meleeStart; k < count && k < cap; k++) { if (outTargets[k] == tgtCell) { seen = true; break; } }
+                for (int k = meleeStart; k < count && k < cap; k++) { if (outTargets[k] == targetCell) { seen = true; break; } }
                 if (seen) continue;
 
-                if (count < cap) outTargets[count] = tgtCell;
+                if (count < cap) outTargets[count] = targetCell;
                 count++;
             }
         }
@@ -94,7 +94,7 @@ public static class GetLegalTargets
     /// <summary>
     /// SHOOT structural legality: enemy-only, range-filtered, LOS required; single-target only.
     /// </summary>
-    public static int GetLegalTargets_Shoot(int abilityId, int actorPieceId, int[] outTargets, int gameIndex)
+    public static int GetLegalTargets_Shoot(int actorPieceId, int actorType, int[] outTargets, int gameIndex)
     {
         var bm = GameRegistry.game[gameIndex].boardModel;
 
@@ -102,8 +102,8 @@ public static class GetLegalTargets
         if (originCell < 0) return 0;
         int actorOwner = bm.GetPieceOwner(actorPieceId);
 
-        int rmin = (abilityId >= 0 && abilityId < Pieces.rangeMin.Length) ? Pieces.rangeMin[abilityId] : 0;
-        int rmax = (abilityId >= 0 && abilityId < Pieces.rangeMax.Length) ? Pieces.rangeMax[abilityId] : 0;
+        int rmin = PieceDefinition.shoot_rangeMin[actorType];
+        int rmax = PieceDefinition.shoot_rangeMax[actorType];
         if (rmax < rmin) { int t = rmax; rmax = rmin; rmin = t; }
 
         int cap = outTargets != null ? outTargets.Length : 0;
