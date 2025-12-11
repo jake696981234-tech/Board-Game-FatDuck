@@ -36,16 +36,16 @@ public static class CostEngine
         {
             botSurcharge = a.kind switch
             {
-                (byte)Pieces.AbilityKind.Move => PieceDefinition.move_botSurcharge[a.pieceType],
-                (byte)Pieces.AbilityKind.Shoot => PieceDefinition.shoot_botSurcharge[a.pieceType],
-                (byte)Pieces.AbilityKind.CaptureVP => PieceDefinition.captureVP_botSurcharge[a.pieceType],
-                (byte)Pieces.AbilityKind.CoreDamage => PieceDefinition.coreDamage_botSurcharge[a.pieceType],
-                (byte)Pieces.AbilityKind.GroupBuild => PieceDefinition.groupBuild_botSurcharge[a.pieceType],
-                (byte)Pieces.AbilityKind.Upgrade => PieceDefinition.upgrade_botSurcharge[a.pieceType],
-                (byte)Pieces.AbilityKind.Launcher => PieceDefinition.launcher_botSurcharge[a.pieceType],
-                (byte)Pieces.AbilityKind.Spawner => PieceDefinition.spawn_botSurcharge[a.pieceType],
-                (byte)Pieces.AbilityKind.SacrificeFactory => PieceDefinition.sacrificeFactory_botSurcharge[a.pieceType],
-                (byte)Pieces.AbilityKind.ConversionFactory => PieceDefinition.conversionFactory_botSurcharge[a.pieceType],
+                (byte)PieceDefinition.AbilityKind.Move => PieceDefinition.move_botSurcharge[a.pieceType],
+                (byte)PieceDefinition.AbilityKind.Shoot => PieceDefinition.shoot_botSurcharge[a.pieceType],
+                (byte)PieceDefinition.AbilityKind.CaptureVP => PieceDefinition.captureVP_botSurcharge[a.pieceType],
+                (byte)PieceDefinition.AbilityKind.CoreDamage => PieceDefinition.coreDamage_botSurcharge[a.pieceType],
+                (byte)PieceDefinition.AbilityKind.GroupBuild => PieceDefinition.groupBuild_botSurcharge[a.pieceType],
+                (byte)PieceDefinition.AbilityKind.Upgrade => PieceDefinition.upgrade_botSurcharge[a.pieceType],
+                (byte)PieceDefinition.AbilityKind.Launcher => PieceDefinition.launcher_botSurcharge[a.pieceType],
+                (byte)PieceDefinition.AbilityKind.Spawner => PieceDefinition.spawn_botSurcharge[a.pieceType],
+                (byte)PieceDefinition.AbilityKind.SacrificeFactory => PieceDefinition.sacrificeFactory_botSurcharge[a.pieceType],
+                (byte)PieceDefinition.AbilityKind.ConversionFactory => PieceDefinition.conversionFactory_botSurcharge[a.pieceType],
                 _ => 0
             };
         }
@@ -56,7 +56,7 @@ public static class CostEngine
         int buildCost = 0;
         if (a.kind == ActionKind.Create)
         {
-            buildCost = PieceDefinition.buildCostByType[a.pieceType]; // new accessor on Pieces
+            buildCost = PieceDefinition.buildCostByType[a.pieceType]; // new accessor on PieceDefinition
         }
         else if (a.kind == ActionKind.Spawner)
         {
@@ -127,16 +127,16 @@ public static class CostEngine
         {
             botSurcharge = a.kind switch
             {
-                (byte)Pieces.AbilityKind.Move => PieceDefinition.move_botSurcharge[a.pieceType],
-                (byte)Pieces.AbilityKind.Shoot => PieceDefinition.shoot_botSurcharge[a.pieceType],
-                (byte)Pieces.AbilityKind.CaptureVP => PieceDefinition.captureVP_botSurcharge[a.pieceType],
-                (byte)Pieces.AbilityKind.CoreDamage => PieceDefinition.coreDamage_botSurcharge[a.pieceType],
-                (byte)Pieces.AbilityKind.GroupBuild => PieceDefinition.groupBuild_botSurcharge[a.pieceType],
-                (byte)Pieces.AbilityKind.Upgrade => PieceDefinition.upgrade_botSurcharge[a.pieceType],
-                (byte)Pieces.AbilityKind.Launcher => PieceDefinition.launcher_botSurcharge[a.pieceType],
-                (byte)Pieces.AbilityKind.Spawner => PieceDefinition.spawn_botSurcharge[a.pieceType],
-                (byte)Pieces.AbilityKind.SacrificeFactory => PieceDefinition.sacrificeFactory_botSurcharge[a.pieceType],
-                (byte)Pieces.AbilityKind.ConversionFactory => PieceDefinition.conversionFactory_botSurcharge[a.pieceType],
+                (byte)PieceDefinition.AbilityKind.Move => PieceDefinition.move_botSurcharge[a.pieceType],
+                (byte)PieceDefinition.AbilityKind.Shoot => PieceDefinition.shoot_botSurcharge[a.pieceType],
+                (byte)PieceDefinition.AbilityKind.CaptureVP => PieceDefinition.captureVP_botSurcharge[a.pieceType],
+                (byte)PieceDefinition.AbilityKind.CoreDamage => PieceDefinition.coreDamage_botSurcharge[a.pieceType],
+                (byte)PieceDefinition.AbilityKind.GroupBuild => PieceDefinition.groupBuild_botSurcharge[a.pieceType],
+                (byte)PieceDefinition.AbilityKind.Upgrade => PieceDefinition.upgrade_botSurcharge[a.pieceType],
+                (byte)PieceDefinition.AbilityKind.Launcher => PieceDefinition.launcher_botSurcharge[a.pieceType],
+                (byte)PieceDefinition.AbilityKind.Spawner => PieceDefinition.spawn_botSurcharge[a.pieceType],
+                (byte)PieceDefinition.AbilityKind.SacrificeFactory => PieceDefinition.sacrificeFactory_botSurcharge[a.pieceType],
+                (byte)PieceDefinition.AbilityKind.ConversionFactory => PieceDefinition.conversionFactory_botSurcharge[a.pieceType],
                 _ => 0
             };
         }

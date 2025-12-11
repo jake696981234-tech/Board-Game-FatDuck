@@ -38,12 +38,12 @@ public sealed class HeuristicPolicy : IBotPolicy
             case ActionKind.CaptureVP:
             case ActionKind.Create:
             case ActionKind.Spawner:
-                return bm.DistToVictoryPoint(a.dstCell);
+                return bm.DistToVictoryPoint(a.TargetCellId);
             case ActionKind.Shoot:
             case ActionKind.CoreDamage:
             case ActionKind.Push:
             case ActionKind.Launcher:
-                return bm.DistToVictoryPoint(a.srcCell);
+                return bm.DistToVictoryPoint(a.ActorsCellId);
             default:
                 return int.MaxValue / 4;
         }

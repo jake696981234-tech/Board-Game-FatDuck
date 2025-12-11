@@ -23,7 +23,7 @@ public static class PiecesSides
     {
         var bm = GameRegistry.game[gameIndex].boardModel;
 
-        if (!Pieces.IsConnectorConfigAllowed(type, configIndex)) return false;
+        if (!PieceDefinition.IsConnectorConfigAllowed(type, configIndex)) return false;
 
         // Adjacent wall/connector compatibility
         int[] neigh = Scratch.GetScratchNeighborBuffer(gameIndex);

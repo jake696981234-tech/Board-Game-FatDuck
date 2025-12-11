@@ -2,8 +2,28 @@
 
 public static class PieceDefinition
 {
-    public static int typeCount;
+    public enum AbilityKind : byte
+    {
+        Move = 0,
+        Shoot = 1,
+        CaptureVP = 2,
+        CoreDamage = 3,
+        Create = 4,
+        EndTurn = 5, // placeholder for alignment with ActionKind
+        Push = 6,
+        GroupBuild = 7,
+        Upgrade = 8,
+        Launcher = 9,
+        Spawner = 10,
+        SacrificeFactory = 11,
+        ConversionFactory = 12,
+        Factory = 13,
+        Sanctuary = 14,
+        Eat = 15,
+        Custom2 = 16,
+    }
 
+    public static int typeCount;
 
     #region UI
     public static string[] displayNameByType;
@@ -156,5 +176,13 @@ public static class PieceDefinition
     public static int[] coreDamage_botSurcharge;
 
     #endregion
+
+    public static bool IsConnectorConfigAllowed(byte type, int configIndex)
+    {
+        if (configIndex < 0 || configIndex >= 64) return false;
+        if (type >= connectorAllowedMasks.Length) return false;
+        ulong mask = connectorAllowedMasks[type];
+        return (mask & (1UL << configIndex)) != 0;
+    }
 
 }

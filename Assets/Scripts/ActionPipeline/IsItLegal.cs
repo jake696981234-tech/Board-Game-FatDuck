@@ -47,7 +47,7 @@ public static class IsItLegal
 
         // Create legality for target type at dstCell
         if (bm.GetCellOccupant(a.TargetCellId) >= 0) return false;
-        int reqDigit = Pieces.GetRequiredDigit((byte)targetType);
+        int reqDigit = PieceDefinition.codeDigitsByType[(byte)targetType];
         if (reqDigit >= 0 && !gameState.ps[currentPlayer].HasDigit(reqDigit)) return false;
 
         // geometric create gate (core/building adjacency)
@@ -112,7 +112,7 @@ public static class IsItLegal
         if (origin < 0) return false;
 
         // Digit gate for target type
-        int reqDigit = Pieces.GetRequiredDigit((byte)targetType);
+        int reqDigit = PieceDefinition.codeDigitsByType[(byte)targetType];
         if (reqDigit >= 0 && !gameState.ps[currentPlayer].HasDigit(reqDigit)) return false;
 
         // Gather empty cells in range with LOS
@@ -152,7 +152,7 @@ public static class IsItLegal
         if (targetType < 0 || targetType >= PieceDefinition.typeCount) return false;
         if (a.TargetCellId != a.ActorsCellId) return false;
         if (bm.GetPieceCell(actorPid) != a.ActorsCellId) return false;
-        int reqDigit = Pieces.GetRequiredDigit((byte)targetType);
+        int reqDigit = PieceDefinition.codeDigitsByType[(byte)targetType];
         if (reqDigit >= 0 && !gameState.ps[currentPlayer].HasDigit(reqDigit)) return false;
         return true;
     }
@@ -272,7 +272,7 @@ public static class IsItLegal
                 Debug.Log("buildable flag Returned False");
                 return false;
             }
-            int req = Pieces.GetRequiredDigit(a.pieceType);
+            int req = PieceDefinition.codeDigitsByType[a.pieceType];
             if (req >= 0 && !gameState.ps[player].HasDigit(req))
             {
                 Debug.Log("Required digit gate Returned False");
@@ -283,7 +283,7 @@ public static class IsItLegal
             if (PieceDefinition.connectors_enabled[a.pieceType])
             {
                 int cfg = a.aux;
-                if (!Pieces.IsConnectorConfigAllowed(a.pieceType, cfg))
+                if (!PieceDefinition.IsConnectorConfigAllowed(a.pieceType, cfg))
                 {
                     Debug.Log("IsConnectorConfigAllowed Returned False");
                     return false;

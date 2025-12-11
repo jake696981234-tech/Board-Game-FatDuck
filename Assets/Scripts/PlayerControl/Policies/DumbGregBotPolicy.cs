@@ -171,7 +171,7 @@ public sealed class DumbGregBotPolicy : IBotPolicy
 
             if (a.kind != ActionKind.Move) continue;
 
-            int src = a.srcCell; int dst = a.dstCell;
+            int src = a.ActorsCellId; int dst = a.TargetCellId;
             int before = bm.DistToVictoryPoint(src);
             int after = bm.DistToVictoryPoint(dst);
             int delta = before - after;
@@ -179,7 +179,7 @@ public sealed class DumbGregBotPolicy : IBotPolicy
 
             int pid = bm.GetCellOccupant(src);
             byte typ = bm.GetPieceType(pid);
-            bool isBuilding = Pieces.IsBuilding(typ);
+            bool isBuilding = PieceDefinition.isBuildingByType[typ];
 
             if (!isBuilding)
             {
@@ -241,7 +241,7 @@ public sealed class DumbGregBotPolicy : IBotPolicy
             if (IsMasked(i, mask)) continue;
             ref readonly var a = ref acts[i];
             if (a.kind != ActionKind.Create) continue;
-            bool isB = Pieces.IsBuilding(a.pieceType);
+            bool isB = PieceDefinition.isBuildingByType[a.pieceType];
             if (mustBeBuilding != isB) continue;
             float c = Cost(costs, i);
             double w = 1.0 / (1.0 + Math.Max(0.0, c));
@@ -254,7 +254,7 @@ public sealed class DumbGregBotPolicy : IBotPolicy
             if (IsMasked(i, mask)) continue;
             ref readonly var a = ref acts[i];
             if (a.kind != ActionKind.Create) continue;
-            bool isB = Pieces.IsBuilding(a.pieceType);
+            bool isB = PieceDefinition.isBuildingByType[a.pieceType];
             if (mustBeBuilding != isB) continue;
             float c = Cost(costs, i);
             double w = 1.0 / (1.0 + Math.Max(0.0, c));

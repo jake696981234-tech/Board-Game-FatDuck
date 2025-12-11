@@ -32,7 +32,7 @@ public sealed class BuildMenuPresenter : MonoBehaviour
         foreach (var it in items)
         {
             var view = Ensure(i++);
-            view.Bind(it, OnItemClicked, Pieces.isBuildingByType[it.pieceType], Pieces.factionNameByType[it.pieceType]);
+            view.Bind(it, OnItemClicked, PieceDefinition.isBuildingByType[it.pieceType], PieceDefinition.factionNameByType[it.pieceType]);
             view.gameObject.SetActive(true);
         }
         for (; i < _pool.Count; i++) _pool[i].gameObject.SetActive(false);

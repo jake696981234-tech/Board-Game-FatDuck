@@ -192,7 +192,7 @@ public static class OfferProvider
                 int targetType = PieceDefinition.upgradeTargetType[actorType];
                 if (targetType >= 0 && targetType < PieceDefinition.typeCount)
                 {
-                    int reqDigit = Pieces.GetRequiredDigit((byte)targetType);
+                    int reqDigit = PieceDefinition.codeDigitsByType[(byte)targetType];
                     if (reqDigit < 0 || gameState.ps[player].HasDigit(reqDigit))
                     {
                         var a = new Action
@@ -306,7 +306,7 @@ public static class OfferProvider
                 {
                     if (!PieceDefinition.buildableByType[t]) continue; // buildable gate (CSV flag)
                                                                        // digitsRequired gate (Plan-B): skip if requirement exists and player lacks it
-                    int req = Pieces.GetRequiredDigit((byte)t);
+                    int req = PieceDefinition.codeDigitsByType[(byte)t];
                     if (req >= 0 && !gameState.ps[player].HasDigit(req)) continue;
                     bool hasConn = PieceDefinition.connectors_enabled[t];
                     ulong allowedMask = hasConn ? PieceDefinition.connectorAllowedMasks[t] : 0UL;
@@ -463,7 +463,7 @@ public static class OfferProvider
         if (amount <= 0 || targetType < 0 || targetType >= PieceDefinition.typeCount) return;
 
         // Digit gate; buildable override allowed
-        int reqDigit = Pieces.GetRequiredDigit((byte)targetType);
+        int reqDigit = PieceDefinition.codeDigitsByType[(byte)targetType];
         if (reqDigit >= 0 && !gameState.ps[player].HasDigit(reqDigit)) return;
 
         // Collect empty, LOS-valid cells within range from launcher
@@ -593,7 +593,7 @@ public static class OfferProvider
         {
             if (!bm.IsEmpty(cell)) continue;
             if (!BmAbilityCac.IsCreateGeometryLegal(cell, q.playerId, gameIndex)) continue;
-            int reqDigit = Pieces.GetRequiredDigit(targetType);
+            int reqDigit = PieceDefinition.codeDigitsByType[targetType];
             if (reqDigit >= 0 && !gameState.ps[player].HasDigit(reqDigit)) continue;
             var a = new Action
             {
