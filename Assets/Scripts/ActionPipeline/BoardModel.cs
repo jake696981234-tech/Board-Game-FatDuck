@@ -10,7 +10,7 @@ using System.Runtime.CompilerServices;
 /// - Stores only anchors (VP cell, per-player core cells), occupancy, and dense piece tables.
 /// - Geometry is injected (BoardGeometry) for zero-alloc neighbors/distance/LOS. 
 /// </summary>
-public partial class BoardModel
+public class BoardModel
 {
     // ---------- Immutable board constants (set once at Init) ----------
     private int _radius;

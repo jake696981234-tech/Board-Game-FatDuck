@@ -8,6 +8,7 @@
 //  - EndTurn is always appended as final action.
 
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Game.Core;
 using Action = Game.Core.Action;
@@ -323,20 +324,7 @@ public static class OfferProvider
                             TargetCellId = (ushort)cell,
                             aux = 0
                         };
-                        if (PieceDefinition.sacrificeCost_enabled[a.pieceType])
-                        {
-                            int howMany = 0;
-                            if (PassiveActions.SacrificeCost(a, out Action[] outAction, out howMany, player, gameIndex))
-                            {
-                                for (int i = 0; i < 64; i++)
-                                {
-
-                                }
-                                Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
-                            }
-                            continue;
-                        }
-                        Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
+                        EmitCreateWithSacrifice(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
                     }
                     if (hasConn)
                     {
@@ -354,7 +342,7 @@ public static class OfferProvider
                                 TargetCellId = (ushort)cell,
                                 aux = (ushort)cfg // carry config index
                             };
-                            Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
+                            EmitCreateWithSacrifice(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
                         }
                     }
                 }
@@ -452,6 +440,38 @@ public static class OfferProvider
     // ---- BoardModel adapters (1-liners; edit here to match your API names if needed) ----
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool IsInvalid(BoardModel bm, int pieceId) => pieceId == bm.InvalidId;
+
+    private static readonly List<int[]> SacrificeCostOptions = new List<int[]>(64);
+
+    private static void EmitCreateWithSacrifice(
+        ref Action baseAction,
+        ref int write,
+        ref int total,
+        int cap,
+        Span<Action> outActions,
+        in OfferQuery q,
+        Span<float> outCosts,
+        Span<byte> outMask,
+        int gameIndex,
+        int player)
+    {
+        if (!PieceDefinition.sacrificeCost_enabled[baseAction.pieceType])
+        {
+            Emit(ref baseAction, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
+            return;
+        }
+
+        SacrificeCostOptions.Clear();
+        if (!PassiveActions.GenerateSacrificeCosts(in baseAction, player, gameIndex, SacrificeCostOptions))
+            return; // no legal sacrifice options
+
+        for (int i = 0; i < SacrificeCostOptions.Count; i++)
+        {
+            var withCost = baseAction;
+            withCost.addCost = SacrificeCostOptions[i];
+            Emit(ref withCost, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
+        }
+    }
 
 
     //might move this later to - this needs to split up of methods

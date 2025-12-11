@@ -80,6 +80,13 @@ namespace Game.Core
             var gameState = GameRegistry.game[gameIndex].gameState;
             var bm = GameRegistry.game[gameIndex].boardModel;
 
+            if (PieceDefinition.sacrificeCost_enabled[theAction.pieceType])
+            {
+                for (int i = 0; i < PieceDefinition.sacrificeCost_howManyItNeeds[theAction.pieceType]; i++)
+                {
+                    pieceKilled(theAction.addCost[i], gameIndex);
+                }
+            }
 
             int pid = bm.AllocateRow();
             bm.PlacePieceRow(pid, player, (byte)theAction.pieceType, theAction.TargetCellId, PieceDefinition.maxHP[theAction.pieceType]);

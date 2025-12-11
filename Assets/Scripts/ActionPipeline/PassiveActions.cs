@@ -3,45 +3,72 @@ using System;
 
 public static class PassiveActions
 {
-    public static bool GenerateSacrificeCosts(Game.Core.Action theAction, Span<int[]> altCost, int playerId, int gameIndex)
+    private const int MaxSacrificeCombos = 64;
+
+    /// <summary>
+    /// Populate sacrifice options for a create action.
+    /// Returns false if no legal options exist.
+    /// </summary>
+    public static bool GenerateSacrificeCosts(in Game.Core.Action theAction, int playerId, int gameIndex, List<int[]> outOptions)
     {
+        outOptions.Clear();
+
         var bm = GameRegistry.game[gameIndex].boardModel;
 
-        int[] ownerPieceId = Scratch.GetScratchCellBuffer(gameIndex);
-        int numberOfPiecesOnBoard = bm.GetOwnedPieceIds(playerId, ownerPieceId);
+        int need = PieceDefinition.sacrificeCost_howManyItNeeds[theAction.pieceType];
+        if (need <= 0) return false;
 
-        if (numberOfPiecesOnBoard <= 0) return false;
-        if (PieceDefinition.sacrificeCost_howManyItNeeds[theAction.pieceType] > numberOfPiecesOnBoard) return false;
+        int[] owned = Scratch.GetScratchCellBuffer(gameIndex);
+        int ownedCount = bm.GetOwnedPieceIds(playerId, owned);
+        if (ownedCount < need) return false;
 
-        int TargetsFound = 0;
-        int[] TargetId = Scratch.GetScratchCellBuffer(gameIndex);
+        // Filter eligible pieces into the front of the same buffer
+        int eligibleCount = 0;
+        bool requiresSpecific = PieceDefinition.sacrificeCost_isNeedsSpecificPiece[theAction.pieceType];
+        int requiredType = PieceDefinition.sacrificeCost_specificPiece[theAction.pieceType];
 
-        if (!PieceDefinition.sacrificeCost_isNeedsSpecificPiece[theAction.pieceType])
+        for (int i = 0; i < ownedCount; i++)
         {
-            for (int i = 0; i < numberOfPiecesOnBoard; i++)
+            int pid = owned[i];
+            if (!bm.IsValidPieceId(pid)) continue;
+            if (requiresSpecific && bm.pieceType[pid] != requiredType) continue;
+            owned[eligibleCount++] = pid;
+        }
+        if (eligibleCount < need) return false;
+
+        Array.Sort(owned, 0, eligibleCount); // deterministic combos
+
+        // Generate combinations deterministically, capped to avoid blowup
+        if (need == 1)
+        {
+            int limit = Math.Min(eligibleCount, MaxSacrificeCombos);
+            for (int i = 0; i < limit; i++)
+                outOptions.Add(new[] { owned[i] });
+            return outOptions.Count > 0;
+        }
+
+        int[] combo = new int[need];
+        void Recurse(int start, int depth)
+        {
+            if (outOptions.Count >= MaxSacrificeCombos) return;
+            if (depth == need)
             {
-                TargetsFound++;
-                TargetId[i] = ownerPieceId[i];
+                int[] arr = new int[need];
+                Array.Copy(combo, arr, need);
+                outOptions.Add(arr);
+                return;
+            }
+            int remainingSlots = need - depth;
+            for (int i = start; i <= eligibleCount - remainingSlots; i++)
+            {
+                combo[depth] = owned[i];
+                Recurse(i + 1, depth + 1);
+                if (outOptions.Count >= MaxSacrificeCombos) return;
             }
         }
-        else
-        {
-            for (int i = 0; i < numberOfPiecesOnBoard; i++)
-            {
-                if (bm.pieceType[ownerPieceId[i]] == PieceDefinition.sacrificeCost_specificPiece[theAction.pieceType])
-                {
-                    TargetsFound++;
-                    TargetId[i] = ownerPieceId[i];
-                    continue;
-                }
-            }
-        }
-        if (TargetsFound < PieceDefinition.sacrificeCost_howManyItNeeds[theAction.pieceType]) return false;
 
-
-        altCost = TargetId;
-
-        return true;
+        Recurse(0, 0);
+        return outOptions.Count > 0;
     }
 
 

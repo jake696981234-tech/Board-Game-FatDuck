@@ -8,22 +8,12 @@ public sealed class GameBootstrapper : MonoBehaviour
 {
     [Header("Authoring")]
     public Config config;     // assign in Inspector
-
     public PerGameConfig perGameConfig;
-
     [SerializeField] private GameObject uiRoot;
-
-
     [SerializeField] private GameObject inspectGameController;
-
-
     // Live systems (optional to expose for debugging)
     public BoardModel board;
-
-
     public static GameConfigHub hub;
-
-
     void Awake()
     {
         uiRoot.SetActive(config.inspectGame);

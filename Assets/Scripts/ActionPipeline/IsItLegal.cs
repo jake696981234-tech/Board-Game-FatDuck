@@ -319,6 +319,34 @@ public static class IsItLegal
                     return false;
                 }
             }
+
+            // Sacrifice cost gate: ensure specified pieces are available and owned
+            if (PieceDefinition.sacrificeCost_enabled[a.pieceType])
+            {
+                int need = PieceDefinition.sacrificeCost_howManyItNeeds[a.pieceType];
+                var cost = a.addCost;
+                if (need > 0)
+                {
+                    if (cost == null || cost.Length < need)
+                    {
+                        Debug.Log("Sacrifice cost missing Returned False");
+                        return false;
+                    }
+                    int valid = 0;
+                    for (int i = 0; i < cost.Length; i++)
+                    {
+                        int pid = cost[i];
+                        if (!bm.IsValidPieceId(pid)) continue;
+                        if (bm.GetPieceOwner(pid) != player) continue;
+                        valid++;
+                    }
+                    if (valid < need)
+                    {
+                        Debug.Log("Sacrifice cost pieces unavailable Returned False");
+                        return false;
+                    }
+                }
+            }
             return true;
         }
 
