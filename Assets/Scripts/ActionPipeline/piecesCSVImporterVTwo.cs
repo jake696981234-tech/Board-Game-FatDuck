@@ -38,42 +38,42 @@ public static class PiecesCsvImporter
 
 
             #region UI
-            PieceDefinition.displayNameByType[typeId] = Get(cols, H, "displayNameByType", required: true);
-            PieceDefinition.factionNameByType[typeId] = Get(cols, H, "factionNameByType", defaultValue: "");
-            PieceDefinition.spritePathByType[typeId] = Get(cols, H, "spritePathByType", defaultValue: "");
+            PieceDefinition.name[typeId] = Get(cols, H, "name", required: true);
+            PieceDefinition.factionName[typeId] = Get(cols, H, "factionName", defaultValue: "");
+            PieceDefinition.spritePath[typeId] = Get(cols, H, "spritePath", defaultValue: "");
 
             #endregion
             #region General Fields
-            PieceDefinition.isBuildingByType[typeId] = GetBool(cols, H, "isBuildingByType", defaultValue: false);
-            PieceDefinition.buildableByType[typeId] = GetBool(cols, H, "buildableByType", defaultValue: true);
-            PieceDefinition.buildCostByType[typeId] = GetInt(cols, H, "buildCostByType", defaultValue: 0);
-            PieceDefinition.maxHPByType[typeId] = (short)ClampToShort(GetInt(cols, H, "maxHPByType", defaultValue: 0));
+            PieceDefinition.isBuilding[typeId] = GetBool(cols, H, "isBuilding", defaultValue: false);
+            PieceDefinition.isbuildable[typeId] = GetBool(cols, H, "isbuildable", defaultValue: true);
+            PieceDefinition.BuildCost[typeId] = GetInt(cols, H, "BuildCost", defaultValue: 0);
+            PieceDefinition.maxHP[typeId] = (short)ClampToShort(GetInt(cols, H, "maxHP", defaultValue: 0));
 
             #endregion
             #region Digits
-            PieceDefinition.codeDigitsByType[typeId] = GetInt(cols, H, "codeDigitsByType", defaultValue: -1);
-            PieceDefinition.grantsDigitByType[typeId] = GetInt(cols, H, "grantsDigitByType", defaultValue: -1);
+            PieceDefinition.requiredDigit[typeId] = GetInt(cols, H, "requiredDigit", defaultValue: -1);
+            PieceDefinition.digitItGives[typeId] = GetInt(cols, H, "digitItGives", defaultValue: -1);
 
             #endregion
             #region Connectors
             PieceDefinition.connectors_enabled[typeId] = GetBool(cols, H, "connectors_enabled", defaultValue: false);
-            PieceDefinition.connectorNeedsCapital[typeId] = GetBool(cols, H, "connectorNeedsCapital", defaultValue: false);
-            PieceDefinition.connectorIsCapital[typeId] = GetBool(cols, H, "connectorIsCapital", defaultValue: false);
-            PieceDefinition.connectorCapitalHealth[typeId] = GetInt(cols, H, "connectorCapitalHealth", defaultValue: 0);
-            PieceDefinition.connectorAllowedMasks[typeId] = ParseConnectorMask(Get(cols, H, "connector_masks", defaultValue: string.Empty));
+            PieceDefinition.connector_needsCapital[typeId] = GetBool(cols, H, "connector_needsCapital", defaultValue: false);
+            PieceDefinition.connector_isCapital[typeId] = GetBool(cols, H, "connector_isCapital", defaultValue: false);
+            PieceDefinition.connector_capitalHealth[typeId] = GetInt(cols, H, "connector_capitalHealth", defaultValue: 0);
+            PieceDefinition.connector_allowedMasks[typeId] = ParseConnectorMask(Get(cols, H, "connector_allowedMasks", defaultValue: string.Empty));
 
             #endregion
             #region Group Build
             PieceDefinition.groupBuild_enabled[typeId] = GetBool(cols, H, "groupBuild_enabled", defaultValue: false);
-            PieceDefinition.groupBuildTargetType[typeId] = GetInt(cols, H, "groupBuildTargetType", defaultValue: -1);
-            PieceDefinition.groupBuildRequireNumber[typeId] = GetInt(cols, H, "groupBuildRequireNumber", defaultValue: 0);
-            PieceDefinition.groupBuildDeletion[typeId] = GetBool(cols, H, "groupBuildDeletion", defaultValue: false);
+            PieceDefinition.groupBuild_target[typeId] = GetInt(cols, H, "groupBuild_target", defaultValue: -1);
+            PieceDefinition.groupBuild_requireNumber[typeId] = GetInt(cols, H, "groupBuild_requireNumber", defaultValue: 0);
+            PieceDefinition.groupBuild_deletion[typeId] = GetBool(cols, H, "groupBuild_deletion", defaultValue: false);
             PieceDefinition.groupBuild_botSurcharge[typeId] = GetInt(cols, H, "groupBuild_botSurcharge", defaultValue: 0);
 
             #endregion
             #region Upgrade
-            PieceDefinition.upgradeEnabled[typeId] = GetBool(cols, H, "upgradeEnabled", defaultValue: false);
-            PieceDefinition.upgradeTargetType[typeId] = GetInt(cols, H, "upgradeTargetType", defaultValue: -1);
+            PieceDefinition.upgrade_enabled[typeId] = GetBool(cols, H, "upgrade_enabled", defaultValue: false);
+            PieceDefinition.upgrade_target[typeId] = GetInt(cols, H, "upgrade_target", defaultValue: -1);
             PieceDefinition.upgrade_botSurcharge[typeId] = GetInt(cols, H, "upgrade_botSurcharge", defaultValue: 0);
 
             #endregion
@@ -81,20 +81,20 @@ public static class PiecesCsvImporter
             PieceDefinition.launcher_enabled[typeId] = GetBool(cols, H, "launcher_enabled", defaultValue: false);
             PieceDefinition.launcher_inputRange[typeId] = GetInt(cols, H, "launcher_inputRange", defaultValue: 0);
             PieceDefinition.launcher_outputRange[typeId] = GetInt(cols, H, "launcher_outputRange", defaultValue: 0);
-            PieceDefinition.launcher_friendlyFire[typeId] = GetBool(cols, H, "launcher_friendlyFire", defaultValue: false);
-            PieceDefinition.launcher_enemyFire[typeId] = GetBool(cols, H, "launcher_enemyFire", defaultValue: false);
+            PieceDefinition.launcher_isfriendlyFire[typeId] = GetBool(cols, H, "launcher_isfriendlyFire", defaultValue: false);
+            PieceDefinition.launcher_isEnemyFire[typeId] = GetBool(cols, H, "launcher_isEnemyFire", defaultValue: false);
             PieceDefinition.launcher_botSurcharge[typeId] = GetInt(cols, H, "launcher_botSurcharge", defaultValue: 0);
 
 
             #endregion
             #region Push
             PieceDefinition.push_enabled[typeId] = GetBool(cols, H, "push_enabled", defaultValue: false);
-            PieceDefinition.push_TargetsBuildings[typeId] = GetBool(cols, H, "push_TargetsBuildings", defaultValue: false);
-            PieceDefinition.push_TargetsSoldiers[typeId] = GetBool(cols, H, "push_TargetsSoldiers", defaultValue: false);
+            PieceDefinition.push_IsTargetsBuildings[typeId] = GetBool(cols, H, "push_IsTargetsBuildings", defaultValue: false);
+            PieceDefinition.push_isTargetsSoldiers[typeId] = GetBool(cols, H, "push_isTargetsSoldiers", defaultValue: false);
             PieceDefinition.push_rangeMax[typeId] = GetInt(cols, H, "push_rangeMax", defaultValue: 0);
-            PieceDefinition.push_PushAmount[typeId] = GetInt(cols, H, "push_PushAmount", defaultValue: 0);
-            PieceDefinition.push_pull[typeId] = GetBool(cols, H, "push_pull", defaultValue: false);
-            PieceDefinition.push_FriendlyFire[typeId] = GetBool(cols, H, "push_FriendlyFire", defaultValue: false);
+            PieceDefinition.push_pushAmount[typeId] = GetInt(cols, H, "push_pushAmount", defaultValue: 0);
+            PieceDefinition.push_isPull[typeId] = GetBool(cols, H, "push_isPull", defaultValue: false);
+            PieceDefinition.push_isFriendlyFire[typeId] = GetBool(cols, H, "push_isFriendlyFire", defaultValue: false);
             PieceDefinition.push_damage[typeId] = GetInt(cols, H, "push_damage", defaultValue: 0);
 
             #endregion
@@ -103,21 +103,21 @@ public static class PiecesCsvImporter
             PieceDefinition.spawn_pieceAmount[typeId] = GetInt(cols, H, "spawn_pieceAmount", defaultValue: 0);
             PieceDefinition.spawn_targetType[typeId] = GetInt(cols, H, "spawn_targetType", defaultValue: -1);
             PieceDefinition.spawn_range[typeId] = GetInt(cols, H, "spawn_range", defaultValue: 0);
-            PieceDefinition.spawn_onlyOncePerTurn[typeId] = GetBool(cols, H, "spawn_onlyOncePerTurn", defaultValue: false);
+            PieceDefinition.spawn_isOnlyOncePerTurn[typeId] = GetBool(cols, H, "spawn_isOnlyOncePerTurn", defaultValue: false);
             PieceDefinition.spawn_botSurcharge[typeId] = GetInt(cols, H, "spawn_botSurcharge", defaultValue: 0);
 
             #endregion
             #region multiCreate
             PieceDefinition.multiCreate_enabledByType[typeId] = GetBool(cols, H, "multiCreate_enabledByType", defaultValue: false);
             PieceDefinition.multiCreate_amountByType[typeId] = GetInt(cols, H, "multiCreate_amountByType", defaultValue: 0);
-            PieceDefinition.multiCreate_boarderingByType[typeId] = GetBool(cols, H, "multiCreate_boarderingByType", defaultValue: false);
+            PieceDefinition.multiCreate_isBoardering[typeId] = GetBool(cols, H, "multiCreate_isBoardering", defaultValue: false);
 
             #endregion
             #region factory
             PieceDefinition.factory_enabled[typeId] = GetBool(cols, H, "factory_enabled", defaultValue: false);
             PieceDefinition.factory_amount[typeId] = GetInt(cols, H, "factory_amount", defaultValue: 0);
-            PieceDefinition.factory_roundMultiplier[typeId] = GetBool(cols, H, "factory_roundMultiplier", defaultValue: false);
-            PieceDefinition.factory_group[typeId] = GetBool(cols, H, "factory_group", defaultValue: false);
+            PieceDefinition.factory_isRoundMultiplier[typeId] = GetBool(cols, H, "factory_isRoundMultiplier", defaultValue: false);
+            PieceDefinition.factory_isGroup[typeId] = GetBool(cols, H, "factory_isGroup", defaultValue: false);
             PieceDefinition.factory_groupAmount[typeId] = GetInt(cols, H, "factory_groupAmount", defaultValue: 0);
 
             #endregion
@@ -130,8 +130,8 @@ public static class PiecesCsvImporter
             #region conversion Factory
             // may add this to the Factory region
             PieceDefinition.conversionFactory_enabled[typeId] = GetBool(cols, H, "conversionFactory_enabled", defaultValue: false);
-            PieceDefinition.conversionFactory_coreHealth[typeId] = GetBool(cols, H, "conversionFactory_coreHealth", defaultValue: false);
-            PieceDefinition.conversionFactory_vp[typeId] = GetBool(cols, H, "conversionFactory_vp", defaultValue: false);
+            PieceDefinition.conversionFactory_isCoreHealth[typeId] = GetBool(cols, H, "conversionFactory_isCoreHealth", defaultValue: false);
+            PieceDefinition.conversionFactory_isVp[typeId] = GetBool(cols, H, "conversionFactory_isVp", defaultValue: false);
             PieceDefinition.conversionFactory_amount[typeId] = GetInt(cols, H, "conversionFactory_amount", defaultValue: 0);
             PieceDefinition.conversionFactory_botSurcharge[typeId] = GetInt(cols, H, "conversionFactory_botSurcharge", defaultValue: 0);
 
@@ -290,43 +290,43 @@ public static class PiecesCsvImporter
         PieceDefinition.typeCount = count;
 
         #region UI
-        PieceDefinition.displayNameByType = new string[count];
-        PieceDefinition.factionNameByType = new string[count];
-        PieceDefinition.spritePathByType = new string[count];
+        PieceDefinition.name = new string[count];
+        PieceDefinition.factionName = new string[count];
+        PieceDefinition.spritePath = new string[count];
 
         #endregion
         #region General Fields
-        PieceDefinition.isBuildingByType = new bool[count];
-        PieceDefinition.buildableByType = new bool[count];
-        PieceDefinition.buildCostByType = new int[count];
-        PieceDefinition.maxHPByType = new short[count];
+        PieceDefinition.isBuilding = new bool[count];
+        PieceDefinition.isbuildable = new bool[count];
+        PieceDefinition.BuildCost = new int[count];
+        PieceDefinition.maxHP = new short[count];
 
         #endregion
         #region Digits
-        PieceDefinition.codeDigitsByType = new int[count];
-        PieceDefinition.grantsDigitByType = new int[count];
+        PieceDefinition.requiredDigit = new int[count];
+        PieceDefinition.digitItGives = new int[count];
 
 
         #endregion
         #region Connectors
         PieceDefinition.connectors_enabled = new bool[count];
-        PieceDefinition.connectorNeedsCapital = new bool[count];
-        PieceDefinition.connectorIsCapital = new bool[count];
-        PieceDefinition.connectorCapitalHealth = new int[count];
-        PieceDefinition.connectorAllowedMasks = new ulong[count];
+        PieceDefinition.connector_needsCapital = new bool[count];
+        PieceDefinition.connector_isCapital = new bool[count];
+        PieceDefinition.connector_capitalHealth = new int[count];
+        PieceDefinition.connector_allowedMasks = new ulong[count];
 
         #endregion
         #region Group Build
         PieceDefinition.groupBuild_enabled = new bool[count];
-        PieceDefinition.groupBuildTargetType = new int[count];
-        PieceDefinition.groupBuildRequireNumber = new int[count];
-        PieceDefinition.groupBuildDeletion = new bool[count];
+        PieceDefinition.groupBuild_target = new int[count];
+        PieceDefinition.groupBuild_requireNumber = new int[count];
+        PieceDefinition.groupBuild_deletion = new bool[count];
         PieceDefinition.groupBuild_botSurcharge = new int[count];
 
         #endregion
         #region Upgrade
-        PieceDefinition.upgradeEnabled = new bool[count];
-        PieceDefinition.upgradeTargetType = new int[count];
+        PieceDefinition.upgrade_enabled = new bool[count];
+        PieceDefinition.upgrade_target = new int[count];
         PieceDefinition.upgrade_botSurcharge = new int[count];
 
         #endregion
@@ -334,19 +334,19 @@ public static class PiecesCsvImporter
         PieceDefinition.launcher_enabled = new bool[count];
         PieceDefinition.launcher_inputRange = new int[count];
         PieceDefinition.launcher_outputRange = new int[count];
-        PieceDefinition.launcher_friendlyFire = new bool[count];
-        PieceDefinition.launcher_enemyFire = new bool[count];
+        PieceDefinition.launcher_isfriendlyFire = new bool[count];
+        PieceDefinition.launcher_isEnemyFire = new bool[count];
         PieceDefinition.launcher_botSurcharge = new int[count];
 
         #endregion
         #region Push
         PieceDefinition.push_enabled = new bool[count];
-        PieceDefinition.push_TargetsBuildings = new bool[count];
-        PieceDefinition.push_TargetsSoldiers = new bool[count];
+        PieceDefinition.push_IsTargetsBuildings = new bool[count];
+        PieceDefinition.push_isTargetsSoldiers = new bool[count];
         PieceDefinition.push_rangeMax = new int[count];
-        PieceDefinition.push_PushAmount = new int[count];
-        PieceDefinition.push_pull = new bool[count];
-        PieceDefinition.push_FriendlyFire = new bool[count];
+        PieceDefinition.push_pushAmount = new int[count];
+        PieceDefinition.push_isPull = new bool[count];
+        PieceDefinition.push_isFriendlyFire = new bool[count];
         PieceDefinition.push_damage = new int[count];
 
         #endregion
@@ -355,21 +355,21 @@ public static class PiecesCsvImporter
         PieceDefinition.spawn_pieceAmount = new int[count];
         PieceDefinition.spawn_targetType = new int[count];
         PieceDefinition.spawn_range = new int[count];
-        PieceDefinition.spawn_onlyOncePerTurn = new bool[count];
+        PieceDefinition.spawn_isOnlyOncePerTurn = new bool[count];
         PieceDefinition.spawn_botSurcharge = new int[count];
 
         #endregion
         #region multiCreate
         PieceDefinition.multiCreate_enabledByType = new bool[count];
         PieceDefinition.multiCreate_amountByType = new int[count];
-        PieceDefinition.multiCreate_boarderingByType = new bool[count];
+        PieceDefinition.multiCreate_isBoardering = new bool[count];
 
         #endregion
         #region factory
         PieceDefinition.factory_enabled = new bool[count];
         PieceDefinition.factory_amount = new int[count];
-        PieceDefinition.factory_roundMultiplier = new bool[count];
-        PieceDefinition.factory_group = new bool[count];
+        PieceDefinition.factory_isRoundMultiplier = new bool[count];
+        PieceDefinition.factory_isGroup = new bool[count];
         PieceDefinition.factory_groupAmount = new int[count];
 
         #endregion
@@ -380,8 +380,8 @@ public static class PiecesCsvImporter
         #endregion
         #region conversion Factory
         PieceDefinition.conversionFactory_enabled = new bool[count];
-        PieceDefinition.conversionFactory_coreHealth = new bool[count];
-        PieceDefinition.conversionFactory_vp = new bool[count];
+        PieceDefinition.conversionFactory_isCoreHealth = new bool[count];
+        PieceDefinition.conversionFactory_isVp = new bool[count];
         PieceDefinition.conversionFactory_amount = new int[count];
         PieceDefinition.conversionFactory_botSurcharge = new int[count];
 

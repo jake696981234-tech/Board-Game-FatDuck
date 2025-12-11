@@ -204,7 +204,7 @@ public sealed class PlayerAgent
             if (pid < 0) { obs[w++] = 0f; continue; }
             byte typ = _bm.GetPieceType(pid);
             int hp = BM_PieceHP(pid);
-            int mh = PieceDefinition.maxHPByType[typ];
+            int mh = PieceDefinition.maxHP[typ];
             obs[w++] = Safe01(hp, mh);
         }
 
@@ -215,7 +215,7 @@ public sealed class PlayerAgent
             int pid = BM_PieceAt(id);
             if (pid < 0) { obs[w++] = 0f; continue; }
             byte typ = _bm.GetPieceType(pid);
-            obs[w++] = PieceDefinition.isBuildingByType[typ] ? 1f : 0f;
+            obs[w++] = PieceDefinition.isBuilding[typ] ? 1f : 0f;
         }
 
         // ch8: is VP cell

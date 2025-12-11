@@ -171,10 +171,10 @@ public static class OfferProvider
             }
             if (PieceDefinition.groupBuild_enabled[actorType])
             {
-                int tgtType = PieceDefinition.groupBuildTargetType[actorType];
+                int tgtType = PieceDefinition.groupBuild_target[actorType];
                 if (tgtType >= 0 && tgtType < PieceDefinition.typeCount)
                 {
-                    int require = PieceDefinition.groupBuildRequireNumber[actorType];
+                    int require = PieceDefinition.groupBuild_requireNumber[actorType];
                     if (require > 1)
                     {
                         // Cluster check
@@ -187,12 +187,12 @@ public static class OfferProvider
                     }
                 }
             }
-            if (PieceDefinition.upgradeEnabled[actorType])
+            if (PieceDefinition.upgrade_enabled[actorType])
             {
-                int targetType = PieceDefinition.upgradeTargetType[actorType];
+                int targetType = PieceDefinition.upgrade_target[actorType];
                 if (targetType >= 0 && targetType < PieceDefinition.typeCount)
                 {
-                    int reqDigit = PieceDefinition.codeDigitsByType[(byte)targetType];
+                    int reqDigit = PieceDefinition.requiredDigit[(byte)targetType];
                     if (reqDigit < 0 || gameState.ps[player].HasDigit(reqDigit))
                     {
                         var a = new Action
@@ -294,7 +294,7 @@ public static class OfferProvider
                         if (IsInvalid(bm, nbPid)) continue;
                         if (bm.GetPieceOwner(nbPid) != q.playerId) continue;
                         byte nbType = bm.GetPieceType(nbPid);
-                        if (PieceDefinition.isBuildingByType[nbType]) legal = true;
+                        if (PieceDefinition.isBuilding[nbType]) legal = true;
                     }
                 }
 
@@ -304,12 +304,12 @@ public static class OfferProvider
                 int typeCount = PieceDefinition.typeCount;
                 for (int t = 0; t < typeCount; t++)
                 {
-                    if (!PieceDefinition.buildableByType[t]) continue; // buildable gate (CSV flag)
-                                                                       // digitsRequired gate (Plan-B): skip if requirement exists and player lacks it
-                    int req = PieceDefinition.codeDigitsByType[(byte)t];
+                    if (!PieceDefinition.isbuildable[t]) continue; // buildable gate (CSV flag)
+                                                                   // digitsRequired gate (Plan-B): skip if requirement exists and player lacks it
+                    int req = PieceDefinition.requiredDigit[(byte)t];
                     if (req >= 0 && !gameState.ps[player].HasDigit(req)) continue;
                     bool hasConn = PieceDefinition.connectors_enabled[t];
-                    ulong allowedMask = hasConn ? PieceDefinition.connectorAllowedMasks[t] : 0UL;
+                    ulong allowedMask = hasConn ? PieceDefinition.connector_allowedMasks[t] : 0UL;
                     if (hasConn && allowedMask == 0UL) continue;
 
                     if (!hasConn)
@@ -459,11 +459,11 @@ public static class OfferProvider
         int amount = PieceDefinition.spawn_pieceAmount[actorType];
         int range = PieceDefinition.spawn_range[actorType];
         int targetType = PieceDefinition.spawn_targetType[actorType];
-        bool once = PieceDefinition.spawn_onlyOncePerTurn[actorType];
+        bool once = PieceDefinition.spawn_isOnlyOncePerTurn[actorType];
         if (amount <= 0 || targetType < 0 || targetType >= PieceDefinition.typeCount) return;
 
         // Digit gate; buildable override allowed
-        int reqDigit = PieceDefinition.codeDigitsByType[(byte)targetType];
+        int reqDigit = PieceDefinition.requiredDigit[(byte)targetType];
         if (reqDigit >= 0 && !gameState.ps[player].HasDigit(reqDigit)) return;
 
         // Collect empty, LOS-valid cells within range from launcher
@@ -593,7 +593,7 @@ public static class OfferProvider
         {
             if (!bm.IsEmpty(cell)) continue;
             if (!BmAbilityCac.IsCreateGeometryLegal(cell, q.playerId, gameIndex)) continue;
-            int reqDigit = PieceDefinition.codeDigitsByType[targetType];
+            int reqDigit = PieceDefinition.requiredDigit[targetType];
             if (reqDigit >= 0 && !gameState.ps[player].HasDigit(reqDigit)) continue;
             var a = new Action
             {

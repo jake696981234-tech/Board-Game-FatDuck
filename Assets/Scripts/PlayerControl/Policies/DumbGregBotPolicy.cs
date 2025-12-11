@@ -179,7 +179,7 @@ public sealed class DumbGregBotPolicy : IBotPolicy
 
             int pid = bm.GetCellOccupant(src);
             byte typ = bm.GetPieceType(pid);
-            bool isBuilding = PieceDefinition.isBuildingByType[typ];
+            bool isBuilding = PieceDefinition.isBuilding[typ];
 
             if (!isBuilding)
             {
@@ -241,7 +241,7 @@ public sealed class DumbGregBotPolicy : IBotPolicy
             if (IsMasked(i, mask)) continue;
             ref readonly var a = ref acts[i];
             if (a.kind != ActionKind.Create) continue;
-            bool isB = PieceDefinition.isBuildingByType[a.pieceType];
+            bool isB = PieceDefinition.isBuilding[a.pieceType];
             if (mustBeBuilding != isB) continue;
             float c = Cost(costs, i);
             double w = 1.0 / (1.0 + Math.Max(0.0, c));
@@ -254,7 +254,7 @@ public sealed class DumbGregBotPolicy : IBotPolicy
             if (IsMasked(i, mask)) continue;
             ref readonly var a = ref acts[i];
             if (a.kind != ActionKind.Create) continue;
-            bool isB = PieceDefinition.isBuildingByType[a.pieceType];
+            bool isB = PieceDefinition.isBuilding[a.pieceType];
             if (mustBeBuilding != isB) continue;
             float c = Cost(costs, i);
             double w = 1.0 / (1.0 + Math.Max(0.0, c));

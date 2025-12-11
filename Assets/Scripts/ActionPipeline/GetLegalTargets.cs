@@ -167,8 +167,8 @@ public static class GetLegalTargets
 
         int inputRange = PieceDefinition.launcher_inputRange[actorType];
         int outputRange = PieceDefinition.launcher_outputRange[actorType];
-        bool allowFriendly = PieceDefinition.launcher_friendlyFire[actorType];
-        bool allowEnemy = PieceDefinition.launcher_enemyFire[actorType];
+        bool allowFriendly = PieceDefinition.launcher_isfriendlyFire[actorType];
+        bool allowEnemy = PieceDefinition.launcher_isEnemyFire[actorType];
 
         int originCell = bm.GetPieceCell(actorPid);
         if (originCell < 0) return 0;
@@ -223,10 +223,10 @@ public static class GetLegalTargets
 
         int actorOwner = bm.GetPieceOwner(actorPieceId);
 
-        bool allowBuildings = PieceDefinition.push_TargetsBuildings[actorType];
-        bool allowSoldiers = PieceDefinition.push_TargetsSoldiers[actorType];
+        bool allowBuildings = PieceDefinition.push_IsTargetsBuildings[actorType];
+        bool allowSoldiers = PieceDefinition.push_isTargetsSoldiers[actorType];
         int rangeMax = PieceDefinition.push_rangeMax[actorType];
-        bool allowFriendly = PieceDefinition.push_FriendlyFire[actorType];
+        bool allowFriendly = PieceDefinition.push_isFriendlyFire[actorType];
 
         int cap = outPieceIds != null ? outPieceIds.Length : 0;
         int count = 0;
@@ -240,7 +240,7 @@ public static class GetLegalTargets
             if (!allowFriendly && bm.GetPieceOwner(victimId) == actorOwner) continue;
 
             byte type = bm.GetPieceType(victimId);
-            bool isBuilding = PieceDefinition.isBuildingByType[actorType];
+            bool isBuilding = PieceDefinition.isBuilding[actorType];
             if (isBuilding && !allowBuildings) continue;
             if (!isBuilding && !allowSoldiers) continue;
 

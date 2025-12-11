@@ -10,8 +10,8 @@ public static class ShowRightPanel
         var items = new List<BuildItem>(UIBridge._count);
         if (UIBridge._count > 0)
         {
-            var names = PieceDefinition.displayNameByType;     // assumed from your Pieces registry
-            var paths = PieceDefinition.spritePathByType;      // assumed from your Pieces registry
+            var names = PieceDefinition.name;     // assumed from your Pieces registry
+            var paths = PieceDefinition.spritePath;      // assumed from your Pieces registry
 
             for (int i = 0; i < UIBridge._count; i++)
             {

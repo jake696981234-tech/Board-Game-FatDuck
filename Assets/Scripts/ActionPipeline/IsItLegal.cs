@@ -14,13 +14,13 @@ public static class IsItLegal
         if (targetPid < 0 || !bm.IsValidPieceId(targetPid)) return false;
         if (bm.GetPieceCell(targetPid) != a.TargetCellId) return false;
 
-        bool allowFriendly = PieceDefinition.push_FriendlyFire[actorType];
+        bool allowFriendly = PieceDefinition.push_isFriendlyFire[actorType];
         if (!allowFriendly && bm.GetPieceOwner(targetPid) == actorOwner) return false;
 
-        bool allowBuildings = PieceDefinition.push_TargetsBuildings[actorType];
-        bool allowSoldiers = PieceDefinition.push_TargetsSoldiers[actorType];
+        bool allowBuildings = PieceDefinition.push_IsTargetsBuildings[actorType];
+        bool allowSoldiers = PieceDefinition.push_isTargetsSoldiers[actorType];
         byte tgtType = bm.GetPieceType(targetPid);
-        bool isBuilding = PieceDefinition.isBuildingByType[actorType];
+        bool isBuilding = PieceDefinition.isBuilding[actorType];
         if (isBuilding && !allowBuildings) return false;
         if (!isBuilding && !allowSoldiers) return false;
 
@@ -42,12 +42,12 @@ public static class IsItLegal
 
         byte actorType = bm.GetPieceType(actorPid);
         if (!PieceDefinition.groupBuild_enabled[actorType]) return false;
-        int targetType = PieceDefinition.groupBuildTargetType[actorType];
+        int targetType = PieceDefinition.groupBuild_target[actorType];
         if (targetType < 0 || targetType >= PieceDefinition.typeCount) return false;
 
         // Create legality for target type at dstCell
         if (bm.GetCellOccupant(a.TargetCellId) >= 0) return false;
-        int reqDigit = PieceDefinition.codeDigitsByType[(byte)targetType];
+        int reqDigit = PieceDefinition.requiredDigit[(byte)targetType];
         if (reqDigit >= 0 && !gameState.ps[currentPlayer].HasDigit(reqDigit)) return false;
 
         // geometric create gate (core/building adjacency)
@@ -56,7 +56,7 @@ public static class IsItLegal
 
         // Cluster size check
         int clusterSize = BmAbilityCac.CountClusterOfType(actorType, bm.GetPieceCell(actorPid), gameIndex);
-        return clusterSize >= PieceDefinition.groupBuildTargetType[actorType];
+        return clusterSize >= PieceDefinition.groupBuild_target[actorType];
     }
 
     public static bool IsLegal_Launcher(int actorPid, int actorType, in Game.Core.Action a, int gameIndex)
@@ -66,8 +66,8 @@ public static class IsItLegal
 
         int inputRange = PieceDefinition.launcher_inputRange[actorType];
         int outputRange = PieceDefinition.launcher_outputRange[actorType];
-        bool allowFriendly = PieceDefinition.launcher_friendlyFire[actorType];
-        bool allowEnemy = PieceDefinition.launcher_enemyFire[actorType];
+        bool allowFriendly = PieceDefinition.launcher_isfriendlyFire[actorType];
+        bool allowEnemy = PieceDefinition.launcher_isEnemyFire[actorType];
 
         int targetPid = a.aux;
         if (targetPid < 0 || !bm.IsValidPieceId(targetPid)) return false;
@@ -104,7 +104,7 @@ public static class IsItLegal
         if (targetType < 0 || targetType >= PieceDefinition.typeCount) return false;
         int amount = PieceDefinition.spawn_pieceAmount[actorType];
         int range = PieceDefinition.spawn_range[actorType];
-        bool once = PieceDefinition.spawn_onlyOncePerTurn[actorType];
+        bool once = PieceDefinition.spawn_isOnlyOncePerTurn[actorType];
 
         if (once && bm.spawnerUsedThisTurn.Contains(actorPid)) return false;
 
@@ -112,7 +112,7 @@ public static class IsItLegal
         if (origin < 0) return false;
 
         // Digit gate for target type
-        int reqDigit = PieceDefinition.codeDigitsByType[(byte)targetType];
+        int reqDigit = PieceDefinition.requiredDigit[(byte)targetType];
         if (reqDigit >= 0 && !gameState.ps[currentPlayer].HasDigit(reqDigit)) return false;
 
         // Gather empty cells in range with LOS
@@ -147,12 +147,12 @@ public static class IsItLegal
 
         if (actorPid < 0) return false;
         byte actorType = bm.GetPieceType(actorPid);
-        if (!PieceDefinition.upgradeEnabled[actorType]) return false;
-        int targetType = PieceDefinition.upgradeTargetType[actorType];
+        if (!PieceDefinition.upgrade_enabled[actorType]) return false;
+        int targetType = PieceDefinition.upgrade_target[actorType];
         if (targetType < 0 || targetType >= PieceDefinition.typeCount) return false;
         if (a.TargetCellId != a.ActorsCellId) return false;
         if (bm.GetPieceCell(actorPid) != a.ActorsCellId) return false;
-        int reqDigit = PieceDefinition.codeDigitsByType[(byte)targetType];
+        int reqDigit = PieceDefinition.requiredDigit[(byte)targetType];
         if (reqDigit >= 0 && !gameState.ps[currentPlayer].HasDigit(reqDigit)) return false;
         return true;
     }
@@ -257,7 +257,7 @@ public static class IsItLegal
                     if (pid < 0) continue;
                     if (bm.GetPieceOwner(pid) != player) continue;
                     byte t = bm.GetPieceType(pid);
-                    if (PieceDefinition.isBuildingByType[t]) { geomOk = true; break; }
+                    if (PieceDefinition.isBuilding[t]) { geomOk = true; break; }
                 }
             }
             if (!geomOk)
@@ -267,12 +267,12 @@ public static class IsItLegal
             }
 
             // parity with OfferProvider: buildable flag + required digit gate
-            if (!PieceDefinition.isBuildingByType[a.pieceType])
+            if (!PieceDefinition.isBuilding[a.pieceType])
             {
                 Debug.Log("buildable flag Returned False");
                 return false;
             }
-            int req = PieceDefinition.codeDigitsByType[a.pieceType];
+            int req = PieceDefinition.requiredDigit[a.pieceType];
             if (req >= 0 && !gameState.ps[player].HasDigit(req))
             {
                 Debug.Log("Required digit gate Returned False");

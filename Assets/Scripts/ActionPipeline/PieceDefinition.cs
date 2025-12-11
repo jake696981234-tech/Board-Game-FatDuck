@@ -9,7 +9,7 @@ public static class PieceDefinition
         CaptureVP = 2,
         CoreDamage = 3,
         Create = 4,
-        EndTurn = 5, // placeholder for alignment with ActionKind
+        EndTurn = 5, 
         Push = 6,
         GroupBuild = 7,
         Upgrade = 8,
@@ -24,164 +24,130 @@ public static class PieceDefinition
     }
 
     public static int typeCount;
-
     #region UI
-    public static string[] displayNameByType;
-    public static string[] factionNameByType;
-    public static string[] spritePathByType;
-
-
+    public static string[] name;
+    public static string[] factionName;
+    public static string[] spritePath;
     #endregion
     #region General Fields
-    public static bool[] isBuildingByType;      // [type] -> true => Building, false => Soldier (kept as bool for existing callers)
-    public static bool[] buildableByType;       // [type] -> 0/1 flag; default 1
-    public static int[] buildCostByType;       // [type] -> cost to Create this type
-    public static short[] maxHPByType;           // [type] -> max HP
-
+    public static bool[] isBuilding;     
+    public static bool[] isbuildable;       
+    public static int[] BuildCost;       
+    public static short[] maxHP;
     #endregion
     #region Digits
-    public static int[] codeDigitsByType;      // [type] -> prerequisite digits (optional)
-    public static int[] grantsDigitByType; // [type] -> -1 = none, else 0..9
-
+    public static int[] requiredDigit;
+    public static int[] digitItGives;
     #endregion
     #region Connectors
-
-    public static bool[] connectors_enabled;      // [type] -> true if this type uses connector/wall sides
-    public static bool[] connectorNeedsCapital;    // [type] -> true if placement requires capital connectivity
-    public static bool[] connectorIsCapital;       // [type] -> true if this type counts as a capital
-    public static int[] connectorCapitalHealth;   // [type] -> capital health contribution for connected component
-    public static ulong[] connectorAllowedMasks;    // [type] -> bitmask of allowed 6-bit side configs (bit i -> config i allowed)
-
+    public static bool[] connectors_enabled;
+    public static bool[] connector_needsCapital;
+    public static bool[] connector_isCapital;
+    public static int[] connector_capitalHealth;
+    public static ulong[] connector_allowedMasks;
     #endregion
     #region Group Build
-    public static bool[] groupBuild_enabled;        // [type] -> can this type perform group build
-    public static int[] groupBuildTargetType;     // [type] -> type id to create
-    public static int[] groupBuildRequireNumber;  // [type] -> required count in cluster
-    public static bool[] groupBuildDeletion;       // [type] -> delete contributors on build
+    public static bool[] groupBuild_enabled;
+    public static int[] groupBuild_target;
+    public static int[] groupBuild_requireNumber;
+    public static bool[] groupBuild_deletion;
     public static int[] groupBuild_botSurcharge;
-
     #endregion
     #region Upgrade
-
-    public static bool[] upgradeEnabled;           // [type] -> can perform upgrade
-    public static int[] upgradeTargetType;        // [type] -> replace with this type
+    public static bool[] upgrade_enabled;
+    public static int[] upgrade_target;
     public static int[] upgrade_botSurcharge;
     #endregion
     #region launcher
-
-    public static bool[] launcher_enabled; //Addtion
-    public static int[] launcher_inputRange;      // [ability] -> range to pick a piece
-    public static int[] launcher_outputRange;     // [ability] -> range from launcher to drop target
-    public static bool[] launcher_friendlyFire;    // [ability] -> can launch friendlies
-    public static bool[] launcher_enemyFire;       // [ability] -> can launch enemies
+    public static bool[] launcher_enabled;
+    public static int[] launcher_inputRange;
+    public static int[] launcher_outputRange;
+    public static bool[] launcher_isfriendlyFire;
+    public static bool[] launcher_isEnemyFire;
     public static int[] launcher_botSurcharge;
-
-
     #endregion
     #region Push
-
-    public static bool[] push_enabled; //addition
-    public static bool[] push_TargetsBuildings;    // [ability] -> push can target buildings
-    public static bool[] push_TargetsSoldiers;     // [ability] -> push can target soldiers
-    public static int[] push_rangeMax;            // [ability] -> input range for push
-    public static int[] push_PushAmount;          // [ability] -> displacement distance
-    public static bool[] push_pull;                // [ability] -> invert direction
-    public static bool[] push_FriendlyFire;        // [ability] -> allow friendlies
-    public static int[] push_damage;              // [ability] -> damage on push
-
+    public static bool[] push_enabled;
+    public static bool[] push_IsTargetsBuildings;
+    public static bool[] push_isTargetsSoldiers;
+    public static int[] push_rangeMax;
+    public static int[] push_pushAmount;
+    public static bool[] push_isPull;
+    public static bool[] push_isFriendlyFire;
+    public static int[] push_damage;
     #endregion
     #region spawn
-
-    public static bool[] spawn_enabled; //addition
-    public static int[] spawn_pieceAmount;        // [ability] -> how many pieces to create
-    public static int[] spawn_targetType;         // [ability] -> type to create
-    public static int[] spawn_range;              // [ability] -> spawn range
-    public static bool[] spawn_onlyOncePerTurn;    // [ability] -> once-per-turn gate
+    public static bool[] spawn_enabled;
+    public static int[] spawn_pieceAmount;
+    public static int[] spawn_targetType;
+    public static int[] spawn_range;
+    public static bool[] spawn_isOnlyOncePerTurn;
     public static int[] spawn_botSurcharge;
-
     #endregion
     #region multiCreate
-
-    public static bool[] multiCreate_enabledByType; // [type] -> multi-create hook
-    public static int[] multiCreate_amountByType;  // [type] -> how many total (including primary)
-    public static bool[] multiCreate_boarderingByType; // [type] -> require new pieces to border each other
-
+    public static bool[] multiCreate_enabledByType;
+    public static int[] multiCreate_amountByType;
+    public static bool[] multiCreate_isBoardering;
     #endregion
     #region factory
-
-    public static bool[] factory_enabled; //addition
-    public static int[] factory_amount;           // [ability] -> payout amount
-    public static bool[] factory_roundMultiplier;  // [ability] -> multiply by round number
-    public static bool[] factory_group;            // [ability] -> requires groups
-    public static int[] factory_groupAmount;      // [ability] -> size of each group
-
+    public static bool[] factory_enabled;
+    public static int[] factory_amount;
+    public static bool[] factory_isRoundMultiplier;
+    public static bool[] factory_isGroup;
+    public static int[] factory_groupAmount;
     #endregion
     #region sanctuary
-
     public static bool[] sanctuary_enabled;
     public static int[] sanctuary_range;
-
-
     #endregion
     #region conversion Factory
     // may add this to the Factory region
-
-    public static bool[] conversionFactory_enabled; //addition
-    public static bool[] conversionFactory_coreHealth; // [ability] -> convert to core health
-    public static bool[] conversionFactory_vp;         // [ability] -> convert to VP
-    public static int[] conversionFactory_amount;      // [ability] -> amount converted
-    public static int[] conversionFactory_botSurcharge; // [ability] -> bot surcharge
-
+    public static bool[] conversionFactory_enabled;
+    public static bool[] conversionFactory_isCoreHealth;
+    public static bool[] conversionFactory_isVp;
+    public static int[] conversionFactory_amount;
+    public static int[] conversionFactory_botSurcharge;
     #endregion
     #region eat
-
-    public static bool[] eat_enabled;                  // [ability] -> eat passive enabled
-    public static int[] eat_amount;                    // [ability] -> eat amount
-
+    public static bool[] eat_enabled;
+    public static int[] eat_amount;
     #endregion
     #region shoot
-    // this needs to re done- used to be Generic params
-    //this is all addition
     public static bool[] shoot_enabled;
-    public static int[] shoot_rangeMin;                // [abilityId]
-    public static int[] shoot_rangeMax;                // [abilityId]
-    public static int[] shoot_damage;                  // [abilityId]
+    public static int[] shoot_rangeMin;
+    public static int[] shoot_rangeMax;
+    public static int[] shoot_damage;
     public static int[] shoot_botSurcharge;
-
     #endregion
     #region Move
-    public static bool[] move_enabled; //addition
-    public static int[] move_rangeMin;                // [abilityId]
-    public static int[] move_rangeMax;                // [abilityId]
-    public static int[] move_damage;                  // [abilityId]
-
+    public static bool[] move_enabled;
+    public static int[] move_rangeMin;
+    public static int[] move_rangeMax;
+    public static int[] move_damage;
     public static int[] move_botSurcharge;
-
     #endregion
     #region sacrifice Factory
     public static bool[] sacrificeFactory_enabled;
-    public static int[] sacrificeFactory_amount; // [abilityId] -> amount to add when sacrificing
+    public static int[] sacrificeFactory_amount;
     public static int[] sacrificeFactory_rangeMin;
     public static int[] sacrificeFactory_rangeMax;
     public static int[] sacrificeFactory_botSurcharge;
-
     #endregion
-    #region capture
-
-    public static bool[] captureVP_enabled; //addition
+    #region captureVP
+    public static bool[] captureVP_enabled;
     public static int[] captureVP_botSurcharge;
-
-    public static bool[] coreDamage_enabled; //addition
-    public static int[] coreDamage_damage; //addition
+    #endregion
+    #region coreDamage
+    public static bool[] coreDamage_enabled;
+    public static int[] coreDamage_damage;
     public static int[] coreDamage_botSurcharge;
-
     #endregion
 
     public static bool IsConnectorConfigAllowed(byte type, int configIndex)
     {
         if (configIndex < 0 || configIndex >= 64) return false;
-        if (type >= connectorAllowedMasks.Length) return false;
-        ulong mask = connectorAllowedMasks[type];
+        if (type >= connector_allowedMasks.Length) return false;
+        ulong mask = connector_allowedMasks[type];
         return (mask & (1UL << configIndex)) != 0;
     }
 

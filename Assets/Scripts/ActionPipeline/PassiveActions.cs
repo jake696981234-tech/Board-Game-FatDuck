@@ -57,9 +57,9 @@ public static class PassiveActions
             if (baseAmt == 0 && AuxPayout == 0) continue;
 
             // Flags for scaling
-            bool roundMul = PieceDefinition.factory_roundMultiplier[type];
+            bool roundMul = PieceDefinition.factory_isRoundMultiplier[type];
 
-            bool group = PieceDefinition.factory_group[type];
+            bool group = PieceDefinition.factory_isGroup[type];
 
             int groupAmt = PieceDefinition.factory_groupAmount[type];
 

@@ -45,11 +45,11 @@ public static class PiecesSides
             if (ourConn != nbConn && (ourConn || nbConn)) return false;
         }
 
-        if (!PieceDefinition.connectorNeedsCapital[type])
+        if (!PieceDefinition.connector_needsCapital[type])
             return true;
 
         // If this piece is itself a capital, connectivity is satisfied.
-        if (PieceDefinition.connectorIsCapital[type])
+        if (PieceDefinition.connector_isCapital[type])
             return true;
 
         // BFS through connector edges to find any capital.
@@ -89,7 +89,7 @@ public static class PiecesSides
                 config = bm.pieceConnectorConfig[pid];
             }
 
-            if (PieceDefinition.connectorIsCapital[type] && bm.GetPieceOwner(pid) == playerId)
+            if (PieceDefinition.connector_isCapital[type] && bm.GetPieceOwner(pid) == playerId)
                 return true;
 
             int[] neigh = Scratch.GetScratchNeighborBuffer(gameIndex);
@@ -155,8 +155,8 @@ public static class PiecesSides
                 comp.Add(cur);
                 byte ct = bm.pieceType[cur];
                 int cfg = bm.pieceConnectorConfig[cur];
-                if (PieceDefinition.connectorIsCapital[ct]) hasCapital = true;
-                int capHp = PieceDefinition.connectorCapitalHealth[ct];
+                if (PieceDefinition.connector_isCapital[ct]) hasCapital = true;
+                int capHp = PieceDefinition.connector_capitalHealth[ct];
                 if (capHp > maxCapHp) maxCapHp = capHp;
 
                 int cell = bm.pieceCellId[cur];
@@ -185,7 +185,7 @@ public static class PiecesSides
             foreach (int id in comp)
             {
                 bm.pieceCapitalHP[id] = appliedHp;
-                if (appliedHp == 0 && PieceDefinition.connectorNeedsCapital[bm.pieceType[id]])
+                if (appliedHp == 0 && PieceDefinition.connector_needsCapital[bm.pieceType[id]])
                 {
                     toDestroy ??= new List<int>();
                     toDestroy.Add(id);

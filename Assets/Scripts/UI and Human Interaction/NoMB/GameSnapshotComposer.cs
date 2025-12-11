@@ -99,8 +99,8 @@ public sealed class GameSnapshotComposer
         }
 
         // per-type UI metadata (safe to share)
-        snapshot.spritePathByType = PieceDefinition.spritePathByType;
-        snapshot.displayNameByType = PieceDefinition.displayNameByType;
+        snapshot.spritePathByType = PieceDefinition.spritePath;
+        snapshot.displayNameByType = PieceDefinition.name;
 
         // default owner palette (can replace later)
         snapshot.ownerTintByPlayer = new Color[4] { Color.red, Color.blue, Color.green, Color.silver };
