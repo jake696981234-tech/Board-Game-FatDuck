@@ -16,6 +16,7 @@ using UnityEngine;
 
 public static class OfferProvider
 {
+    #region Action List Method
     public static int BuildActionList(
         in OfferQuery q,
         Span<Action> outActions,
@@ -280,8 +281,8 @@ public static class OfferProvider
                 bool legal = (cell == coreCell); // allow 'on core'
                 if (!legal)
                 {
-                    int nCore = bm.GetNeighbors(coreCell, scratch);
-                    for (int i = 0; i < nCore; i++) { if (scratch[i] == cell) { legal = true; break; } }
+                    int numberOfCoreNeighbors = bm.GetNeighbors(coreCell, scratch);
+                    for (int i = 0; i < numberOfCoreNeighbors; i++) { if (scratch[i] == cell) { legal = true; break; } }
                 }
 
                 if (!legal)
@@ -302,14 +303,14 @@ public static class OfferProvider
 
                 // For each buildable type (default: all types 0..TypeCount-1)
                 int typeCount = PieceDefinition.typeCount;
-                for (int t = 0; t < typeCount; t++)
+                for (int type = 0; type < typeCount; type++)
                 {
-                    if (!PieceDefinition.isbuildable[t]) continue; // buildable gate (CSV flag)
-                                                                   // digitsRequired gate (Plan-B): skip if requirement exists and player lacks it
-                    int req = PieceDefinition.requiredDigit[(byte)t];
+                    if (!PieceDefinition.isbuildable[type]) continue; // buildable gate (CSV flag)
+                                                                      // digitsRequired gate (Plan-B): skip if requirement exists and player lacks it
+                    int req = PieceDefinition.requiredDigit[(byte)type];
                     if (req >= 0 && !gameState.ps[player].HasDigit(req)) continue;
-                    bool hasConn = PieceDefinition.connectors_enabled[t];
-                    ulong allowedMask = hasConn ? PieceDefinition.connector_allowedMasks[t] : 0UL;
+                    bool hasConn = PieceDefinition.connectors_enabled[type];
+                    ulong allowedMask = hasConn ? PieceDefinition.connector_allowedMasks[type] : 0UL;
                     if (hasConn && allowedMask == 0UL) continue;
 
                     if (!hasConn)
@@ -317,25 +318,38 @@ public static class OfferProvider
                         var a = new Action
                         {
                             kind = Create,
-                            pieceType = (byte)t,
+                            pieceType = (byte)type,
                             ActorsCellId = (ushort)0xFFFF, // sentinel no-actor
                             TargetCellId = (ushort)cell,
                             aux = 0
                         };
+                        if (PieceDefinition.sacrificeCost_enabled[a.pieceType])
+                        {
+                            int howMany = 0;
+                            if (PassiveActions.SacrificeCost(a, out Action[] outAction, out howMany, player, gameIndex))
+                            {
+                                for (int i = 0; i < 64; i++)
+                                {
+
+                                }
+                                Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
+                            }
+                            continue;
+                        }
                         Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
                     }
-                    else
+                    if (hasConn)
                     {
                         for (int cfg = 0; cfg < 64; cfg++)
                         {
                             if ((allowedMask & (1UL << cfg)) == 0) continue;
-                            if (!PiecesSides.IsConnectorPlacementLegal(cell, (byte)t, cfg, q.playerId, gameIndex))
+                            if (!PiecesSides.IsConnectorPlacementLegal(cell, (byte)type, cfg, q.playerId, gameIndex))
                                 continue;
 
                             var a = new Action
                             {
                                 kind = Create,
-                                pieceType = (byte)t,
+                                pieceType = (byte)type,
                                 ActorsCellId = (ushort)0xFFFF,
                                 TargetCellId = (ushort)cell,
                                 aux = (ushort)cfg // carry config index
@@ -380,6 +394,9 @@ public static class OfferProvider
         ZeroTail(write, outCosts, outMask);
         return total;
     }
+
+    #endregion
+    #region Helpers
 
     // ---- Emit & helpers ----
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -606,6 +623,6 @@ public static class OfferProvider
             Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
         }
     }
-
+    #endregion
 
 }

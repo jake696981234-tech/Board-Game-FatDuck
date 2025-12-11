@@ -3,6 +3,48 @@ using System;
 
 public static class PassiveActions
 {
+    public static bool GenerateSacrificeCosts(Game.Core.Action theAction, Span<int[]> altCost, int playerId, int gameIndex)
+    {
+        var bm = GameRegistry.game[gameIndex].boardModel;
+
+        int[] ownerPieceId = Scratch.GetScratchCellBuffer(gameIndex);
+        int numberOfPiecesOnBoard = bm.GetOwnedPieceIds(playerId, ownerPieceId);
+
+        if (numberOfPiecesOnBoard <= 0) return false;
+        if (PieceDefinition.sacrificeCost_howManyItNeeds[theAction.pieceType] > numberOfPiecesOnBoard) return false;
+
+        int TargetsFound = 0;
+        int[] TargetId = Scratch.GetScratchCellBuffer(gameIndex);
+
+        if (!PieceDefinition.sacrificeCost_isNeedsSpecificPiece[theAction.pieceType])
+        {
+            for (int i = 0; i < numberOfPiecesOnBoard; i++)
+            {
+                TargetsFound++;
+                TargetId[i] = ownerPieceId[i];
+            }
+        }
+        else
+        {
+            for (int i = 0; i < numberOfPiecesOnBoard; i++)
+            {
+                if (bm.pieceType[ownerPieceId[i]] == PieceDefinition.sacrificeCost_specificPiece[theAction.pieceType])
+                {
+                    TargetsFound++;
+                    TargetId[i] = ownerPieceId[i];
+                    continue;
+                }
+            }
+        }
+        if (TargetsFound < PieceDefinition.sacrificeCost_howManyItNeeds[theAction.pieceType]) return false;
+
+
+        altCost = TargetId;
+
+        return true;
+    }
+
+
 
     #region Factory Ability
     public static float[] ComputePlayersFactoryIncome(int gameIndex)

@@ -84,6 +84,7 @@ public static class CostEngine
         }
 
         quoted = Quote(a, gameIndex, player);
+
         if (gameState.ps[player].budget < quoted) return false;
 
         // Once-per-turn gates (read-only caps)
@@ -95,6 +96,7 @@ public static class CostEngine
 
     // -------------------- Internals --------------------
 
+    
 
     private static int RoundToInt(float value)
     {

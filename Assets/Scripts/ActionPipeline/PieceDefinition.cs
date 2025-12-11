@@ -142,7 +142,13 @@ public static class PieceDefinition
     public static int[] coreDamage_damage;
     public static int[] coreDamage_botSurcharge;
     #endregion
-
+    #region sacrificeCost
+    public static bool[] sacrificeCost_enabled;
+    public static bool[] sacrificeCost_isNeedsSpecificPiece;
+    public static int[] sacrificeCost_specificPiece;
+    public static int[] sacrificeCost_howManyItNeeds;
+    
+    #endregion
     public static bool IsConnectorConfigAllowed(byte type, int configIndex)
     {
         if (configIndex < 0 || configIndex >= 64) return false;

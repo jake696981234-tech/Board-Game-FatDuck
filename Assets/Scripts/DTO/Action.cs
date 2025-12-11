@@ -44,14 +44,17 @@ namespace Game.Core
         /// </summary>
         public ushort aux;
 
+        public int[] altCost;
+
         /// <summary>Convenience constructor (optional).</summary>
-        public Action(byte kind, byte pieceType, ushort actorsCellId, ushort targetCellId, ushort aux = 0)
+        public Action(byte kind, byte pieceType, ushort actorsCellId, ushort targetCellId, ushort aux = 0, int[] altCost = null)
         {
             this.kind = kind;
             this.pieceType = pieceType;
             this.ActorsCellId = actorsCellId;
             this.TargetCellId = targetCellId;
             this.aux = aux;
+            this.altCost = altCost ?? Array.Empty<int>();
         }
 
         public override string ToString()
