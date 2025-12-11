@@ -101,19 +101,39 @@ public static class IsItLegal
 
 
         int targetType = PieceDefinition.spawn_targetType[actorType];
-        if (targetType < 0 || targetType >= PieceDefinition.typeCount) return false;
+        if (targetType < 0 || targetType >= PieceDefinition.typeCount)
+        {
+            Debug.Log("IsLegal_Spawner - (targetType < 0 || targetType >= PieceDefinition.typeCount) Returned False");
+            return false;
+        }
+
         int amount = PieceDefinition.spawn_pieceAmount[actorType];
         int range = PieceDefinition.spawn_range[actorType];
         bool once = PieceDefinition.spawn_isOnlyOncePerTurn[actorType];
 
-        if (once && bm.spawnerUsedThisTurn.Contains(actorPid)) return false;
+        if (once && bm.spawnerUsedThisTurn.Contains(actorPid))
+        {
+            Debug.Log("IsLegal_Spawner - (once && bm.spawnerUsedThisTurn.Contains(actorPid)) Returned False)");
+            return false;
+        }
+
 
         int origin = bm.GetPieceCell(actorPid);
-        if (origin < 0) return false;
+        if (origin < 0)
+        {
+            Debug.Log("IsLegal_Spawner - (origin < 0) Returned False)");
+            return false;
+        }
+
 
         // Digit gate for target type
         int reqDigit = PieceDefinition.requiredDigit[(byte)targetType];
-        if (reqDigit >= 0 && !gameState.ps[currentPlayer].HasDigit(reqDigit)) return false;
+        if (reqDigit >= 0 && !gameState.ps[currentPlayer].HasDigit(reqDigit))
+        {
+            Debug.Log("IsLegal_Spawner - (reqDigit >= 0 && !gameState.ps[currentPlayer].HasDigit(reqDigit)) Returned False)");
+            return false;
+        }
+
 
         // Gather empty cells in range with LOS
         int[] scratch = Scratch.GetScratchCellBuffer(gameIndex);
@@ -128,7 +148,12 @@ public static class IsItLegal
             scratch[emptyCount++] = c;
         }
 
-        if (emptyCount <= 0) return false;
+        if (emptyCount <= 0)
+        {
+            Debug.Log("IsLegal_Spawner - (emptyCount <= 0) Returned False)");
+            return false;
+        }
+
 
         // Piece limit check: allow as many as possible
         int availableLimit = int.MaxValue;
@@ -267,11 +292,11 @@ public static class IsItLegal
             }
 
             // parity with OfferProvider: buildable flag + required digit gate
-            if (!PieceDefinition.isBuilding[a.pieceType])
-            {
-                Debug.Log("buildable flag Returned False");
-                return false;
-            }
+            // if (!PieceDefinition.isBuilding[a.pieceType])
+            // {
+            //     Debug.Log("isBuilding flag Returned False");
+            //     return false;
+            // }
             int req = PieceDefinition.requiredDigit[a.pieceType];
             if (req >= 0 && !gameState.ps[player].HasDigit(req))
             {
@@ -361,13 +386,13 @@ public static class IsItLegal
                     return false; // slot-kind drift guard
                 }
             case Spawner:
-                if (IsLegal_Spawner(actorPid, a.pieceType, in a, player, gameIndex))
+                if (IsLegal_Spawner(actorPid, type, in a, player, gameIndex))
                 {
                     return true;
                 }
                 else
                 {
-                    Debug.Log("Spawner - ContainsFirstN Returned False");
+                    Debug.Log("Spawner - IsLegal_Spawner Returned False");
                     return false; // slot-kind drift guard
                 }
             case GroupBuild:

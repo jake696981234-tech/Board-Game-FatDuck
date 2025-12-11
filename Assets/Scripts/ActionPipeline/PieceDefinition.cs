@@ -9,7 +9,7 @@ public static class PieceDefinition
         CaptureVP = 2,
         CoreDamage = 3,
         Create = 4,
-        EndTurn = 5, 
+        EndTurn = 5,
         Push = 6,
         GroupBuild = 7,
         Upgrade = 8,
@@ -30,9 +30,9 @@ public static class PieceDefinition
     public static string[] spritePath;
     #endregion
     #region General Fields
-    public static bool[] isBuilding;     
-    public static bool[] isbuildable;       
-    public static int[] BuildCost;       
+    public static bool[] isBuilding;
+    public static bool[] isbuildable;
+    public static int[] BuildCost;
     public static short[] maxHP;
     #endregion
     #region Digits

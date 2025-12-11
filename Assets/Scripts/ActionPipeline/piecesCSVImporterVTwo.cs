@@ -60,7 +60,7 @@ public static class PiecesCsvImporter
             PieceDefinition.connector_needsCapital[typeId] = GetBool(cols, H, "connector_needsCapital", defaultValue: false);
             PieceDefinition.connector_isCapital[typeId] = GetBool(cols, H, "connector_isCapital", defaultValue: false);
             PieceDefinition.connector_capitalHealth[typeId] = GetInt(cols, H, "connector_capitalHealth", defaultValue: 0);
-            PieceDefinition.connector_allowedMasks[typeId] = ParseConnectorMask(Get(cols, H, "connector_allowedMasks", defaultValue: string.Empty));
+            PieceDefinition.connector_allowedMasks[typeId] = ulong.MaxValue; //ParseConnectorMask(Get(cols, H, "connector_allowedMasks", defaultValue: string.Empty));
 
             #endregion
             #region Group Build

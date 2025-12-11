@@ -15,7 +15,7 @@ namespace Game.Core
 
             int actorPid = bm.GetCellOccupant(theAction.ActorsCellId);
             if (actorPid < 0) return;
-            int dstOcc = bm.GetCellOccupant(theAction.ActorsCellId);
+            int dstOcc = bm.GetCellOccupant(theAction.TargetCellId);
             if (dstOcc >= 0)
             {
                 ResolveMelee(actorPid, dstOcc, in theAction, gameIndex);
@@ -121,7 +121,7 @@ namespace Game.Core
 
             byte actorType = bm.GetPieceType(actorPid);
 
-            int dmg = PieceDefinition.shoot_damage[theAction.pieceType];
+            int dmg = PieceDefinition.push_damage[theAction.pieceType];
             bool killed = ApplyDamageWithCapital(theAction.ActorsCellId, victimID, dmg, gameIndex);
             if (killed)
             {
@@ -434,9 +434,8 @@ namespace Game.Core
         private static void ResolveMelee(int actorPid, int victimID, in Action theAction, int gameIndex)
         {
             var bm = GameRegistry.game[gameIndex].boardModel;
-            var gameState = GameRegistry.game[gameIndex].gameState;
 
-            int dmg = PieceDefinition.shoot_damage[theAction.pieceType];
+            int dmg = PieceDefinition.move_damage[theAction.pieceType];
             bool killed = ApplyDamageWithCapital(actorPid, victimID, dmg, gameIndex);
             if (killed)
             {

@@ -496,10 +496,10 @@ public static class OfferProvider
             var a = new Action
             {
                 kind = Spawner,
-                pieceType = (byte)targetType,
+                pieceType = (byte)actorType, // pieceType carries the actor type for spawners
                 ActorsCellId = (ushort)actorCell,
                 TargetCellId = (ushort)empties[i],
-                aux = 0
+                aux = (ushort)targetType // carry target type for UI/debug readability
             };
             Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
         }
