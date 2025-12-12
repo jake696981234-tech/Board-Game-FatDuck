@@ -2,7 +2,7 @@ using UnityEngine;
 
 public static class PanelToggles
 {
-    public enum Mode { Build, Create, PieceAction, ActionExecute, WallOptionsSecoundPanel, MultiInputAction }
+    public enum Mode { Build, Create, PieceAction, ActionExecute, WallOptionsSecoundPanel, MultiInputAction, MultiCreateAction, SacrificeSelect }
     public static Mode _mode = Mode.Build;
     public static void TogglePanels(bool build, bool create, bool action, bool pieceFull, bool execute, bool walls)
     {
@@ -30,5 +30,5 @@ public static class PanelToggles
         _mode = Mode.WallOptionsSecoundPanel;
     }
 
-    
+
 }

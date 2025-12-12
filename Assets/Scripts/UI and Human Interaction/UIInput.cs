@@ -38,6 +38,7 @@ public static class UIInput
             {
                 case PanelToggles.Mode.WallOptionsSecoundPanel: UIModes.enterWallOptionsSecondPanelMode(); break; //this is dumb lazy code i added
                 case PanelToggles.Mode.Create: UIModes.EnterBuildMode(); break;
+                case PanelToggles.Mode.SacrificeSelect: UIModes.EnterBuildMode(); break;
                 case PanelToggles.Mode.PieceAction: UIModes.EnterBuildMode(); break;
                 case PanelToggles.Mode.ActionExecute: UIModes.EnterPieceActionMode(); break;
                 case PanelToggles.Mode.MultiInputAction: UIModes.EnterPieceActionMode(); break;
@@ -77,7 +78,57 @@ public static class UIInput
                 // else: stay on default Build + Non-piece Action layout
                 break;
 
+            case PanelToggles.Mode.SacrificeSelect:
+                {
+                    int pid = UIBridge.bm.GetCellOccupant(cellId);
+                    if (pid < 0) break;
+                    if (UIHelpers.SelectedSacrificeIds.Contains(pid)) break;
+                    if (UIBridge.bm.GetPieceOwner(pid) != UIBridge.gameState.CurrentPlayerId) break;
+
+                    bool allowed = false;
+                    for (int i = 0; i < UIHelpers.SacrificeCombos.Count; i++)
+                    {
+                        var combo = UIHelpers.SacrificeCombos[i];
+                        if (combo == null) continue;
+                        bool subset = true;
+                        for (int s = 0; s < UIHelpers.SelectedSacrificeIds.Count; s++)
+                        {
+                            if (Array.IndexOf(combo, UIHelpers.SelectedSacrificeIds[s]) < 0) { subset = false; break; }
+                        }
+                        if (!subset) continue;
+                        if (Array.IndexOf(combo, pid) >= 0) { allowed = true; break; }
+                    }
+                    if (!allowed) break;
+
+                    UIHelpers.SelectedSacrificeIds.Add(pid);
+                    UIHelpers.SortSelectedSacrifices();
+
+                    int need = PieceDefinition.sacrificeCost_howManyItNeeds[UIHelpers._selectedCreateType];
+                    if (UIHelpers.SelectedSacrificeIds.Count >= need)
+                    {
+                        UIModes.EnterCreateModeForSacrifice(UIHelpers.CachedActionForSacrificeCostMode, UIHelpers.CachedUIInfoForSacrificeCostMode);
+                    }
+                    else
+                    {
+                        showBoard.ClearHighlights();
+                        showBoard.HighlightCells(
+                            UIHelpers.GetNextSelectableSacrificeCells(),
+                            UI.hic.config ? UI.hic.config.createModeCellHighlight : new Color(0.25f, 0.75f, 0.25f, 0.6f)
+                        );
+                    }
+                    break;
+                }
+
             case PanelToggles.Mode.Create:
+            case PanelToggles.Mode.MultiCreateAction:
+                if (UIHelpers._createArmed)
+                {
+                    int idx = UIHelpers.FindConcreteCreateAction(UIHelpers._selectedCreateType, (ushort)cellId);
+                    if (idx >= 0) { UIBridge.PerformActionIndex(idx); }
+                    showBoard.ClearHighlights();
+                    UIModes.EnterBuildMode();
+                }
+                break;
             case PanelToggles.Mode.WallOptionsSecoundPanel:
                 UIHelpers._firstCellSelected = null;
                 // Click on a highlighted target → perform the concrete Create action
@@ -140,16 +191,22 @@ public static class UIInput
     #endregion
 
     #region Prefab Clicked
-    private static void OnBuildItemClicked(BuildItem item)
+    private static void OnBuildItemClicked(Game.Core.Action item, UIInfo uiInfo)
     {
+        if (PieceDefinition.sacrificeCost_enabled[item.pieceType])
+        {
+            UIModes.EnterSacrificeSelectMode(item, uiInfo);
+            return;
+        }
         if (PieceDefinition.connectors_enabled[item.pieceType])
         {
             UIHelpers.CachedBuildItemForCreateConnector = item;
+            UIHelpers.CachedUIInfoForCreateConnector = uiInfo;
             UIModes.EnterConnectingMode(item);
         }
         else
         {
-            UIModes.EnterCreateMode(item);
+            UIModes.EnterCreateMode(item, uiInfo);
         }
     }
 

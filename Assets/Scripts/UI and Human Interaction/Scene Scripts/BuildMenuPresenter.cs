@@ -10,46 +10,53 @@ public sealed class BuildMenuPresenter : MonoBehaviour
     public Transform listContent;            // BuildPanel/BuildScroll/Viewport/Content
     public BuildMenuItemView itemPrefab;     // prefab with Button + Icon/Name/Cost
 
-    public event Action<BuildItem> OnItemClicked;
+    public event Action<Game.Core.Action, UIInfo> OnItemClicked;
 
     private readonly List<BuildMenuItemView> _pool = new();
 
 
-    public void Show(IEnumerable<BuildItem> rawItems, InteractionConfig config)
+    public void Show(IEnumerable<Game.Core.Action> rawItems, List<UIInfo> uiInfo, InteractionConfig config)
     {
-        IEnumerable<BuildItem> items;
+        IEnumerable<Game.Core.Action> items;
+        var UiInfo = new List<UIInfo>();
         if (config.GiveRawActionOffers)
         {
             items = rawItems;
+            UiInfo = uiInfo;
         }
         else
         {
-            items = filteredBuildOptions(rawItems);
+            items = filteredBuildOptions(rawItems, UiInfo, out uiInfo);
         }
 
         gameObject.SetActive(true);
         int i = 0;
-        foreach (var it in items)
+        foreach (var item in items)
         {
             var view = Ensure(i++);
-            view.Bind(it, OnItemClicked, PieceDefinition.isBuilding[it.pieceType], PieceDefinition.factionName[it.pieceType]);
+            view.Bind(item, uiInfo[i - 1], OnItemClicked);
             view.gameObject.SetActive(true);
         }
         for (; i < _pool.Count; i++) _pool[i].gameObject.SetActive(false);
     }
 
-    private IEnumerable<BuildItem> filteredBuildOptions(IEnumerable<BuildItem> items)
+    private IEnumerable<Game.Core.Action> filteredBuildOptions(IEnumerable<Game.Core.Action> items, List<UIInfo> uiInfo, out List<UIInfo> outUiInfo)
     {
-        var filteredItems = new List<BuildItem>();
+        var filteredItems = new List<Game.Core.Action>();
+        var filteredUiInfo = new List<UIInfo>();
         var iHaveAlreadySeenYou = new HashSet<byte>();
 
+        int i = 0;
         foreach (var item in items)
         {
             if (iHaveAlreadySeenYou.Add(item.pieceType))
             {
                 filteredItems.Add(item);
+                filteredUiInfo.Add(uiInfo[i]);
+                i++;
             }
         }
+        outUiInfo = filteredUiInfo;
         return filteredItems;
     }
 

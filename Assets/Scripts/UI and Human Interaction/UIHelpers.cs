@@ -1,10 +1,18 @@
 using UnityEngine;
 using Game.Core; // for GameState and Action Kind
 using System.Collections.Generic;
+using System;
 
 public static class UIHelpers
 {
-    public static BuildItem CachedBuildItemForCreateConnector;
+    public static Game.Core.Action CachedBuildItemForCreateConnector;
+    public static UIInfo CachedUIInfoForCreateConnector;
+
+    public static Game.Core.Action CachedActionForSacrificeCostMode;
+    public static UIInfo CachedUIInfoForSacrificeCostMode;
+    public static readonly List<int> SelectedSacrificeIds = new List<int>(8);
+    public static readonly List<int[]> SacrificeCombos = new List<int[]>(64);
+
     public static int? _selectedPieceId;
     // Create flow
     public static byte _selectedCreateType = 0;   // which piece type we're trying to create
@@ -18,6 +26,127 @@ public static class UIHelpers
     #region Right Panel
 
     // --- Create helpers ---
+    public static void StartSacrificeFlow(byte pieceType)
+    {
+        _selectedCreateType = pieceType;
+        SelectedSacrificeIds.Clear();
+        SacrificeCombos.Clear();
+        _createArmed = false;
+        // populate combos from current offers
+        for (int i = 0; i < UIBridge._count; i++)
+        {
+            var a = UIBridge._offers[i];
+            if (a.kind != Game.Core.ActionKind.Create) continue;
+            if (a.pieceType != pieceType) continue;
+            if (!PieceDefinition.sacrificeCost_enabled[pieceType]) continue;
+            if (UIBridge._mask[i] == 0) continue;
+            if (a.addCost == null || a.addCost.Length == 0) continue;
+            SacrificeCombos.Add(a.addCost);
+        }
+    }
+
+    public static IEnumerable<int> GetSelectableSacrificeCells(byte pieceType)
+    {
+        _createTargetsBuffer.Clear();
+        if (SacrificeCombos.Count == 0) return _createTargetsBuffer;
+        // union of all pieceIds in combos -> convert to cellIds
+        var seen = new HashSet<int>();
+        for (int i = 0; i < SacrificeCombos.Count; i++)
+        {
+            var combo = SacrificeCombos[i];
+            if (combo == null) continue;
+            for (int j = 0; j < combo.Length; j++)
+            {
+                int pid = combo[j];
+                if (!UIBridge.bm.IsValidPieceId(pid)) continue;
+                if (UIBridge.bm.GetPieceOwner(pid) != UIBridge.gameState.CurrentPlayerId) continue;
+                int cell = UIBridge.bm.GetPieceCell(pid);
+                if (cell < 0) continue;
+                if (seen.Add(cell)) _createTargetsBuffer.Add(cell);
+            }
+        }
+        return _createTargetsBuffer;
+    }
+
+    public static IEnumerable<int> GetNextSelectableSacrificeCells()
+    {
+        _createTargetsBuffer.Clear();
+        if (SacrificeCombos.Count == 0) return _createTargetsBuffer;
+        var seen = new HashSet<int>();
+        for (int i = 0; i < SacrificeCombos.Count; i++)
+        {
+            var combo = SacrificeCombos[i];
+            if (combo == null) continue;
+            // ensure current selection is subset
+            bool subset = true;
+            for (int s = 0; s < SelectedSacrificeIds.Count; s++)
+            {
+                if (System.Array.IndexOf(combo, SelectedSacrificeIds[s]) < 0)
+                {
+                    subset = false; break;
+                }
+            }
+            if (!subset) continue;
+            for (int j = 0; j < combo.Length; j++)
+            {
+                int pid = combo[j];
+                if (SelectedSacrificeIds.Contains(pid)) continue;
+                if (!UIBridge.bm.IsValidPieceId(pid)) continue;
+                if (UIBridge.bm.GetPieceOwner(pid) != UIBridge.gameState.CurrentPlayerId) continue;
+                int cell = UIBridge.bm.GetPieceCell(pid);
+                if (cell < 0) continue;
+                if (seen.Add(cell)) _createTargetsBuffer.Add(cell);
+            }
+        }
+        return _createTargetsBuffer;
+    }
+
+    private static bool AddCostMatchesSelection(int[] addCost, List<int> selection)
+    {
+        if (addCost == null) return false;
+        if (addCost.Length != selection.Count) return false;
+        // both should already be sorted; ensure selection sorted
+        for (int i = 0; i < selection.Count; i++)
+        {
+            if (addCost[i] != selection[i]) return false;
+        }
+        return true;
+    }
+
+    public static void SortSelectedSacrifices()
+    {
+        SelectedSacrificeIds.Sort();
+    }
+
+    public static IEnumerable<int> ComputeCreateTargetsForPieceTypeWithSacrifice(byte pieceType)
+    {
+        _createTargetsBuffer.Clear();
+        for (int i = 0; i < UIBridge._count; i++)
+        {
+            var a = UIBridge._offers[i];
+            if (a.kind != Game.Core.ActionKind.Create) continue;
+            if (a.pieceType != pieceType) continue;
+            if (UIBridge._mask[i] == 0) continue;
+            if (!AddCostMatchesSelection(a.addCost, SelectedSacrificeIds)) continue;
+            _createTargetsBuffer.Add(a.TargetCellId);
+        }
+        return _createTargetsBuffer;
+    }
+
+    public static bool HasCreateWithCurrentSacrifice(byte pieceType)
+    {
+        for (int i = 0; i < UIBridge._count; i++)
+        {
+            var a = UIBridge._offers[i];
+            if (a.kind != Game.Core.ActionKind.Create) continue;
+            if (a.pieceType != pieceType) continue;
+            if (UIBridge._mask[i] == 0) continue;
+            if (!AddCostMatchesSelection(a.addCost, SelectedSacrificeIds)) continue;
+            return true;
+        }
+        return false;
+    }
+
     public static int FindFirstCreateIndexForType(byte type)
     {
         for (int i = 0; i < UIBridge._count; i++)
@@ -45,6 +174,10 @@ public static class UIHelpers
             if (a.pieceType != type) continue;
             if (a.TargetCellId != dst) continue;
             if (UIBridge._mask[i] == 0) continue;
+            if (SelectedSacrificeIds.Count > 0)
+            {
+                if (!AddCostMatchesSelection(a.addCost, SelectedSacrificeIds)) continue;
+            }
             return i;
         }
         return -1;
@@ -209,7 +342,7 @@ public static class UIHelpers
         }
         else
         {
-            ShowRightPanel.PushBuildMenu();
+            ShowRightPanel.PushCreateActionMenu();
             ShowRightPanel.PushNonPieceActionList();
         }
         ShowLeftPanel.HudRefresh();

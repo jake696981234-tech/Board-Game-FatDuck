@@ -14,6 +14,15 @@ using UnityEngine;
 //     { this.pieceType = pieceType; this.name = name; this.spritePath = spritePath; this.cost = cost; this.legal = legal; this.Auxiliary = auxiliary; }
 // }
 
+public readonly struct UIInfo
+{
+    public readonly bool legal;
+    public readonly int fullCost;
+
+    public UIInfo(bool legal, int fullCost)
+    { this.legal = legal; this.fullCost = fullCost; }
+}
+
 public readonly struct PieceContext
 {
     public readonly int pieceId;

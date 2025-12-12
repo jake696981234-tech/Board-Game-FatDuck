@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 public static class UIModes
 {
@@ -11,18 +12,20 @@ public static class UIModes
         PanelToggles._mode = PanelToggles.Mode.Build;
         UIHelpers._selectedPieceId = null;
         UIHelpers._selectedAction = null;
+        UIHelpers.SelectedSacrificeIds.Clear();
+        UIHelpers.SacrificeCombos.Clear();
 
         UIHelpers.SetBackdropColor(UI.hic.config ? UI.hic.config.buildModeBackground : new Color(0, 0, 0, 0.8f));
         UIHelpers.SetPanelBackdropColor(UI.hic.config ? UI.hic.config.buildModePanelBackground : new Color(0, 0, 0, 0.8f));
 
         PanelToggles.TogglePanels(build: true, create: false, action: true, pieceFull: false, execute: false, walls: false);
-        ShowRightPanel.PushBuildMenu();
+        ShowRightPanel.PushCreateActionMenu();
         ShowRightPanel.PushNonPieceActionList();   // NEW: default action list = non-piece actions (e.g., End Turn)
 
         ShowLeftPanel.HudRefresh();
     }
 
-    public static void EnterCreateMode(BuildItem build, ushort? ChosenWall = null)
+    public static void EnterCreateMode(Game.Core.Action build, UIInfo uiInfo, ushort? ChosenWall = null)
     {
         showBoard.ClearHighlights();
         showBoard.ApplyDefaultCellColor(UI.hic.config.defaultCellColor);
@@ -31,24 +34,26 @@ public static class UIModes
         UIHelpers._selectedActionIndex = UIHelpers.FindFirstCreateIndexForType(UIHelpers._selectedCreateType); // seed (can be -1 if none)
         UIHelpers._createArmed = (UIHelpers._selectedActionIndex >= 0);
 
-        if (ChosenWall == null)
+        IEnumerable<int> targets;
+        if (UIHelpers.SelectedSacrificeIds.Count > 0)
         {
-            showBoard.HighlightCells(
-                UIHelpers.ComputeCreateTargetsForPieceType(UIHelpers._selectedCreateType),
-                UI.hic.config ? UI.hic.config.createModeCellHighlight : new Color(0.25f, 0.75f, 0.25f, 0.6f)
-            );
-
-            UIHelpers.cachedChosenWall = null;
+            targets = UIHelpers.ComputeCreateTargetsForPieceTypeWithSacrifice(UIHelpers._selectedCreateType);
+        }
+        else if (ChosenWall != null)
+        {
+            targets = UIHelpers.ComputeCreateTargetsForPieceType(UIHelpers._selectedCreateType, ChosenWall);
+            UIHelpers.cachedChosenWall = ChosenWall;
         }
         else
         {
-            showBoard.HighlightCells(
-                UIHelpers.ComputeCreateTargetsForPieceType(UIHelpers._selectedCreateType, ChosenWall),
-                UI.hic.config ? UI.hic.config.createModeCellHighlight : new Color(0.25f, 0.75f, 0.25f, 0.6f)
-            );
-
-            UIHelpers.cachedChosenWall = ChosenWall;
+            targets = UIHelpers.ComputeCreateTargetsForPieceType(UIHelpers._selectedCreateType);
+            UIHelpers.cachedChosenWall = null;
         }
+
+        showBoard.HighlightCells(
+            targets,
+            UI.hic.config ? UI.hic.config.createModeCellHighlight : new Color(0.25f, 0.75f, 0.25f, 0.6f)
+        );
 
 
         PanelToggles._mode = PanelToggles.Mode.Create;
@@ -60,11 +65,11 @@ public static class UIModes
         UIHelpers.SetPanelBackdropColor(UI.hic.config ? UI.hic.config.createModePanelBackground : new Color(0, 0, 0, 0.8f));
         PanelToggles.TogglePanels(build: false, create: true, action: false, pieceFull: false, execute: false, walls: false);
 
-        if (UI.hic.createTitleText) UI.hic.createTitleText.text = $"Create: {build.name}";
-        if (UI.hic.createCostText) UI.hic.createCostText.text = $"Cost: {build.cost}";
+        if (UI.hic.createTitleText) UI.hic.createTitleText.text = $"Create: {PieceDefinition.name[build.pieceType]}";
+        if (UI.hic.createCostText) UI.hic.createCostText.text = $"Cost: {uiInfo.fullCost}";
         if (UI.hic.createSprite)
         {
-            var s = !string.IsNullOrEmpty(build.spritePath) ? Resources.Load<Sprite>(build.spritePath) : null;
+            var s = !string.IsNullOrEmpty(PieceDefinition.spritePath[build.pieceType]) ? Resources.Load<Sprite>(PieceDefinition.spritePath[build.pieceType]) : null;
             UI.hic.createSprite.sprite = s;
             UI.hic.createSprite.enabled = (s != null);
         }
@@ -73,7 +78,33 @@ public static class UIModes
         ShowLeftPanel.HudRefresh();
     }
 
-    public static void EnterConnectingMode(BuildItem item)
+    public static void EnterSacrificeSelectMode(Game.Core.Action build, UIInfo uiInfo)
+    {
+        showBoard.ClearHighlights();
+        showBoard.ApplyDefaultCellColor(UI.hic.config.defaultCellColor);
+        PanelToggles._mode = PanelToggles.Mode.SacrificeSelect;
+        UIHelpers.CachedActionForSacrificeCostMode = build;
+        UIHelpers.CachedUIInfoForSacrificeCostMode = uiInfo;
+        UIHelpers.StartSacrificeFlow(build.pieceType);
+        var cells = UIHelpers.GetSelectableSacrificeCells(build.pieceType);
+        showBoard.HighlightCells(
+            cells,
+            UI.hic.config ? UI.hic.config.createModeCellHighlight : new Color(0.25f, 0.75f, 0.25f, 0.6f)
+        );
+        UIHelpers.SetBackdropColor(UI.hic.config ? UI.hic.config.createModeBackground : new Color(0, 0, 0, 0.8f));
+        UIHelpers.SetPanelBackdropColor(UI.hic.config ? UI.hic.config.createModePanelBackground : new Color(0, 0, 0, 0.8f));
+        PanelToggles.TogglePanels(build: false, create: false, action: false, pieceFull: false, execute: false, walls: false);
+        ShowLeftPanel.HudRefresh();
+    }
+
+    public static void EnterCreateModeForSacrifice(Game.Core.Action build, UIInfo uiInfo)
+    {
+        UIHelpers.SortSelectedSacrifices();
+        EnterCreateMode(build, uiInfo);
+        UIHelpers._createArmed = UIHelpers.HasCreateWithCurrentSacrifice(build.pieceType);
+    }
+
+    public static void EnterConnectingMode(Game.Core.Action item)
     {
         // Ensure we query offers for the piece type the user just picked
 
@@ -147,7 +178,7 @@ public static class UIModes
 
     public static void EnterCreateModeWithWallChosen(ushort chosenWall)
     {
-        EnterCreateMode(UIHelpers.CachedBuildItemForCreateConnector, chosenWall);
+        EnterCreateMode(UIHelpers.CachedBuildItemForCreateConnector, UIHelpers.CachedUIInfoForCreateConnector, chosenWall);
     }
 
     #endregion
