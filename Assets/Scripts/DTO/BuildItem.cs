@@ -1,18 +1,18 @@
 // Assets/Scripts/UI/HIC/HICDtos.cs
 using UnityEngine;
 
-public readonly struct BuildItem
-{
-    public readonly byte pieceType;
-    public readonly string name;
-    public readonly string spritePath;
-    public readonly int cost;
-    public readonly bool legal;
-    public readonly ushort Auxiliary;
+// public readonly struct BuildItem
+// {
+//     public readonly byte pieceType;
+//     public readonly string name;
+//     public readonly string spritePath;
+//     public readonly int cost;
+//     public readonly bool legal;
+//     public readonly ushort Auxiliary;
 
-    public BuildItem(byte pieceType, string name, string spritePath, int cost, bool legal, ushort auxiliary)
-    { this.pieceType = pieceType; this.name = name; this.spritePath = spritePath; this.cost = cost; this.legal = legal; this.Auxiliary = auxiliary; }
-}
+//     public BuildItem(byte pieceType, string name, string spritePath, int cost, bool legal, ushort auxiliary)
+//     { this.pieceType = pieceType; this.name = name; this.spritePath = spritePath; this.cost = cost; this.legal = legal; this.Auxiliary = auxiliary; }
+// }
 
 public readonly struct PieceContext
 {
