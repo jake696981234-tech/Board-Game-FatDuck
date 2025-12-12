@@ -165,21 +165,10 @@ public static class IsItLegal
     }
 
     // this probs needs to be fixed
-    public static bool IsLegal_Upgrade(int actorPid, int abilityId, in Game.Core.Action a, byte currentPlayer, int gameIndex)
+    public static bool IsLegal_Upgrade(int actorPid, in Game.Core.Action a, byte currentPlayer, int gameIndex)
     {
-        var bm = GameRegistry.game[gameIndex].boardModel;
-        var gameState = GameRegistry.game[gameIndex].gameState;
-
-        if (actorPid < 0) return false;
-        byte actorType = bm.GetPieceType(actorPid);
-        if (!PieceDefinition.upgrade_enabled[actorType]) return false;
-        int targetType = PieceDefinition.upgrade_target[actorType];
-        if (targetType < 0 || targetType >= PieceDefinition.typeCount) return false;
-        if (a.TargetCellId != a.ActorsCellId) return false;
-        if (bm.GetPieceCell(actorPid) != a.ActorsCellId) return false;
-        int reqDigit = PieceDefinition.requiredDigit[(byte)targetType];
-        if (reqDigit >= 0 && !gameState.ps[currentPlayer].HasDigit(reqDigit)) return false;
-        return true;
+        // Legacy path removed; upgrade now handled via create offers
+        return false;
     }
 
     public static bool IsLegal_ConversionFactory(int PlayersVPAmount)
@@ -227,6 +216,20 @@ public static class IsItLegal
         // Plan-B: Create has no actor/slot/ability; structural rule only
         if (a.kind == Create)
         {
+            bool isUpgradeCreate = PieceDefinition.upgrade_enabled[a.pieceType];
+            int upgradeSourceType = isUpgradeCreate ? PieceDefinition.upgrade_target[a.pieceType] : -1;
+
+            if (isUpgradeCreate)
+            {
+                // ActorsCellId carries source piece id for upgrade-create
+                int srcPid = bm.GetCellOccupant(a.ActorsCellId);
+                if (srcPid < 0) return false;
+                if (bm.GetPieceOwner(srcPid) != player) return false;
+                if (bm.GetPieceType(srcPid) != upgradeSourceType) return false;
+                // Target must be the same cell as source
+                if (bm.GetPieceCell(srcPid) != a.TargetCellId) return false;
+            }
+
             // If pending multi-create placements are active, treat this as a placement
             if (gameState.multiCreateActive && a.pieceType == gameState.multiCreateType)
             {
@@ -255,40 +258,43 @@ public static class IsItLegal
             }
 
             // cell must be empty
-            if (bm.GetCellOccupant(a.TargetCellId) >= 0)
+            if (!isUpgradeCreate && bm.GetCellOccupant(a.TargetCellId) >= 0)
             {
                 Debug.Log("GetCellOccupant returned false");
                 return false;
             }
 
             // geometry: on core OR adjacent to core OR adjacent to any of your buildings
-            bool geomOk = false;
-            int core = bm.GetPlayerCoreCellId(player);
-            if (a.TargetCellId == core) { geomOk = true; }
-            if (!geomOk)
+            if (!isUpgradeCreate)
             {
-                var scratch = Scratch.GetScratchCellBuffer(gameIndex);
-                int n = bm.GetNeighbors(core, scratch);
-                for (int i = 0; i < n; i++) { if (scratch[i] == a.TargetCellId) { geomOk = true; break; } }
-            }
-            if (!geomOk)
-            {
-                var scratch2 = Scratch.GetScratchCellBuffer(gameIndex);
-                int n2 = bm.GetNeighbors(a.TargetCellId, scratch2);
-                for (int i = 0; i < n2; i++)
+                bool geomOk = false;
+                int core = bm.GetPlayerCoreCellId(player);
+                if (a.TargetCellId == core) { geomOk = true; }
+                if (!geomOk)
                 {
-                    int nb = scratch2[i];
-                    int pid = bm.GetCellOccupant(nb);
-                    if (pid < 0) continue;
-                    if (bm.GetPieceOwner(pid) != player) continue;
-                    byte t = bm.GetPieceType(pid);
-                    if (PieceDefinition.isBuilding[t]) { geomOk = true; break; }
+                    var scratch = Scratch.GetScratchCellBuffer(gameIndex);
+                    int n = bm.GetNeighbors(core, scratch);
+                    for (int i = 0; i < n; i++) { if (scratch[i] == a.TargetCellId) { geomOk = true; break; } }
                 }
-            }
-            if (!geomOk)
-            {
-                Debug.Log("Legal Build Location Returned False");
-                return false;
+                if (!geomOk)
+                {
+                    var scratch2 = Scratch.GetScratchCellBuffer(gameIndex);
+                    int n2 = bm.GetNeighbors(a.TargetCellId, scratch2);
+                    for (int i = 0; i < n2; i++)
+                    {
+                        int nb = scratch2[i];
+                        int pid = bm.GetCellOccupant(nb);
+                        if (pid < 0) continue;
+                        if (bm.GetPieceOwner(pid) != player) continue;
+                        byte t = bm.GetPieceType(pid);
+                        if (PieceDefinition.isBuilding[t]) { geomOk = true; break; }
+                    }
+                }
+                if (!geomOk)
+                {
+                    Debug.Log("Legal Build Location Returned False");
+                    return false;
+                }
             }
 
             // parity with OfferProvider: buildable flag + required digit gate
@@ -305,7 +311,7 @@ public static class IsItLegal
             }
 
             // Connector legality: config index is carried in aux
-            if (PieceDefinition.connectors_enabled[a.pieceType])
+            if (PieceDefinition.connectors_enabled[a.pieceType] && !isUpgradeCreate)
             {
                 int cfg = a.aux;
                 if (!PieceDefinition.IsConnectorConfigAllowed(a.pieceType, cfg))

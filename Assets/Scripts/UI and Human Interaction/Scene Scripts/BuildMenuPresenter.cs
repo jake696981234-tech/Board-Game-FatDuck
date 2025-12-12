@@ -26,7 +26,7 @@ public sealed class BuildMenuPresenter : MonoBehaviour
         }
         else
         {
-            items = filteredBuildOptions(rawItems, UiInfo, out uiInfo);
+            items = filteredBuildOptions(rawItems, uiInfo, out uiInfo);
         }
 
         gameObject.SetActive(true);
@@ -52,8 +52,9 @@ public sealed class BuildMenuPresenter : MonoBehaviour
             if (iHaveAlreadySeenYou.Add(item.pieceType))
             {
                 filteredItems.Add(item);
-                filteredUiInfo.Add(uiInfo[i]);
                 i++;
+                filteredUiInfo.Add(uiInfo[i]);
+
             }
         }
         outUiInfo = filteredUiInfo;

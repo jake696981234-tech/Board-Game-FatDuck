@@ -177,6 +177,13 @@ public static class PiecesCsvImporter
             PieceDefinition.coreDamage_botSurcharge[typeId] = GetInt(cols, H, "coreDamage_botSurcharge", defaultValue: 0);
 
             #endregion
+            #region sacrificeCost
+            PieceDefinition.sacrificeCost_enabled[typeId] = GetBool(cols, H, "sacrificeCost_enabled", defaultValue: false);
+            PieceDefinition.sacrificeCost_isNeedsSpecificPiece[typeId] = GetBool(cols, H, "sacrificeCost_isNeedsSpecificPiece", defaultValue: false);
+            PieceDefinition.sacrificeCost_specificPiece[typeId] = GetInt(cols, H, "sacrificeCost_specificPiece", defaultValue: -1);
+            PieceDefinition.sacrificeCost_howManyItNeeds[typeId] = GetInt(cols, H, "sacrificeCost_howManyItNeeds", defaultValue: -1);
+
+            #endregion
         }
     }
 
@@ -422,6 +429,13 @@ public static class PiecesCsvImporter
         PieceDefinition.coreDamage_enabled = new bool[count];
         PieceDefinition.coreDamage_damage = new int[count];
         PieceDefinition.coreDamage_botSurcharge = new int[count];
+
+        #endregion
+        #region sacrificeCost
+        PieceDefinition.sacrificeCost_enabled = new bool[count];
+        PieceDefinition.sacrificeCost_isNeedsSpecificPiece = new bool[count];
+        PieceDefinition.sacrificeCost_specificPiece = new int[count];
+        PieceDefinition.sacrificeCost_howManyItNeeds = new int[count];
 
         #endregion
     }

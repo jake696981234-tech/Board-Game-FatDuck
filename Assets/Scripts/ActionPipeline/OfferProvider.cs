@@ -189,27 +189,6 @@ public static class OfferProvider
                     }
                 }
             }
-            if (PieceDefinition.upgrade_enabled[actorType])
-            {
-                int targetType = PieceDefinition.upgrade_target[actorType];
-                if (targetType >= 0 && targetType < PieceDefinition.typeCount)
-                {
-                    int reqDigit = PieceDefinition.requiredDigit[(byte)targetType];
-                    if (reqDigit < 0 || gameState.ps[player].HasDigit(reqDigit))
-                    {
-                        var a = new Action
-                        {
-                            kind = Upgrade,
-                            pieceType = actorType,
-                            ActorsCellId = (ushort)cell,
-                            TargetCellId = (ushort)cell,
-                            aux = (byte)targetType
-                        };
-                        Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
-
-                    }
-                }
-            }
             if (PieceDefinition.launcher_enabled[actorType])
             {
                 int theNumberOfTargets = GetLegalTargets.GetLegalTargets_Launcher(pieceId, actorType, scratch, gameIndex);
@@ -307,14 +286,43 @@ public static class OfferProvider
                 for (int type = 0; type < typeCount; type++)
                 {
                     if (!PieceDefinition.isbuildable[type]) continue; // buildable gate (CSV flag)
-                                                                      // digitsRequired gate (Plan-B): skip if requirement exists and player lacks it
+                                                                   // digitsRequired gate (Plan-B): skip if requirement exists and player lacks it
                     int req = PieceDefinition.requiredDigit[(byte)type];
                     if (req >= 0 && !gameState.ps[player].HasDigit(req)) continue;
-                    bool hasConn = PieceDefinition.connectors_enabled[type];
+                    // Upgrade-create: allow even if not buildable; enforce source piece presence later
+                    bool isUpgradeCreate = PieceDefinition.upgrade_enabled[type] && PieceDefinition.upgrade_target[type] >= 0 && PieceDefinition.upgrade_target[type] < PieceDefinition.typeCount;
+                    if (isUpgradeCreate && !PieceDefinition.isbuildable[type])
+                    {
+                        // override buildable gate
+                    }
+                    else if (!PieceDefinition.isbuildable[type])
+                    {
+                        continue;
+                    }
+                    bool hasConn = PieceDefinition.connectors_enabled[type] && !isUpgradeCreate;
                     ulong allowedMask = hasConn ? PieceDefinition.connector_allowedMasks[type] : 0UL;
                     if (hasConn && allowedMask == 0UL) continue;
 
-                    if (!hasConn)
+                    if (isUpgradeCreate)
+                    {
+                        // For upgrade-create, target cell must host a source piece
+                        int sourceType = PieceDefinition.upgrade_target[type];
+                        int pid = bm.GetCellOccupant(cell);
+                        if (pid < 0) continue;
+                        if (bm.GetPieceOwner(pid) != player) continue;
+                        if (bm.GetPieceType(pid) != sourceType) continue;
+
+                        var a = new Action
+                        {
+                            kind = Create,
+                            pieceType = (byte)type,
+                            ActorsCellId = (ushort)pid, // carry source piece id
+                            TargetCellId = (ushort)cell,
+                            aux = 0
+                        };
+                        EmitCreateWithSacrifice(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
+                    }
+                    else if (!hasConn)
                     {
                         var a = new Action
                         {
@@ -326,7 +334,7 @@ public static class OfferProvider
                         };
                         EmitCreateWithSacrifice(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
                     }
-                    if (hasConn)
+                    if (hasConn && !isUpgradeCreate)
                     {
                         for (int cfg = 0; cfg < 64; cfg++)
                         {

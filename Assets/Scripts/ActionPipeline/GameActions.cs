@@ -80,9 +80,20 @@ namespace Game.Core
             var gameState = GameRegistry.game[gameIndex].gameState;
             var bm = GameRegistry.game[gameIndex].boardModel;
 
+            // Upgrade-create: ActorsCellId carries source piece id (for upgrade flow)
+            int sourcePid = bm.GetCellOccupant(theAction.ActorsCellId);
+            bool isUpgradeCreate = PieceDefinition.upgrade_enabled[theAction.pieceType] && sourcePid >= 0 && bm.IsValidPieceId(sourcePid);
+            byte sourceType = isUpgradeCreate ? bm.GetPieceType(sourcePid) : (byte)0xFF;
+            if (isUpgradeCreate)
+            {
+                int expectedSourceType = PieceDefinition.upgrade_target[theAction.pieceType];
+                if (sourceType != expectedSourceType) isUpgradeCreate = false;
+            }
+
             if (PieceDefinition.sacrificeCost_enabled[theAction.pieceType])
             {
-                for (int i = 0; i < PieceDefinition.sacrificeCost_howManyItNeeds[theAction.pieceType]; i++)
+                int need = PieceDefinition.sacrificeCost_howManyItNeeds[theAction.pieceType];
+                for (int i = 0; i < need; i++)
                 {
                     pieceKilled(theAction.addCost[i], gameIndex);
                 }
@@ -92,6 +103,9 @@ namespace Game.Core
             bm.PlacePieceRow(pid, player, (byte)theAction.pieceType, theAction.TargetCellId, PieceDefinition.maxHP[theAction.pieceType]);
             // Set connector config if applicable (Create uses aux for config index)
             bm.pieceConnectorConfig[pid] = (byte)theAction.aux;
+            // Preserve connector config from source on upgrade
+            if (isUpgradeCreate && sourcePid >= 0)
+                bm.pieceConnectorConfig[pid] = bm.pieceConnectorConfig[sourcePid];
             // Grant digit if this type provides one
             int g = PieceDefinition.digitItGives[(byte)theAction.pieceType];
             if (g >= 0) gameState.ps[player].GrantDigit(g);
@@ -111,6 +125,12 @@ namespace Game.Core
             }
 
             RefreshConnectorState(gameIndex);
+
+            // Remove source piece after placing new one (no connector wipe for intermediate state)
+            if (isUpgradeCreate && bm.IsValidPieceId(sourcePid))
+            {
+                bm.FreeRowSwapBack(sourcePid);
+            }
         }
 
         //ENDTURN = 5
@@ -183,32 +203,7 @@ namespace Game.Core
 
         public static void ApplyUpgrade(in Action a, byte p, int gameIndex)
         {
-            var bm = GameRegistry.game[gameIndex].boardModel;
-            var gameState = GameRegistry.game[gameIndex].gameState;
-
-            int actorPid = bm.GetCellOccupant(a.ActorsCellId);
-            if (actorPid < 0) return;
-            byte actorType = bm.GetPieceType(actorPid);
-            int targetType = PieceDefinition.upgrade_target[actorType];
-            if (targetType < 0 || targetType >= PieceDefinition.typeCount) return;
-
-            // Preserve connector config
-            byte oldConfig = bm.pieceConnectorConfig[actorPid];
-
-            // Revoke digit from old type if it granted one
-            int gOld = PieceDefinition.digitItGives[actorType];
-            if (gOld >= 0) gameState.ps[p].RevokeDigit(gOld);
-
-            // Replace type and reset HP
-            bm.pieceType[actorPid] = (byte)targetType;
-            bm.pieceHP[actorPid] = PieceDefinition.maxHP[targetType];
-            bm.pieceConnectorConfig[actorPid] = oldConfig;
-
-            // Grant digit for new type
-            int gNew = PieceDefinition.digitItGives[(byte)targetType];
-            if (gNew >= 0) gameState.ps[p].GrantDigit(gNew);
-
-            // No connector refresh per requirement
+            // Legacy path unused (upgrade now via create)
         }
 
         public static void ApplyLauncher(in Action a, byte p, int gameIndex)
