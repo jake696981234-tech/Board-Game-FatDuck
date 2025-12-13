@@ -465,6 +465,18 @@ public class BoardModel
         return total;
     }
 
+    public int GetAllPieceIdsNotOwnedByAPlayer(int ExcludedPlayer, Span<int> outPieceIds)
+    {
+        int total = 0, write = 0;
+        for (int pid = 0; pid < pieceCount; pid++)
+        {
+            if (pieceOwner[pid] == ExcludedPlayer) continue;
+            total++;
+            if (write < outPieceIds.Length) outPieceIds[write++] = pid;
+        }
+        return total;
+    }
+
     /// <summary>Collect cells of owned Buildings using IsBuildingType predicate. Returns total count.</summary>
     public int GetOwnedBuildingCells(int owner, Span<int> outCells)
     {

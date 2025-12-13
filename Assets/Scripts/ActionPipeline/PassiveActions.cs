@@ -259,10 +259,34 @@ public static class PassiveActions
     }
     #endregion
     #region Feeding Ground
-    // public static void FeedingGround()
-    // {
 
-    // }
+    public static void FeedingGround(int gameIndex, int pieceIDKilled)
+    {
+        var bm = GameRegistry.game[gameIndex].boardModel;
+        int[] PiecesInRange = Scratch.GetScratchCellBuffer(gameIndex);
+
+        int Player = bm.pieceOwner[pieceIDKilled];
+
+        for (int pid = 0; pid < bm.pieceCount; pid++)
+        {
+            if (bm.pieceOwner[pid] == Player) continue;
+            int pieceType = bm.pieceType[pid];
+            if (!PieceDefinition.feedingGround_enabled[pieceType]) continue;
+
+            for (int range = 0; range <= PieceDefinition.feedingGround_Range[pieceType]; range++)
+            {
+                int found = BmAbilityCac.pieceIdsRingAroundCell(bm.pieceCellId[pid], range, PiecesInRange, gameIndex);
+
+                if (found <= 0) continue;
+
+                for (int i = 0; i < found; i++)
+                {
+                    if (PiecesInRange[i] != pieceIDKilled) continue;
+                    bm.pieceFactoryAux[pid] += PieceDefinition.feedingGround_payOut[pieceType];
+                }
+            }
+        }
+    }
 
     #endregion
 }

@@ -159,7 +159,7 @@ public static class OfferProvider
                 for (int i = 0; i < theNumberOfTargets; i++)
                 {
                     int tgtPid = scratch[i];
-                    ushort dst = (ushort)bm.GetPieceCell(gameIndex);
+                    ushort dst = (ushort)bm.GetPieceCell(tgtPid);
                     var a = new Action
                     {
                         kind = Push,

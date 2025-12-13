@@ -47,7 +47,7 @@ public static class PiecesCsvImporter
             PieceDefinition.isBuilding[typeId] = GetBool(cols, H, "isBuilding", defaultValue: false);
             PieceDefinition.isBuildable[typeId] = GetBool(cols, H, "isbuildable", defaultValue: true);
             PieceDefinition.BuildCost[typeId] = GetInt(cols, H, "BuildCost", defaultValue: 0);
-            PieceDefinition.maxHP[typeId] = (short)ClampToShort(GetInt(cols, H, "maxHP", defaultValue: 0));
+            PieceDefinition.maxHP[typeId] = (short)ClampToShort(GetInt(cols, H, "maxHP", defaultValue: 1));
 
             #endregion
             #region Digits
@@ -182,6 +182,12 @@ public static class PiecesCsvImporter
             PieceDefinition.sacrificeCost_isNeedsSpecificPiece[typeId] = GetBool(cols, H, "sacrificeCost_isNeedsSpecificPiece", defaultValue: false);
             PieceDefinition.sacrificeCost_specificPiece[typeId] = GetInt(cols, H, "sacrificeCost_specificPiece", defaultValue: -1);
             PieceDefinition.sacrificeCost_howManyItNeeds[typeId] = GetInt(cols, H, "sacrificeCost_howManyItNeeds", defaultValue: -1);
+            #endregion
+
+            #region Feeding Ground
+            PieceDefinition.feedingGround_enabled[typeId] = GetBool(cols, H, "feedingGround_enabled", defaultValue: false);
+            PieceDefinition.feedingGround_payOut[typeId] = GetInt(cols, H, "feedingGround_payOut", defaultValue: -1);
+            PieceDefinition.feedingGround_Range[typeId] = GetInt(cols, H, "feedingGround_Range", defaultValue: -1);
 
             #endregion
         }
@@ -437,6 +443,11 @@ public static class PiecesCsvImporter
         PieceDefinition.sacrificeCost_specificPiece = new int[count];
         PieceDefinition.sacrificeCost_howManyItNeeds = new int[count];
 
+        #endregion
+        #region Feeding Ground
+        PieceDefinition.feedingGround_enabled = new bool[count];
+        PieceDefinition.feedingGround_payOut = new int[count];
+        PieceDefinition.feedingGround_Range = new int[count];
         #endregion
     }
 

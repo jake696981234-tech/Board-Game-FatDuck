@@ -93,9 +93,18 @@ namespace Game.Core
             if (PieceDefinition.sacrificeCost_enabled[theAction.pieceType])
             {
                 int need = PieceDefinition.sacrificeCost_howManyItNeeds[theAction.pieceType];
-                for (int i = 0; i < need; i++)
+                if (need > 0 && theAction.addCost != null)
                 {
-                    pieceKilled(theAction.addCost[i], gameIndex);
+                    int killed = 0;
+                    for (int i = 0; i < theAction.addCost.Length && killed < need; i++)
+                    {
+                        int pieceid = theAction.addCost[i];
+                        if (!bm.IsValidPieceId(pieceid)) continue;
+                        if (bm.GetPieceOwner(pieceid) != player) continue;
+                        pieceKilled(pieceid, gameIndex);
+                        killed++;
+                    }
+                    if (killed < need) return; // safety: not enough valid sacrifices
                 }
             }
 
@@ -376,6 +385,8 @@ namespace Game.Core
             int Pieceid = bm.GetCellOccupant(theAction.ActorsCellId);
 
             bm.pieceFactoryAux[Pieceid] += PieceDefinition.eat_amount[theAction.pieceType];
+
+            PassiveActions.FeedingGround(gameIndex, victim);
 
             pieceKilled(victim, gameIndex);
         }
