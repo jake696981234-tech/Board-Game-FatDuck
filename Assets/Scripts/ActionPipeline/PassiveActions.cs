@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System;
+using Game.Core;
 
 public static class PassiveActions
 {
@@ -22,6 +23,13 @@ public static class PassiveActions
         int ownedCount = bm.GetOwnedPieceIds(playerId, owned);
         if (ownedCount < need) return false;
 
+        int excludePid = -1;
+        if (theAction.kind == ActionKind.Upgrade)
+        {
+            int pid = bm.GetCellOccupant(theAction.ActorsCellId);
+            if (pid >= 0) excludePid = pid;
+        }
+
         // Filter eligible pieces into the front of the same buffer
         int eligibleCount = 0;
         bool requiresSpecific = PieceDefinition.sacrificeCost_isNeedsSpecificPiece[theAction.pieceType];
@@ -30,6 +38,7 @@ public static class PassiveActions
         for (int i = 0; i < ownedCount; i++)
         {
             int pid = owned[i];
+            if (pid == excludePid) continue;
             if (!bm.IsValidPieceId(pid)) continue;
             if (requiresSpecific && bm.pieceType[pid] != requiredType) continue;
             owned[eligibleCount++] = pid;
@@ -248,5 +257,12 @@ public static class PassiveActions
         }
         return false;
     }
+    #endregion
+    #region Feeding Ground
+    // public static void FeedingGround()
+    // {
+
+    // }
+
     #endregion
 }

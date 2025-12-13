@@ -45,7 +45,7 @@ public static class PiecesCsvImporter
             #endregion
             #region General Fields
             PieceDefinition.isBuilding[typeId] = GetBool(cols, H, "isBuilding", defaultValue: false);
-            PieceDefinition.isbuildable[typeId] = GetBool(cols, H, "isbuildable", defaultValue: true);
+            PieceDefinition.isBuildable[typeId] = GetBool(cols, H, "isbuildable", defaultValue: true);
             PieceDefinition.BuildCost[typeId] = GetInt(cols, H, "BuildCost", defaultValue: 0);
             PieceDefinition.maxHP[typeId] = (short)ClampToShort(GetInt(cols, H, "maxHP", defaultValue: 0));
 
@@ -304,7 +304,7 @@ public static class PiecesCsvImporter
         #endregion
         #region General Fields
         PieceDefinition.isBuilding = new bool[count];
-        PieceDefinition.isbuildable = new bool[count];
+        PieceDefinition.isBuildable = new bool[count];
         PieceDefinition.BuildCost = new int[count];
         PieceDefinition.maxHP = new short[count];
 

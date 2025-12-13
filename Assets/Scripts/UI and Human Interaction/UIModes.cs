@@ -14,6 +14,7 @@ public static class UIModes
         UIHelpers._selectedAction = null;
         UIHelpers.SelectedSacrificeIds.Clear();
         UIHelpers.SacrificeCombos.Clear();
+        UIHelpers.SelectedUpgradeSourceCell = null;
 
         UIHelpers.SetBackdropColor(UI.hic.config ? UI.hic.config.buildModeBackground : new Color(0, 0, 0, 0.8f));
         UIHelpers.SetPanelBackdropColor(UI.hic.config ? UI.hic.config.buildModePanelBackground : new Color(0, 0, 0, 0.8f));
@@ -102,6 +103,25 @@ public static class UIModes
         UIHelpers.SortSelectedSacrifices();
         EnterCreateMode(build, uiInfo);
         UIHelpers._createArmed = UIHelpers.HasCreateWithCurrentSacrifice(build.pieceType);
+    }
+
+    public static void EnterUpgradeSacrificeSelectMode(ActionItem actionItem, int actionIndex)
+    {
+        showBoard.ClearHighlights();
+        showBoard.ApplyDefaultCellColor(UI.hic.config.defaultCellColor);
+        PanelToggles._mode = PanelToggles.Mode.SacrificeSelect;
+        UIHelpers.CachedActionForSacrificeCostMode = UIBridge._offers[actionIndex];
+        UIHelpers.CachedUIInfoForSacrificeCostMode = new UIInfo(true, actionItem.cost);
+        UIHelpers.StartSacrificeFlow(UIBridge._offers[actionIndex].pieceType, UIBridge._offers[actionIndex].TargetCellId);
+        var cells = UIHelpers.GetSelectableSacrificeCells(UIBridge._offers[actionIndex].pieceType);
+        showBoard.HighlightCells(
+            cells,
+            UI.hic.config ? UI.hic.config.createModeCellHighlight : new Color(0.25f, 0.75f, 0.25f, 0.6f)
+        );
+        UIHelpers.SetBackdropColor(UI.hic.config ? UI.hic.config.createModeBackground : new Color(0, 0, 0, 0.8f));
+        UIHelpers.SetPanelBackdropColor(UI.hic.config ? UI.hic.config.createModePanelBackground : new Color(0, 0, 0, 0.8f));
+        PanelToggles.TogglePanels(build: false, create: false, action: false, pieceFull: false, execute: false, walls: false);
+        ShowLeftPanel.HudRefresh();
     }
 
     public static void EnterConnectingMode(Game.Core.Action item)

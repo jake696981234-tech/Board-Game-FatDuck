@@ -103,10 +103,35 @@ public static class UIInput
                     UIHelpers.SelectedSacrificeIds.Add(pid);
                     UIHelpers.SortSelectedSacrifices();
 
-                    int need = PieceDefinition.sacrificeCost_howManyItNeeds[UIHelpers._selectedCreateType];
+                    // Determine need based on current mode (create or upgrade)
+                    int need = 0;
+                    if (UIHelpers._selectedActionIndex >= 0 && UIBridge._offers[UIHelpers._selectedActionIndex].kind == Game.Core.ActionKind.Upgrade)
+                    {
+                        need = PieceDefinition.sacrificeCost_howManyItNeeds[UIBridge._offers[UIHelpers._selectedActionIndex].pieceType];
+                    }
+                    else
+                    {
+                        need = PieceDefinition.sacrificeCost_howManyItNeeds[UIHelpers._selectedCreateType];
+                    }
+
                     if (UIHelpers.SelectedSacrificeIds.Count >= need)
                     {
-                        UIModes.EnterCreateModeForSacrifice(UIHelpers.CachedActionForSacrificeCostMode, UIHelpers.CachedUIInfoForSacrificeCostMode);
+                        if (UIHelpers._selectedActionIndex >= 0 && UIBridge._offers[UIHelpers._selectedActionIndex].kind == Game.Core.ActionKind.Upgrade)
+                        {
+                            // auto-perform upgrade with matching sacrifice set
+                            int srcCell = UIHelpers.SelectedUpgradeSourceCell ?? UIBridge._offers[UIHelpers._selectedActionIndex].ActorsCellId;
+                            int idx = UIHelpers.FindConcreteUpgradeAction(UIBridge._offers[UIHelpers._selectedActionIndex].pieceType, (ushort)srcCell);
+                            if (idx >= 0) { UIBridge.PerformActionIndex(idx); }
+                            UIHelpers.SelectedSacrificeIds.Clear();
+                            UIHelpers.SacrificeCombos.Clear();
+                            UIHelpers.SelectedUpgradeSourceCell = null;
+                            showBoard.ClearHighlights();
+                            UIModes.EnterBuildMode();
+                        }
+                        else
+                        {
+                            UIModes.EnterCreateModeForSacrifice(UIHelpers.CachedActionForSacrificeCostMode, UIHelpers.CachedUIInfoForSacrificeCostMode);
+                        }
                     }
                     else
                     {
@@ -232,7 +257,15 @@ public static class UIInput
         UIHelpers._selectedActionIndex = idx; // seed used for target resolution
         showBoard.ClearHighlights();
         showBoard.HighlightCells(UIHelpers.ComputeTargetsForActionIndex(UIHelpers._selectedActionIndex), col);
-        UIModes.EnterActionExecuteMode(item);
+        // If upgrade with sacrifice cost, branch into sacrifice select flow
+        if (UIBridge._offers[idx].kind == Game.Core.ActionKind.Upgrade && PieceDefinition.sacrificeCost_enabled[UIBridge._offers[idx].pieceType])
+        {
+            UIModes.EnterUpgradeSacrificeSelectMode(item, idx);
+        }
+        else
+        {
+            UIModes.EnterActionExecuteMode(item);
+        }
     }
     #endregion
 

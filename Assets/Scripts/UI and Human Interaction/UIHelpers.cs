@@ -12,6 +12,7 @@ public static class UIHelpers
     public static UIInfo CachedUIInfoForSacrificeCostMode;
     public static readonly List<int> SelectedSacrificeIds = new List<int>(8);
     public static readonly List<int[]> SacrificeCombos = new List<int[]>(64);
+    public static int? SelectedUpgradeSourceCell;
 
     public static int? _selectedPieceId;
     // Create flow
@@ -26,7 +27,7 @@ public static class UIHelpers
     #region Right Panel
 
     // --- Create helpers ---
-    public static void StartSacrificeFlow(byte pieceType)
+    public static void StartSacrificeFlow(byte pieceType, int? upgradeSourceCell = null)
     {
         _selectedCreateType = pieceType;
         SelectedSacrificeIds.Clear();
@@ -36,8 +37,9 @@ public static class UIHelpers
         for (int i = 0; i < UIBridge._count; i++)
         {
             var a = UIBridge._offers[i];
-            if (a.kind != Game.Core.ActionKind.Create) continue;
+            if (a.kind != Game.Core.ActionKind.Create && a.kind != Game.Core.ActionKind.Upgrade) continue;
             if (a.pieceType != pieceType) continue;
+            if (a.kind == Game.Core.ActionKind.Upgrade && upgradeSourceCell.HasValue && a.TargetCellId != (ushort)upgradeSourceCell.Value) continue;
             if (!PieceDefinition.sacrificeCost_enabled[pieceType]) continue;
             if (UIBridge._mask[i] == 0) continue;
             if (a.addCost == null || a.addCost.Length == 0) continue;
@@ -147,6 +149,21 @@ public static class UIHelpers
         return false;
     }
 
+    public static bool HasUpgradeWithCurrentSacrifice(byte destType, ushort srcCell)
+    {
+        for (int i = 0; i < UIBridge._count; i++)
+        {
+            var a = UIBridge._offers[i];
+            if (a.kind != Game.Core.ActionKind.Upgrade) continue;
+            if (a.pieceType != destType) continue;
+            if (a.TargetCellId != srcCell) continue;
+            if (UIBridge._mask[i] == 0) continue;
+            if (!AddCostMatchesSelection(a.addCost, SelectedSacrificeIds)) continue;
+            return true;
+        }
+        return false;
+    }
+
     public static int FindFirstCreateIndexForType(byte type)
     {
         for (int i = 0; i < UIBridge._count; i++)
@@ -173,6 +190,25 @@ public static class UIHelpers
 
             if (a.pieceType != type) continue;
             if (a.TargetCellId != dst) continue;
+            if (UIBridge._mask[i] == 0) continue;
+            if (SelectedSacrificeIds.Count > 0)
+            {
+                if (!AddCostMatchesSelection(a.addCost, SelectedSacrificeIds)) continue;
+            }
+            return i;
+        }
+        return -1;
+    }
+
+    public static int FindConcreteUpgradeAction(byte destType, ushort srcCell)
+    {
+        for (int i = 0; i < UIBridge._count; i++)
+        {
+            var a = UIBridge._offers[i];
+            if (a.kind != Game.Core.ActionKind.Upgrade) continue;
+            if (a.pieceType != destType) continue;
+            if (a.ActorsCellId != srcCell) continue;
+            if (a.TargetCellId != srcCell) continue;
             if (UIBridge._mask[i] == 0) continue;
             if (SelectedSacrificeIds.Count > 0)
             {

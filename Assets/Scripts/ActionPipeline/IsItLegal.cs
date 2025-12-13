@@ -459,6 +459,64 @@ public static class IsItLegal
                     Debug.Log("CoreDamage - ContainsFirstN Returned False");
                     return false; // slot-kind drift guard
                 }
+            case Upgrade:
+                {
+                    byte actorType = bm.GetPieceType(actorPid);
+                    byte destType = a.pieceType;
+                    if (!PieceDefinition.upgrade_enabled[destType])
+                    {
+                        Debug.Log("Upgrade - (!PieceDefinition.upgrade_enabled[destType]) Returned False");
+                        return false;
+                    }
+                    if (PieceDefinition.upgrade_target[destType] != actorType)
+                    {
+                        Debug.Log("Upgrade - (PieceDefinition.upgrade_target[destType] != actorType)Returned False");
+                        return false;
+                    }
+                    if (a.TargetCellId != a.ActorsCellId)
+                    {
+                        Debug.Log("Upgrade - (a.TargetCellId != a.ActorsCellId) Returned False");
+                        return false;
+                    }
+                    if (bm.GetPieceCell(actorPid) != a.ActorsCellId)
+                    {
+                        Debug.Log("Upgrade - (bm.GetPieceCell(actorPid) != a.ActorsCellId) Returned False");
+                        return false;
+                    }
+                    int reqDigit = PieceDefinition.requiredDigit[destType];
+                    if (reqDigit >= 0 && !gameState.ps[player].HasDigit(reqDigit))
+                    {
+                        Debug.Log("Upgrade - (reqDigit >= 0 && !gameState.ps[player].HasDigit(reqDigit)) Returned False");
+                        return false;
+                    }
+                    if (PieceDefinition.sacrificeCost_enabled[destType])
+                    {
+                        int need = PieceDefinition.sacrificeCost_howManyItNeeds[destType];
+                        var cost = a.addCost;
+                        if (need > 0)
+                        {
+                            if (cost == null || cost.Length < need)
+                            {
+                                Debug.Log("Upgrade - (cost == null || cost.Length < need) Returned False");
+                                return false;
+                            }
+                            int valid = 0;
+                            for (int i = 0; i < cost.Length; i++)
+                            {
+                                int pid = cost[i];
+                                if (!bm.IsValidPieceId(pid)) continue;
+                                if (bm.GetPieceOwner(pid) != player) continue;
+                                valid++;
+                            }
+                            if (valid < need)
+                            {
+                                Debug.Log("Upgrade - (valid < need) Returned False");
+                                return false;
+                            }
+                        }
+                    }
+                    return true;
+                }
             case SacrificeFactory:
                 count = GetLegalTargets.GetLegalTargets_SacrificeFactory(actorPid, a.pieceType, targetsPiece, gameIndex);
                 if (ContainsFirstN(targets, count, a.aux /* targetPieceId */))

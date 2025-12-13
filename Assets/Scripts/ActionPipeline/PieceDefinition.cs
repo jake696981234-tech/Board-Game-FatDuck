@@ -31,7 +31,7 @@ public static class PieceDefinition
     #endregion
     #region General Fields
     public static bool[] isBuilding;
-    public static bool[] isbuildable;
+    public static bool[] isBuildable;
     public static int[] BuildCost;
     public static short[] maxHP;
     #endregion
@@ -148,7 +148,13 @@ public static class PieceDefinition
     public static bool[] sacrificeCost_isNeedsSpecificPiece;
     public static int[] sacrificeCost_specificPiece;
     public static int[] sacrificeCost_howManyItNeeds;
-    
+
+    #endregion
+    #region Feeding Ground
+    public static bool[] feedingGround_enabled;
+    public static int[] feedingGround_Range;
+    public static int[] feedingGround_payOut;
+
     #endregion
     public static bool IsConnectorConfigAllowed(byte type, int configIndex)
     {

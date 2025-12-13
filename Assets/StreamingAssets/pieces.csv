@@ -3,5 +3,7 @@ Froggy Villiage,Frog,Flower,TRUE,TRUE,80,1,,1,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 Froggy Factory,Frog,PE,TRUE,TRUE,20,1,1,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,TRUE,TRUE,,,,TRUE,10,,,,,,,,,
 Froggy Spawner,Frog,SPE,TRUE,TRUE,30,1,1,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,TRUE,1,3,1,FALSE,,,,,,,TRUE,TRUE,,,,,,,,,,,,,,
 Spawned Frog,Frog,FR,,FALSE,,,1,,,,,,,,TRUE,1,1,1,,TRUE,,TRUE,1,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
-Fast Frog,Frog,SFR,,TRUE,20,,1,,TRUE,5,,,,,TRUE,1,2,1,,TRUE,,TRUE,1,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
-Fast Frog Upgraded,Frog,,,FALSE,1000,,1,,,,,,,,TRUE,1,3,1,,TRUE,,TRUE,1,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,TRUE,FALSE,,2
+Fast Frog,Frog,SFR,,TRUE,20,,1,,,,,,,,TRUE,1,2,1,,TRUE,,TRUE,1,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Fast Frog Upgraded with sac cost,Frog,,,TRUE,30,,1,,TRUE,4,,,,,TRUE,1,3,1,,TRUE,,TRUE,1,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,TRUE,FALSE,,2
+Fast Frog Upgraded,Frog,,,TRUE,30,,1,,TRUE,4,,,,,TRUE,1,3,1,,TRUE,,TRUE,1,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Frog  with sac cost,Frog,,,TRUE,30,,1,,,,,,,,TRUE,1,3,1,,TRUE,,TRUE,1,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,TRUE,FALSE,,2

@@ -64,6 +64,10 @@ public static class CostEngine
             int amount = PieceDefinition.spawn_pieceAmount[a.pieceType];
             if (targetType >= 0 && amount > 0) buildCost = PieceDefinition.BuildCost[targetType] * amount;
         }
+        else if (a.kind == ActionKind.Upgrade)
+        {
+            buildCost = PieceDefinition.BuildCost[a.pieceType];
+        }
 
         return turnFee + botSurcharge + buildCost;
     }
@@ -156,6 +160,10 @@ public static class CostEngine
             int amount = PieceDefinition.spawn_pieceAmount[a.pieceType];
             if (targetType >= 0 && amount > 0) buildCost = PieceDefinition.BuildCost[targetType] * amount;
         }
+        if (a.kind == ActionKind.Upgrade)
+        {
+            buildCost = PieceDefinition.BuildCost[a.pieceType];
+        }
         return new CostBreakdown(turnFee, botSurcharge, buildCost);
     }
 
@@ -192,4 +200,3 @@ public static class CostEngine
 
 
 }
-
