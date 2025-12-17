@@ -159,13 +159,13 @@ public static class OfferProvider
                 for (int i = 0; i < theNumberOfTargets; i++)
                 {
                     int tgtPid = scratch[i];
-                    ushort dst = (ushort)bm.GetPieceCell(tgtPid);
+                    ushort targetCellId = (ushort)bm.GetPieceCell(tgtPid);
                     var a = new Action
                     {
                         kind = Push,
                         pieceType = actorType,
                         ActorsCellId = (ushort)cell,
-                        TargetCellId = dst,
+                        TargetCellId = targetCellId,
                         aux = (ushort)tgtPid
                     };
                     Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
@@ -217,13 +217,13 @@ public static class OfferProvider
                 for (int i = 0; i < theNumberOfTargets; i++)
                 {
                     int tgtPid = scratch[i];
-                    ushort dst = (ushort)bm.GetPieceCell(tgtPid);
+                    ushort targetCellId = (ushort)bm.GetPieceCell(tgtPid);
                     var a = new Action
                     {
                         kind = SacrificeFactory,
                         pieceType = actorType,
                         ActorsCellId = (ushort)cell,
-                        TargetCellId = dst,
+                        TargetCellId = targetCellId,
                         aux = (ushort)tgtPid
                     };
                     Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
@@ -256,9 +256,9 @@ public static class OfferProvider
                 var a = new Action
                 {
                     kind = Upgrade,
-                    pieceType = (byte)upgradedToPieceType, // destination type
-                    ActorsCellId = (ushort)cell,
-                    TargetCellId = (ushort)cell,
+                    pieceType = actorType, // destination type
+                    ActorsCellId = (ushort)cell, // to do - switch this around. PieceType = used to be upgradedToPieceType- and TargetCellId used to be cell.
+                    TargetCellId = (byte)upgradedToPieceType,
                     aux = 0
                 };
 
