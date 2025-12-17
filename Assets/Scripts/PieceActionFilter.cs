@@ -82,7 +82,7 @@ public static class PieceActionFilter
 
     private static void setActionKind()
     {
-        if (UIFilter.uIType != UIFilter.UIType.ActionKind)
+        if (UIFilter.uIType != UIFilter.UIType.PieceActionKind)
             {
                 UIFilter.ResetClickedData();
                 return;
@@ -117,7 +117,7 @@ public static class PieceActionFilter
 
     private static void SetTargetCellIdToClickedCell()
     {
-        if (UIFilter.uIType != UIFilter.UIType.TargetCellId)
+        if (UIFilter.uIType != UIFilter.UIType.Cell)
         {
             UIFilter.ResetClickedData();
             return;
@@ -131,7 +131,7 @@ public static class PieceActionFilter
 
     private static void SetAuxForLauncher()
     {
-         if (UIFilter.uIType != UIFilter.UIType.TargetCellId)
+         if (UIFilter.uIType != UIFilter.UIType.Cell)
         {
             UIFilter.ResetClickedData();
             return;
@@ -148,7 +148,7 @@ public static class PieceActionFilter
 
         if (!isTargetCellId)
         {
-            if (UIFilter.uIType != UIFilter.UIType.TargetCellId)
+            if (UIFilter.uIType != UIFilter.UIType.Cell)
             {
                 UIFilter.ResetClickedData();
                 return;
@@ -169,7 +169,7 @@ public static class PieceActionFilter
 
         if (!isTargetCellId)
         {
-            if (UIFilter.uIType != UIFilter.UIType.TargetCellId)
+            if (UIFilter.uIType != UIFilter.UIType.Cell)
             {
                 UIFilter.ResetClickedData();
                 return;
@@ -190,7 +190,7 @@ public static class PieceActionFilter
 
         if (!isTargetCellId)
         {
-            if (UIFilter.uIType != UIFilter.UIType.TargetCellId)
+            if (UIFilter.uIType != UIFilter.UIType.Cell)
             {
                 UIFilter.ResetClickedData();
                 return;
@@ -211,7 +211,7 @@ public static class PieceActionFilter
         
         if (!isTargetCellId)
         {
-            if (UIFilter.uIType != UIFilter.UIType.TargetCellId)
+            if (UIFilter.uIType != UIFilter.UIType.Cell)
             {
                 UIFilter.ResetClickedData();
                 return;
@@ -231,7 +231,7 @@ public static class PieceActionFilter
 
         if (!isAddCost)
         {
-            if (UIFilter.uIType != UIFilter.UIType.addCost)
+            if (UIFilter.uIType != UIFilter.UIType.Cell)
             {
                 UIFilter.ResetClickedData();
                 return;

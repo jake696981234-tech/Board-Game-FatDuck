@@ -3,6 +3,106 @@ using UnityEngine;
 
 public static class UIFilter
 {
+    public static void topFilter()
+    {
+        if (uIType == UIType.EndTurnButton)
+        {
+            //peformEndTurn to do
+            reset();
+        }
+
+
+        if (uIType == UIType.Cancel)
+        {
+            reset();
+            return;
+        }
+
+        switch (state)
+        {
+            case State.Idle:
+            {
+                if (uIType == UIType.BuildItem)
+                {
+                    CreateActionFilter.Filter();
+                    return;
+                }
+                if (uIType == UIType.PieceActionKind)
+                {
+                    PieceActionFilter.Filter();
+                    return;
+                }
+                
+                ResetClickedData();
+                return;
+            }
+            case State.Create:
+            {
+                CreateActionFilter.Filter();
+                return;
+            }
+            case State.PieceAction:
+            {
+                PieceActionFilter.Filter();
+                return;
+            }
+        }
+    }
+    public static byte clickedBuildPieceType;
+    public static byte clickedActionKind;
+    public static ushort clickedCellId;
+    public static ushort clickedWallConfig;
+    public static int[] clickedAddCost;
+    public static int clickedWallNumber;
+
+    #region Subscription
+
+    public static void OnBuildItemClicked(Game.Core.Action item, UIInfo uiInfo)
+    {
+        uIType = UIType.BuildItem;
+        clickedBuildPieceType = item.pieceType;
+        topFilter();
+    }
+
+    public static void OnWallNumberClicked(int wallNumber)
+    {
+        uIType = UIType.NumberOfWalls;
+        clickedWallNumber = wallNumber;
+        topFilter();
+    }
+
+    public static void OnWallConfigClicked(ushort wallConfig)
+    {
+        uIType = UIType.WallConfig;
+        clickedWallConfig = wallConfig;
+        topFilter();
+    }
+
+    public static void OnCellClicked(ushort Cell)
+    {
+        uIType = UIType.Cell;
+        clickedCellId = Cell;
+        topFilter();
+    }
+
+    public static void OnPieceActionClicked(Game.Core.Action item)
+    {
+        uIType = UIType.PieceActionKind;
+        clickedActionKind = item.kind;
+        topFilter();
+    }
+
+    public static void onCancel()
+    {
+        uIType = UIType.EndTurnButton;
+         topFilter();
+    }
+
+
+
+    #endregion
+
+    #region DTOS
     public enum State
     {
         Idle = 1,
@@ -12,29 +112,26 @@ public static class UIFilter
     }
     public static State state = State.Idle;
    
-   public enum UIType
+    public enum UIType
     {
-        cell = 1,
         BuildItem = 2,
         NumberOfWalls = 3,
         WallConfig = 4,
-        addCost = 5,
-        TargetCellId = 6,
-        ActionKind = 7,
-        PieceAction = 8,
+        Cell = 6,
+        PieceActionKind = 8,
         Cancel = 9,
+        EndTurnButton = 10,
     }
     public static UIType uIType;
+    #endregion
 
-    public static byte clickedBuildItem;
-    public static byte clickedActionKind;
-    public static ushort clickedCellId;
-    public static ushort clickedAux;
-    public static int[] clickedAddCost;
-
+    #region Util
+    
     public static void reset()
     {
         // Add Reset UI in Here to do
+
+        ResetClickedData();
 
         state = State.Idle;
 
@@ -64,46 +161,8 @@ public static class UIFilter
 
     public static void ResetClickedData()
     {
-        clickedBuildItem = 30;
+        clickedBuildPieceType = 30;
         clickedCellId = 30;
     }
-
-    public static void topFilter()
-    {
-        if (uIType == UIType.Cancel)
-        {
-            reset();
-            return;
-        }
-
-        switch (state)
-        {
-            case State.Idle:
-            {
-                if (uIType == UIType.BuildItem)
-                {
-                    CreateActionFilter.Filter();
-                    return;
-                }
-                if (uIType == UIType.PieceAction)
-                {
-                    PieceActionFilter.Filter();
-                    return;
-                }
-                
-                ResetClickedData();
-                return;
-            }
-            case State.Create:
-            {
-                CreateActionFilter.Filter();
-                return;
-            }
-            case State.PieceAction:
-            {
-                PieceActionFilter.Filter();
-                return;
-            }
-        }
-    }  
+    #endregion
 }

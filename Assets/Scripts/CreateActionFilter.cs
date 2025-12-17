@@ -54,10 +54,10 @@ public static class CreateActionFilter
     {
         UIFilter.state = UIFilter.State.Create;
 
-        pieceType = UIFilter.clickedBuildItem;
+        pieceType = UIFilter.clickedBuildPieceType;
         isPieceType = true;
         
-        if (!PieceDefinition.connectors_enabled[UIFilter.clickedBuildItem]) isAux = true;
+        if (!PieceDefinition.connectors_enabled[UIFilter.clickedBuildPieceType]) isAux = true;
         if (!PieceDefinition.sacrificeCost_enabled[pieceType]) isAddCost = true;
 
         cleanUpSet();
@@ -81,14 +81,14 @@ public static class CreateActionFilter
             UIFilter.ResetClickedData();
             return;
         }
-        aux = UIFilter.clickedAux;
+        aux = UIFilter.clickedWallConfig;
         isAux = true;
         cleanUpSet();
     }
 
     public static void setSacCost()
     {
-        if (UIFilter.uIType != UIFilter.UIType.addCost)
+        if (UIFilter.uIType != UIFilter.UIType.Cell)
         {
             UIFilter.ResetClickedData();
             return;
@@ -100,7 +100,7 @@ public static class CreateActionFilter
     
     public static void setTargetCell()
     {
-        if (UIFilter.uIType != UIFilter.UIType.TargetCellId)
+        if (UIFilter.uIType != UIFilter.UIType.Cell)
         {
             UIFilter.ResetClickedData();
             return;
@@ -152,7 +152,7 @@ public static class CreateActionFilter
     // need to add go back to defualt Option
     public static void NumberOfWallOptions()
     {
-        var wallOptions = UIHelpers.WallOptionsForPieceType((byte)CreateActionFilter.pieceType); // move this
+        var wallOptions = ComputeWallOptions();
         UI.hic.wallOptionPanel.ShowSideOptions(wallOptions);
         PanelToggles.TogglePanels(build: false, create: false, action: false, pieceFull: false, execute: false, walls: true); // populate this to pther areas
     }
@@ -172,6 +172,21 @@ public static class CreateActionFilter
         showBoard.HighlightCells(computeCreateCellOptions(), UI.hic.config.createModeCellHighlight);
     }
 
+    
+    public static IEnumerable<ushort> ComputeWallOptions()
+    {
+        List<ushort> wallConfigs = new List<ushort>(64);
+        for (int i = 0; i < UIBridge._count; i++)
+        {
+            var actions = UIBridge._offers[i];
+            if (actions.kind != Create) continue;   // byte code
+            if (actions.pieceType != pieceType) continue;
+            if (UIBridge._mask[i] == 0) continue; // masked out = illegal/unaffordable
+            wallConfigs.Add(actions.aux);
+        }
+        return wallConfigs;
+    }
+
     private static IEnumerable<int> computeSacrficeTargets()
     {
         List<int> SacrficeTargets = new List<int>(128);
@@ -179,13 +194,13 @@ public static class CreateActionFilter
         for (int i = 0; i < UIBridge._count; i++)
         {
             var actions = UIBridge._offers[i];
-            if (actions.kind != Game.Core.ActionKind.Create) continue;
-            if (actions.pieceType != CreateActionFilter.pieceType) continue;
+            if (actions.kind != Create) continue;
+            if (actions.pieceType != pieceType) continue;
             if (UIBridge._mask[i] == 0) continue;
 
-            if (PieceDefinition.sacrificeCost_isNeedsSpecificPiece[CreateActionFilter.pieceType])
+            if (PieceDefinition.sacrificeCost_isNeedsSpecificPiece[pieceType])
             {
-                if (PieceDefinition.sacrificeCost_specificPiece[CreateActionFilter.pieceType] != actions.TargetCellId) continue;
+                if (PieceDefinition.sacrificeCost_specificPiece[pieceType] != actions.TargetCellId) continue;
             }
 
             SacrficeTargets.Add(actions.TargetCellId); // to do, check if this is the right thing to add
@@ -201,12 +216,12 @@ public static class CreateActionFilter
             var theAction = UIBridge._offers[i];
             if (theAction.kind != Create) continue;   // byte code
 
-            if (PieceDefinition.connectors_enabled[CreateActionFilter.pieceType])
+            if (PieceDefinition.connectors_enabled[pieceType])
             {
-                if (theAction.aux != CreateActionFilter.aux) continue;
+                if (theAction.aux != aux) continue;
             }
 
-            if (theAction.pieceType != CreateActionFilter.pieceType) continue;
+            if (theAction.pieceType != pieceType) continue;
             if (UIBridge._mask[i] == 0) continue; // masked out = illegal/unaffordable
             CreateCellOptions.Add(theAction.TargetCellId);
         }
