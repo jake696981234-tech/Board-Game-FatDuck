@@ -1,4 +1,5 @@
 using static Game.Core.ActionKind;
+using System.Collections.Generic;
 
 public static class CreateActionFilter 
 {
@@ -121,32 +122,94 @@ public static class CreateActionFilter
     {
         if (!isNumberOfWalls)
         {
-            // showNumberOfWallOptions();
+            NumberOfWallOptions();
             UIFilter.ResetClickedData();
             return;
         }
         if (!isAux)
         {
-            // showWallConfigOptions();
+            WallConfigOptions();
             UIFilter.ResetClickedData();
             return;
         }
 
         if (!isAddCost)
         {
-            // showSacrificeCostOptions();
+            SacrificeCostOptions();
             UIFilter.ResetClickedData();
             return;
         }
 
         if (!isTargetCellId)
         {
-            // showSacrificeCostOptions();
+            CreateCellOptions();
             UIFilter.ResetClickedData();
             return;
         }
         //performAction(); to do
     }
 
+    // need to add go back to defualt Option
+    public static void NumberOfWallOptions()
+    {
+        var wallOptions = UIHelpers.WallOptionsForPieceType((byte)CreateActionFilter.pieceType); // move this
+        UI.hic.wallOptionPanel.ShowSideOptions(wallOptions);
+        PanelToggles.TogglePanels(build: false, create: false, action: false, pieceFull: false, execute: false, walls: true); // populate this to pther areas
+    }
 
+    public static void WallConfigOptions()
+    {
+        // to do- currently the system is Semi-Internal
+    }
+
+    public static void SacrificeCostOptions()
+    {
+        showBoard.HighlightCells(computeSacrficeTargets(), UI.hic.config.createModeCellHighlight);
+    }
+
+    public static void CreateCellOptions()
+    {
+        showBoard.HighlightCells(computeCreateCellOptions(), UI.hic.config.createModeCellHighlight);
+    }
+
+    private static IEnumerable<int> computeSacrficeTargets()
+    {
+        List<int> SacrficeTargets = new List<int>(128);
+ 
+        for (int i = 0; i < UIBridge._count; i++)
+        {
+            var actions = UIBridge._offers[i];
+            if (actions.kind != Game.Core.ActionKind.Create) continue;
+            if (actions.pieceType != CreateActionFilter.pieceType) continue;
+            if (UIBridge._mask[i] == 0) continue;
+
+            if (PieceDefinition.sacrificeCost_isNeedsSpecificPiece[CreateActionFilter.pieceType])
+            {
+                if (PieceDefinition.sacrificeCost_specificPiece[CreateActionFilter.pieceType] != actions.TargetCellId) continue;
+            }
+
+            SacrficeTargets.Add(actions.TargetCellId); // to do, check if this is the right thing to add
+        }
+        return SacrficeTargets;
+    } 
+
+    public static IEnumerable<int> computeCreateCellOptions()
+    {
+        List<int> CreateCellOptions = new List<int>(128);
+        for (int i = 0; i < UIBridge._count; i++)
+        {
+            var theAction = UIBridge._offers[i];
+            if (theAction.kind != Create) continue;   // byte code
+
+            if (PieceDefinition.connectors_enabled[CreateActionFilter.pieceType])
+            {
+                if (theAction.aux != CreateActionFilter.aux) continue;
+            }
+
+            if (theAction.pieceType != CreateActionFilter.pieceType) continue;
+            if (UIBridge._mask[i] == 0) continue; // masked out = illegal/unaffordable
+            CreateCellOptions.Add(theAction.TargetCellId);
+        }
+        return CreateCellOptions;
+    }
 }
