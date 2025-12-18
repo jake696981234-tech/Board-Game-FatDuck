@@ -13,7 +13,7 @@ public sealed class WallOptionPanel : MonoBehaviour
 
     public GameObject FirstWallOptionPanel;
 
-    public GameObject WallCreatePanel2;
+    
 
     public WallOptionPrefab wallOptionPrefab;
 
@@ -26,9 +26,9 @@ public sealed class WallOptionPanel : MonoBehaviour
 
     private List<ushort> cachedwallOptions = new();
 
-    public void ShowSideOptions(IEnumerable<ushort> wallOptions)
+    public void showNumberOfWallS(IEnumerable<ushort> wallOptions)
     {
-        WallCreatePanel2.SetActive(false);
+        // WallCreatePanel2.SetActive(false);
         FirstWallOptionPanel.SetActive(true);
 
 
@@ -47,9 +47,9 @@ public sealed class WallOptionPanel : MonoBehaviour
 
 
 
-    public void showWallOptions(IEnumerable<ushort> wallOptions, int howMany)
+    public void showWallConfigOptions(int howMany)
     {
-        WallCreatePanel2.SetActive(true);
+        // WallCreatePanel2.SetActive(true);
         DestoryAllWallOptions();
         wallConfigOption.Clear();
 
@@ -61,13 +61,13 @@ public sealed class WallOptionPanel : MonoBehaviour
         if (UI.giveRawActionOffers)
         {
             // Raw: show all that match howMany
-            wallsToShow = wallOptions.Where(w => howMany == PiecesSides.CountWalls(w));
+            wallsToShow = cachedwallOptions.Where(w => howMany == PiecesSides.CountWalls(w));
         }
         else
         {
             // Filtered: unique options that match howMany
             var seen = new HashSet<ushort>();
-            wallsToShow = wallOptions
+            wallsToShow = cachedwallOptions
                 .Where(w => howMany == PiecesSides.CountWalls(w))
                 .Where(w => seen.Add(w));   // only first time a value appears
         }
@@ -93,35 +93,31 @@ public sealed class WallOptionPanel : MonoBehaviour
         wallConfigOption.Clear();
     }
 
+    
     public void whenButtonOneIsClicked()
     {
-        showWallOptions(cachedwallOptions, 1);
+        UIFilter.OnWallNumberClicked(1);
         FirstWallOptionPanel.SetActive(false);
     }
     public void whenButtonTwoIsClicked()
     {
-        showWallOptions(cachedwallOptions, 2);
+        UIFilter.OnWallNumberClicked(2);
         FirstWallOptionPanel.SetActive(false);
     }
     public void whenButtonThreeIsClicked()
     {
-        showWallOptions(cachedwallOptions, 3);
+        UIFilter.OnWallNumberClicked(3);
         FirstWallOptionPanel.SetActive(false);
     }
     public void whenButtonFourIsClicked()
     {
-        showWallOptions(cachedwallOptions, 4);
+        UIFilter.OnWallNumberClicked(4);
         FirstWallOptionPanel.SetActive(false);
     }
     public void whenButtonFiveIsClicked()
     {
-        showWallOptions(cachedwallOptions, 5);
+        UIFilter.OnWallNumberClicked(5);
         FirstWallOptionPanel.SetActive(false);
-    }
-
-    public void whenBackIsClicked()
-    {
-        ShowSideOptions(cachedwallOptions);
     }
 
 }

@@ -16,11 +16,14 @@ public class InteractionConfig : ScriptableObject
     public Color actionExecuteBackground = new(0.1f, 0.1f, 0.12f, 0.85f);
     public Color actionExecutePanelBackground = new(0.1f, 0.1f, 0.1f, 0.85f);
 
+    public Color ConnectorModeBackground = new(0.1f, 0.12f, 0.1f, 0.85f);
+
 
 
     [Header("Cell Highlights")]
     // (Legacy) Kept for backwards compatibility, not used for highlights anymore:
     public Color createModeCellHighlight = new(0.1f, 0.1f, 0.1f, 0.85f);
+    public Color SacrificeCostCellHighlight = new(0.1f, 0.1f, 0.1f, 0.85f);
 
     // NOTE: We now use ONE colour for all legal action cells:
     public Color actionLegalTargetHighlight = new(0.1f, 0.1f, 0.1f, 0.85f);

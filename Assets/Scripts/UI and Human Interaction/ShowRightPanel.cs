@@ -42,35 +42,35 @@ public static class ShowRightPanel
         UI.hic.nonPieceActionList.Show(items);
     }
 
-    public static void PushPieceActionListForSelection()
-    {
-        var items = new List<ActionItem>();
-        bool moveAddedForCell = false;
-        if (UIHelpers._selectedCellId.HasValue)
-        {
-            int cell = UIHelpers._selectedCellId.Value;
-            for (int i = 0; i < UIBridge._count; i++)
-            {
-                var a = UIBridge._offers[i];
-                if (a.kind == Game.Core.ActionKind.EndTurn) continue; // exclude non-piece actions
-                if (a.ActorsCellId != (ushort)cell) continue;               // only actions from this piece
+    // public static void PushPieceActionListForSelection()
+    // {
+    //     var items = new List<ActionItem>();
+    //     bool moveAddedForCell = false;
+    //     if (UIHelpers._selectedCellId.HasValue)
+    //     {
+    //         int cell = UIHelpers._selectedCellId.Value;
+    //         for (int i = 0; i < UIBridge._count; i++)
+    //         {
+    //             var a = UIBridge._offers[i];
+    //             if (a.kind == Game.Core.ActionKind.EndTurn) continue; // exclude non-piece actions
+    //             if (a.ActorsCellId != (ushort)cell) continue;               // only actions from this piece
 
-                // Show only one Move per selected piece unless raw offers requested
-                if (a.kind == Game.Core.ActionKind.Move && !UI.hic.config.GiveRawActionOffers)
-                {
-                    if (moveAddedForCell) continue;
-                    moveAddedForCell = true;
-                }
+    //             // Show only one Move per selected piece unless raw offers requested
+    //             if (a.kind == Game.Core.ActionKind.Move && !UI.hic.config.GiveRawActionOffers)
+    //             {
+    //                 if (moveAddedForCell) continue;
+    //                 moveAddedForCell = true;
+    //             }
 
-                int kind = a.kind;
-                string label = UIHelpers.PrettyAction(a);
-                int cost = Mathf.RoundToInt(UIBridge._quoted[i]);
-                bool legal = UIBridge._mask[i] != 0;
-                items.Add(new ActionItem(i.ToString(), label, cost, legal, Array.Empty<int>(), kind));
-            }
-        }
-        UI.hic.pieceActionListFull.Show(items);
-    }
+    //             int kind = a.kind;
+    //             string label = UIHelpers.PrettyAction(a);
+    //             int cost = Mathf.RoundToInt(UIBridge._quoted[i]);
+    //             bool legal = UIBridge._mask[i] != 0;
+    //             items.Add(new ActionItem(i.ToString(), label, cost, legal, Array.Empty<int>(), kind));
+    //         }
+    //     }
+    //     UI.hic.pieceActionListFull.Show(items);
+    // }
 
 
 }

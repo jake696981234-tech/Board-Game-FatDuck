@@ -28,6 +28,7 @@ public sealed class HumanInteractionController : MonoBehaviour
     [Header("Panels")]
     public BuildMenuPresenter buildMenu;         // BuildPanel
     public RectTransform createPanel;       // CreatePanel
+    public GameObject WallCreatePanel2;
     public TMP_Text createTitleText;
     public TMP_Text createCostText;
     public Image createSprite;

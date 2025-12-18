@@ -257,12 +257,12 @@ public static class OfferProvider
                 {
                     kind = Upgrade,
                     pieceType = actorType, // destination type
-                    ActorsCellId = (ushort)cell, // to do - switch this around. PieceType = used to be upgradedToPieceType- and TargetCellId used to be cell.
+                    ActorsCellId = (ushort)cell, // to do need to change the rest of the method - I switched this around. PieceType = used to be upgradedToPieceType- and TargetCellId used to be cell.
                     TargetCellId = (byte)upgradedToPieceType,
                     aux = 0
                 };
 
-                if (PieceDefinition.sacrificeCost_enabled[upgradedToPieceType])
+                if (PieceDefinition.sacrificeCost_enabled[upgradedToPieceType]) //pretty sure this sets Aux as piece IDs, i made this be reflected in UI. If theres issues, check this.
                 {
                     SacrificeCostOptions.Clear();
                     if (PassiveActions.GenerateSacrificeCosts(in a, player, gameIndex, SacrificeCostOptions))

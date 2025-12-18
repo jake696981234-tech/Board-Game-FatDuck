@@ -1,5 +1,9 @@
 using static Game.Core.ActionKind;
 using System.Collections.Generic;
+using UnityEngine;
+using System.Linq;
+
+// to do, need to figure out if the strut UIinfo still needs to be around, its not added to this new system yet
 
 public static class CreateActionFilter 
 {
@@ -7,17 +11,24 @@ public static class CreateActionFilter
     public static bool isPieceType;
     public static int pieceType;
 
-    public const ushort ActerCellId = 0xFFFF;
+    public const ushort ActorCellId = 0xFFFF;
 
     public static bool isTargetCellId;
     public static ushort TargetCellId;
+    public static int[] cachedLegalTargetCellId;
 
     public static bool isNumberOfWalls;
+    public static int WallNumber;
+
+
     public static bool isAux;
+    public static bool ActionRequiresAux;
     public static ushort aux;
 
     public static bool isAddCost;
+    public static bool ActionCostRequiresAddCost;
     public static int[] addCost; 
+    public static int[] cachedLegalAddCost;
 
 
     public static void Filter()
@@ -70,6 +81,7 @@ public static class CreateActionFilter
             UIFilter.ResetClickedData();
             return;
         }
+        WallNumber = UIFilter.clickedWallNumber;
         isNumberOfWalls = true;
         cleanUpSet();
     }
@@ -82,25 +94,29 @@ public static class CreateActionFilter
             return;
         }
         aux = UIFilter.clickedWallConfig;
+        ActionRequiresAux = true;
+        
+        
         isAux = true;
         cleanUpSet();
     }
 
     public static void setSacCost()
     {
-        if (UIFilter.uIType != UIFilter.UIType.Cell)
+        if (UIFilter.uIType != UIFilter.UIType.Cell || cachedLegalAddCost.Contains(UIFilter.clickedCellId))
         {
             UIFilter.ResetClickedData();
             return;
         } 
-        addCost[addCost.Length] = UIFilter.clickedAddCost[UIFilter.clickedAddCost.Length];
+        addCost[addCost.Length] = UIBridge.bm.occupantPieceId[UIFilter.clickedCellId];
+        ActionCostRequiresAddCost = true;
         if (addCost.Length == PieceDefinition.sacrificeCost_howManyItNeeds[pieceType]) isAddCost = true;
         cleanUpSet();
     }
     
     public static void setTargetCell()
     {
-        if (UIFilter.uIType != UIFilter.UIType.Cell)
+        if (UIFilter.uIType != UIFilter.UIType.Cell || cachedLegalTargetCellId.Contains(UIFilter.clickedCellId))
         {
             UIFilter.ResetClickedData();
             return;
@@ -146,31 +162,93 @@ public static class CreateActionFilter
             UIFilter.ResetClickedData();
             return;
         }
-        //performAction(); to do
+        
+        if (ActionCostRequiresAddCost && !ActionRequiresAux) // to do- probs need to resort the addcost array order.
+        {
+            Game.Core.Action theAction = new Game.Core.Action(kind, (byte)pieceType, ActorCellId, TargetCellId, 0, addCost);
+            UIBridge.PerformActionIndex(theAction);
+            return;
+        }
+        if (ActionCostRequiresAddCost && ActionRequiresAux)
+        {
+            Game.Core.Action theAction = new Game.Core.Action(kind, (byte)pieceType, ActorCellId, TargetCellId, aux, addCost);
+            UIBridge.PerformActionIndex(theAction);
+            return;
+        }
+        if (!ActionCostRequiresAddCost && ActionRequiresAux)
+        {
+            Game.Core.Action theAction = new Game.Core.Action(kind, (byte)pieceType, ActorCellId, TargetCellId, aux);
+            UIBridge.PerformActionIndex(theAction);
+            return;
+        }
+        if (!ActionCostRequiresAddCost && !ActionRequiresAux)
+        {
+            Game.Core.Action theAction = new Game.Core.Action(kind, (byte)pieceType, ActorCellId, TargetCellId);
+            UIBridge.PerformActionIndex(theAction);
+            return;
+        }
+        Debug.Log($"showNextOption failed this is very unexpected");
+    }
+
+     public static void CreateCellOptions()
+    {
+        showBoard.ClearHighlights();
+        showBoard.ApplyDefaultCellColor(UI.hic.config.defaultCellColor);
+        
+        showBoard.HighlightCells(computeCreateCellOptions(), UI.hic.config.createModeCellHighlight);
+        PanelToggles.TogglePanels(build: false, create: true, action: false, pieceFull: false, execute: false, walls: false, secondWalls: false); 
+
+        UIHelpers.SetBackdropColor(UI.hic.config.createModeBackground);
+        UIHelpers.SetPanelBackdropColor(UI.hic.config.createModePanelBackground);
+        if (UI.hic.createTitleText) UI.hic.createTitleText.text = $"Create: {PieceDefinition.name[pieceType]}";
+        if (UI.hic.createCostText) UI.hic.createCostText.text = $"Cost: {PieceDefinition.BuildCost[pieceType]}"; //to do, this does not show full cost
+        if (UI.hic.createSprite)
+        {
+            var s = !string.IsNullOrEmpty(PieceDefinition.spritePath[pieceType]) ? Resources.Load<Sprite>(PieceDefinition.spritePath[pieceType]) : null;
+            UI.hic.createSprite.sprite = s;
+            UI.hic.createSprite.enabled = (s != null);
+        }
+
+        ShowLeftPanel.HudRefresh();
     }
 
     // need to add go back to defualt Option
     public static void NumberOfWallOptions()
     {
-        var wallOptions = ComputeWallOptions();
-        UI.hic.wallOptionPanel.ShowSideOptions(wallOptions);
-        PanelToggles.TogglePanels(build: false, create: false, action: false, pieceFull: false, execute: false, walls: true); // populate this to pther areas
+        UI.hic.wallOptionPanel.showNumberOfWallS(ComputeWallOptions());
+        UIHelpers.SetBackdropColor(UI.hic.config.ConnectorModeBackground);
+        PanelToggles.TogglePanels(build: false, create: false, action: false, pieceFull: false, execute: false, walls: true, secondWalls: false); // populate this to pther areas
     }
 
     public static void WallConfigOptions()
     {
-        // to do- currently the system is Semi-Internal
+        UI.hic.wallOptionPanel.showWallConfigOptions(UIFilter.clickedWallNumber);
+        PanelToggles.TogglePanels(build: false, create: false, action: false, pieceFull: false, execute: false, walls: false, secondWalls: true);
     }
 
     public static void SacrificeCostOptions()
     {
-        showBoard.HighlightCells(computeSacrficeTargets(), UI.hic.config.createModeCellHighlight);
+        showBoard.ClearHighlights();
+        showBoard.ApplyDefaultCellColor(UI.hic.config.defaultCellColor);
+
+        showBoard.HighlightCells(computeSacrficeTargets(), UI.hic.config.SacrificeCostCellHighlight);
+        PanelToggles.TogglePanels(build: false, create: true, action: false, pieceFull: false, execute: false, walls: false, secondWalls: false); // could change this to sac specfic
+
+        UIHelpers.SetBackdropColor(UI.hic.config.createModeBackground);
+        UIHelpers.SetPanelBackdropColor(UI.hic.config.createModePanelBackground);
+        if (UI.hic.createTitleText) UI.hic.createTitleText.text = $"Choose Sacrfice/s for: {PieceDefinition.name[pieceType]}";
+        if (UI.hic.createCostText) UI.hic.createCostText.text = $"Cost: {PieceDefinition.BuildCost[pieceType]}"; //to do, this does not show full cost
+        if (UI.hic.createSprite)
+        {
+            var s = !string.IsNullOrEmpty(PieceDefinition.spritePath[pieceType]) ? Resources.Load<Sprite>(PieceDefinition.spritePath[pieceType]) : null;
+            UI.hic.createSprite.sprite = s;
+            UI.hic.createSprite.enabled = (s != null);
+        }
+
+        ShowLeftPanel.HudRefresh();
     }
 
-    public static void CreateCellOptions()
-    {
-        showBoard.HighlightCells(computeCreateCellOptions(), UI.hic.config.createModeCellHighlight);
-    }
+   
 
     
     public static IEnumerable<ushort> ComputeWallOptions()
@@ -190,7 +268,7 @@ public static class CreateActionFilter
     private static IEnumerable<int> computeSacrficeTargets()
     {
         List<int> SacrficeTargets = new List<int>(128);
- 
+        var seen = new HashSet<int>();
         for (int i = 0; i < UIBridge._count; i++)
         {
             var actions = UIBridge._offers[i];
@@ -203,8 +281,15 @@ public static class CreateActionFilter
                 if (PieceDefinition.sacrificeCost_specificPiece[pieceType] != actions.TargetCellId) continue;
             }
 
-            SacrficeTargets.Add(actions.TargetCellId); // to do, check if this is the right thing to add
+            //to do - need to remove the prevoius selected option if, there was one
+            
+            for (int b = 0; b < PieceDefinition.sacrificeCost_howManyItNeeds[pieceType]; b++)
+            {
+                if (!seen.Add(actions.addCost[b])) continue; // skip duplicates
+                SacrficeTargets.Add(UIBridge.bm.pieceCellId[actions.addCost[b]]); 
+            }
         }
+        cachedLegalAddCost = SacrficeTargets.ToArray();
         return SacrficeTargets;
     } 
 
@@ -225,6 +310,7 @@ public static class CreateActionFilter
             if (UIBridge._mask[i] == 0) continue; // masked out = illegal/unaffordable
             CreateCellOptions.Add(theAction.TargetCellId);
         }
+        cachedLegalTargetCellId = CreateCellOptions.ToArray();
         return CreateCellOptions;
     }
 }

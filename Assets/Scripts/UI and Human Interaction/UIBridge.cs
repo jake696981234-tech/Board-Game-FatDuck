@@ -74,18 +74,16 @@ public static class UIBridge
 
     #endregion
     #region Action Out Point
-    public static void PerformActionIndex(int idx)
+    public static void PerformActionIndex(Game.Core.Action theAction)
     {
-        if (gameState == null) return;
-        var a = _offers[idx];
         // Execute through reducer (single source of truth). This method fires OnActionExecuted afterwards. :contentReference[oaicite:9]{index=9}
-        if (!gameState.Perform(in a))
+        if (!gameState.Perform(in theAction))
         {
-            Debug.LogWarning($"[HIC] Perform rejected: {UIHelpers.PrettyAction(a)}");
+            Debug.LogWarning($"[HIC] Perform rejected: {UIHelpers.PrettyAction(theAction)}");
         }
         else
         {
-            UI._lastActionLabel = UIHelpers.PrettyAction(a); // show in Debug HUD
+            UI._lastActionLabel = UIHelpers.PrettyAction(theAction); // show in Debug HUD
         }
         // UI refresh happens via HandleActionExecuted()
     }

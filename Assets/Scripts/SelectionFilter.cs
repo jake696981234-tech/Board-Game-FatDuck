@@ -52,10 +52,20 @@ public static class UIFilter
     public static byte clickedActionKind;
     public static ushort clickedCellId;
     public static ushort clickedWallConfig;
-    public static int[] clickedAddCost;
     public static int clickedWallNumber;
 
     #region Subscription
+
+    public static void HookPresenters()
+    {
+        UI.hic.endTurnButton.onClick.AddListener(onEndTurnButton);
+        UI.hic.buildMenu.OnItemClicked += OnBuildItemClicked;
+        //UI.hic.nonPieceActionList.OnItemClicked += OnActionItemClicked;
+        UI.hic.pieceActionListFull.OnItemClicked += OnPieceActionClicked;
+        // UI.hic.SeePerPieceTypeTotalsButton.onClick.AddListener(() => ShowFactoryBonusByPieceTypePrefabs());
+    }
+
+
 
     public static void OnBuildItemClicked(Game.Core.Action item, UIInfo uiInfo)
     {
@@ -85,19 +95,24 @@ public static class UIFilter
         topFilter();
     }
 
-    public static void OnPieceActionClicked(Game.Core.Action item)
+    public static void OnPieceActionClicked(ActionItem item)
     {
         uIType = UIType.PieceActionKind;
-        clickedActionKind = item.kind;
+        clickedActionKind = (byte)item.kind;
         topFilter();
     }
 
     public static void onCancel()
     {
-        uIType = UIType.EndTurnButton;
+        uIType = UIType.Cancel;
          topFilter();
     }
 
+    public static void onEndTurnButton()
+    {
+        uIType = UIType.EndTurnButton;
+         topFilter();
+    }
 
 
     #endregion
@@ -130,6 +145,16 @@ public static class UIFilter
     public static void reset()
     {
         // Add Reset UI in Here to do
+        ShowRightPanel.PushNonPieceActionList();
+        ShowRightPanel.PushCreateActionMenu();
+
+        //UI 
+        showBoard.ClearHighlights();
+        showBoard.ApplyDefaultCellColor(UI.hic.config.defaultCellColor);
+        UIHelpers.SetBackdropColor(UI.hic.config ? UI.hic.config.buildModeBackground : new Color(0, 0, 0, 0.8f));
+        UIHelpers.SetPanelBackdropColor(UI.hic.config ? UI.hic.config.buildModePanelBackground : new Color(0, 0, 0, 0.8f));
+        PanelToggles.TogglePanels(build: true, create: false, action: true, pieceFull: false, execute: false, walls: false, secondWalls: false);
+        ShowLeftPanel.HudRefresh();
 
         ResetClickedData();
 
@@ -140,7 +165,9 @@ public static class UIFilter
         PieceActionFilter.isActorCellId = false;
         PieceActionFilter.isTargetCellId = false;
         PieceActionFilter.isAux = false;
+        PieceActionFilter.ActionRequiresAux = false;
         PieceActionFilter.isAddCost = false;
+        PieceActionFilter.ActionCostRequiresAddCost = false;
 
         PieceActionFilter.kind = 15;
         PieceActionFilter.pieceType = -1;
@@ -151,7 +178,9 @@ public static class UIFilter
         CreateActionFilter.isPieceType = false;
         CreateActionFilter.isTargetCellId = false;
         CreateActionFilter.isAux = false;
+        CreateActionFilter.ActionRequiresAux = false;
         CreateActionFilter.isAddCost = false;
+        CreateActionFilter.ActionCostRequiresAddCost = false;
 
         CreateActionFilter.pieceType = -1;
         CreateActionFilter.TargetCellId = 300;
