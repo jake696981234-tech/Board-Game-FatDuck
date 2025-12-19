@@ -61,6 +61,64 @@ public static class CreateActionFilter
         
     }
 
+    private static void showNextOption()
+    {
+        if (!isNumberOfWalls)
+        {
+            NumberOfWallOptions();
+            UIFilter.ResetClickedData();
+            return;
+        }
+        if (!isAux)
+        {
+            WallConfigOptions();
+            UIFilter.ResetClickedData();
+            return;
+        }
+        if (!isAddCost)
+        {
+            SacrificeCostOptions();
+            UIFilter.ResetClickedData();
+            return;
+        }
+        if (!isTargetCellId)
+        {
+            CreateCellOptions();
+            UIFilter.ResetClickedData();
+            return;
+        }
+        //Perform Actions
+        if (ActionCostRequiresAddCost && !ActionRequiresAux) // to do- probs need to resort the addcost array order.
+        {
+            Game.Core.Action theAction = new Game.Core.Action(kind, (byte)pieceType, ActorCellId, TargetCellId, 0, addCost);
+            UIBridge.PerformActionIndex(theAction);
+            UIFilter.reset();
+            return;
+        }
+        if (ActionCostRequiresAddCost && ActionRequiresAux)
+        {
+            Game.Core.Action theAction = new Game.Core.Action(kind, (byte)pieceType, ActorCellId, TargetCellId, aux, addCost);
+            UIBridge.PerformActionIndex(theAction);
+            UIFilter.reset();
+            return;
+        }
+        if (!ActionCostRequiresAddCost && ActionRequiresAux)
+        {
+            Game.Core.Action theAction = new Game.Core.Action(kind, (byte)pieceType, ActorCellId, TargetCellId, aux);
+            UIBridge.PerformActionIndex(theAction);
+            UIFilter.reset();
+            return;
+        }
+        if (!ActionCostRequiresAddCost && !ActionRequiresAux)
+        {
+            Game.Core.Action theAction = new Game.Core.Action(kind, (byte)pieceType, ActorCellId, TargetCellId);
+            UIBridge.PerformActionIndex(theAction);
+            UIFilter.reset();
+            return;
+        }
+        Debug.Log($"showNextOption failed this is very unexpected");
+    }
+
     public static void SetFilter()
     {
         UIFilter.state = UIFilter.State.Create;
@@ -95,7 +153,6 @@ public static class CreateActionFilter
         }
         aux = UIFilter.clickedWallConfig;
         ActionRequiresAux = true;
-        
         
         isAux = true;
         cleanUpSet();
@@ -134,61 +191,7 @@ public static class CreateActionFilter
     
 
 
-    private static void showNextOption()
-    {
-        if (!isNumberOfWalls)
-        {
-            NumberOfWallOptions();
-            UIFilter.ResetClickedData();
-            return;
-        }
-        if (!isAux)
-        {
-            WallConfigOptions();
-            UIFilter.ResetClickedData();
-            return;
-        }
-
-        if (!isAddCost)
-        {
-            SacrificeCostOptions();
-            UIFilter.ResetClickedData();
-            return;
-        }
-
-        if (!isTargetCellId)
-        {
-            CreateCellOptions();
-            UIFilter.ResetClickedData();
-            return;
-        }
-        
-        if (ActionCostRequiresAddCost && !ActionRequiresAux) // to do- probs need to resort the addcost array order.
-        {
-            Game.Core.Action theAction = new Game.Core.Action(kind, (byte)pieceType, ActorCellId, TargetCellId, 0, addCost);
-            UIBridge.PerformActionIndex(theAction);
-            return;
-        }
-        if (ActionCostRequiresAddCost && ActionRequiresAux)
-        {
-            Game.Core.Action theAction = new Game.Core.Action(kind, (byte)pieceType, ActorCellId, TargetCellId, aux, addCost);
-            UIBridge.PerformActionIndex(theAction);
-            return;
-        }
-        if (!ActionCostRequiresAddCost && ActionRequiresAux)
-        {
-            Game.Core.Action theAction = new Game.Core.Action(kind, (byte)pieceType, ActorCellId, TargetCellId, aux);
-            UIBridge.PerformActionIndex(theAction);
-            return;
-        }
-        if (!ActionCostRequiresAddCost && !ActionRequiresAux)
-        {
-            Game.Core.Action theAction = new Game.Core.Action(kind, (byte)pieceType, ActorCellId, TargetCellId);
-            UIBridge.PerformActionIndex(theAction);
-            return;
-        }
-        Debug.Log($"showNextOption failed this is very unexpected");
-    }
+    
 
      public static void CreateCellOptions()
     {
@@ -215,6 +218,7 @@ public static class CreateActionFilter
     // need to add go back to defualt Option
     public static void NumberOfWallOptions()
     {
+        showBoard.ClearHighlights();
         UI.hic.wallOptionPanel.showNumberOfWallS(ComputeWallOptions());
         UIHelpers.SetBackdropColor(UI.hic.config.ConnectorModeBackground);
         PanelToggles.TogglePanels(build: false, create: false, action: false, pieceFull: false, execute: false, walls: true, secondWalls: false); // populate this to pther areas
@@ -222,6 +226,7 @@ public static class CreateActionFilter
 
     public static void WallConfigOptions()
     {
+        showBoard.ClearHighlights();
         UI.hic.wallOptionPanel.showWallConfigOptions(UIFilter.clickedWallNumber);
         PanelToggles.TogglePanels(build: false, create: false, action: false, pieceFull: false, execute: false, walls: false, secondWalls: true);
     }

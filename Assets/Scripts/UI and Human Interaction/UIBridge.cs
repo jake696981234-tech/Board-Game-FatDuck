@@ -137,19 +137,12 @@ public static class UIBridge
         }
     }
 
-
-
     private static int snapShotNumber = 0;
 
     private static List<GameSnapshot> snapShotHistory = new List<GameSnapshot>();
 
-
-
-
     public static void actuallyApplySnapshot()
     {
-
-
         snapShotNumber = Mathf.Clamp(snapShotNumber, 0, snapShotHistory.Count - 1);
 
         if (!UI.hic.config.ManualStepThroughSnapShots)
@@ -162,12 +155,6 @@ public static class UIBridge
             showBoard.ApplySnapshotData(snapShotHistory[snapShotNumber]);
         }
     }
-
-
-
-
-
-
 
     #endregion
 }

@@ -25,16 +25,17 @@ public static class UI
             hic.PlayerRow_Button = new Button[4];
         }
 
-        HowManyWallSelected += UIModes.EnterCreateModeWithWallChosen;
+        // HowManyWallSelected += UIModes.EnterCreateModeWithWallChosen;
         giveRawActionOffers = hic.config.GiveRawActionOffers;
 
-        ChangetoSecondPanelMode += PanelToggles.SetWallOptionsSecondPanelMode;
+        // ChangetoSecondPanelMode += PanelToggles.SetWallOptionsSecondPanelMode;
 
-        UIBridge.gameState.OnActionExecuted += UIHelpers.HandleActionExecuted; // refresh on every mutation
-        UIBridge.RebuildOffersForCurrentPlayer();
-        UIModes.EnterBuildMode(); // will push menus from offers
-        UIInput.HookPresenters();
-        ShowLeftPanel.HudRefresh();
+        // UIBridge.gameState.OnActionExecuted += UIHelpers.HandleActionExecuted; // refresh on every mutation
+        // UIBridge.RebuildOffersForCurrentPlayer();
+        // UIModes.EnterBuildMode(); // will push menus from offers
+        // UIInput.HookPresenters();
+        // ShowLeftPanel.HudRefresh();
+        UIFilter.reset();
     }
 
 
@@ -42,11 +43,11 @@ public static class UI
     public static string _lastActionLabel = string.Empty; // for Debug HUD
 
 
-    public static void OnDisable()
-    {
-        UIBridge.gameState.OnActionExecuted -= UIHelpers.HandleActionExecuted;
-        UIInput.UnhookPresenters();
-    }
+    // public static void OnDisable()
+    // {
+    //     // UIBridge.gameState.OnActionExecuted -= UIHelpers.HandleActionExecuted;
+    //     UIInput.UnhookPresenters();
+    // }
 
 
 
@@ -72,16 +73,16 @@ public static class UI
     public static int turnNumber;
     public static int gameNumber = 1;
 
-    public static event System.Action<ushort> HowManyWallSelected;
+    // public static event System.Action<ushort> HowManyWallSelected;
 
-    public static event System.Action ChangetoSecondPanelMode;
+    // public static event System.Action ChangetoSecondPanelMode;
 
-    public static void howManyWallSelected(ushort ChosenWall)
-    {
-        HowManyWallSelected?.Invoke(ChosenWall);
+    // public static void howManyWallSelected(ushort ChosenWall)
+    // {
+    //     HowManyWallSelected?.Invoke(ChosenWall);
 
-        ChangetoSecondPanelMode?.Invoke();
-    }
+    //     ChangetoSecondPanelMode?.Invoke();
+    // }
 
 
     private static void subscribeMe()

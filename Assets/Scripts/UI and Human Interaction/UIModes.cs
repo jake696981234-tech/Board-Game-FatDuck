@@ -105,24 +105,24 @@ public static class UIModes
     //     UIHelpers._createArmed = UIHelpers.HasCreateWithCurrentSacrifice(build.pieceType);
     // }
 
-    public static void EnterUpgradeSacrificeSelectMode(ActionItem actionItem, int actionIndex)
-    {
-        showBoard.ClearHighlights();
-        showBoard.ApplyDefaultCellColor(UI.hic.config.defaultCellColor);
-        PanelToggles._mode = PanelToggles.Mode.SacrificeSelect;
-        UIHelpers.CachedActionForSacrificeCostMode = UIBridge._offers[actionIndex];
-        UIHelpers.CachedUIInfoForSacrificeCostMode = new UIInfo(true, actionItem.cost);
-        UIHelpers.StartSacrificeFlow(UIBridge._offers[actionIndex].pieceType, UIBridge._offers[actionIndex].TargetCellId);
-        var cells = UIHelpers.GetSelectableSacrificeCells(UIBridge._offers[actionIndex].pieceType);
-        showBoard.HighlightCells(
-            cells,
-            UI.hic.config ? UI.hic.config.createModeCellHighlight : new Color(0.25f, 0.75f, 0.25f, 0.6f)
-        );
-        UIHelpers.SetBackdropColor(UI.hic.config ? UI.hic.config.createModeBackground : new Color(0, 0, 0, 0.8f));
-        UIHelpers.SetPanelBackdropColor(UI.hic.config ? UI.hic.config.createModePanelBackground : new Color(0, 0, 0, 0.8f));
-        PanelToggles.TogglePanels(build: false, create: false, action: false, pieceFull: false, execute: false, walls: false, secondWalls: false);
-        ShowLeftPanel.HudRefresh();
-    }
+    // public static void EnterUpgradeSacrificeSelectMode(ActionItem actionItem, int actionIndex)
+    // {
+    //     showBoard.ClearHighlights();
+    //     showBoard.ApplyDefaultCellColor(UI.hic.config.defaultCellColor);
+    //     PanelToggles._mode = PanelToggles.Mode.SacrificeSelect;
+    //     UIHelpers.CachedActionForSacrificeCostMode = UIBridge._offers[actionIndex];
+    //     UIHelpers.CachedUIInfoForSacrificeCostMode = new UIInfo(true, actionItem.cost);
+    //     UIHelpers.StartSacrificeFlow(UIBridge._offers[actionIndex].pieceType, UIBridge._offers[actionIndex].TargetCellId);
+    //     var cells = UIHelpers.GetSelectableSacrificeCells(UIBridge._offers[actionIndex].pieceType);
+    //     showBoard.HighlightCells(
+    //         cells,
+    //         UI.hic.config ? UI.hic.config.createModeCellHighlight : new Color(0.25f, 0.75f, 0.25f, 0.6f)
+    //     );
+    //     UIHelpers.SetBackdropColor(UI.hic.config ? UI.hic.config.createModeBackground : new Color(0, 0, 0, 0.8f));
+    //     UIHelpers.SetPanelBackdropColor(UI.hic.config ? UI.hic.config.createModePanelBackground : new Color(0, 0, 0, 0.8f));
+    //     PanelToggles.TogglePanels(build: false, create: false, action: false, pieceFull: false, execute: false, walls: false, secondWalls: false);
+    //     ShowLeftPanel.HudRefresh();
+    // }
 
     // public static void EnterConnectingMode(Game.Core.Action item)
     // {
@@ -156,50 +156,50 @@ public static class UIModes
     //     ShowLeftPanel.HudRefresh();
     // }
 
-    public static void EnterActionExecuteMode(ActionItem action)
-    {
-        showBoard.ClearHighlights();
-        if (action.kind == Game.Core.ActionKind.Launcher && PanelToggles._mode != PanelToggles.Mode.MultiInputAction)
-        {
-            PanelToggles._mode = PanelToggles.Mode.MultiInputAction;
-        }
-        else
-        {
-            PanelToggles._mode = PanelToggles.Mode.ActionExecute;
-        }
+    // public static void EnterActionExecuteMode(ActionItem action)
+    // {
+    //     showBoard.ClearHighlights();
+    //     if (action.kind == Game.Core.ActionKind.Launcher && PanelToggles._mode != PanelToggles.Mode.MultiInputAction)
+    //     {
+    //         PanelToggles._mode = PanelToggles.Mode.MultiInputAction;
+    //     }
+    //     else
+    //     {
+    //         PanelToggles._mode = PanelToggles.Mode.ActionExecute;
+    //     }
 
-        UIHelpers._selectedAction = action;
+    //     UIHelpers._selectedAction = action;
 
-        UIHelpers.SetBackdropColor(UI.hic.config ? UI.hic.config.actionExecuteBackground : new Color(0, 0, 0, 0.8f));
-        UIHelpers.SetPanelBackdropColor(UI.hic.config ? UI.hic.config.actionExecutePanelBackground : new Color(0, 0, 0, 0.8f));
+    //     UIHelpers.SetBackdropColor(UI.hic.config ? UI.hic.config.actionExecuteBackground : new Color(0, 0, 0, 0.8f));
+    //     UIHelpers.SetPanelBackdropColor(UI.hic.config ? UI.hic.config.actionExecutePanelBackground : new Color(0, 0, 0, 0.8f));
 
-        PanelToggles.TogglePanels(build: false, create: false, action: false, pieceFull: false, execute: true, walls: false, secondWalls: false);
-        // (Re)apply legal-target highlights for clarity while in execute mode
-        if (UIHelpers._selectedActionIndex >= 0)
-        {
-            var col = UI.hic.config ? UI.hic.config.actionLegalTargetHighlight : new Color(0.6f, 0.35f, 0.9f, 0.65f);
-            showBoard.ClearHighlights();
-            showBoard.HighlightCells(UIHelpers.ComputeTargetsForActionIndex(UIHelpers._selectedActionIndex), col);
-        }
+    //     PanelToggles.TogglePanels(build: false, create: false, action: false, pieceFull: false, execute: true, walls: false, secondWalls: false);
+    //     // (Re)apply legal-target highlights for clarity while in execute mode
+    //     if (UIHelpers._selectedActionIndex >= 0)
+    //     {
+    //         var col = UI.hic.config ? UI.hic.config.actionLegalTargetHighlight : new Color(0.6f, 0.35f, 0.9f, 0.65f);
+    //         showBoard.ClearHighlights();
+    //         showBoard.HighlightCells(UIHelpers.ComputeTargetsForActionIndex(UIHelpers._selectedActionIndex), col);
+    //     }
 
-        if (UI.hic.actionTitleText) UI.hic.actionTitleText.text = action.name;
-        if (UI.hic.actionPieceText) UI.hic.actionPieceText.text = UIHelpers._selectedPieceId.HasValue ? $"Piece #{UIHelpers._selectedPieceId.Value}" : "Piece (none)";
-        if (UI.hic.actionCostText) UI.hic.actionCostText.text = $"Cost: {action.cost}";
+    //     if (UI.hic.actionTitleText) UI.hic.actionTitleText.text = action.name;
+    //     if (UI.hic.actionPieceText) UI.hic.actionPieceText.text = UIHelpers._selectedPieceId.HasValue ? $"Piece #{UIHelpers._selectedPieceId.Value}" : "Piece (none)";
+    //     if (UI.hic.actionCostText) UI.hic.actionCostText.text = $"Cost: {action.cost}";
 
-        ShowLeftPanel.HudRefresh();
-    }
+    //     ShowLeftPanel.HudRefresh();
+    // }
 
-    public static void enterWallOptionsSecondPanelMode()
-    {
-        PanelToggles.TogglePanels(build: false, create: false, action: false, pieceFull: false, execute: false, walls: true, secondWalls: false);
-        showBoard.ClearHighlights();
-        PanelToggles._mode = PanelToggles.Mode.Create;
-    }
+    // public static void enterWallOptionsSecondPanelMode()
+    // {
+    //     PanelToggles.TogglePanels(build: false, create: false, action: false, pieceFull: false, execute: false, walls: true, secondWalls: false);
+    //     showBoard.ClearHighlights();
+    //     PanelToggles._mode = PanelToggles.Mode.Create;
+    // }
 
-    public static void EnterCreateModeWithWallChosen(ushort chosenWall)
-    {
-        EnterCreateMode(UIHelpers.CachedBuildItemForCreateConnector, UIHelpers.CachedUIInfoForCreateConnector, chosenWall);
-    }
+    // public static void EnterCreateModeWithWallChosen(ushort chosenWall)
+    // {
+    //     EnterCreateMode(UIHelpers.CachedBuildItemForCreateConnector, UIHelpers.CachedUIInfoForCreateConnector, chosenWall);
+    // }
 
     #endregion
 }

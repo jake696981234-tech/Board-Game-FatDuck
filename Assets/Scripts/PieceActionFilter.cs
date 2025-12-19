@@ -298,7 +298,7 @@ public static class PieceActionFilter
             return;
         }
 
-        if (ActionCostRequiresAddCost && !ActionRequiresAux) // to do- probs need to resort the addcost array order.
+        if (ActionCostRequiresAddCost && !ActionRequiresAux) // to do- probs need to resort the addcost array order. Look at -case PanelToggles.Mode.SacrificeSelect:- Inside old UIInput, Could be use full code that does this, and few ther essetentials.   
         {
             Game.Core.Action theAction = new Game.Core.Action(kind, (byte)pieceType, ActorCellId, TargetCellId, 0, addCost);
             UIBridge.PerformActionIndex(theAction);

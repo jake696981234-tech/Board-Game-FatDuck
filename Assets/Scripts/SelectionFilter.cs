@@ -7,7 +7,7 @@ public static class UIFilter
     {
         if (uIType == UIType.EndTurnButton)
         {
-            //peformEndTurn to do
+            UIBridge.PerformActionIndex(UIHelpers.FindEndTurnIndex());
             reset();
         }
 
@@ -27,7 +27,7 @@ public static class UIFilter
                     CreateActionFilter.Filter();
                     return;
                 }
-                if (uIType == UIType.PieceActionKind)
+                if (uIType == UIType.Cell && UIHelpers.HasPieceActionsForCell(clickedCellId))
                 {
                     PieceActionFilter.Filter();
                     return;
@@ -60,9 +60,8 @@ public static class UIFilter
     {
         UI.hic.endTurnButton.onClick.AddListener(onEndTurnButton);
         UI.hic.buildMenu.OnItemClicked += OnBuildItemClicked;
-        //UI.hic.nonPieceActionList.OnItemClicked += OnActionItemClicked;
         UI.hic.pieceActionListFull.OnItemClicked += OnPieceActionClicked;
-        // UI.hic.SeePerPieceTypeTotalsButton.onClick.AddListener(() => ShowFactoryBonusByPieceTypePrefabs());
+        // UI.hic.SeePerPieceTypeTotalsButton.onClick.AddListener(() => ShowFactoryBonusByPieceTypePrefabs()); //to do
     }
 
 
@@ -144,6 +143,7 @@ public static class UIFilter
     
     public static void reset()
     {
+        UIBridge.RebuildOffersForCurrentPlayer();
         // Add Reset UI in Here to do
         ShowRightPanel.PushNonPieceActionList();
         ShowRightPanel.PushCreateActionMenu();

@@ -2,8 +2,8 @@ using UnityEngine;
 
 public static class PanelToggles
 {
-    public enum Mode { Build, Create, PieceAction, ActionExecute, WallOptionsSecoundPanel, MultiInputAction, MultiCreateAction, SacrificeSelect }
-    public static Mode _mode = Mode.Build;
+    // public enum Mode { Build, Create, PieceAction, ActionExecute, WallOptionsSecoundPanel, MultiInputAction, MultiCreateAction, SacrificeSelect }
+    // public static Mode _mode = Mode.Build;
     public static void TogglePanels(bool build, bool create, bool action, bool pieceFull, bool execute, bool walls, bool secondWalls)
     {
         if (UI.hic.buildMenu) UI.hic.buildMenu.gameObject.SetActive(build);
@@ -25,11 +25,11 @@ public static class PanelToggles
         UI.hic.Payout_Panel2.SetActive(EndRoundTotalPanel2);
     }
 
-    public static void SetWallOptionsSecondPanelMode()
-    {
+    // public static void SetWallOptionsSecondPanelMode()
+    // {
 
-        _mode = Mode.WallOptionsSecoundPanel;
-    }
+    //     _mode = Mode.WallOptionsSecoundPanel;
+    // }
 
 
 }

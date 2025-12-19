@@ -8,6 +8,11 @@ namespace Game.Core
     // Deterministic, allocation-free mutation entrypoint for Phase A.
     // Aligns with Pieces.AbilityKind (incl. CoreDamage), pricing-only CostEngine,
     // and read-only OfferProvider. All state mutations happen through here.
+
+
+    //general to do list: 
+    // 1. Methods that kill mutliple units at once i think is casuing an issue. for example, sacrfice cost. maybe aswell sacrfice factory. Why do I think this? because im using pieceIds as my way of telling the system what to kill. But after the first pieceID is killed, the swap back happens, and the piece IDS change. Shouldnt be to hard of a problem to solve.
+
     public class GameState
     {
         #region Class's Refrences
