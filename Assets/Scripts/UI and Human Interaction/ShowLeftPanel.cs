@@ -116,7 +116,7 @@ public static class ShowLeftPanel
 
         // --- Match header ---
         if (UI.hic.Header_TurnOwnerText) UI.hic.Header_TurnOwnerText.text = $"Player {UIBridge.gameState.CurrentPlayerId}";
-        if (UI.hic.Header_ModeText) UI.hic.Header_ModeText.text = PanelToggles._mode.ToString();
+        // if (UI.hic.Header_ModeText) UI.hic.Header_ModeText.text = PanelToggles._mode.ToString();
 
         // --- Personal stats (your seat) ---
         if (UI.hic.Personal_BudgetText) UI.hic.Personal_BudgetText.text = "Budget: " + $"{Mathf.RoundToInt(UIBridge.gameState.GetBudget(UIBridge._humanPlayer))}";

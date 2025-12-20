@@ -3,7 +3,21 @@ using UnityEngine;
 
 public static class UIFilter
 {
-    public static void topFilter()
+    public static byte clickedBuildPieceType;
+    public static byte clickedActionKind;
+    public static ushort clickedCellId;
+    public static ushort clickedWallConfig;
+    public static int clickedWallNumber;
+
+    public static void ResetClickedData()
+    {
+        clickedBuildPieceType = 30;
+        clickedActionKind = 30;
+        clickedCellId = 30;
+        clickedWallConfig = 30;
+        clickedWallNumber = -1;
+    }
+    private static void topFilter()
     {
         if (uIType == UIType.EndTurnButton)
         {
@@ -48,17 +62,13 @@ public static class UIFilter
             }
         }
     }
-    public static byte clickedBuildPieceType;
-    public static byte clickedActionKind;
-    public static ushort clickedCellId;
-    public static ushort clickedWallConfig;
-    public static int clickedWallNumber;
+   
 
     #region Subscription
 
     public static void HookPresenters()
     {
-        UI.hic.endTurnButton.onClick.AddListener(onEndTurnButton);
+        // UI.hic.endTurnButton.onClick.AddListener(onEndTurnButton);
         UI.hic.buildMenu.OnItemClicked += OnBuildItemClicked;
         UI.hic.pieceActionListFull.OnItemClicked += OnPieceActionClicked;
         // UI.hic.SeePerPieceTypeTotalsButton.onClick.AddListener(() => ShowFactoryBonusByPieceTypePrefabs()); //to do
@@ -66,7 +76,7 @@ public static class UIFilter
 
 
 
-    public static void OnBuildItemClicked(Game.Core.Action item, UIInfo uiInfo)
+    private static void OnBuildItemClicked(Game.Core.Action item, UIInfo uiInfo)
     {
         uIType = UIType.BuildItem;
         clickedBuildPieceType = item.pieceType;
@@ -94,7 +104,7 @@ public static class UIFilter
         topFilter();
     }
 
-    public static void OnPieceActionClicked(ActionItem item)
+    private static void OnPieceActionClicked(ActionItem item)
     {
         uIType = UIType.PieceActionKind;
         clickedActionKind = (byte)item.kind;
@@ -107,7 +117,7 @@ public static class UIFilter
          topFilter();
     }
 
-    public static void onEndTurnButton()
+    private static void onEndTurnButton()
     {
         uIType = UIType.EndTurnButton;
          topFilter();
@@ -165,7 +175,7 @@ public static class UIFilter
         PieceActionFilter.isActorCellId = false;
         PieceActionFilter.isTargetCellId = false;
         PieceActionFilter.isAux = false;
-        PieceActionFilter.ActionRequiresAux = false;
+        PieceActionFilter.isActionRequiresAux = false;
         PieceActionFilter.isAddCost = false;
         PieceActionFilter.ActionCostRequiresAddCost = false;
 
@@ -173,10 +183,15 @@ public static class UIFilter
         PieceActionFilter.pieceType = -1;
         PieceActionFilter.TargetCellId = 300;
         PieceActionFilter.aux = 300;
-        Array.Clear(PieceActionFilter.addCost, 0, PieceActionFilter.addCost.Length);
+        PieceActionFilter.addCost.Clear();
+        PieceActionFilter.cachedLegalTargetCellId.Clear();
+        PieceActionFilter.cachedLegalAddCost.Clear();
+        PieceActionFilter.cachedLegalAux.Clear();
+
 
         CreateActionFilter.isPieceType = false;
         CreateActionFilter.isTargetCellId = false;
+        CreateActionFilter.isNumberOfWalls = false;
         CreateActionFilter.isAux = false;
         CreateActionFilter.ActionRequiresAux = false;
         CreateActionFilter.isAddCost = false;
@@ -184,14 +199,12 @@ public static class UIFilter
 
         CreateActionFilter.pieceType = -1;
         CreateActionFilter.TargetCellId = 300;
+        CreateActionFilter.cachedLegalTargetCellId.Clear();
+        CreateActionFilter.cachedLegalAddCost.Clear();
         CreateActionFilter.aux = 300;
-        Array.Clear(CreateActionFilter.addCost, 0, CreateActionFilter.addCost.Length);
+        CreateActionFilter.addCost.Clear();
     }
 
-    public static void ResetClickedData()
-    {
-        clickedBuildPieceType = 30;
-        clickedCellId = 30;
-    }
+   
     #endregion
 }

@@ -35,6 +35,7 @@ public static class UI
         // UIModes.EnterBuildMode(); // will push menus from offers
         // UIInput.HookPresenters();
         // ShowLeftPanel.HudRefresh();
+        UIFilter.HookPresenters();
         UIFilter.reset();
     }
 

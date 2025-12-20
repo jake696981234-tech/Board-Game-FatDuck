@@ -15,7 +15,9 @@ public static class CreateActionFilter
 
     public static bool isTargetCellId;
     public static ushort TargetCellId;
-    public static int[] cachedLegalTargetCellId;
+    public static List<int> cachedLegalTargetCellId = new List<int>(256);
+
+    
 
     public static bool isNumberOfWalls;
     public static int WallNumber;
@@ -27,8 +29,8 @@ public static class CreateActionFilter
 
     public static bool isAddCost;
     public static bool ActionCostRequiresAddCost;
-    public static int[] addCost; 
-    public static int[] cachedLegalAddCost;
+    public static List<int> addCost = new List<int>(256);
+    public static List<int> cachedLegalAddCost = new List<int>(256);
 
 
     public static void Filter()
@@ -90,14 +92,14 @@ public static class CreateActionFilter
         //Perform Actions
         if (ActionCostRequiresAddCost && !ActionRequiresAux) // to do- probs need to resort the addcost array order.
         {
-            Game.Core.Action theAction = new Game.Core.Action(kind, (byte)pieceType, ActorCellId, TargetCellId, 0, addCost);
+            Game.Core.Action theAction = new Game.Core.Action(kind, (byte)pieceType, ActorCellId, TargetCellId, 0, addCost.ToArray());
             UIBridge.PerformActionIndex(theAction);
             UIFilter.reset();
             return;
         }
         if (ActionCostRequiresAddCost && ActionRequiresAux)
         {
-            Game.Core.Action theAction = new Game.Core.Action(kind, (byte)pieceType, ActorCellId, TargetCellId, aux, addCost);
+            Game.Core.Action theAction = new Game.Core.Action(kind, (byte)pieceType, ActorCellId, TargetCellId, aux, addCost.ToArray());
             UIBridge.PerformActionIndex(theAction);
             UIFilter.reset();
             return;
@@ -119,20 +121,24 @@ public static class CreateActionFilter
         Debug.Log($"showNextOption failed this is very unexpected");
     }
 
-    public static void SetFilter()
+    private static void SetFilter()
     {
         UIFilter.state = UIFilter.State.Create;
 
         pieceType = UIFilter.clickedBuildPieceType;
         isPieceType = true;
         
-        if (!PieceDefinition.connectors_enabled[UIFilter.clickedBuildPieceType]) isAux = true;
+        if (!PieceDefinition.connectors_enabled[UIFilter.clickedBuildPieceType])
+        {
+            isAux = true;
+            isNumberOfWalls = true;
+        }
         if (!PieceDefinition.sacrificeCost_enabled[pieceType]) isAddCost = true;
 
         cleanUpSet();
     }
 
-    public static void setNumberOfWalls()
+    private static void setNumberOfWalls()
     {
         if (UIFilter.uIType != UIFilter.UIType.NumberOfWalls)
         {
@@ -144,7 +150,7 @@ public static class CreateActionFilter
         cleanUpSet();
     }
 
-    public static void setWallConfig()
+    private static void setWallConfig()
     {
         if (UIFilter.uIType != UIFilter.UIType.WallConfig)
         {
@@ -158,31 +164,32 @@ public static class CreateActionFilter
         cleanUpSet();
     }
 
-    public static void setSacCost()
+    private static void setSacCost()
     {
-        if (UIFilter.uIType != UIFilter.UIType.Cell || cachedLegalAddCost.Contains(UIFilter.clickedCellId))
+        if (UIFilter.uIType != UIFilter.UIType.Cell || !cachedLegalAddCost.Contains(UIFilter.clickedCellId))
         {
             UIFilter.ResetClickedData();
             return;
         } 
-        addCost[addCost.Length] = UIBridge.bm.occupantPieceId[UIFilter.clickedCellId];
+        addCost.Add(UIBridge.bm.occupantPieceId[UIFilter.clickedCellId]);
         ActionCostRequiresAddCost = true;
-        if (addCost.Length == PieceDefinition.sacrificeCost_howManyItNeeds[pieceType]) isAddCost = true;
+        if (addCost.Count == PieceDefinition.sacrificeCost_howManyItNeeds[pieceType]) isAddCost = true;
         cleanUpSet();
     }
     
-    public static void setTargetCell()
+    private static void setTargetCell()
     {
-        if (UIFilter.uIType != UIFilter.UIType.Cell || cachedLegalTargetCellId.Contains(UIFilter.clickedCellId))
+        if (UIFilter.uIType != UIFilter.UIType.Cell || !cachedLegalTargetCellId.Contains(UIFilter.clickedCellId))
         {
             UIFilter.ResetClickedData();
             return;
         }
         TargetCellId = UIFilter.clickedCellId;
+        isTargetCellId = true;
         cleanUpSet();
     }
 
-    public static void cleanUpSet()
+    private static void cleanUpSet()
     {
         UIFilter.ResetClickedData();
         showNextOption();
@@ -193,7 +200,7 @@ public static class CreateActionFilter
 
     
 
-     public static void CreateCellOptions()
+     private static void CreateCellOptions()
     {
         showBoard.ClearHighlights();
         showBoard.ApplyDefaultCellColor(UI.hic.config.defaultCellColor);
@@ -216,7 +223,7 @@ public static class CreateActionFilter
     }
 
     // need to add go back to defualt Option
-    public static void NumberOfWallOptions()
+    private static void NumberOfWallOptions()
     {
         showBoard.ClearHighlights();
         UI.hic.wallOptionPanel.showNumberOfWallS(ComputeWallOptions());
@@ -224,14 +231,14 @@ public static class CreateActionFilter
         PanelToggles.TogglePanels(build: false, create: false, action: false, pieceFull: false, execute: false, walls: true, secondWalls: false); // populate this to pther areas
     }
 
-    public static void WallConfigOptions()
+    private static void WallConfigOptions()
     {
         showBoard.ClearHighlights();
-        UI.hic.wallOptionPanel.showWallConfigOptions(UIFilter.clickedWallNumber);
+        UI.hic.wallOptionPanel.showWallConfigOptions(WallNumber);
         PanelToggles.TogglePanels(build: false, create: false, action: false, pieceFull: false, execute: false, walls: false, secondWalls: true);
     }
 
-    public static void SacrificeCostOptions()
+    private static void SacrificeCostOptions()
     {
         showBoard.ClearHighlights();
         showBoard.ApplyDefaultCellColor(UI.hic.config.defaultCellColor);
@@ -256,7 +263,7 @@ public static class CreateActionFilter
    
 
     
-    public static IEnumerable<ushort> ComputeWallOptions()
+    private static IEnumerable<ushort> ComputeWallOptions()
     {
         List<ushort> wallConfigs = new List<ushort>(64);
         for (int i = 0; i < UIBridge._count; i++)
@@ -294,11 +301,11 @@ public static class CreateActionFilter
                 SacrficeTargets.Add(UIBridge.bm.pieceCellId[actions.addCost[b]]); 
             }
         }
-        cachedLegalAddCost = SacrficeTargets.ToArray();
+        cachedLegalAddCost = SacrficeTargets;
         return SacrficeTargets;
     } 
 
-    public static IEnumerable<int> computeCreateCellOptions()
+    private static IEnumerable<int> computeCreateCellOptions()
     {
         List<int> CreateCellOptions = new List<int>(128);
         for (int i = 0; i < UIBridge._count; i++)
@@ -315,7 +322,7 @@ public static class CreateActionFilter
             if (UIBridge._mask[i] == 0) continue; // masked out = illegal/unaffordable
             CreateCellOptions.Add(theAction.TargetCellId);
         }
-        cachedLegalTargetCellId = CreateCellOptions.ToArray();
+        cachedLegalTargetCellId = CreateCellOptions;
         return CreateCellOptions;
     }
 }

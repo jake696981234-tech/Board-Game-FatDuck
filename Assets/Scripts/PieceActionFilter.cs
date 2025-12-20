@@ -17,19 +17,21 @@ public static class PieceActionFilter
 
     public static bool isTargetCellId;
     public static ushort TargetCellId;
-    public static int[] cachedLegalTargetCellId;
+    public static List<int> cachedLegalTargetCellId = new List<int>(256);
+
 
     public static bool isAux;
-    public static bool ActionRequiresAux;
+    public static bool isActionRequiresAux;
     public static ushort aux;
-    public static int[] cachedLegalAux;
+    public static List<int> cachedLegalAux = new List<int>(256);
+
+    
     
 
     public static bool isAddCost;
     public static bool ActionCostRequiresAddCost;
-    public static int[] addCost; 
-    public static int[] cachedLegalAddCost;
-
+    public static List<int> addCost = new List<int>(256);
+    public static List<int> cachedLegalAddCost = new List<int>(256);
 
 
     public static void Filter()
@@ -127,7 +129,7 @@ public static class PieceActionFilter
 
     private static void SetTargetCellIdToClickedCell()
     {
-        if (UIFilter.uIType != UIFilter.UIType.Cell || cachedLegalTargetCellId.Contains(UIFilter.clickedCellId))
+        if (UIFilter.uIType != UIFilter.UIType.Cell || !cachedLegalTargetCellId.Contains(UIFilter.clickedCellId))
         {
             UIFilter.ResetClickedData();
             return;
@@ -141,14 +143,16 @@ public static class PieceActionFilter
 
     private static void SetAuxForLauncher()
     {
-         if (UIFilter.uIType != UIFilter.UIType.Cell  || cachedLegalAux.Contains(UIFilter.clickedCellId))
+         if (UIFilter.uIType != UIFilter.UIType.Cell  || !cachedLegalAux.Contains(UIFilter.clickedCellId))
         {
             UIFilter.ResetClickedData();
             return;
         }
         aux = (ushort)UIBridge.bm.occupantPieceId[UIFilter.clickedCellId];
-        ActionRequiresAux = true;
+        isActionRequiresAux = true;
         isAux = true;
+        UIFilter.ResetClickedData();
+        showNextActionOption();
     }
 
 
@@ -159,7 +163,7 @@ public static class PieceActionFilter
 
         if (!isTargetCellId)
         {
-            if (UIFilter.uIType != UIFilter.UIType.Cell || cachedLegalTargetCellId.Contains(UIFilter.clickedCellId))
+            if (UIFilter.uIType != UIFilter.UIType.Cell || !cachedLegalTargetCellId.Contains(UIFilter.clickedCellId))
             {
                 UIFilter.ResetClickedData();
                 return;
@@ -180,14 +184,14 @@ public static class PieceActionFilter
 
         if (!isTargetCellId)
         {
-            if (UIFilter.uIType != UIFilter.UIType.Cell || cachedLegalTargetCellId.Contains(UIFilter.clickedCellId))
+            if (UIFilter.uIType != UIFilter.UIType.Cell || !cachedLegalTargetCellId.Contains(UIFilter.clickedCellId))
             {
                 UIFilter.ResetClickedData();
                 return;
             }
             TargetCellId = UIFilter.clickedCellId;
             aux = (ushort)PieceDefinition.spawn_targetType[pieceType];
-            ActionRequiresAux = true;
+            isActionRequiresAux = true;
 
             isTargetCellId = true;
         }
@@ -201,14 +205,14 @@ public static class PieceActionFilter
 
         if (!isTargetCellId)
         {
-            if (UIFilter.uIType != UIFilter.UIType.Cell || cachedLegalTargetCellId.Contains(UIFilter.clickedCellId))
+            if (UIFilter.uIType != UIFilter.UIType.Cell || !cachedLegalTargetCellId.Contains(UIFilter.clickedCellId))
             {
                 UIFilter.ResetClickedData();
                 return;
             }
             TargetCellId = UIFilter.clickedCellId;
             aux = (ushort)UIBridge.bm.occupantPieceId[TargetCellId];
-            ActionRequiresAux = true;
+            isActionRequiresAux = true;
             isTargetCellId = true;
         }
         UIFilter.ResetClickedData();
@@ -222,7 +226,7 @@ public static class PieceActionFilter
         
         if (!isTargetCellId)
         {
-            if (UIFilter.uIType != UIFilter.UIType.Cell || cachedLegalTargetCellId.Contains(UIFilter.clickedCellId))
+            if (UIFilter.uIType != UIFilter.UIType.Cell || !cachedLegalTargetCellId.Contains(UIFilter.clickedCellId))
             {
                 UIFilter.ResetClickedData();
                 return;
@@ -242,14 +246,14 @@ public static class PieceActionFilter
 
         if (!isAddCost)
         {
-            if (UIFilter.uIType != UIFilter.UIType.Cell  || cachedLegalAddCost.Contains(UIFilter.clickedCellId))
+            if (UIFilter.uIType != UIFilter.UIType.Cell  || !cachedLegalAddCost.Contains(UIFilter.clickedCellId))
             {
                 UIFilter.ResetClickedData();
                 return;
             } 
-            addCost[addCost.Length] = UIBridge.bm.occupantPieceId[UIFilter.clickedCellId];
+            addCost.Add(UIBridge.bm.occupantPieceId[UIFilter.clickedCellId]);
             ActionCostRequiresAddCost = true;
-            if (addCost.Length == PieceDefinition.sacrificeCost_howManyItNeeds[pieceType]) isAddCost = true;
+            if (addCost.Count == PieceDefinition.sacrificeCost_howManyItNeeds[pieceType]) isAddCost = true;
         }
         UIFilter.ResetClickedData();
         showNextActionOption();
@@ -268,7 +272,7 @@ public static class PieceActionFilter
 
     
 
-    private static void showNextActionOption() // to do
+    private static void showNextActionOption() 
     {
         if (!isKind)
         {
@@ -298,28 +302,32 @@ public static class PieceActionFilter
             return;
         }
 
-        if (ActionCostRequiresAddCost && !ActionRequiresAux) // to do- probs need to resort the addcost array order. Look at -case PanelToggles.Mode.SacrificeSelect:- Inside old UIInput, Could be use full code that does this, and few ther essetentials.   
+        if (ActionCostRequiresAddCost && !isActionRequiresAux) // to do- probs need to resort the addcost array order. Look at -case PanelToggles.Mode.SacrificeSelect:- Inside old UIInput, Could be use full code that does this, and few ther essetentials.   
         {
-            Game.Core.Action theAction = new Game.Core.Action(kind, (byte)pieceType, ActorCellId, TargetCellId, 0, addCost);
+            Game.Core.Action theAction = new Game.Core.Action(kind, (byte)pieceType, ActorCellId, TargetCellId, 0, addCost.ToArray());
             UIBridge.PerformActionIndex(theAction);
+            UIFilter.reset();
             return;
         }
-        if (ActionCostRequiresAddCost && ActionRequiresAux)
+        if (ActionCostRequiresAddCost && isActionRequiresAux)
         {
-            Game.Core.Action theAction = new Game.Core.Action(kind, (byte)pieceType, ActorCellId, TargetCellId, aux, addCost);
+            Game.Core.Action theAction = new Game.Core.Action(kind, (byte)pieceType, ActorCellId, TargetCellId, aux, addCost.ToArray());
             UIBridge.PerformActionIndex(theAction);
+            UIFilter.reset();
             return;
         }
-        if (!ActionCostRequiresAddCost && ActionRequiresAux)
+        if (!ActionCostRequiresAddCost && isActionRequiresAux)
         {
             Game.Core.Action theAction = new Game.Core.Action(kind, (byte)pieceType, ActorCellId, TargetCellId, aux);
             UIBridge.PerformActionIndex(theAction);
+            UIFilter.reset();
             return;
         }
-        if (!ActionCostRequiresAddCost && !ActionRequiresAux)
+        if (!ActionCostRequiresAddCost && !isActionRequiresAux)
         {
             Game.Core.Action theAction = new Game.Core.Action(kind, (byte)pieceType, ActorCellId, TargetCellId);
             UIBridge.PerformActionIndex(theAction);
+            UIFilter.reset();
             return;
         }
         Debug.Log($"showNextActionOption failed this is very unexpected");
@@ -327,7 +335,7 @@ public static class PieceActionFilter
 
 
 
-    public static void SacrificeCostOptions()
+    private static void SacrificeCostOptions()
     {
         showBoard.ClearHighlights();
         showBoard.ApplyDefaultCellColor(UI.hic.config.defaultCellColor);
@@ -373,11 +381,11 @@ public static class PieceActionFilter
                 SacrficeTargets.Add(UIBridge.bm.pieceCellId[actions.addCost[b]]); // to do, check if this is the right thing to add
             }    
         }
-        cachedLegalAddCost = SacrficeTargets.ToArray();
+        cachedLegalAddCost = SacrficeTargets;
         return SacrficeTargets;
     } 
 
-    public static void secondTargetlauncherOptions() // this is for aux, probs could work for more than just the launcher
+    private static void secondTargetlauncherOptions() // this is for aux, probs could work for more than just the launcher
     {
         showBoard.ClearHighlights();
 
@@ -391,7 +399,7 @@ public static class PieceActionFilter
         ShowLeftPanel.HudRefresh();
     }
 
-    public static void PieceKindOptions()
+    private static void PieceKindOptions()
     {
         showBoard.ClearHighlights();
         showBoard.ApplyDefaultCellColor(UI.hic.config.defaultCellColor);
@@ -404,7 +412,7 @@ public static class PieceActionFilter
         ShowLeftPanel.HudRefresh();
     }
 
-    public static void TargetCellIdsOptions()
+    private static void TargetCellIdsOptions()
     {
         showBoard.ClearHighlights();
 
@@ -423,7 +431,7 @@ public static class PieceActionFilter
     }
 
 
-    public static IEnumerable<int> ComputeTargetCellsForAction()
+    private static IEnumerable<int> ComputeTargetCellsForAction()
     {
         List<int> targetCells = new List<int>(128);
 
@@ -437,11 +445,11 @@ public static class PieceActionFilter
 
             targetCells.Add(action.TargetCellId);
         }
-        cachedLegalTargetCellId = targetCells.ToArray();
+        cachedLegalTargetCellId = targetCells;
         return targetCells;
     }
 
-    public static IEnumerable<int> ComputeAuxCellsForAction()
+    private static IEnumerable<int> ComputeAuxCellsForAction()
     {
         List<int> targetAuxCells = new List<int>(128);
 
@@ -456,12 +464,12 @@ public static class PieceActionFilter
 
             targetAuxCells.Add(UIBridge.bm.pieceCellId[action.aux]);
         }
-        cachedLegalAux = targetAuxCells.ToArray();
+        cachedLegalAux = targetAuxCells;
         return targetAuxCells;
     }
 
 
-    public static void PushPieceActionListForSelection()
+    private static void PushPieceActionListForSelection()
     {
         var items = new List<ActionItem>();
         bool moveAddedForCell = false;
