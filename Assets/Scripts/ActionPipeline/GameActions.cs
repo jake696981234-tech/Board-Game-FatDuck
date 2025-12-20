@@ -212,6 +212,7 @@ namespace Game.Core
 
         public static void ApplyUpgrade(in Action a, byte p, int gameIndex)
         {
+            Debug.Log("Legacy Upgrade Path reached, FIX ME!");
             // Legacy path unused (upgrade now via create)
         }
 
