@@ -222,6 +222,7 @@ public static class PieceActionFilter
 
     private static void UpgradeFilter()
     {
+        Debug.Log("Reached code path upgrade");
         TargetCellId = (ushort)PieceDefinition.upgrade_target[kind];
         isTargetCellId = true;
         isAux = true;

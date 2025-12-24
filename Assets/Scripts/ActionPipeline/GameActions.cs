@@ -79,6 +79,7 @@ namespace Game.Core
         {
             var gameState = GameRegistry.game[gameIndex].gameState;
             var bm = GameRegistry.game[gameIndex].boardModel;
+            
 
             // Upgrade-create: ActorsCellId carries source piece id (for upgrade flow)
             int sourcePid = bm.GetCellOccupant(theAction.ActorsCellId);

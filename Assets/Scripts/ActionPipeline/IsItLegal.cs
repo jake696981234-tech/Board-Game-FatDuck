@@ -217,7 +217,7 @@ public static class IsItLegal
         if (a.kind == Create)
         {
             bool isUpgradeCreate = PieceDefinition.upgrade_enabled[a.pieceType];
-            int upgradeSourceType = isUpgradeCreate ? PieceDefinition.upgrade_target[a.pieceType] : -1;
+            // int upgradeSourceType = isUpgradeCreate ? PieceDefinition.upgrade_target[a.pieceType] : -1;
 
             if (isUpgradeCreate)
             {
@@ -225,7 +225,7 @@ public static class IsItLegal
                 int srcPid = bm.GetCellOccupant(a.ActorsCellId);
                 if (srcPid < 0) return false;
                 if (bm.GetPieceOwner(srcPid) != player) return false;
-                if (bm.GetPieceType(srcPid) != upgradeSourceType) return false;
+                if (bm.GetPieceType(srcPid) != a.pieceType) return false;
                 // Target must be the same cell as source
                 if (bm.GetPieceCell(srcPid) != a.TargetCellId) return false;
             }

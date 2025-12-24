@@ -661,4 +661,199 @@ public static class OfferProvider
     }
     #endregion
 
+    private static void PieceActions()
+    {
+        int[] scratch = Scratch.GetScratchCellBuffer(gameIndex); // neighbor buffer, etc. (no allocs)
+        int cellCount = bm.GetCellCount();
+
+        for (int cell = 0; cell < cellCount; cell++)
+        {
+            int pieceId = bm.GetCellOccupant(cell);
+            if (IsInvalid(bm, pieceId)) continue;
+            if ((byte)bm.GetPieceOwner(pieceId) != q.playerId) continue;
+
+            byte actorType = bm.GetPieceType(pieceId);
+
+            if (PieceDefinition.move_enabled[actorType]) CreateMoveActions();
+            if (PieceDefinition.shoot_enabled[actorType]) CreateShootActions();
+            if (PieceDefinition.captureVP_enabled[actorType]) CreateCaptureVPActions();
+            if (PieceDefinition.coreDamage_enabled[actorType]) CreateCoreDamageActions();
+            if (PieceDefinition.push_enabled[actorType]) CreatePushActions();
+            if (PieceDefinition.groupBuild_enabled[actorType]) CreateGroupBuildActions();
+            if (PieceDefinition.launcher_enabled[actorType]) CreateLauncherActions();
+            if (PieceDefinition.spawn_enabled[actorType]) CreatespawnActions();
+            if (PieceDefinition.sacrificeFactory_enabled[actorType]) CreateSacrificeFactoryActions();
+            if (PieceDefinition.conversionFactory_enabled[actorType]) CreateConversionFactoryActions();
+        }
+    }
+
+    private static void CreateMoveActions()
+    {
+        int theNumberOfTargets = GetLegalTargets.GetLegalTargets_Move(pieceId, actorType, scratch, gameIndex);
+        for (int i = 0; i < theNumberOfTargets; i++)
+        {
+            int targetCellId = scratch[i];
+            var a = new Action
+            {
+                kind = Move,
+                pieceType = actorType,
+                ActorsCellId = (ushort)cell,
+                TargetCellId = (ushort)targetCellId,
+                aux = 0
+            };
+            Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
+        }
+    }
+
+    private static void CreateShootActions()
+    {
+        int theNumberOfTargets = GetLegalTargets.GetLegalTargets_Shoot(pieceId, actorType, scratch, gameIndex);
+        for (int i = 0; i < theNumberOfTargets; i++)
+        {
+            int tgtPid = scratch[i];
+            ushort targetCellId = (ushort)bm.GetPieceCell(tgtPid);
+            var a = new Action
+            {
+                kind = Shoot,
+                pieceType = actorType,
+                ActorsCellId = (ushort)cell,
+                TargetCellId = targetCellId,
+                aux = (ushort)tgtPid
+            };
+            Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
+        }
+    }
+    private static void CreateCaptureVPActions()
+    {
+        if (IsItLegal.IsLegal_CaptureVP(pieceId, gameIndex))
+        {
+            ushort vpCell = (ushort)bm.GetVictoryPointCellId();
+            var a = new Action
+            {
+                kind = CaptureVP,
+                pieceType = actorType,
+                ActorsCellId = (ushort)cell,
+                TargetCellId = vpCell,
+                aux = 0
+            };
+            Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
+        }
+    }
+    private static void CreateCoreDamageActions()
+    {
+        // Determine which adjacent cell is the enemy core and set dstCell accordingly
+        ushort dstCore = 0;
+        int owner = (byte)bm.GetPieceOwner(pieceId);
+        int nNbrs = bm.GetNeighbors(cell, scratch);
+        for (int i = 0; i < nNbrs; i++)
+        {
+            int nb = scratch[i];
+            if (nb < 0) continue;
+            if (bm.IsEnemyCoreCell(nb, owner)) { dstCore = (ushort)nb; break; }
+        }
+
+        var a = new Action
+        {
+            kind = CoreDamage,
+            pieceType = actorType,
+            ActorsCellId = (ushort)cell,
+            TargetCellId = dstCore,
+            aux = 0
+        };
+        Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
+    }
+    private static void CreatePushActions()
+    {
+        int theNumberOfTargets = GetLegalTargets.GetLegalTargets_Push(pieceId, actorType, scratch, gameIndex);
+        for (int i = 0; i < theNumberOfTargets; i++)
+        {
+            int tgtPid = scratch[i];
+            ushort targetCellId = (ushort)bm.GetPieceCell(tgtPid);
+            var a = new Action
+            {
+                kind = Push,
+                pieceType = actorType,
+                ActorsCellId = (ushort)cell,
+                TargetCellId = targetCellId,
+                aux = (ushort)tgtPid
+            };
+            Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
+        }
+    }
+    private static void CreateGroupBuildActions()
+    {
+        int tgtType = PieceDefinition.groupBuild_target[actorType];
+        if (tgtType >= 0 && tgtType < PieceDefinition.typeCount)
+        {
+            int require = PieceDefinition.groupBuild_requireNumber[actorType];
+            if (require > 1)
+            {
+                // Cluster check
+                int clusterSize = BmAbilityCac.CountClusterOfType(actorType, cell, gameIndex);
+                if (clusterSize >= require)
+                {
+                    // Enumerate legal create destinations for target type
+                    EnumerateGroupBuildCreates(q, (byte)tgtType, cell, actorType, ref write, ref total, cap, outActions, outCosts, outMask, gameIndex, player);
+                }
+            }
+        }
+    }
+    private static void CreateLauncherActions()
+    {
+        int theNumberOfTargets = GetLegalTargets.GetLegalTargets_Launcher(pieceId, actorType, scratch, gameIndex);
+        for (int i = 0; i < theNumberOfTargets; i += 2)
+        {
+            int tgtPid = scratch[i];
+            int dst = scratch[i + 1];
+            var a = new Action
+            {
+                kind = Launcher,
+                pieceType = actorType,
+                ActorsCellId = (ushort)cell,
+                TargetCellId = (ushort)dst,
+                aux = (ushort)tgtPid
+            };
+            Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
+        }
+    }
+    private static void CreatespawnActions()
+    {
+        EmitSpawnerActions(q, pieceId, actorType, cell, ref write, ref total, cap, outActions, outCosts, outMask, gameIndex, player);
+    }
+    private static void CreateSacrificeFactoryActions()
+    {
+        int theNumberOfTargets = GetLegalTargets.GetLegalTargets_SacrificeFactory(pieceId, actorType, scratch, gameIndex);
+        for (int i = 0; i < theNumberOfTargets; i++)
+        {
+            int tgtPid = scratch[i];
+            ushort targetCellId = (ushort)bm.GetPieceCell(tgtPid);
+            var a = new Action
+            {
+                kind = SacrificeFactory,
+                pieceType = actorType,
+                ActorsCellId = (ushort)cell,
+                TargetCellId = targetCellId,
+                aux = (ushort)tgtPid
+            };
+            Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
+        }
+    }
+    private static void CreateConversionFactoryActions()
+    {
+        if (IsItLegal.IsLegal_ConversionFactory(gameState.ps[player].vpTotal))
+        {
+            var a = new Action
+            {
+                kind = ConversionFactory,
+                pieceType = actorType,
+                ActorsCellId = (ushort)cell,
+                TargetCellId = (ushort)cell,
+                aux = 0
+            };
+            Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
+        }
+    }
+
+    
+
 }
