@@ -25,379 +25,379 @@ public static class OfferProvider
         Span<byte> outMask,
         int gameIndex,
         int player)
-    {
-        var gameState = GameRegistry.game[gameIndex].gameState;
-        var bm = GameRegistry.game[gameIndex].boardModel;
-
-        int cap = outActions.Length;
-        if (outCosts.Length < cap) cap = outCosts.Length;
-        if (outMask.Length < cap) cap = outMask.Length;
-
-        int write = 0;
-        int total = 0;
-
-        // Multi-create pending: emit only placement actions
-        if (q.multiCreateActive && q.multiCreateRemaining > 0)
         {
-            Debug.Log($"Entering MultiCreatePlacements");
-            EmitMultiCreatePlacements(q, outActions, outCosts, outMask, ref write, ref total, gameIndex, player);
-            // Always offer EndTurn as escape hatch
-            var end = new Action
-            {
-                kind = EndTurn,
-                pieceType = 0,
-                ActorsCellId = 0xFFFF,
-                TargetCellId = 0,
-                aux = 0
-            };
-            if (write < outActions.Length)
-            {
-                outActions[write] = end;
-                outCosts[write] = 0f;
-                outMask[write] = 1;
-                write++;
-            }
-            total++;
-            ZeroTail(write, outCosts, outMask);
-            return total;
-        }
+            var gameState = GameRegistry.game[gameIndex].gameState;
+            var bm = GameRegistry.game[gameIndex].boardModel;
 
-        int[] scratch = Scratch.GetScratchCellBuffer(gameIndex); // neighbor buffer, etc. (no allocs)
-        int cellCount = bm.GetCellCount();
+            int cap = outActions.Length;
+            if (outCosts.Length < cap) cap = outCosts.Length;
+            if (outMask.Length < cap) cap = outMask.Length;
 
-        // =============================
-        // Ability-based actions (unchanged)
-        // =============================
-        for (int cell = 0; cell < cellCount; cell++)
-        {
-            int pieceId = bm.GetCellOccupant(cell);
-            if (IsInvalid(bm, pieceId)) continue;
-            if ((byte)bm.GetPieceOwner(pieceId) != q.playerId) continue;
+            int write = 0;
+            int total = 0;
 
-            byte actorType = bm.GetPieceType(pieceId);
-
-            if (PieceDefinition.move_enabled[actorType])
+            // Multi-create pending: emit only placement actions
+            if (q.multiCreateActive && q.multiCreateRemaining > 0)
             {
-                int theNumberOfTargets = GetLegalTargets.GetLegalTargets_Move(pieceId, actorType, scratch, gameIndex);
-                for (int i = 0; i < theNumberOfTargets; i++)
+                Debug.Log($"Entering MultiCreatePlacements");
+                EmitMultiCreatePlacements(q, outActions, outCosts, outMask, ref write, ref total, gameIndex, player);
+                // Always offer EndTurn as escape hatch
+                var end = new Action
                 {
-                    int targetCellId = scratch[i];
-                    var a = new Action
-                    {
-                        kind = Move,
-                        pieceType = actorType,
-                        ActorsCellId = (ushort)cell,
-                        TargetCellId = (ushort)targetCellId,
-                        aux = 0
-                    };
-                    Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
-                }
-            }
-            if (PieceDefinition.shoot_enabled[actorType])
-            {
-                int theNumberOfTargets = GetLegalTargets.GetLegalTargets_Shoot(pieceId, actorType, scratch, gameIndex);
-                for (int i = 0; i < theNumberOfTargets; i++)
-                {
-                    int tgtPid = scratch[i];
-                    ushort targetCellId = (ushort)bm.GetPieceCell(tgtPid);
-                    var a = new Action
-                    {
-                        kind = Shoot,
-                        pieceType = actorType,
-                        ActorsCellId = (ushort)cell,
-                        TargetCellId = targetCellId,
-                        aux = (ushort)tgtPid
-                    };
-                    Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
-                }
-            }
-            if (PieceDefinition.captureVP_enabled[actorType])
-            {
-                if (IsItLegal.IsLegal_CaptureVP(pieceId, gameIndex))
-                {
-                    ushort vpCell = (ushort)bm.GetVictoryPointCellId();
-                    var a = new Action
-                    {
-                        kind = CaptureVP,
-                        pieceType = actorType,
-                        ActorsCellId = (ushort)cell,
-                        TargetCellId = vpCell,
-                        aux = 0
-                    };
-                    Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
-                }
-            }
-            if (PieceDefinition.coreDamage_enabled[actorType])
-            {
-                if (IsItLegal.IsLegal_CoreDamage(pieceId, gameIndex))
-                {
-                    // Determine which adjacent cell is the enemy core and set dstCell accordingly
-                    ushort dstCore = 0;
-                    int owner = (byte)bm.GetPieceOwner(pieceId);
-                    int nNbrs = bm.GetNeighbors(cell, scratch);
-                    for (int i = 0; i < nNbrs; i++)
-                    {
-                        int nb = scratch[i];
-                        if (nb < 0) continue;
-                        if (bm.IsEnemyCoreCell(nb, owner)) { dstCore = (ushort)nb; break; }
-                    }
-
-                    var a = new Action
-                    {
-                        kind = CoreDamage,
-                        pieceType = actorType,
-                        ActorsCellId = (ushort)cell,
-                        TargetCellId = dstCore,
-                        aux = 0
-                    };
-                    Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
-                }
-            }
-            if (PieceDefinition.push_enabled[actorType])
-            {
-                int theNumberOfTargets = GetLegalTargets.GetLegalTargets_Push(pieceId, actorType, scratch, gameIndex);
-                for (int i = 0; i < theNumberOfTargets; i++)
-                {
-                    int tgtPid = scratch[i];
-                    ushort targetCellId = (ushort)bm.GetPieceCell(tgtPid);
-                    var a = new Action
-                    {
-                        kind = Push,
-                        pieceType = actorType,
-                        ActorsCellId = (ushort)cell,
-                        TargetCellId = targetCellId,
-                        aux = (ushort)tgtPid
-                    };
-                    Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
-                }
-            }
-            if (PieceDefinition.groupBuild_enabled[actorType])
-            {
-                int tgtType = PieceDefinition.groupBuild_target[actorType];
-                if (tgtType >= 0 && tgtType < PieceDefinition.typeCount)
-                {
-                    int require = PieceDefinition.groupBuild_requireNumber[actorType];
-                    if (require > 1)
-                    {
-                        // Cluster check
-                        int clusterSize = BmAbilityCac.CountClusterOfType(actorType, cell, gameIndex);
-                        if (clusterSize >= require)
-                        {
-                            // Enumerate legal create destinations for target type
-                            EnumerateGroupBuildCreates(q, (byte)tgtType, cell, actorType, ref write, ref total, cap, outActions, outCosts, outMask, gameIndex, player);
-                        }
-                    }
-                }
-            }
-            if (PieceDefinition.launcher_enabled[actorType])
-            {
-                int theNumberOfTargets = GetLegalTargets.GetLegalTargets_Launcher(pieceId, actorType, scratch, gameIndex);
-                for (int i = 0; i < theNumberOfTargets; i += 2)
-                {
-                    int tgtPid = scratch[i];
-                    int dst = scratch[i + 1];
-                    var a = new Action
-                    {
-                        kind = Launcher,
-                        pieceType = actorType,
-                        ActorsCellId = (ushort)cell,
-                        TargetCellId = (ushort)dst,
-                        aux = (ushort)tgtPid
-                    };
-                    Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
-                }
-            }
-            if (PieceDefinition.spawn_enabled[actorType])
-            {
-                EmitSpawnerActions(q, pieceId, actorType, cell, ref write, ref total, cap, outActions, outCosts, outMask, gameIndex, player);
-            }
-            if (PieceDefinition.sacrificeFactory_enabled[actorType])
-            {
-                int theNumberOfTargets = GetLegalTargets.GetLegalTargets_SacrificeFactory(pieceId, actorType, scratch, gameIndex);
-                for (int i = 0; i < theNumberOfTargets; i++)
-                {
-                    int tgtPid = scratch[i];
-                    ushort targetCellId = (ushort)bm.GetPieceCell(tgtPid);
-                    var a = new Action
-                    {
-                        kind = SacrificeFactory,
-                        pieceType = actorType,
-                        ActorsCellId = (ushort)cell,
-                        TargetCellId = targetCellId,
-                        aux = (ushort)tgtPid
-                    };
-                    Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
-                }
-            }
-            if (PieceDefinition.conversionFactory_enabled[actorType])
-            {
-                if (IsItLegal.IsLegal_ConversionFactory(gameState.ps[player].vpTotal))
-                {
-                    var a = new Action
-                    {
-                        kind = ConversionFactory,
-                        pieceType = actorType,
-                        ActorsCellId = (ushort)cell,
-                        TargetCellId = (ushort)cell,
-                        aux = 0
-                    };
-                    Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
-                }
-            }
-
-            // Upgrade-as-piece-action: find destination types that upgrade from this actorType
-            for (int upgradedToPieceType = 0; upgradedToPieceType < PieceDefinition.typeCount; upgradedToPieceType++)
-            {
-                if (!PieceDefinition.upgrade_enabled[upgradedToPieceType]) continue;
-                if (PieceDefinition.upgrade_target[upgradedToPieceType] != actorType) continue;
-                int reqDigit = PieceDefinition.requiredDigit[(byte)upgradedToPieceType];
-                if (reqDigit >= 0 && !gameState.ps[player].HasDigit(reqDigit)) continue;
-
-                var a = new Action
-                {
-                    kind = Upgrade,
-                    pieceType = actorType, // destination type
-                    ActorsCellId = (ushort)cell, // to do need to change the rest of the method - I switched this around. PieceType = used to be upgradedToPieceType- and TargetCellId used to be cell.
-                    TargetCellId = (byte)upgradedToPieceType,
+                    kind = EndTurn,
+                    pieceType = 0,
+                    ActorsCellId = 0xFFFF,
+                    TargetCellId = 0,
                     aux = 0
                 };
-
-                if (PieceDefinition.sacrificeCost_enabled[upgradedToPieceType]) //pretty sure this sets Aux as piece IDs, i made this be reflected in UI. If theres issues, check this.
+                if (write < outActions.Length)
                 {
-                    SacrificeCostOptions.Clear();
-                    if (PassiveActions.GenerateSacrificeCosts(in a, player, gameIndex, SacrificeCostOptions))
+                    outActions[write] = end;
+                    outCosts[write] = 0f;
+                    outMask[write] = 1;
+                    write++;
+                }
+                total++;
+                ZeroTail(write, outCosts, outMask);
+                return total;
+            }
+
+            int[] scratch = Scratch.GetScratchCellBuffer(gameIndex); // neighbor buffer, etc. (no allocs)
+            int cellCount = bm.GetCellCount();
+
+            // =============================
+            // Ability-based actions (unchanged)
+            // =============================
+            for (int cell = 0; cell < cellCount; cell++)
+            {
+                int pieceId = bm.GetCellOccupant(cell);
+                if (IsInvalid(bm, pieceId)) continue;
+                if ((byte)bm.GetPieceOwner(pieceId) != q.playerId) continue;
+
+                byte actorType = bm.GetPieceType(pieceId);
+
+                if (PieceDefinition.move_enabled[actorType])
+                {
+                    int theNumberOfTargets = GetLegalTargets.GetLegalTargets_Move(pieceId, actorType, scratch, gameIndex);
+                    for (int i = 0; i < theNumberOfTargets; i++)
                     {
-                        for (int opt = 0; opt < SacrificeCostOptions.Count; opt++)
+                        int targetCellId = scratch[i];
+                        var a = new Action
                         {
-                            var withCost = a;
-                            withCost.addCost = SacrificeCostOptions[opt];
-                            Emit(ref withCost, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
+                            kind = Move,
+                            pieceType = actorType,
+                            ActorsCellId = (ushort)cell,
+                            TargetCellId = (ushort)targetCellId,
+                            aux = 0
+                        };
+                        Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
+                    }
+                }
+                if (PieceDefinition.shoot_enabled[actorType])
+                {
+                    int theNumberOfTargets = GetLegalTargets.GetLegalTargets_Shoot(pieceId, actorType, scratch, gameIndex);
+                    for (int i = 0; i < theNumberOfTargets; i++)
+                    {
+                        int tgtPid = scratch[i];
+                        ushort targetCellId = (ushort)bm.GetPieceCell(tgtPid);
+                        var a = new Action
+                        {
+                            kind = Shoot,
+                            pieceType = actorType,
+                            ActorsCellId = (ushort)cell,
+                            TargetCellId = targetCellId,
+                            aux = (ushort)tgtPid
+                        };
+                        Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
+                    }
+                }
+                if (PieceDefinition.captureVP_enabled[actorType])
+                {
+                    if (IsItLegal.IsLegal_CaptureVP(pieceId, gameIndex))
+                    {
+                        ushort vpCell = (ushort)bm.GetVictoryPointCellId();
+                        var a = new Action
+                        {
+                            kind = CaptureVP,
+                            pieceType = actorType,
+                            ActorsCellId = (ushort)cell,
+                            TargetCellId = vpCell,
+                            aux = 0
+                        };
+                        Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
+                    }
+                }
+                if (PieceDefinition.coreDamage_enabled[actorType])
+                {
+                    if (IsItLegal.IsLegal_CoreDamage(pieceId, gameIndex))
+                    {
+                        // Determine which adjacent cell is the enemy core and set dstCell accordingly
+                        ushort dstCore = 0;
+                        int owner = (byte)bm.GetPieceOwner(pieceId);
+                        int nNbrs = bm.GetNeighbors(cell, scratch);
+                        for (int i = 0; i < nNbrs; i++)
+                        {
+                            int nb = scratch[i];
+                            if (nb < 0) continue;
+                            if (bm.IsEnemyCoreCell(nb, owner)) { dstCore = (ushort)nb; break; }
+                        }
+
+                        var a = new Action
+                        {
+                            kind = CoreDamage,
+                            pieceType = actorType,
+                            ActorsCellId = (ushort)cell,
+                            TargetCellId = dstCore,
+                            aux = 0
+                        };
+                        Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
+                    }
+                }
+                if (PieceDefinition.push_enabled[actorType])
+                {
+                    int theNumberOfTargets = GetLegalTargets.GetLegalTargets_Push(pieceId, actorType, scratch, gameIndex);
+                    for (int i = 0; i < theNumberOfTargets; i++)
+                    {
+                        int tgtPid = scratch[i];
+                        ushort targetCellId = (ushort)bm.GetPieceCell(tgtPid);
+                        var a = new Action
+                        {
+                            kind = Push,
+                            pieceType = actorType,
+                            ActorsCellId = (ushort)cell,
+                            TargetCellId = targetCellId,
+                            aux = (ushort)tgtPid
+                        };
+                        Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
+                    }
+                }
+                if (PieceDefinition.groupBuild_enabled[actorType])
+                {
+                    int tgtType = PieceDefinition.groupBuild_target[actorType];
+                    if (tgtType >= 0 && tgtType < PieceDefinition.typeCount)
+                    {
+                        int require = PieceDefinition.groupBuild_requireNumber[actorType];
+                        if (require > 1)
+                        {
+                            // Cluster check
+                            int clusterSize = BmAbilityCac.CountClusterOfType(actorType, cell, gameIndex);
+                            if (clusterSize >= require)
+                            {
+                                // Enumerate legal create destinations for target type
+                                EnumerateGroupBuildCreates(q, (byte)tgtType, cell, actorType, ref write, ref total, cap, outActions, outCosts, outMask, gameIndex, player);
+                            }
                         }
                     }
                 }
-                else
+                if (PieceDefinition.launcher_enabled[actorType])
                 {
-                    Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
-                }
-            }
-        }
-        // =============================
-        // Global Create actions (decoupled from abilities)
-        // Determinism: cells↑ then pieceType↑
-        // =============================
-        bool limitActive = q.pieceLimitEnabled && q.pieceLimitPerPlayer > 0;
-        bool limitReached = limitActive && bm.GetPieceCountForPlayer(q.playerId) >= q.pieceLimitPerPlayer;
-        if (!limitReached)
-        {
-            int coreCell = bm.GetPlayerCoreCellId(q.playerId);
-            for (int cell = 0; cell < cellCount; cell++)
-            {
-                if (!bm.IsEmpty(cell)) continue; // only empties
-
-                bool legal = (cell == coreCell); // allow 'on core'
-                if (!legal)
-                {
-                    int numberOfCoreNeighbors = bm.GetNeighbors(coreCell, scratch);
-                    for (int i = 0; i < numberOfCoreNeighbors; i++) { if (scratch[i] == cell) { legal = true; break; } }
-                }
-
-                if (!legal)
-                {
-                    int nNbrs = bm.GetNeighbors(cell, scratch);
-                    for (int i = 0; i < nNbrs && !legal; i++)
+                    int theNumberOfTargets = GetLegalTargets.GetLegalTargets_Launcher(pieceId, actorType, scratch, gameIndex);
+                    for (int i = 0; i < theNumberOfTargets; i += 2)
                     {
-                        int nbCell = scratch[i];
-                        int nbPid = bm.GetCellOccupant(nbCell);
-                        if (IsInvalid(bm, nbPid)) continue;
-                        if (bm.GetPieceOwner(nbPid) != q.playerId) continue;
-                        byte nbType = bm.GetPieceType(nbPid);
-                        if (PieceDefinition.isBuilding[nbType]) legal = true;
+                        int tgtPid = scratch[i];
+                        int dst = scratch[i + 1];
+                        var a = new Action
+                        {
+                            kind = Launcher,
+                            pieceType = actorType,
+                            ActorsCellId = (ushort)cell,
+                            TargetCellId = (ushort)dst,
+                            aux = (ushort)tgtPid
+                        };
+                        Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
                     }
                 }
-
-                if (!legal) continue;
-
-                // For each buildable type (default: all types 0..TypeCount-1)
-                int typeCount = PieceDefinition.typeCount;
-                for (int type = 0; type < typeCount; type++)
+                if (PieceDefinition.spawn_enabled[actorType])
                 {
-                    if (PieceDefinition.upgrade_enabled[type]) continue; // handled as piece action upgrade
-                    if (!PieceDefinition.isBuildable[type]) continue; // buildable gate (CSV flag)
-                                                                      // digitsRequired gate (Plan-B): skip if requirement exists and player lacks it
-                    int req = PieceDefinition.requiredDigit[(byte)type];
-                    if (req >= 0 && !gameState.ps[player].HasDigit(req)) continue;
-                    bool hasConn = PieceDefinition.connectors_enabled[type];
-                    ulong allowedMask = hasConn ? PieceDefinition.connector_allowedMasks[type] : 0UL;
-                    if (hasConn && allowedMask == 0UL) continue;
-
-                    if (!hasConn)
+                    EmitSpawnerActions(q, pieceId, actorType, cell, ref write, ref total, cap, outActions, outCosts, outMask, gameIndex, player);
+                }
+                if (PieceDefinition.sacrificeFactory_enabled[actorType])
+                {
+                    int theNumberOfTargets = GetLegalTargets.GetLegalTargets_SacrificeFactory(pieceId, actorType, scratch, gameIndex);
+                    for (int i = 0; i < theNumberOfTargets; i++)
+                    {
+                        int tgtPid = scratch[i];
+                        ushort targetCellId = (ushort)bm.GetPieceCell(tgtPid);
+                        var a = new Action
+                        {
+                            kind = SacrificeFactory,
+                            pieceType = actorType,
+                            ActorsCellId = (ushort)cell,
+                            TargetCellId = targetCellId,
+                            aux = (ushort)tgtPid
+                        };
+                        Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
+                    }
+                }
+                if (PieceDefinition.conversionFactory_enabled[actorType])
+                {
+                    if (IsItLegal.IsLegal_ConversionFactory(gameState.ps[player].vpTotal))
                     {
                         var a = new Action
                         {
-                            kind = Create,
-                            pieceType = (byte)type,
-                            ActorsCellId = (ushort)0xFFFF, // sentinel no-actor
+                            kind = ConversionFactory,
+                            pieceType = actorType,
+                            ActorsCellId = (ushort)cell,
                             TargetCellId = (ushort)cell,
                             aux = 0
                         };
-                        EmitCreateWithSacrifice(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
+                        Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
                     }
-                    if (hasConn)
-                    {
-                        for (int cfg = 0; cfg < 64; cfg++)
-                        {
-                            if ((allowedMask & (1UL << cfg)) == 0) continue;
-                            if (!PiecesSides.IsConnectorPlacementLegal(cell, (byte)type, cfg, q.playerId, gameIndex))
-                                continue;
+                }
 
+                // Upgrade-as-piece-action: find destination types that upgrade from this actorType
+                for (int upgradedToPieceType = 0; upgradedToPieceType < PieceDefinition.typeCount; upgradedToPieceType++)
+                {
+                    if (!PieceDefinition.upgrade_enabled[upgradedToPieceType]) continue;
+                    if (PieceDefinition.upgrade_target[upgradedToPieceType] != actorType) continue;
+                    int reqDigit = PieceDefinition.requiredDigit[(byte)upgradedToPieceType];
+                    if (reqDigit >= 0 && !gameState.ps[player].HasDigit(reqDigit)) continue;
+
+                    var a = new Action
+                    {
+                        kind = Upgrade,
+                        pieceType = actorType, // destination type
+                        ActorsCellId = (ushort)cell, // to do need to change the rest of the method - I switched this around. PieceType = used to be upgradedToPieceType- and TargetCellId used to be cell.
+                        TargetCellId = (byte)upgradedToPieceType,
+                        aux = 0
+                    };
+
+                    if (PieceDefinition.sacrificeCost_enabled[upgradedToPieceType]) //pretty sure this sets Aux as piece IDs, i made this be reflected in UI. If theres issues, check this.
+                    {
+                        SacrificeCostOptions.Clear();
+                        if (PassiveActions.GenerateSacrificeCosts(in a, player, gameIndex, SacrificeCostOptions))
+                        {
+                            for (int opt = 0; opt < SacrificeCostOptions.Count; opt++)
+                            {
+                                var withCost = a;
+                                withCost.addCost = SacrificeCostOptions[opt];
+                                Emit(ref withCost, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
+                    }
+                }
+            }
+            // =============================
+            // Global Create actions (decoupled from abilities)
+            // Determinism: cells↑ then pieceType↑
+            // =============================
+            bool limitActive = q.pieceLimitEnabled && q.pieceLimitPerPlayer > 0;
+            bool limitReached = limitActive && bm.GetPieceCountForPlayer(q.playerId) >= q.pieceLimitPerPlayer;
+            if (!limitReached)
+            {
+                int coreCell = bm.GetPlayerCoreCellId(q.playerId);
+                for (int cell = 0; cell < cellCount; cell++)
+                {
+                    if (!bm.IsEmpty(cell)) continue; // only empties
+
+                    bool legal = (cell == coreCell); // allow 'on core'
+                    if (!legal)
+                    {
+                        int numberOfCoreNeighbors = bm.GetNeighbors(coreCell, scratch);
+                        for (int i = 0; i < numberOfCoreNeighbors; i++) { if (scratch[i] == cell) { legal = true; break; } }
+                    }
+
+                    if (!legal)
+                    {
+                        int nNbrs = bm.GetNeighbors(cell, scratch);
+                        for (int i = 0; i < nNbrs && !legal; i++)
+                        {
+                            int nbCell = scratch[i];
+                            int nbPid = bm.GetCellOccupant(nbCell);
+                            if (IsInvalid(bm, nbPid)) continue;
+                            if (bm.GetPieceOwner(nbPid) != q.playerId) continue;
+                            byte nbType = bm.GetPieceType(nbPid);
+                            if (PieceDefinition.isBuilding[nbType]) legal = true;
+                        }
+                    }
+
+                    if (!legal) continue;
+
+                    // For each buildable type (default: all types 0..TypeCount-1)
+                    int typeCount = PieceDefinition.typeCount;
+                    for (int type = 0; type < typeCount; type++)
+                    {
+                        if (PieceDefinition.upgrade_enabled[type]) continue; // handled as piece action upgrade
+                        if (!PieceDefinition.isBuildable[type]) continue; // buildable gate (CSV flag)
+                                                                        // digitsRequired gate (Plan-B): skip if requirement exists and player lacks it
+                        int req = PieceDefinition.requiredDigit[(byte)type];
+                        if (req >= 0 && !gameState.ps[player].HasDigit(req)) continue;
+                        bool hasConn = PieceDefinition.connectors_enabled[type];
+                        ulong allowedMask = hasConn ? PieceDefinition.connector_allowedMasks[type] : 0UL;
+                        if (hasConn && allowedMask == 0UL) continue;
+
+                        if (!hasConn)
+                        {
                             var a = new Action
                             {
                                 kind = Create,
                                 pieceType = (byte)type,
-                                ActorsCellId = (ushort)0xFFFF,
+                                ActorsCellId = (ushort)0xFFFF, // sentinel no-actor
                                 TargetCellId = (ushort)cell,
-                                aux = (ushort)cfg // carry config index
+                                aux = 0
                             };
                             EmitCreateWithSacrifice(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
+                        }
+                        if (hasConn)
+                        {
+                            for (int cfg = 0; cfg < 64; cfg++)
+                            {
+                                if ((allowedMask & (1UL << cfg)) == 0) continue;
+                                if (!PiecesSides.IsConnectorPlacementLegal(cell, (byte)type, cfg, q.playerId, gameIndex))
+                                    continue;
+
+                                var a = new Action
+                                {
+                                    kind = Create,
+                                    pieceType = (byte)type,
+                                    ActorsCellId = (ushort)0xFFFF,
+                                    TargetCellId = (ushort)cell,
+                                    aux = (ushort)cfg // carry config index
+                                };
+                                EmitCreateWithSacrifice(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
+                            }
                         }
                     }
                 }
             }
-        }
 
-        // =============================
-        // EndTurn (always present, always last in prefix, always mask=1)
-        // =============================
-        total++;
-        var endTurn = new Action
-        {
-            kind = EndTurn,
-            pieceType = 0,
-            ActorsCellId = (ushort)0xFFFF,
-            TargetCellId = 0,
-            aux = 0
-        };
-        if (write < cap)
-        {
-            outActions[write] = endTurn;
-            // enforced free/affordable in WriteCostMask; but set here for clarity
-            outCosts[write] = 0f;
-            outMask[write] = 1;
-            write++;
-        }
-        else if (cap > 0)
-        {
-            // Buffer full: overwrite the last slot to guarantee EndTurn is in-branch
-            int last = cap - 1;
-            outActions[last] = endTurn;
-            outCosts[last] = 0f;
-            outMask[last] = 1;
-            write = cap;
-        }
+            // =============================
+            // EndTurn (always present, always last in prefix, always mask=1)
+            // =============================
+            total++;
+            var endTurn = new Action
+            {
+                kind = EndTurn,
+                pieceType = 0,
+                ActorsCellId = (ushort)0xFFFF,
+                TargetCellId = 0,
+                aux = 0
+            };
+            if (write < cap)
+            {
+                outActions[write] = endTurn;
+                // enforced free/affordable in WriteCostMask; but set here for clarity
+                outCosts[write] = 0f;
+                outMask[write] = 1;
+                write++;
+            }
+            else if (cap > 0)
+            {
+                // Buffer full: overwrite the last slot to guarantee EndTurn is in-branch
+                int last = cap - 1;
+                outActions[last] = endTurn;
+                outCosts[last] = 0f;
+                outMask[last] = 1;
+                write = cap;
+            }
 
-        ZeroTail(write, outCosts, outMask);
-        return total;
-    }
+            ZeroTail(write, outCosts, outMask);
+            return total;
+        }
 
     #endregion
     #region Helpers
@@ -660,200 +660,4 @@ public static class OfferProvider
         }
     }
     #endregion
-
-    private static void PieceActions()
-    {
-        int[] scratch = Scratch.GetScratchCellBuffer(gameIndex); // neighbor buffer, etc. (no allocs)
-        int cellCount = bm.GetCellCount();
-
-        for (int cell = 0; cell < cellCount; cell++)
-        {
-            int pieceId = bm.GetCellOccupant(cell);
-            if (IsInvalid(bm, pieceId)) continue;
-            if ((byte)bm.GetPieceOwner(pieceId) != q.playerId) continue;
-
-            byte actorType = bm.GetPieceType(pieceId);
-
-            if (PieceDefinition.move_enabled[actorType]) CreateMoveActions();
-            if (PieceDefinition.shoot_enabled[actorType]) CreateShootActions();
-            if (PieceDefinition.captureVP_enabled[actorType]) CreateCaptureVPActions();
-            if (PieceDefinition.coreDamage_enabled[actorType]) CreateCoreDamageActions();
-            if (PieceDefinition.push_enabled[actorType]) CreatePushActions();
-            if (PieceDefinition.groupBuild_enabled[actorType]) CreateGroupBuildActions();
-            if (PieceDefinition.launcher_enabled[actorType]) CreateLauncherActions();
-            if (PieceDefinition.spawn_enabled[actorType]) CreatespawnActions();
-            if (PieceDefinition.sacrificeFactory_enabled[actorType]) CreateSacrificeFactoryActions();
-            if (PieceDefinition.conversionFactory_enabled[actorType]) CreateConversionFactoryActions();
-        }
-    }
-
-    private static void CreateMoveActions()
-    {
-        int theNumberOfTargets = GetLegalTargets.GetLegalTargets_Move(pieceId, actorType, scratch, gameIndex);
-        for (int i = 0; i < theNumberOfTargets; i++)
-        {
-            int targetCellId = scratch[i];
-            var a = new Action
-            {
-                kind = Move,
-                pieceType = actorType,
-                ActorsCellId = (ushort)cell,
-                TargetCellId = (ushort)targetCellId,
-                aux = 0
-            };
-            Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
-        }
-    }
-
-    private static void CreateShootActions()
-    {
-        int theNumberOfTargets = GetLegalTargets.GetLegalTargets_Shoot(pieceId, actorType, scratch, gameIndex);
-        for (int i = 0; i < theNumberOfTargets; i++)
-        {
-            int tgtPid = scratch[i];
-            ushort targetCellId = (ushort)bm.GetPieceCell(tgtPid);
-            var a = new Action
-            {
-                kind = Shoot,
-                pieceType = actorType,
-                ActorsCellId = (ushort)cell,
-                TargetCellId = targetCellId,
-                aux = (ushort)tgtPid
-            };
-            Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
-        }
-    }
-    private static void CreateCaptureVPActions()
-    {
-        if (IsItLegal.IsLegal_CaptureVP(pieceId, gameIndex))
-        {
-            ushort vpCell = (ushort)bm.GetVictoryPointCellId();
-            var a = new Action
-            {
-                kind = CaptureVP,
-                pieceType = actorType,
-                ActorsCellId = (ushort)cell,
-                TargetCellId = vpCell,
-                aux = 0
-            };
-            Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
-        }
-    }
-    private static void CreateCoreDamageActions()
-    {
-        // Determine which adjacent cell is the enemy core and set dstCell accordingly
-        ushort dstCore = 0;
-        int owner = (byte)bm.GetPieceOwner(pieceId);
-        int nNbrs = bm.GetNeighbors(cell, scratch);
-        for (int i = 0; i < nNbrs; i++)
-        {
-            int nb = scratch[i];
-            if (nb < 0) continue;
-            if (bm.IsEnemyCoreCell(nb, owner)) { dstCore = (ushort)nb; break; }
-        }
-
-        var a = new Action
-        {
-            kind = CoreDamage,
-            pieceType = actorType,
-            ActorsCellId = (ushort)cell,
-            TargetCellId = dstCore,
-            aux = 0
-        };
-        Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
-    }
-    private static void CreatePushActions()
-    {
-        int theNumberOfTargets = GetLegalTargets.GetLegalTargets_Push(pieceId, actorType, scratch, gameIndex);
-        for (int i = 0; i < theNumberOfTargets; i++)
-        {
-            int tgtPid = scratch[i];
-            ushort targetCellId = (ushort)bm.GetPieceCell(tgtPid);
-            var a = new Action
-            {
-                kind = Push,
-                pieceType = actorType,
-                ActorsCellId = (ushort)cell,
-                TargetCellId = targetCellId,
-                aux = (ushort)tgtPid
-            };
-            Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
-        }
-    }
-    private static void CreateGroupBuildActions()
-    {
-        int tgtType = PieceDefinition.groupBuild_target[actorType];
-        if (tgtType >= 0 && tgtType < PieceDefinition.typeCount)
-        {
-            int require = PieceDefinition.groupBuild_requireNumber[actorType];
-            if (require > 1)
-            {
-                // Cluster check
-                int clusterSize = BmAbilityCac.CountClusterOfType(actorType, cell, gameIndex);
-                if (clusterSize >= require)
-                {
-                    // Enumerate legal create destinations for target type
-                    EnumerateGroupBuildCreates(q, (byte)tgtType, cell, actorType, ref write, ref total, cap, outActions, outCosts, outMask, gameIndex, player);
-                }
-            }
-        }
-    }
-    private static void CreateLauncherActions()
-    {
-        int theNumberOfTargets = GetLegalTargets.GetLegalTargets_Launcher(pieceId, actorType, scratch, gameIndex);
-        for (int i = 0; i < theNumberOfTargets; i += 2)
-        {
-            int tgtPid = scratch[i];
-            int dst = scratch[i + 1];
-            var a = new Action
-            {
-                kind = Launcher,
-                pieceType = actorType,
-                ActorsCellId = (ushort)cell,
-                TargetCellId = (ushort)dst,
-                aux = (ushort)tgtPid
-            };
-            Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
-        }
-    }
-    private static void CreatespawnActions()
-    {
-        EmitSpawnerActions(q, pieceId, actorType, cell, ref write, ref total, cap, outActions, outCosts, outMask, gameIndex, player);
-    }
-    private static void CreateSacrificeFactoryActions()
-    {
-        int theNumberOfTargets = GetLegalTargets.GetLegalTargets_SacrificeFactory(pieceId, actorType, scratch, gameIndex);
-        for (int i = 0; i < theNumberOfTargets; i++)
-        {
-            int tgtPid = scratch[i];
-            ushort targetCellId = (ushort)bm.GetPieceCell(tgtPid);
-            var a = new Action
-            {
-                kind = SacrificeFactory,
-                pieceType = actorType,
-                ActorsCellId = (ushort)cell,
-                TargetCellId = targetCellId,
-                aux = (ushort)tgtPid
-            };
-            Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
-        }
-    }
-    private static void CreateConversionFactoryActions()
-    {
-        if (IsItLegal.IsLegal_ConversionFactory(gameState.ps[player].vpTotal))
-        {
-            var a = new Action
-            {
-                kind = ConversionFactory,
-                pieceType = actorType,
-                ActorsCellId = (ushort)cell,
-                TargetCellId = (ushort)cell,
-                aux = 0
-            };
-            Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
-        }
-    }
-
-    
-
 }
