@@ -10,7 +10,7 @@ public static class SpawnAction
         int actorPid,
         int actorType,
         int actorCell,
-        OfferBuild offerBuild)
+        ref OfferBuild offerBuild)
         {
             var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
             var gameState = GameRegistry.game[offerBuild.gameIndex].gameState;
@@ -60,7 +60,7 @@ public static class SpawnAction
                     TargetCellId = (ushort)empties[i],
                     aux = (ushort)targetType // carry target type for UI/debug readability
                 };
-                OfferProvider.Emit(theAction, offerBuild);
+                OfferProvider.Emit(theAction, ref offerBuild);
             }
         }
 

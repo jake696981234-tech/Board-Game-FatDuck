@@ -304,7 +304,7 @@ public sealed class MLAgentController : Agent
         offerBuild.total = 0;
         offerBuild.cap = 0;
 
-        int total = OfferProvider.BuildActionList(offerBuild);
+        int total = OfferProvider.BuildActionList(ref offerBuild);
         // We only allow the emitted prefix to be selectable by the policy
         return Math.Min(total, acts.Length);
     }

@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 public static class GroupBuildAction
 {
-    public static void CreateActions(int pieceId, byte actorType, int cell, OfferBuild offerBuild)
+    public static void CreateActions(int pieceId, byte actorType, int cell, ref OfferBuild offerBuild)
     {
         int tgtType = PieceDefinition.groupBuild_target[actorType];
         if (tgtType >= 0 && tgtType < PieceDefinition.typeCount)
@@ -20,7 +20,7 @@ public static class GroupBuildAction
                 if (clusterSize >= require)
                 {
                     // Enumerate legal create destinations for target type
-                    EnumerateGroupBuildCreates(offerBuild, (byte)tgtType, cell, actorType);
+                    EnumerateGroupBuildCreates(ref offerBuild, (byte)tgtType, cell, actorType);
                 }
             }
         }
@@ -121,7 +121,7 @@ public static class GroupBuildAction
             return cells;
         }
 
-    private static void EnumerateGroupBuildCreates(OfferBuild offerBuild, byte targetType, int clusterRepresentativeCell, byte actorType)
+    private static void EnumerateGroupBuildCreates(ref OfferBuild offerBuild, byte targetType, int clusterRepresentativeCell, byte actorType)
     {
         var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
         var gameState = GameRegistry.game[offerBuild.gameIndex].gameState;
@@ -141,7 +141,7 @@ public static class GroupBuildAction
                 TargetCellId = (ushort)cell,
                 aux = 0
             };
-            OfferProvider.Emit(a, offerBuild);
+            OfferProvider.Emit(a, ref offerBuild);
         }
     }
 }

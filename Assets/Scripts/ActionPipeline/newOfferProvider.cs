@@ -8,7 +8,7 @@ using UnityEngine;
 
 public static class OfferProvider
 {
-     public static int BuildActionList(OfferBuild offerBuild)
+     public static int BuildActionList(ref OfferBuild offerBuild)
     {
         offerBuild.cap =  offerBuild.outActions.Length;
         if (offerBuild.outCosts.Length < offerBuild.cap) offerBuild.cap = offerBuild.outCosts.Length;
@@ -23,18 +23,18 @@ public static class OfferProvider
 
         for (int cell = 0; cell < cellCount; cell++)
         {
-            PieceActions(offerBuild, cell, ref scratch);
-            CreateAction.CreateActions(cell, offerBuild);
+            PieceActions(ref offerBuild, cell, ref scratch);
+            CreateAction.CreateActions(cell, ref offerBuild);
         }
 
-        EndTurnAction(offerBuild);
+        EndTurnAction(ref offerBuild);
 
         ZeroTail(offerBuild.write, offerBuild.outCosts, offerBuild.outMask);
         return offerBuild.total; 
     }
 
 
-    private static void PieceActions(OfferBuild offerBuild, int cell, ref int[] scratch)
+    private static void PieceActions(ref OfferBuild offerBuild, int cell, ref int[] scratch)
     {
         var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
 
@@ -44,20 +44,20 @@ public static class OfferProvider
 
         byte actorType = bm.GetPieceType(pieceId);
 
-        if (PieceDefinition.move_enabled[actorType]) MoveAction.CreateActions(pieceId, actorType, cell, offerBuild);
-        if (PieceDefinition.shoot_enabled[actorType]) ShootAction.CreateActions(pieceId, actorType, cell, offerBuild);
-        if (PieceDefinition.captureVP_enabled[actorType]) CaptureVPAction.CreateActions(pieceId, actorType, cell, offerBuild);
-        if (PieceDefinition.coreDamage_enabled[actorType]) CoreDamageAction.CreateActions(pieceId, actorType, cell, offerBuild);
-        if (PieceDefinition.push_enabled[actorType]) PushAction.CreateActions(pieceId, actorType, cell, offerBuild);
-        if (PieceDefinition.groupBuild_enabled[actorType]) GroupBuildAction.CreateActions(pieceId, actorType, cell, offerBuild);
-        if (PieceDefinition.launcher_enabled[actorType]) LauncherAction.CreateActions(pieceId, actorType, cell, offerBuild);
-        if (PieceDefinition.spawn_enabled[actorType]) SpawnAction.CreateActions(pieceId, actorType, cell, offerBuild);
-        if (PieceDefinition.sacrificeFactory_enabled[actorType]) SacrificeFactoryAction.CreateActions(pieceId, actorType, cell, offerBuild);
-        if (PieceDefinition.conversionFactory_enabled[actorType]) ConversionFactoryAction.CreateActions(pieceId, actorType, cell, offerBuild);
-        if (PieceDefinition.conversionFactory_enabled[actorType]) UpgradeAction.CreateActions(pieceId, actorType, cell, offerBuild);
+        if (PieceDefinition.move_enabled[actorType]) MoveAction.CreateActions(pieceId, actorType, cell, ref offerBuild);
+        if (PieceDefinition.shoot_enabled[actorType]) ShootAction.CreateActions(pieceId, actorType, cell, ref offerBuild);
+        if (PieceDefinition.captureVP_enabled[actorType]) CaptureVPAction.CreateActions(actorType, cell, ref offerBuild);
+        if (PieceDefinition.coreDamage_enabled[actorType]) CoreDamageAction.CreateActions(actorType, cell, ref offerBuild);
+        if (PieceDefinition.push_enabled[actorType]) PushAction.CreateActions(pieceId, actorType, cell, ref offerBuild);
+        if (PieceDefinition.groupBuild_enabled[actorType]) GroupBuildAction.CreateActions(pieceId, actorType, cell, ref offerBuild);
+        if (PieceDefinition.launcher_enabled[actorType]) LauncherAction.CreateActions(pieceId, actorType, cell, ref offerBuild);
+        if (PieceDefinition.spawn_enabled[actorType]) SpawnAction.CreateActions(pieceId, actorType, cell, ref offerBuild);
+        if (PieceDefinition.sacrificeFactory_enabled[actorType]) SacrificeFactoryAction.CreateActions(pieceId, actorType, cell, ref offerBuild);
+        if (PieceDefinition.conversionFactory_enabled[actorType]) ConversionFactoryAction.CreateActions(pieceId, actorType, cell, ref offerBuild);
+        UpgradeAction.CreateActions(pieceId, actorType, cell, ref offerBuild);
     }
 
-    private static void EndTurnAction(OfferBuild offerBuild)
+    private static void EndTurnAction(ref OfferBuild offerBuild)
     {
     // =============================
         // EndTurn (always present, always last in prefix, always mask=1)
@@ -102,20 +102,20 @@ public static class OfferProvider
     public static bool IsInvalid(BoardModel bm, int pieceId) => pieceId == bm.InvalidId;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void Emit(Action theAction, OfferBuild offerBuild)
+    public static void Emit(Action theAction, ref OfferBuild offerBuild)
     {
         offerBuild.total++;
         if (offerBuild.write < offerBuild.cap)
         {
             offerBuild.outActions[offerBuild.write] = theAction;
-            WriteCostMask(theAction, offerBuild);
+            WriteCostMask(theAction, ref offerBuild);
             offerBuild.write++;
         }
     }
 
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void WriteCostMask(in Action theAction, OfferBuild offerBuild)
+    private static void WriteCostMask(in Action theAction, ref OfferBuild offerBuild)
     {
         var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
 

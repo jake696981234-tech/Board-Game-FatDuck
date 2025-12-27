@@ -21,15 +21,12 @@ public static class PieceActionFilter
 
 
     public static bool isAux;
-    public static bool isActionRequiresAux;
+    public static bool isActionRequiresAux = false;
     public static ushort aux;
     public static List<int> cachedLegalAux = new List<int>(256);
 
-    
-    
-
     public static bool isAddCost;
-    public static bool ActionCostRequiresAddCost;
+    public static bool ActionCostRequiresAddCost = false;
     public static List<int> addCost = new List<int>(256);
     public static List<int> cachedLegalAddCost = new List<int>(256);
 
@@ -226,45 +223,10 @@ public static class PieceActionFilter
         TargetCellId = (ushort)PieceDefinition.upgrade_target[kind];
         isTargetCellId = true;
         isAux = true;
-        isAddCost = true;
+        if (!PieceDefinition.sacrificeCost_enabled[pieceType]) isAddCost = true;
 
         UIFilter.ResetClickedData();
         showNextActionOption();
-        
-        
-        // if (!isTargetCellId)
-        // {
-        //     if (UIFilter.uIType != UIFilter.UIType.Cell || !cachedLegalTargetCellId.Contains(UIFilter.clickedCellId))
-        //     {
-        //         UIFilter.ResetClickedData();
-        //         return;
-        //     }
-        //     TargetCellId = (ushort)UIBridge.bm.GetPieceTypeFromCell(UIFilter.clickedCellId);
-        //     isTargetCellId = true;
-
-        //     if (!PieceDefinition.sacrificeCost_enabled[TargetCellId])
-        //     {
-        //         if (!isAddCost) isAddCost = true;
-        //     }
-
-        //     UIFilter.ResetClickedData();
-        //     showNextActionOption();
-        //     return;
-        // }
-
-        // if (!isAddCost)
-        // {
-        //     if (UIFilter.uIType != UIFilter.UIType.Cell  || !cachedLegalAddCost.Contains(UIFilter.clickedCellId))
-        //     {
-        //         UIFilter.ResetClickedData();
-        //         return;
-        //     } 
-        //     addCost.Add(UIBridge.bm.occupantPieceId[UIFilter.clickedCellId]);
-        //     ActionCostRequiresAddCost = true;
-        //     if (addCost.Count == PieceDefinition.sacrificeCost_howManyItNeeds[pieceType]) isAddCost = true;
-        // }
-        // UIFilter.ResetClickedData();
-        // showNextActionOption();
     }
 
     private static void SetOneInputKindFilter()
@@ -353,11 +315,11 @@ public static class PieceActionFilter
 
         UIHelpers.SetBackdropColor(UI.hic.config.createModeBackground);
         UIHelpers.SetPanelBackdropColor(UI.hic.config.createModePanelBackground);
-        if (UI.hic.createTitleText) UI.hic.createTitleText.text = $"Choose Sacrfices for the upgrade: {PieceDefinition.name[PieceDefinition.upgrade_target[TargetCellId]]}";
+        if (UI.hic.createTitleText) UI.hic.createTitleText.text = $"Choose Sacrfices for the upgrade: {PieceDefinition.name[pieceType]}";
         if (UI.hic.createCostText) UI.hic.createCostText.text = $"Cost: {PieceDefinition.BuildCost[pieceType]}"; //to do, this does not show full cost
         if (UI.hic.createSprite)
         {
-            var s = !string.IsNullOrEmpty(PieceDefinition.spritePath[PieceDefinition.upgrade_target[TargetCellId]]) ? Resources.Load<Sprite>(PieceDefinition.spritePath[PieceDefinition.upgrade_target[TargetCellId]]) : null;
+            var s = !string.IsNullOrEmpty(PieceDefinition.spritePath[pieceType]) ? Resources.Load<Sprite>(PieceDefinition.spritePath[pieceType]) : null;
             UI.hic.createSprite.sprite = s;
             UI.hic.createSprite.enabled = (s != null);
         }
@@ -378,7 +340,20 @@ public static class PieceActionFilter
 
             if (PieceDefinition.sacrificeCost_isNeedsSpecificPiece[pieceType])
             {
-                if (PieceDefinition.sacrificeCost_specificPiece[pieceType] != actions.TargetCellId) continue;
+                // Check the type of the sacrificed piece, not the source upgrade type
+                int requiredType = PieceDefinition.sacrificeCost_specificPiece[pieceType];
+                bool hasRequiredType = false;
+                for (int b = 0; b < actions.addCost.Length; b++)
+                {
+                    int sacrificePid = actions.addCost[b];
+                    if (!UIBridge.bm.IsValidPieceId(sacrificePid)) continue;
+                    if (UIBridge.bm.GetPieceType(sacrificePid) == requiredType)
+                    {
+                        hasRequiredType = true;
+                        break;
+                    }
+                }
+                if (!hasRequiredType) continue;
             }
 
             //to do - need to remove the prevoius selected option if, there was one

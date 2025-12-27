@@ -6,14 +6,14 @@ using System.Collections.Generic;
 
 public static class UpgradeAction
 {
-    public static void CreateActions(int pieceId, byte actorType, int cell, OfferBuild offerBuild)
+    public static void CreateActions(int pieceId, byte actorType, int cell, ref OfferBuild offerBuild)
     {
         // Upgrade-as-piece-action: find destination types that upgrade from this actorType
         for (int upgradedToPieceType = 0; upgradedToPieceType < PieceDefinition.typeCount; upgradedToPieceType++)
         {
             if (!PieceDefinition.upgrade_enabled[upgradedToPieceType]) continue;
             if (PieceDefinition.upgrade_target[upgradedToPieceType] != actorType) continue;
-            if (CreateAction.HasRequiredDigits(upgradedToPieceType, offerBuild)) continue;
+            if (!CreateAction.HasRequiredDigits(upgradedToPieceType, ref offerBuild)) continue;
            
 
             var theAction = new Action
@@ -26,8 +26,8 @@ public static class UpgradeAction
             };
 
             List<Action> CreateActions = new List<Action> {theAction};
-            if (PieceDefinition.sacrificeCost_enabled[upgradedToPieceType] && !CreateAction.GenerateSacrificeCosts(CreateActions, offerBuild)) return;
-            for (int i = 0; i < CreateActions.Count; i++) { OfferProvider.Emit(CreateActions[i], offerBuild); }
+            if (PieceDefinition.sacrificeCost_enabled[upgradedToPieceType] && !CreateAction.GenerateSacrificeCosts(CreateActions, ref offerBuild)) return;
+            for (int i = 0; i < CreateActions.Count; i++) { OfferProvider.Emit(CreateActions[i], ref offerBuild); }
         }
     }
 
@@ -47,7 +47,7 @@ public static class UpgradeAction
 
         int PieceId = bm.AllocateRow();
         bm.PlacePieceRow(PieceId, player, (byte)theAction.pieceType, theAction.ActorsCellId, PieceDefinition.maxHP[theAction.pieceType]);
-        if (PieceDefinition.connectors_enabled[theAction.TargetCellId]) { bm.pieceConnectorConfig[PieceId] = sourceConnector; } else { bm.pieceConnectorConfig[PieceId] = (byte)theAction.aux; }
+        if (PieceDefinition.connectors_enabled[theAction.pieceType]) { bm.pieceConnectorConfig[PieceId] = sourceConnector; } else { bm.pieceConnectorConfig[PieceId] = (byte)theAction.aux; }
         int g = PieceDefinition.digitItGives[(byte)theAction.pieceType];
         if (g >= 0) gameState.ps[player].GrantDigit(g);
 

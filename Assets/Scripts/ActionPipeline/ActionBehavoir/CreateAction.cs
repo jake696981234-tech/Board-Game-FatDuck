@@ -8,20 +8,20 @@ using System;
 
 public static class CreateAction
 {
-    public static void CreateActions(int cell, OfferBuild offerBuild)
+    public static void CreateActions(int cell, ref OfferBuild offerBuild)
     {
-        if (!PieceLimitReached(offerBuild)) return;
-        if (!isCellLegalPlacement(cell, offerBuild)) return;
+        if (PieceLimitReached(ref offerBuild)) return;
+        if (!isCellLegalPlacement(cell, ref offerBuild)) return;
 
         int typeCount = PieceDefinition.typeCount;
         for (int type = 0; type < typeCount; type++)
         {
-            if (!isPieceTypeLegal(type, offerBuild)) continue;
-            GenerateCompleteCreateActions(in cell, in type, offerBuild);
+            if (!isPieceTypeLegal(type, ref offerBuild)) continue;
+            GenerateCompleteCreateActions(in cell, in type, ref offerBuild);
         }
     }
 
-    public static void GenerateCompleteCreateActions(in int cell, in int type, OfferBuild offerBuild)
+    public static void GenerateCompleteCreateActions(in int cell, in int type, ref OfferBuild offerBuild)
     {
          Action theAction = new Game.Core.Action
         {
@@ -32,12 +32,12 @@ public static class CreateAction
             aux = 0
         };
         List<Action> CreateActions = new List<Action> {theAction};
-        if (PieceDefinition.connectors_enabled[theAction.pieceType] && !CreateConnectorOptions(CreateActions, offerBuild)) return;
-        if (PieceDefinition.sacrificeCost_enabled[theAction.pieceType] && !GenerateSacrificeCosts(CreateActions, offerBuild)) return;
-        for (int i = 0; i < CreateActions.Count; i++) { OfferProvider.Emit(CreateActions[i], offerBuild); }
+        if (PieceDefinition.connectors_enabled[theAction.pieceType] && !CreateConnectorOptions(CreateActions, ref offerBuild)) return;
+        if (PieceDefinition.sacrificeCost_enabled[theAction.pieceType] && !GenerateSacrificeCosts(CreateActions, ref offerBuild)) return;
+        for (int i = 0; i < CreateActions.Count; i++) { OfferProvider.Emit(CreateActions[i], ref offerBuild); }
     } 
 
-    public static bool PieceLimitReached(OfferBuild offerBuild)
+    public static bool PieceLimitReached(ref OfferBuild offerBuild)
     {
         var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
         bool limitActive = offerBuild.query.pieceLimitEnabled && offerBuild.query.pieceLimitPerPlayer > 0;
@@ -45,7 +45,7 @@ public static class CreateAction
     }
 
 
-    public static bool CreateConnectorOptions(List<Action> actions, OfferBuild offerBuild) 
+    public static bool CreateConnectorOptions(List<Action> actions, ref OfferBuild offerBuild) 
     {
         List<Action> ConnectorActions = new List<Action>();
         bool legal = false;
@@ -55,12 +55,9 @@ public static class CreateAction
             for (int cfg = 0; cfg < 64; cfg++)
             {
                 // if ((allowedMask & (1UL << cfg)) == 0) continue;
-                if (!PiecesSides.IsConnectorPlacementLegal(actions[i].TargetCellId, actions[i].pieceType, cfg, offerBuild.query.playerId, offerBuild.gameIndex))
-                {
-                    legal = true;
-                    continue;
-                }
-                    
+                if (!PiecesSides.IsConnectorPlacementLegal(actions[i].TargetCellId, actions[i].pieceType, cfg, offerBuild.query.playerId, offerBuild.gameIndex)) continue;
+
+                legal = true;
                 Action theAction = new Game.Core.Action
                 {
                     kind = actions[i].kind,
@@ -84,10 +81,10 @@ public static class CreateAction
 
     
 
-    public static bool isPieceTypeLegal(int type, OfferBuild offerBuild)
+    public static bool isPieceTypeLegal(int type, ref OfferBuild offerBuild)
     {
         if (!PieceDefinition.isBuildable[type]) return false; // buildable gate (CSV flag)
-        if (!HasRequiredDigits(type, offerBuild)) return false;                                            
+        if (!HasRequiredDigits(type, ref offerBuild)) return false;                                            
         
         bool hasConn = PieceDefinition.connectors_enabled[type];
         ulong allowedMask = hasConn ? PieceDefinition.connector_allowedMasks[type] : 0UL;
@@ -96,7 +93,7 @@ public static class CreateAction
         return true;
     }
 
-    public static bool isCellLegalPlacement(int cell, OfferBuild offerBuild)
+    public static bool isCellLegalPlacement(int cell, ref OfferBuild offerBuild)
     {
         var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
         if (!bm.IsEmpty(cell)) return false; // only empties
@@ -104,12 +101,12 @@ public static class CreateAction
         var coreCell = bm.GetPlayerCoreCellId(offerBuild.query.playerId); 
 
         if (cell == coreCell) return true;
-        if (isBaseHex(offerBuild, coreCell, cell)) return true;
-        if (isAdjecentABuilding(cell, offerBuild)) return true;
+        if (isBaseHex(ref offerBuild, coreCell, cell)) return true;
+        if (isAdjecentABuilding(cell, ref offerBuild)) return true;
         return false;
     }
 
-    public static bool isBaseHex(OfferBuild offerBuild, int coreCell, int cell)
+    public static bool isBaseHex(ref OfferBuild offerBuild, int coreCell, int cell)
     {
         var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
         int[] neighScratch = Scratch.GetScratchNeighborBuffer(offerBuild.gameIndex);
@@ -122,7 +119,7 @@ public static class CreateAction
         return false;
     }
 
-    public static bool isAdjecentABuilding(int cell, OfferBuild offerBuild)
+    public static bool isAdjecentABuilding(int cell, ref OfferBuild offerBuild)
     {
         var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
 
@@ -140,7 +137,7 @@ public static class CreateAction
         return false;
     }
 
-    public static bool HasRequiredDigits(int type, OfferBuild offerBuild)
+    public static bool HasRequiredDigits(int type, ref OfferBuild offerBuild)
     {
         var gameState = GameRegistry.game[offerBuild.gameIndex].gameState;
         int req = PieceDefinition.requiredDigit[(byte)type];
@@ -152,7 +149,7 @@ public static class CreateAction
     /// Populate sacrifice options for a create action.
     /// Returns false if no legal options exist.
     /// </summary>
-    public static bool GenerateSacrificeCosts(List<Game.Core.Action> actions, OfferBuild offerBuild)
+    public static bool GenerateSacrificeCosts(List<Game.Core.Action> actions, ref OfferBuild offerBuild)
     {
         // We must preserve the original actions while computing,
         // because we are going to overwrite this same list later.

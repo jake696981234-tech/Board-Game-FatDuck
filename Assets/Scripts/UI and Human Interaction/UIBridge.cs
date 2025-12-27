@@ -78,7 +78,7 @@ public static class UIBridge
         offerBuild.cap = 0;
 
         // Fill the spans (zero-alloc path in OfferProvider). Function returns TOTAL (may exceed cap). :contentReference[oaicite:7]{index=7}
-        _total = OfferProvider.BuildActionList(offerBuild);
+        _total = OfferProvider.BuildActionList(ref offerBuild);
         _count = Mathf.Min(kCap, _total);
     }
 

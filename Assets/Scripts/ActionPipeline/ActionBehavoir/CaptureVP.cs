@@ -6,13 +6,14 @@ using System;
 
 public static class CaptureVPAction
 {
-    public static void CreateActions(int pieceId, byte actorType, int cell, OfferBuild offerBuild)
+    public static void CreateActions(byte actorType, int cell, ref OfferBuild offerBuild)
     {
         var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
 
-        if (IsLegal(pieceId, offerBuild.gameIndex)) return;
-
         ushort vpCell = (ushort)bm.GetVictoryPointCellId();
+        if (cell != vpCell) return;
+        if (!PieceDefinition.captureVP_enabled[actorType]) return;
+
         var theAction = new Action
         {
             kind = CaptureVP,
@@ -21,7 +22,7 @@ public static class CaptureVPAction
             TargetCellId = vpCell,
             aux = 0
         };
-        OfferProvider.Emit(theAction, offerBuild);
+        OfferProvider.Emit(theAction, ref offerBuild);
     }
 
 
@@ -29,10 +30,11 @@ public static class CaptureVPAction
     /// <summary>
     /// CAPTURE VP (targetless): legal if actor stands on VP cell.
     /// </summary>
-    public static bool IsLegal(int actorPieceId, int gameIndex)
+    public static bool IsLegal(int actorPieceId, ref OfferBuild offerBuild)
     {
-        var bm = GameRegistry.game[gameIndex].boardModel;
+        var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
 
+        
         int originCell = bm.GetPieceCell(actorPieceId);
         if (originCell < 0) return false;
         return originCell == bm.GetVictoryPointCellId();

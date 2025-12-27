@@ -5,7 +5,7 @@ using static Game.Core.ActionKind; // import enum values
 
 public static class LauncherAction
 {
-    public static void CreateActions(int pieceId, byte actorType, int cell, OfferBuild offerBuild)
+    public static void CreateActions(int pieceId, byte actorType, int cell, ref OfferBuild offerBuild)
     {
         int[] scratch = Scratch.GetScratchCellBuffer(offerBuild.gameIndex);
         int theNumberOfTargets = GetLegalTargets(pieceId, actorType, scratch, offerBuild.gameIndex);
@@ -21,7 +21,7 @@ public static class LauncherAction
                 TargetCellId = (ushort)dst,
                 aux = (ushort)tgtPid
             };
-            OfferProvider.Emit(theAction, offerBuild);
+            OfferProvider.Emit(theAction, ref offerBuild);
         }
     }
 

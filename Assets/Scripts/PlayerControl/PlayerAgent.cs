@@ -100,7 +100,7 @@ public sealed class PlayerAgent
         offerBuild.total = 0;
         offerBuild.cap = 0;
 
-        int total = OfferProvider.BuildActionList(offerBuild);
+        int total = OfferProvider.BuildActionList(ref offerBuild);
         if (total <= 0) return false;
 
         int n = Math.Min(total, _cfg.maxOffersToConsider);

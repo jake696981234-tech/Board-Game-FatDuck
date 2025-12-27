@@ -5,7 +5,7 @@ using static Game.Core.ActionKind; // import enum values
 
 public static class SacrificeFactoryAction
 {
-    public static void CreateActions(int pieceId, byte actorType, int cell, OfferBuild offerBuild)
+    public static void CreateActions(int pieceId, byte actorType, int cell, ref OfferBuild offerBuild)
     {
         var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
         int[] scratch = Scratch.GetScratchCellBuffer(offerBuild.gameIndex);
@@ -22,7 +22,7 @@ public static class SacrificeFactoryAction
                 TargetCellId = targetCellId,
                 aux = (ushort)tgtPid
             };
-            OfferProvider.Emit(theAction, offerBuild);
+            OfferProvider.Emit(theAction, ref offerBuild);
         }
     }
 
