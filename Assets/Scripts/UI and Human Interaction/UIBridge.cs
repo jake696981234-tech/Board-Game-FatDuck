@@ -77,7 +77,7 @@ public static class UIBridge
     public static void PerformActionIndex(Game.Core.Action theAction)
     {
         // Execute through reducer (single source of truth). This method fires OnActionExecuted afterwards. :contentReference[oaicite:9]{index=9}
-        if (!gameState.Perform(in theAction))
+        if (!gameState.Perform(in theAction, _offers))
         {
             Debug.LogWarning($"[HIC] Perform rejected: {UIHelpers.PrettyAction(theAction)}");
         }

@@ -29,7 +29,7 @@ public sealed class MLAgentController : Agent
 
 
     // Offer buffers (capacity = hub.agent.maxOffersToConsider)
-    private Game.Core.Action[] _actions;
+    private Game.Core.Action[] _offers;
     private float[] _quoted;
     private byte[] _mask;
 
@@ -81,7 +81,7 @@ public sealed class MLAgentController : Agent
         };
 
         int cap = Math.Max(1, _hub.agent.maxOffersToConsider);
-        _actions = new Game.Core.Action[cap];
+        _offers = new Game.Core.Action[cap];
         _quoted = new float[cap];
         _mask = new byte[cap];
 
@@ -115,7 +115,7 @@ public sealed class MLAgentController : Agent
         // If not this player's turn, mask everything so the policy can only pick 0
         if (_gs.CurrentPlayerId != playerId)
         {
-            int cap = _actions.Length;
+            int cap = _offers.Length;
             for (int i = 0; i < cap; i++) actionMask.SetActionEnabled(0, i, false);
             _emitCount = 0;
             return;
@@ -123,7 +123,7 @@ public sealed class MLAgentController : Agent
 
         // Build offers for current player and apply masks
         _emitCount = BuildOffersForCurrentPlayer(); // fills _actions/_quoted/_mask, returns n = min(total, cap)
-        int capBranch = _actions.Length;
+        int capBranch = _offers.Length;
 
         // Disable indices >= _emitCount
         for (int i = _emitCount; i < capBranch; i++) actionMask.SetActionEnabled(0, i, false);
@@ -151,12 +151,12 @@ public sealed class MLAgentController : Agent
         if (_emitCount <= 0 || idx < 0 || idx >= _emitCount || _mask[idx] == 0)
         {
             // Fallback: try to find EndTurn; else no-op
-            int endIdx = FindEndTurn(_actions.AsSpan(0, Math.Max(0, _emitCount)));
+            int endIdx = FindEndTurn(_offers.AsSpan(0, Math.Max(0, _emitCount)));
             if (endIdx >= 0) idx = endIdx; else return;
         }
 
         // Precompute shaping components before applying the action
-        var aChosen = _actions[idx];
+        var aChosen = _offers[idx];
         int distBefore = DistanceBefore(ref aChosen);
         int distAfterPlanned = DistanceAfter(ref aChosen);
         float normalizedCost = 0f;
@@ -164,7 +164,7 @@ public sealed class MLAgentController : Agent
             normalizedCost = Mathf.Clamp01(_quoted[idx] / Mathf.Max(1f, _hub.cap_maxBudget));
 
         // Step the game
-        bool ok = _gs.Perform(in aChosen);
+        bool ok = _gs.Perform(in aChosen, _offers);
         if (!ok) return; // illegal due to race (rare), skip reward
 
         // --- Minimal reward shaping (optional; safe defaults) ---
@@ -262,10 +262,10 @@ public sealed class MLAgentController : Agent
         var discrete = actionsOut.DiscreteActions;
         // Build offers to align with masking; pick cheapest affordable non-EndTurn
         int n = BuildOffersForCurrentPlayer();
-        int pick = PickCheapestAffordableNonEndTurn(_actions.AsSpan(0, n),
+        int pick = PickCheapestAffordableNonEndTurn(_offers.AsSpan(0, n),
                                                     _quoted.AsSpan(0, Math.Min(n, _quoted.Length)),
                                                     _mask.AsSpan(0, Math.Min(n, _mask.Length)));
-        if (pick < 0) pick = FindEndTurn(_actions.AsSpan(0, n));
+        if (pick < 0) pick = FindEndTurn(_offers.AsSpan(0, n));
         if (pick < 0) pick = 0; // fallback safe index
         discrete[0] = pick;
     }
@@ -290,7 +290,7 @@ public sealed class MLAgentController : Agent
         var q = new OfferQuery(playerId, _gs.PieceLimitEnabled, _gs.pieceLimitPerPlayer,
             mcActive, mcType, mcBorder, mcRemaining, mcCells, mcCellCount);
 
-        var acts = _actions.AsSpan();
+        var acts = _offers.AsSpan();
         var costs = _quoted.AsSpan();
         var mask = _mask.AsSpan();
 

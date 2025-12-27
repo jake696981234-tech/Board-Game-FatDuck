@@ -112,7 +112,7 @@ namespace Game.Core
 
         #endregion
         #region The Action method
-        public bool Perform(in Action theAction)
+        public bool Perform(in Action theAction, Action[] offers)
         {
             ref var cur = ref ps[currentPlayer];
 
@@ -121,11 +121,18 @@ namespace Game.Core
                 Debug.Log("FastCheck returned false");
                 return false;
             }
-            if (!IsItLegal.IsStillLegal(in theAction, currentPlayer, gameIndex))
+            // if (!IsItLegal.IsStillLegal(in theAction, currentPlayer, gameIndex))
+            // {
+            //     Debug.Log("Is Still Legal returned false");
+            //     return false;
+            // }
+
+            if (!IsStillLegal(offers, theAction))
             {
                 Debug.Log("Is Still Legal returned false");
                 return false;
             }
+
             events.actionBegin(new ActionContext { ThePlayer = currentPlayer });
 
             CostEngine.CostBreakdown quote = default;
@@ -267,13 +274,25 @@ namespace Game.Core
 
         }
 
-
-
         private bool FastCheck(in Action a)
         {
             if (a.kind > ConversionFactory) return false;
             if (currentPlayer >= 4) return false;
             return true;
+        }
+
+        public static bool IsStillLegal(Action[] offers, Action theAction)
+        {
+            for (int i = 0; i < offers.Length; i++)
+            {
+                if (theAction.kind != offers[i].kind) continue;
+                if (theAction.pieceType != offers[i].pieceType) continue;
+                if (theAction.ActorsCellId != offers[i].ActorsCellId) continue;
+                if (theAction.TargetCellId != offers[i].TargetCellId) continue;
+                if (theAction.aux != offers[i].aux) continue;
+                return true;
+            }
+            return false;
         }
 
         #endregion

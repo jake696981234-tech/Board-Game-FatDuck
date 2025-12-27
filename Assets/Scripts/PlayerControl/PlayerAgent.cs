@@ -30,7 +30,7 @@ public sealed class PlayerAgent
     private byte _mySeat;
 
     // ----- Scratch buffers (reused) -----
-    private Game.Core.Action[] _actions;
+    private Game.Core.Action[] _offers;
     private float[] _quotedCosts;
     private byte[] _mask;
 
@@ -51,7 +51,7 @@ public sealed class PlayerAgent
         _policy = new HeuristicPolicy();
 
         int cap = Math.Max(1, _cfg.maxOffersToConsider);   // allocate once, no mid-episode growth
-        _actions = new Game.Core.Action[cap];
+        _offers = new Game.Core.Action[cap];
         _quotedCosts = new float[cap];
         _mask = new byte[cap];
     }
@@ -86,7 +86,7 @@ public sealed class PlayerAgent
         var q = new OfferQuery(_gs.CurrentPlayerId, _gs.PieceLimitEnabled, _gs.pieceLimitPerPlayer,
             mcActive, mcType, mcBorder, mcRemaining, mcCells, mcCellCount); // :contentReference[oaicite:3]{index=3}
 
-        var acts = _actions.AsSpan();
+        var acts = _offers.AsSpan();
         var costs = _quotedCosts.AsSpan();
         var mask = _mask.AsSpan();
 
@@ -102,7 +102,7 @@ public sealed class PlayerAgent
         if (chosen < 0) chosen = FindEndTurn(actsN);
 
         if (chosen < 0) return false;
-        return _gs.Perform(in actsN[chosen]);
+        return _gs.Perform(in actsN[chosen], _offers);
 
     }
 
