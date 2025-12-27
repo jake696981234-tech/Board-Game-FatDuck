@@ -53,7 +53,7 @@ namespace Game.Core
             this.pieceType = pieceType;
             this.ActorsCellId = actorsCellId;
             this.TargetCellId = targetCellId;
-            this.aux = aux;
+            this.aux = aux; //wall of 6 options
             this.addCost = addCost ?? Array.Empty<int>();
         }
 

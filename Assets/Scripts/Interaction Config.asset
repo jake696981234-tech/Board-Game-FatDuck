@@ -20,7 +20,9 @@ MonoBehaviour:
   pieceActionPanelBackground: {r: 0.6394423, g: 0.38527945, b: 0.735849, a: 1}
   actionExecuteBackground: {r: 0.22745098, g: 0.14901961, b: 0.14901961, a: 1}
   actionExecutePanelBackground: {r: 0.6698113, g: 0.33174616, b: 0.33174616, a: 1}
+  ConnectorModeBackground: {r: 0.1, g: 0.12, b: 0.1, a: 0.85}
   createModeCellHighlight: {r: 0.2509804, g: 0.7882353, b: 0.63529414, a: 0.85}
+  SacrificeCostCellHighlight: {r: 0.1, g: 0.1, b: 0.1, a: 0.85}
   actionLegalTargetHighlight: {r: 0.78039217, g: 0.4392157, b: 0.9098039, a: 0.85}
   defaultCellColor: {r: 0.24705882, g: 0.6627451, b: 0.9607843, a: 1}
   cellHoverTint: {r: 0.9, g: 0.9, b: 1, a: 1}
@@ -28,7 +30,7 @@ MonoBehaviour:
   cellDisabledTint: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   selectionHighlight: {r: 0.85, g: 0.85, b: 0.1, a: 0.8}
   blockInputWhenNotYourTurn: 1
-  GiveRawActionOffers: 0
+  GiveRawActionOffers: 1
   ManualStepThroughSnapShots: 0
   DelayOnActions: 0
   TimeDelayOnActions: 0.21

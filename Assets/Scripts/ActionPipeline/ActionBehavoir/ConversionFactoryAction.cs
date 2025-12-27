@@ -5,10 +5,10 @@ using static Game.Core.ActionKind; // import enum values
 
 public static class ConversionFactoryAction
 {
-    public static void CreateActions(in int[] scratch, int pieceId, byte actorType, int cell, OfferBuild offerBuild)
+    public static void CreateActions(int pieceId, byte actorType, int cell, OfferBuild offerBuild)
     {
         var gameState = GameRegistry.game[offerBuild.gameIndex].gameState;
-        if (IsItLegal.IsLegal_ConversionFactory(gameState.ps[offerBuild.player].vpTotal))
+        if (IsItLegal.IsLegal_ConversionFactory(gameState.ps[offerBuild.query.playerId].vpTotal))
         {
             var theAction = new Action
             {
@@ -18,7 +18,7 @@ public static class ConversionFactoryAction
                 TargetCellId = (ushort)cell,
                 aux = 0
             };
-            newOfferProvider.Emit(ref theAction, offerBuild);
+            newOfferProvider.Emit(theAction, offerBuild);
         }
     }
 

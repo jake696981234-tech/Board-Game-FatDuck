@@ -21,7 +21,7 @@ public static class CaptureVPAction
                 TargetCellId = vpCell,
                 aux = 0
             };
-            newOfferProvider.Emit(ref theAction, offerBuild);
+            newOfferProvider.Emit(theAction, offerBuild);
         }
     }
 

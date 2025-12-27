@@ -2,13 +2,67 @@ using UnityEngine;
 using Game.Core;
 using Action = Game.Core.Action;
 using static Game.Core.ActionKind; // import enum values
+using System;
 
 public static class SpawnAction
 {
-    public static void CreateActions()
-    {
-        EmitSpawnerActions(q, pieceId, actorType, cell, ref write, ref total, cap, outActions, outCosts, outMask, gameIndex, player);
-    }
+        public static void CreateActions(
+        int actorPid,
+        int actorType,
+        int actorCell,
+        OfferBuild offerBuild)
+        {
+            var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
+            var gameState = GameRegistry.game[offerBuild.gameIndex].gameState;
+
+            int amount = PieceDefinition.spawn_pieceAmount[actorType];
+            int range = PieceDefinition.spawn_range[actorType];
+            int targetType = PieceDefinition.spawn_targetType[actorType];
+            bool once = PieceDefinition.spawn_isOnlyOncePerTurn[actorType];
+            if (amount <= 0 || targetType < 0 || targetType >= PieceDefinition.typeCount) return;
+
+            // Digit gate; buildable override allowed
+            int reqDigit = PieceDefinition.requiredDigit[(byte)targetType];
+            if (reqDigit >= 0 && !gameState.ps[offerBuild.query.playerId].HasDigit(reqDigit)) return;
+
+            // Collect empty, LOS-valid cells within range from launcher
+            int[] empties = Scratch.GetScratchCellBuffer(offerBuild.gameIndex);
+            int eCount = 0;
+            int cellCount = bm.GetCellCount();
+            for (int c = 0; c < cellCount; c++)
+            {
+                if (!bm.IsEmpty(c)) continue;
+                int dist = bm.Distance(actorCell, c);
+                if (dist < 1 || dist > range) continue;
+                if (!BmAbilityCac.LineOfSightClear(actorCell, c, offerBuild.gameIndex)) continue;
+                empties[eCount++] = c;
+            }
+            if (eCount <= 0) return;
+            Array.Sort(empties, 0, eCount);
+
+            // Piece limit: allow as many as possible
+            int availableLimit = int.MaxValue;
+            if (offerBuild.query.pieceLimitEnabled && offerBuild.query.pieceLimitPerPlayer > 0)
+                availableLimit = offerBuild.query.pieceLimitPerPlayer - bm.GetPieceCountForPlayer(offerBuild.query.playerId);
+            int possible = Math.Min(amount, Math.Min(eCount, Math.Max(0, availableLimit)));
+            if (possible <= 0) return;
+
+            // Once-per-turn flag cannot be observed here; Perform will reject if already used.
+
+            // Emit one action per legal empty cell (deterministic order)
+            for (int i = 0; i < eCount; i++)
+            {
+                var theAction = new Action
+                {
+                    kind = Spawner,
+                    pieceType = (byte)actorType, // pieceType carries the actor type for spawners
+                    ActorsCellId = (ushort)actorCell,
+                    TargetCellId = (ushort)empties[i],
+                    aux = (ushort)targetType // carry target type for UI/debug readability
+                };
+                newOfferProvider.Emit(theAction, offerBuild);
+            }
+        }
 
     public static bool IsLegal(int actorPid, int actorType, in Game.Core.Action a, byte currentPlayer, int gameIndex)
     {
@@ -154,6 +208,6 @@ public static class SpawnAction
         if (PieceDefinition.spawn_isOnlyOncePerTurn[theAction.pieceType])
             bm.spawnerUsedThisTurn.Add(actorPid);
 
-        RefreshConnectorState(gameIndex);
+        GameActions.RefreshConnectorState(gameIndex);
     }
 }

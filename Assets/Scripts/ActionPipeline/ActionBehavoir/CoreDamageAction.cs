@@ -5,10 +5,11 @@ using static Game.Core.ActionKind; // import enum values
 
 public static class CoreDamageAction
 {
-    public static void CreateActions(in int[] scratch, int pieceId, byte actorType, int cell, OfferBuild offerBuild)
+    public static void CreateActions(int pieceId, byte actorType, int cell, OfferBuild offerBuild)
     {
         var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
 
+        int[] scratch = Scratch.GetScratchCellBuffer(offerBuild.gameIndex);
         // Determine which adjacent cell is the enemy core and set dstCell accordingly
         ushort dstCore = 0;
         int owner = (byte)bm.GetPieceOwner(pieceId);
@@ -28,7 +29,7 @@ public static class CoreDamageAction
             TargetCellId = dstCore,
             aux = 0
         };
-        newOfferProvider.Emit(ref theAction, offerBuild);
+        newOfferProvider.Emit(theAction, offerBuild);
     }
 
     /// <summary>

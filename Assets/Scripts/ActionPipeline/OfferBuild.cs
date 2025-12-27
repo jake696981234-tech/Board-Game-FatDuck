@@ -6,11 +6,10 @@ using static Game.Core.ActionKind; // import enum values
 public ref struct OfferBuild
 {
     public OfferQuery query;
-    public Span<Action> outActions; 
-    public Span<float> outCosts; 
-    public Span<byte> outMask;  
+    public Span<Action> outActions;
+    public Span<float> outCosts;
+    public Span<byte> outMask;
     public int gameIndex;
-    public int player;
     public int write;
     public int total;
     public int cap;

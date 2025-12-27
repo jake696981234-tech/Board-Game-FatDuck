@@ -367,7 +367,7 @@ namespace Game.Core
 
 
 
-        private static void pieceKilled(int victim, int gameIndex)
+        public static void pieceKilled(int victim, int gameIndex)
         {
             var gameState = GameRegistry.game[gameIndex].gameState;
             var bm = GameRegistry.game[gameIndex].boardModel;
@@ -380,7 +380,7 @@ namespace Game.Core
             RefreshConnectorState(gameIndex);
         }
 
-        private static void pieceKilled(int victim, int gameIndex, Action theAction)
+        public static void pieceKilled(int victim, int gameIndex, Action theAction)
         {
             var bm = GameRegistry.game[gameIndex].boardModel;
 
@@ -394,7 +394,7 @@ namespace Game.Core
         }
 
 
-        private static bool ApplyDamageWithCapital(int attackerCell, int targetPid, int dmg, int gameIndex)
+        public static bool ApplyDamageWithCapital(int attackerCell, int targetPid, int dmg, int gameIndex)
         {
             var bm = GameRegistry.game[gameIndex].boardModel;
 
@@ -429,7 +429,7 @@ namespace Game.Core
             return bm.DamagePieceRow(targetPid, dmg);
         }
 
-        private static void RefreshConnectorState(int gameIndex)
+        public static void RefreshConnectorState(int gameIndex)
         {
             var bm = GameRegistry.game[gameIndex].boardModel;
             var events = GameRegistry.game[gameIndex].eventManager;
@@ -446,7 +446,7 @@ namespace Game.Core
 
 
 
-        private static void ResolveMelee(int actorPid, int victimID, in Action theAction, int gameIndex)
+        public static void ResolveMelee(int actorPid, int victimID, in Action theAction, int gameIndex)
         {
             var bm = GameRegistry.game[gameIndex].boardModel;
 
@@ -468,7 +468,7 @@ namespace Game.Core
 
 
 
-        private static List<int> CollectClusterCells(byte type, int startCell, int gameIndex)
+        public static List<int> CollectClusterCells(byte type, int startCell, int gameIndex)
         {
             var bm = GameRegistry.game[gameIndex].boardModel;
 

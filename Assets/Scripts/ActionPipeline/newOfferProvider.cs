@@ -20,10 +20,11 @@ public static class newOfferProvider
         var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
         int cellCount = bm.GetCellCount();
         int[] scratch = Scratch.GetScratchCellBuffer(offerBuild.gameIndex); // neighbor buffer, etc. (no allocs)
+
         for (int cell = 0; cell < cellCount; cell++)
         {
             PieceActions(offerBuild, cell, ref scratch);
-            CreateAction.CreateActions(cell);
+            CreateAction.CreateActions(cell, offerBuild);
         }
 
         EndTurnAction(offerBuild);
@@ -43,22 +44,17 @@ public static class newOfferProvider
 
         byte actorType = bm.GetPieceType(pieceId);
 
-        if (PieceDefinition.move_enabled[actorType]) MoveAction.CreateActions(in scratch, pieceId, actorType, cell, offerBuild);
-        if (PieceDefinition.shoot_enabled[actorType]) ShootAction.CreateActions(in scratch, pieceId, actorType, cell, offerBuild);
+        if (PieceDefinition.move_enabled[actorType]) MoveAction.CreateActions(pieceId, actorType, cell, offerBuild);
+        if (PieceDefinition.shoot_enabled[actorType]) ShootAction.CreateActions(pieceId, actorType, cell, offerBuild);
         if (PieceDefinition.captureVP_enabled[actorType]) CaptureVPAction.CreateActions(pieceId, actorType, cell, offerBuild);
-        if (PieceDefinition.coreDamage_enabled[actorType]) CoreDamageAction.CreateActions(in scratch, pieceId, actorType, cell, offerBuild);
-        if (PieceDefinition.push_enabled[actorType]) PushAction.CreateActions(in scratch, pieceId, actorType, cell, offerBuild);
-        if (PieceDefinition.groupBuild_enabled[actorType]) GroupBuildAction.CreateActions(in scratch, pieceId, actorType, cell, offerBuild);
-        if (PieceDefinition.launcher_enabled[actorType]) LauncherAction.CreateActions(in scratch, pieceId, actorType, cell, offerBuild);
-        if (PieceDefinition.spawn_enabled[actorType]) SpawnAction.CreateActions();
-        if (PieceDefinition.sacrificeFactory_enabled[actorType]) SacrificeFactoryAction.CreateActions(in scratch, pieceId, actorType, cell, offerBuild);
-        if (PieceDefinition.conversionFactory_enabled[actorType]) ConversionFactoryAction.CreateActions(in scratch, pieceId, actorType, cell, offerBuild);
-        //need to add Piece driven Create actions here
-    }
-
-    private static void GeneralActions()
-    {
-        CreateAction.CreateActions();
+        if (PieceDefinition.coreDamage_enabled[actorType]) CoreDamageAction.CreateActions(pieceId, actorType, cell, offerBuild);
+        if (PieceDefinition.push_enabled[actorType]) PushAction.CreateActions(pieceId, actorType, cell, offerBuild);
+        if (PieceDefinition.groupBuild_enabled[actorType]) GroupBuildAction.CreateActions(pieceId, actorType, cell, offerBuild);
+        if (PieceDefinition.launcher_enabled[actorType]) LauncherAction.CreateActions(pieceId, actorType, cell, offerBuild);
+        if (PieceDefinition.spawn_enabled[actorType]) SpawnAction.CreateActions(pieceId, actorType, cell, offerBuild);
+        if (PieceDefinition.sacrificeFactory_enabled[actorType]) SacrificeFactoryAction.CreateActions(pieceId, actorType, cell, offerBuild);
+        if (PieceDefinition.conversionFactory_enabled[actorType]) ConversionFactoryAction.CreateActions(pieceId, actorType, cell, offerBuild);
+        if (PieceDefinition.conversionFactory_enabled[actorType]) UpgradeAction.CreateActions(pieceId, actorType, cell, offerBuild);
     }
 
     private static void EndTurnAction(OfferBuild offerBuild)
@@ -106,16 +102,35 @@ public static class newOfferProvider
     public static bool IsInvalid(BoardModel bm, int pieceId) => pieceId == bm.InvalidId;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void Emit(
-        ref Action theAction, OfferBuild offerBuild)
+    public static void Emit(Action theAction, OfferBuild offerBuild)
     {
         offerBuild.total++;
         if (offerBuild.write < offerBuild.cap)
         {
             offerBuild.outActions[offerBuild.write] = theAction;
-            WriteCostMask(theAction, q, outCosts, outMask, write, gameIndex, player);
+            WriteCostMask(theAction, offerBuild);
             offerBuild.write++;
         }
+    }
+
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void WriteCostMask(in Action theAction, OfferBuild offerBuild)
+    {
+        var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
+
+        // EndTurn is always free & affordable (never masked out by cost)
+        if (theAction.kind == ActionKind.EndTurn)
+        {
+            offerBuild.outCosts[offerBuild.write] = 0f;
+            offerBuild.outMask[offerBuild.write] = 1;
+            return;
+        }
+
+        float quoted;
+        if (CostEngine.IsAffordable(theAction, out quoted, offerBuild.gameIndex, offerBuild.query.playerId))
+        { offerBuild.outCosts[offerBuild.write] = quoted; offerBuild.outMask[offerBuild.write] = 1; }
+        else { offerBuild.outCosts[offerBuild.write] = quoted; offerBuild.outMask[offerBuild.write] = 0; }
     }
     #endregion
 }

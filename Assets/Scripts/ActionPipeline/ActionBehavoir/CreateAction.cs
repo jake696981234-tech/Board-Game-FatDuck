@@ -3,24 +3,39 @@ using System.Collections.Generic;
 using Game.Core;
 using Action = Game.Core.Action;
 using static Game.Core.ActionKind; // import enum values
+using System;
+
 
 public static class CreateAction
 {
-    public static void CreateActions(int cell, OfferBuild offerBuild, ref int[] scratch)
+    public static void CreateActions(int cell, OfferBuild offerBuild)
     {
-        if (!PieceLimitReached(offerBuild))
-        {
-            if (!isCellLegalPlacement(cell, offerBuild, ref scratch)) return;
+        if (!PieceLimitReached(offerBuild)) return;
+        if (!isCellLegalPlacement(cell, offerBuild)) return;
 
-            // For each buildable type (default: all types 0..TypeCount-1)
-            int typeCount = PieceDefinition.typeCount;
-            for (int type = 0; type < typeCount; type++)
-            {
-                if (!isPieceTypeLegal(type)) return;
-                GenerateCompleteCreateActions(type);
-            }
+        int typeCount = PieceDefinition.typeCount;
+        for (int type = 0; type < typeCount; type++)
+        {
+            if (!isPieceTypeLegal(type, offerBuild)) continue;
+            GenerateCompleteCreateActions(in cell, in type, offerBuild);
         }
     }
+
+    public static void GenerateCompleteCreateActions(in int cell, in int type, OfferBuild offerBuild)
+    {
+         Action theAction = new Game.Core.Action
+        {
+            kind = Create,
+            pieceType = (byte)type,
+            ActorsCellId = (ushort)0xFFFF,
+            TargetCellId = (ushort)cell,
+            aux = 0
+        };
+        List<Action> CreateActions = new List<Action> {theAction};
+        if (PieceDefinition.connectors_enabled[theAction.pieceType] && !CreateConnectorOptions(CreateActions, offerBuild)) return;
+        if (PieceDefinition.sacrificeCost_enabled[theAction.pieceType] && !GenerateSacrificeCosts(CreateActions, offerBuild)) return;
+        for (int i = 0; i < CreateActions.Count; i++) { newOfferProvider.Emit(CreateActions[i], offerBuild); }
+    } 
 
     public static bool PieceLimitReached(OfferBuild offerBuild)
     {
@@ -29,46 +44,50 @@ public static class CreateAction
         return limitActive && bm.GetPieceCountForPlayer(offerBuild.query.playerId) >= offerBuild.query.pieceLimitPerPlayer; 
     }
 
-    public static void GenerateCompleteCreateActions(int type, in Game.Core.Action theAction, OfferBuild offerBuild)
-    {
-        bool hasConn = PieceDefinition.connectors_enabled[type];
-        bool hasSacCost = PieceDefinition.sacrificeCost_enabled[type];
-        List<Game.Core.Action> CreateActions = new List<Game.Core.Action>();
-        
-        if (hasConn) CreateActions.AddRange(CreateConnectorOptions());
-        if (hasSacCost) CreateActions.AddRange(GenerateSacrificeCosts(in theAction, offerBuild, ));
-    }
 
-    
-    public static List<Game.Core.Action> CreateConnectorOptions() //to do- make thi return the actions
+    public static bool CreateConnectorOptions(List<Action> actions, OfferBuild offerBuild) 
     {
-        List<Game.Core.Action> ConnectorActions = new List<Game.Core.Action>(64);
-        for (int cfg = 0; cfg < 64; cfg++)
+        List<Action> ConnectorActions = new List<Action>();
+        bool legal = false;
+
+        for (int i = 0; i < actions.Count; i++)
         {
-            // if ((allowedMask & (1UL << cfg)) == 0) continue;
-            if (!PiecesSides.IsConnectorPlacementLegal(cell, (byte)type, cfg, offerBuild.query.playerId, gameIndex))
-                continue;
-
-            var theAction = new Game.Core.Action
+            for (int cfg = 0; cfg < 64; cfg++)
             {
-                kind = Create,
-                pieceType = (byte)type,
-                ActorsCellId = (ushort)0xFFFF,
-                TargetCellId = (ushort)cell,
-                aux = (ushort)cfg // carry config index
-            };
-
-            ConnectorActions.Add(theAction);
+                // if ((allowedMask & (1UL << cfg)) == 0) continue;
+                if (!PiecesSides.IsConnectorPlacementLegal(actions[i].TargetCellId, actions[i].pieceType, cfg, offerBuild.query.playerId, offerBuild.gameIndex))
+                {
+                    legal = true;
+                    continue;
+                }
+                    
+                Action theAction = new Game.Core.Action
+                {
+                    kind = actions[i].kind,
+                    pieceType = actions[i].pieceType,
+                    ActorsCellId = actions[i].ActorsCellId,
+                    TargetCellId = actions[i].TargetCellId,
+                    aux = (ushort)cfg // carry config index
+                };
+                ConnectorActions.Add(theAction);
+            }
         }
-        return ConnectorActions;
+
+        if (legal)
+        {
+            actions.Clear();
+            actions.AddRange(ConnectorActions);
+            return true;
+        }
+        return false;
     }
 
     
 
-    public static bool isPieceTypeLegal(int type)
+    public static bool isPieceTypeLegal(int type, OfferBuild offerBuild)
     {
         if (!PieceDefinition.isBuildable[type]) return false; // buildable gate (CSV flag)
-        if (!HasRequiredDigits()) return false;                                            
+        if (!HasRequiredDigits(type, offerBuild)) return false;                                            
         
         bool hasConn = PieceDefinition.connectors_enabled[type];
         ulong allowedMask = hasConn ? PieceDefinition.connector_allowedMasks[type] : 0UL;
@@ -77,37 +96,41 @@ public static class CreateAction
         return true;
     }
 
-    public static bool isCellLegalPlacement(int cell, OfferBuild offerBuild, ref int[] scratch)
+    public static bool isCellLegalPlacement(int cell, OfferBuild offerBuild)
     {
         var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
         if (!bm.IsEmpty(cell)) return false; // only empties
 
-        int coreCell = bm.GetPlayerCoreCellId(offerBuild.query.playerId);
-        bool legal = (cell == coreCell); // allow 'on core'
-        if (!legal) legal = isBaseHex(offerBuild, coreCell, ref scratch, cell);
-        if (!legal) legal = isAdjecentABuilding(cell, ref scratch);
-        if (!legal) return false;
-        return true;
+        var coreCell = bm.GetPlayerCoreCellId(offerBuild.query.playerId); 
+
+        if (cell == coreCell) return true;
+        if (isBaseHex(offerBuild, coreCell, cell)) return true;
+        if (isAdjecentABuilding(cell, offerBuild)) return true;
+        return false;
     }
 
-    public static bool isBaseHex(OfferBuild offerBuild, int coreCell, ref int[] scratch, int cell)
+    public static bool isBaseHex(OfferBuild offerBuild, int coreCell, int cell)
     {
         var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
-        int numberOfCoreNeighbors = bm.GetNeighbors(coreCell, scratch);
+        int[] neighScratch = Scratch.GetScratchNeighborBuffer(offerBuild.gameIndex);
+
+        int numberOfCoreNeighbors = bm.GetNeighbors(coreCell, neighScratch);
         for (int i = 0; i < numberOfCoreNeighbors; i++) 
         { 
-            if (scratch[i] == cell) return true;
+            if (neighScratch[i] == cell) return true;
         }
         return false;
     }
 
-    public static bool isAdjecentABuilding(int cell, ref int[] scratch, bool legal, OfferBuild offerBuild)
+    public static bool isAdjecentABuilding(int cell, OfferBuild offerBuild)
     {
         var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
-        int nNbrs = bm.GetNeighbors(cell, scratch);
-        for (int i = 0; i < nNbrs && !legal; i++)
+
+        int[] neighScratch = Scratch.GetScratchNeighborBuffer(offerBuild.gameIndex);
+        int nNbrs = bm.GetNeighbors(cell, neighScratch);
+        for (int i = 0; i < nNbrs; i++)
         {
-            int nbCell = scratch[i];
+            int nbCell = neighScratch[i];
             int nbPid = bm.GetCellOccupant(nbCell);
             if (newOfferProvider.IsInvalid(bm, nbPid)) continue;
             if (bm.GetPieceOwner(nbPid) != offerBuild.query.playerId) continue;
@@ -117,11 +140,11 @@ public static class CreateAction
         return false;
     }
 
-    public static bool HasRequiredDigits()
+    public static bool HasRequiredDigits(int type, OfferBuild offerBuild)
     {
+        var gameState = GameRegistry.game[offerBuild.gameIndex].gameState;
         int req = PieceDefinition.requiredDigit[(byte)type];
-        if (req >= 0 && !gameState.ps[player].HasDigit(req)) return false;
-
+        if (req >= 0 && !gameState.ps[offerBuild.query.playerId].HasDigit(req)) return false;
         return true;
     }
 
@@ -129,75 +152,112 @@ public static class CreateAction
     /// Populate sacrifice options for a create action.
     /// Returns false if no legal options exist.
     /// </summary>
-    public static bool GenerateSacrificeCosts(in Game.Core.Action theAction, OfferBuild offerBuild, List<int[]> outOptions)
+    public static bool GenerateSacrificeCosts(List<Game.Core.Action> actions, OfferBuild offerBuild)
     {
-        outOptions.Clear();
+        // We must preserve the original actions while computing,
+        // because we are going to overwrite this same list later.
+        int actionCount = actions.Count;
+
+        // Cache original actions (shallow copy is enough)
+        // This prevents us from destroying our input.
+        var sourceActions = new List<Game.Core.Action>(actions);
+
+        // All actions share the same pieceType
+        var firstAction = sourceActions[0];
+        int pieceType = firstAction.pieceType;
+
+        int needPerAction = PieceDefinition.sacrificeCost_howManyItNeeds[pieceType];
+        bool requiresSpecific = PieceDefinition.sacrificeCost_isNeedsSpecificPiece[pieceType];
+        int requiredType = PieceDefinition.sacrificeCost_specificPiece[pieceType];
 
         var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
-
-        int need = PieceDefinition.sacrificeCost_howManyItNeeds[theAction.pieceType];
-        if (need <= 0) return false;
-
+        // ------------------------------------------------------------------
+        // 1) Get all pieces owned by the player
+        // ------------------------------------------------------------------
         int[] owned = Scratch.GetScratchCellBuffer(offerBuild.gameIndex);
-        int ownedCount = bm.GetOwnedPieceIds(offerBuild.player, owned);
-        if (ownedCount < need) return false;
+        int ownedCount = bm.GetOwnedPieceIds(offerBuild.query.playerId, owned);
 
-        int excludePid = -1;
-        if (theAction.kind == ActionKind.Upgrade)
-        {
-            int pid = bm.GetCellOccupant(theAction.ActorsCellId);
-            if (pid >= 0) excludePid = pid;
-        }
+        int totalNeed = needPerAction * actionCount;
 
-        // Filter eligible pieces into the front of the same buffer
+        if (ownedCount < totalNeed)
+            return false;
+
+        // ------------------------------------------------------------------
+        // 2) Build eligible list (shared across all actions)
+        // ------------------------------------------------------------------
         int eligibleCount = 0;
-        bool requiresSpecific = PieceDefinition.sacrificeCost_isNeedsSpecificPiece[theAction.pieceType];
-        int requiredType = PieceDefinition.sacrificeCost_specificPiece[theAction.pieceType];
-
         for (int i = 0; i < ownedCount; i++)
         {
             int pid = owned[i];
-            if (pid == excludePid) continue;
+
             if (!bm.IsValidPieceId(pid)) continue;
             if (requiresSpecific && bm.pieceType[pid] != requiredType) continue;
+
             owned[eligibleCount++] = pid;
         }
-        if (eligibleCount < need) return false;
 
-        Array.Sort(owned, 0, eligibleCount); // deterministic combos
+        if (eligibleCount < totalNeed)
+            return false;
 
-        // Generate combinations deterministically, capped to avoid blowup
-        if (need == 1)
+        Array.Sort(owned, 0, eligibleCount); // deterministic
+
+        // ------------------------------------------------------------------
+        // 3) Pick the FIRST valid combination of totalNeed pieces
+        // ------------------------------------------------------------------
+        int[] chosen = new int[totalNeed];
+        bool found = false;
+
+        void RecurseChoose(int startIndex, int depth)
         {
-            int limit = Math.Min(eligibleCount, MaxSacrificeCombos);
-            for (int i = 0; i < limit; i++)
-                outOptions.Add(new[] { owned[i] });
-            return outOptions.Count > 0;
-        }
+            if (found) return;
 
-        int[] combo = new int[need];
-        void Recurse(int start, int depth)
-        {
-            if (outOptions.Count >= MaxSacrificeCombos) return;
-            if (depth == need)
+            if (depth == totalNeed)
             {
-                int[] arr = new int[need];
-                Array.Copy(combo, arr, need);
-                outOptions.Add(arr);
+                // We now OVERWRITE the original list contents
+                actions.Clear();
+
+                int read = 0;
+                for (int ai = 0; ai < actionCount; ai++)
+                {
+                    int[] addCost = new int[needPerAction];
+                    Array.Copy(chosen, read, addCost, 0, needPerAction);
+                    read += needPerAction;
+
+                    // Sort addCost descending
+                    Array.Sort(addCost);
+                    Array.Reverse(addCost);
+
+                    var src = sourceActions[ai];
+                    actions.Add(new Game.Core.Action
+                    {
+                        kind = src.kind,
+                        pieceType = src.pieceType,
+                        ActorsCellId = src.ActorsCellId,
+                        TargetCellId = src.TargetCellId,
+                        aux = src.aux,
+                        addCost = addCost
+                    });
+                }
+
+                found = true;
                 return;
             }
-            int remainingSlots = need - depth;
-            for (int i = start; i <= eligibleCount - remainingSlots; i++)
+
+            int remaining = totalNeed - depth;
+            for (int i = startIndex; i <= eligibleCount - remaining; i++)
             {
-                combo[depth] = owned[i];
-                Recurse(i + 1, depth + 1);
-                if (outOptions.Count >= MaxSacrificeCombos) return;
+                chosen[depth] = owned[i];
+                RecurseChoose(i + 1, depth + 1);
+                if (found) return;
             }
         }
 
-        Recurse(0, 0);
-        return outOptions.Count > 0;
+        RecurseChoose(0, 0);
+        return found;
     }
+
+
+
 
 
     public static void Apply(in Action theAction, byte player, int gameIndex)
@@ -227,7 +287,7 @@ public static class CreateAction
                     int pieceid = theAction.addCost[i];
                     if (!bm.IsValidPieceId(pieceid)) continue;
                     if (bm.GetPieceOwner(pieceid) != player) continue;
-                    pieceKilled(pieceid, gameIndex);
+                    GameActions.pieceKilled(pieceid, gameIndex);
                     killed++;
                 }
                 if (killed < need) return; // safety: not enough valid sacrifices
@@ -259,7 +319,7 @@ public static class CreateAction
             }
         }
 
-        RefreshConnectorState(gameIndex);
+        GameActions.RefreshConnectorState(gameIndex);
 
         // Remove source piece after placing new one (no connector wipe for intermediate state)
         if (isUpgradeCreate && bm.IsValidPieceId(sourcePid))

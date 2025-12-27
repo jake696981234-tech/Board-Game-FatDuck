@@ -5,9 +5,10 @@ using static Game.Core.ActionKind; // import enum values
 
 public static class PushAction
 {
-    public static void CreateActions(in int[] scratch, int pieceId, byte actorType, int cell, OfferBuild offerBuild)
+    public static void CreateActions(int pieceId, byte actorType, int cell, OfferBuild offerBuild)
     {
         var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
+        int[] scratch = Scratch.GetScratchCellBuffer(offerBuild.gameIndex);
         int theNumberOfTargets = GetLegalTargets(pieceId, actorType, scratch, offerBuild.gameIndex);
         for (int i = 0; i < theNumberOfTargets; i++)
         {
@@ -21,7 +22,7 @@ public static class PushAction
                 TargetCellId = targetCellId,
                 aux = (ushort)tgtPid
             };
-            newOfferProvider.Emit(ref theAction, offerBuild);
+            newOfferProvider.Emit(theAction, offerBuild);
         }
     }
 
@@ -116,17 +117,17 @@ public static class PushAction
         byte actorType = bm.GetPieceType(actorPid);
 
         int dmg = PieceDefinition.push_damage[theAction.pieceType];
-        bool killed = ApplyDamageWithCapital(theAction.ActorsCellId, victimID, dmg, gameIndex);
+        bool killed = GameActions.ApplyDamageWithCapital(theAction.ActorsCellId, victimID, dmg, gameIndex);
         if (killed)
         {
             // Revoke digit from the defender's owner if this type granted one
-            pieceKilled(victimID, gameIndex, theAction);
+            GameActions.pieceKilled(victimID, gameIndex, theAction);
         }
         else
         {
             int pushedCellID = BmAbilityCac.ComputePushDestination(actorPid, actorType, victimID, gameIndex);
             bm.MovePieceRow(victimID, pushedCellID);
         }
-        RefreshConnectorState(gameIndex);
+        GameActions.RefreshConnectorState(gameIndex);
     }
 }

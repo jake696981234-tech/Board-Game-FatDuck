@@ -5,8 +5,9 @@ using static Game.Core.ActionKind; // import enum values
 
 public static class MoveAction
 {
-    public static void CreateActions(in int[] scratch, int pieceId, byte actorType, int cell, OfferBuild offerBuild)
+    public static void CreateActions(int pieceId, byte actorType, int cell, OfferBuild offerBuild)
     {
+        int[] scratch = Scratch.GetScratchCellBuffer(offerBuild.gameIndex);
         int theNumberOfTargets = GetLegalTargets(pieceId, actorType, scratch, offerBuild.gameIndex);
         for (int i = 0; i < theNumberOfTargets; i++)
         {
@@ -19,7 +20,7 @@ public static class MoveAction
                 TargetCellId = (ushort)targetCellId,
                 aux = 0
             };
-            newOfferProvider.Emit(ref theAction, offerBuild);
+            newOfferProvider.Emit(theAction, offerBuild);
         }
     }
 
@@ -117,13 +118,13 @@ public static class MoveAction
         int dstOcc = bm.GetCellOccupant(theAction.TargetCellId);
         if (dstOcc >= 0)
         {
-            ResolveMelee(actorPid, dstOcc, in theAction, gameIndex);
+            GameActions.ResolveMelee(actorPid, dstOcc, in theAction, gameIndex);
             bm.MovePieceRow(actorPid, theAction.ActorsCellId);
         }
         else
         {
             bm.MovePieceRow(actorPid, theAction.TargetCellId);
         }
-        RefreshConnectorState(gameIndex);
+        GameActions.RefreshConnectorState(gameIndex);
     }
 }

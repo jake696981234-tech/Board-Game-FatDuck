@@ -5,9 +5,10 @@ using static Game.Core.ActionKind; // import enum values
 
 public static class SacrificeFactoryAction
 {
-    public static void CreateActions(in int[] scratch, int pieceId, byte actorType, int cell, OfferBuild offerBuild)
+    public static void CreateActions(int pieceId, byte actorType, int cell, OfferBuild offerBuild)
     {
         var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
+        int[] scratch = Scratch.GetScratchCellBuffer(offerBuild.gameIndex);
         int theNumberOfTargets = GetLegalTargets(pieceId, actorType, scratch, offerBuild.gameIndex);
         for (int i = 0; i < theNumberOfTargets; i++)
         {
@@ -21,7 +22,7 @@ public static class SacrificeFactoryAction
                 TargetCellId = targetCellId,
                 aux = (ushort)tgtPid
             };
-            newOfferProvider.Emit(ref theAction, offerBuild);
+            newOfferProvider.Emit(theAction, offerBuild);
         }
     }
 
@@ -68,8 +69,8 @@ public static class SacrificeFactoryAction
         int Pieceid = bm.GetCellOccupant(theAction.ActorsCellId);
         bm.pieceFactoryAux[Pieceid] += PieceDefinition.sacrificeFactory_amount[theAction.pieceType];
 
-        pieceKilled(victimID, gameIndex, theAction);
-        RefreshConnectorState(gameIndex);
+        GameActions.pieceKilled(victimID, gameIndex, theAction);
+        GameActions.RefreshConnectorState(gameIndex);
     }
   
 }
