@@ -10,20 +10,20 @@ public static class CaptureVPAction
     {
         var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
 
-        if (IsItLegal.IsLegal_CaptureVP(pieceId, offerBuild.gameIndex))
+        if (IsLegal(pieceId, offerBuild.gameIndex)) return;
+
+        ushort vpCell = (ushort)bm.GetVictoryPointCellId();
+        var theAction = new Action
         {
-            ushort vpCell = (ushort)bm.GetVictoryPointCellId();
-            var theAction = new Action
-            {
-                kind = CaptureVP,
-                pieceType = actorType,
-                ActorsCellId = (ushort)cell,
-                TargetCellId = vpCell,
-                aux = 0
-            };
-            newOfferProvider.Emit(theAction, offerBuild);
-        }
+            kind = CaptureVP,
+            pieceType = actorType,
+            ActorsCellId = (ushort)cell,
+            TargetCellId = vpCell,
+            aux = 0
+        };
+        OfferProvider.Emit(theAction, offerBuild);
     }
+
 
 
     /// <summary>

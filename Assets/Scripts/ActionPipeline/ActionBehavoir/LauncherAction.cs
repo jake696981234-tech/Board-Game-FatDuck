@@ -21,7 +21,7 @@ public static class LauncherAction
                 TargetCellId = (ushort)dst,
                 aux = (ushort)tgtPid
             };
-            newOfferProvider.Emit(theAction, offerBuild);
+            OfferProvider.Emit(theAction, offerBuild);
         }
     }
 

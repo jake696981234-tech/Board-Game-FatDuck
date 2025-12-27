@@ -287,17 +287,29 @@ public sealed class MLAgentController : Agent
     {
         // Build OfferQuery: (bm, pcs, ps, playerId, cost)
         GameActions.GetMultiCreateState(out bool mcActive, out byte mcType, out bool mcBorder, out int mcRemaining, out int[] mcCells, out int mcCellCount, gameIndex);
-        var q = new OfferQuery(playerId, _gs.PieceLimitEnabled, _gs.pieceLimitPerPlayer,
+        var query = new OfferQuery(playerId, _gs.PieceLimitEnabled, _gs.pieceLimitPerPlayer,
             mcActive, mcType, mcBorder, mcRemaining, mcCells, mcCellCount);
 
         var acts = _offers.AsSpan();
         var costs = _quoted.AsSpan();
         var mask = _mask.AsSpan();
 
-        int total = OfferProvider.BuildActionList(in q, acts, costs, mask, gameIndex, playerId);
+        OfferBuild offerBuild;
+        offerBuild.query = query;
+        offerBuild.outActions = acts;
+        offerBuild.outCosts = costs;
+        offerBuild.outMask = mask;
+        offerBuild.gameIndex = gameIndex;
+        offerBuild.write = 0;
+        offerBuild.total = 0;
+        offerBuild.cap = 0;
+
+        int total = OfferProvider.BuildActionList(offerBuild);
         // We only allow the emitted prefix to be selectable by the policy
         return Math.Min(total, acts.Length);
     }
+
+
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private int PickCheapestAffordableNonEndTurn(ReadOnlySpan<Game.Core.Action> acts,

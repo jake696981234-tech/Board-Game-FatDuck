@@ -6,9 +6,9 @@ using Action = Game.Core.Action;
 using static Game.Core.ActionKind; // import enum values
 using UnityEngine;
 
-public static class newOfferProvider
+public static class OfferProvider
 {
-     public static int newBuildActionList(OfferBuild offerBuild)
+     public static int BuildActionList(OfferBuild offerBuild)
     {
         offerBuild.cap =  offerBuild.outActions.Length;
         if (offerBuild.outCosts.Length < offerBuild.cap) offerBuild.cap = offerBuild.outCosts.Length;

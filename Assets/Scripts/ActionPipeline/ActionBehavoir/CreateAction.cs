@@ -34,7 +34,7 @@ public static class CreateAction
         List<Action> CreateActions = new List<Action> {theAction};
         if (PieceDefinition.connectors_enabled[theAction.pieceType] && !CreateConnectorOptions(CreateActions, offerBuild)) return;
         if (PieceDefinition.sacrificeCost_enabled[theAction.pieceType] && !GenerateSacrificeCosts(CreateActions, offerBuild)) return;
-        for (int i = 0; i < CreateActions.Count; i++) { newOfferProvider.Emit(CreateActions[i], offerBuild); }
+        for (int i = 0; i < CreateActions.Count; i++) { OfferProvider.Emit(CreateActions[i], offerBuild); }
     } 
 
     public static bool PieceLimitReached(OfferBuild offerBuild)
@@ -132,7 +132,7 @@ public static class CreateAction
         {
             int nbCell = neighScratch[i];
             int nbPid = bm.GetCellOccupant(nbCell);
-            if (newOfferProvider.IsInvalid(bm, nbPid)) continue;
+            if (OfferProvider.IsInvalid(bm, nbPid)) continue;
             if (bm.GetPieceOwner(nbPid) != offerBuild.query.playerId) continue;
             byte nbType = bm.GetPieceType(nbPid);
             if (PieceDefinition.isBuilding[nbType]) return true;

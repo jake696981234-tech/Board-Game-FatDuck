@@ -55,7 +55,7 @@ public static class UIBridge
             return;
 
         // Build the query from live systems (readonly struct → must use constructor)
-        var q = new OfferQuery(
+        var query = new OfferQuery(
             gameState.CurrentPlayerId,
             gameState.PieceLimitEnabled,
             gameState.pieceLimitPerPlayer,
@@ -67,8 +67,18 @@ public static class UIBridge
             gameState.MultiCreateCellCount
         );
 
+        OfferBuild offerBuild;
+        offerBuild.query = query;
+        offerBuild.outActions = _offers.AsSpan();
+        offerBuild.outCosts = _quoted.AsSpan();
+        offerBuild.outMask = _mask.AsSpan();
+        offerBuild.gameIndex = gameIndex;
+        offerBuild.write = 0;
+        offerBuild.total = 0;
+        offerBuild.cap = 0;
+
         // Fill the spans (zero-alloc path in OfferProvider). Function returns TOTAL (may exceed cap). :contentReference[oaicite:7]{index=7}
-        _total = OfferProvider.BuildActionList(in q, _offers.AsSpan(), _quoted.AsSpan(), _mask.AsSpan(), gameIndex, gameState.CurrentPlayerId);
+        _total = OfferProvider.BuildActionList(offerBuild);
         _count = Mathf.Min(kCap, _total);
     }
 

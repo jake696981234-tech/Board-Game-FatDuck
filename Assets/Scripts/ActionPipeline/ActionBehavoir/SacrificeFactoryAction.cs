@@ -22,7 +22,7 @@ public static class SacrificeFactoryAction
                 TargetCellId = targetCellId,
                 aux = (ushort)tgtPid
             };
-            newOfferProvider.Emit(theAction, offerBuild);
+            OfferProvider.Emit(theAction, offerBuild);
         }
     }
 

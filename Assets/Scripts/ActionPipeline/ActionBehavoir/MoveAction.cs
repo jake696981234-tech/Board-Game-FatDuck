@@ -20,7 +20,7 @@ public static class MoveAction
                 TargetCellId = (ushort)targetCellId,
                 aux = 0
             };
-            newOfferProvider.Emit(theAction, offerBuild);
+            OfferProvider.Emit(theAction, offerBuild);
         }
     }
 

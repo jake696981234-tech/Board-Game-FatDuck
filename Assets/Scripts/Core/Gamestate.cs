@@ -193,15 +193,15 @@ namespace Game.Core
 
             switch (theAction.kind)
             {
-                case Move: GameActions.ApplyMove(in theAction, currentPlayer, gameIndex); break;
-                case Shoot: GameActions.ApplyShoot(in theAction, currentPlayer, gameIndex); break;
+                case Move: MoveAction.Apply(in theAction, currentPlayer, gameIndex); break;
+                case Shoot: ShootAction.Apply(in theAction, currentPlayer, gameIndex); break;
                 case Create:
-                    if (multiCreateActive && theAction.pieceType == multiCreateType)
-                    {
-                        GameActions.ApplyMultiCreatePlacement(in theAction, currentPlayer, gameIndex);
-                    }
-                    else
-                    {
+                    // if (multiCreateActive && theAction.pieceType == multiCreateType)
+                    // {
+                    //     GameActions.ApplyMultiCreatePlacement(in theAction, currentPlayer, gameIndex);
+                    // }
+                    // else
+                    // {
                         if (controller.PieceLimitEnabled && controller.PieceLimitPerPlayer > 0 &&
                             bm.GetPieceCountForPlayer(currentPlayer) >= controller.PieceLimitPerPlayer)
                         {
@@ -209,19 +209,19 @@ namespace Game.Core
                             return false;
                         }
 
-                        GameActions.ApplyCreate(in theAction, currentPlayer, gameIndex);
-                    }
+                        CreateAction.Apply(in theAction, currentPlayer, gameIndex);
+                    // }
                     break;
-                case Push: GameActions.ApplyPush(in theAction, currentPlayer, gameIndex); break;
-                case Upgrade: GameActions.ApplyUpgrade(in theAction, currentPlayer, gameIndex); break;
-                case Launcher: GameActions.ApplyLauncher(in theAction, currentPlayer, gameIndex); break;
-                case Spawner: GameActions.ApplySpawner(in theAction, currentPlayer, gameIndex); break;
-                case GroupBuild: GameActions.ApplyGroupBuild(in theAction, currentPlayer, gameIndex); break;
-                case CaptureVP: GameActions.ApplyCaptureVP(in theAction, currentPlayer, gameIndex); break; // sets flags + VP counters + vpPool
-                case CoreDamage: GameActions.ApplyCoreDamage(in theAction, currentPlayer, gameIndex); break; // sets flag + damages enemy core + elim check
+                case Push: PushAction.Apply(in theAction, currentPlayer, gameIndex); break;
+                case Upgrade: UpgradeAction.Apply(in theAction, currentPlayer, gameIndex); break;
+                case Launcher: LauncherAction.Apply(in theAction, currentPlayer, gameIndex); break;
+                case Spawner: SpawnAction.Apply(in theAction, currentPlayer, gameIndex); break;
+                case GroupBuild: GroupBuildAction.Apply(in theAction, currentPlayer, gameIndex); break;
+                case CaptureVP: CaptureVPAction.Apply(in theAction, currentPlayer, gameIndex); break; // sets flags + VP counters + vpPool
+                case CoreDamage: CoreDamageAction.Apply(in theAction, currentPlayer, gameIndex); break; // sets flag + damages enemy core + elim check
                 case EndTurn: ApplyEndTurn(); break; // unreachable due to early return above
-                case SacrificeFactory: GameActions.ApplySacrificeFactory(in theAction, currentPlayer, gameIndex); break;
-                case ConversionFactory: GameActions.ApplyConversionFactory(in theAction, currentPlayer, gameIndex); break;
+                case SacrificeFactory: SacrificeFactoryAction.Apply(in theAction, currentPlayer, gameIndex); break;
+                case ConversionFactory: ConversionFactoryAction.Apply(in theAction, currentPlayer, gameIndex); break;
                 default:
                     Debug.Log("Find Action Match returned false");
                     return false;

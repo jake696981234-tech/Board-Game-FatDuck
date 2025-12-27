@@ -8,7 +8,7 @@ public static class ConversionFactoryAction
     public static void CreateActions(int pieceId, byte actorType, int cell, OfferBuild offerBuild)
     {
         var gameState = GameRegistry.game[offerBuild.gameIndex].gameState;
-        if (IsItLegal.IsLegal_ConversionFactory(gameState.ps[offerBuild.query.playerId].vpTotal))
+        if (IsLegal(gameState.ps[offerBuild.query.playerId].vpTotal))
         {
             var theAction = new Action
             {
@@ -18,7 +18,7 @@ public static class ConversionFactoryAction
                 TargetCellId = (ushort)cell,
                 aux = 0
             };
-            newOfferProvider.Emit(theAction, offerBuild);
+            OfferProvider.Emit(theAction, offerBuild);
         }
     }
 

@@ -27,7 +27,7 @@ public static class UpgradeAction
 
             List<Action> CreateActions = new List<Action> {theAction};
             if (PieceDefinition.sacrificeCost_enabled[upgradedToPieceType] && !CreateAction.GenerateSacrificeCosts(CreateActions, offerBuild)) return;
-            for (int i = 0; i < CreateActions.Count; i++) { newOfferProvider.Emit(CreateActions[i], offerBuild); }
+            for (int i = 0; i < CreateActions.Count; i++) { OfferProvider.Emit(CreateActions[i], offerBuild); }
         }
     }
 

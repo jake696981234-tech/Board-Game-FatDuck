@@ -83,14 +83,24 @@ public sealed class PlayerAgent
     {
         // Build the query the OfferProvider expects: (bm, pcs, PlayerState snapshot, playerId, cost).
         GameActions.GetMultiCreateState(out bool mcActive, out byte mcType, out bool mcBorder, out int mcRemaining, out int[] mcCells, out int mcCellCount, gameIndex);
-        var q = new OfferQuery(_gs.CurrentPlayerId, _gs.PieceLimitEnabled, _gs.pieceLimitPerPlayer,
+        var query = new OfferQuery(_gs.CurrentPlayerId, _gs.PieceLimitEnabled, _gs.pieceLimitPerPlayer,
             mcActive, mcType, mcBorder, mcRemaining, mcCells, mcCellCount); // :contentReference[oaicite:3]{index=3}
 
         var acts = _offers.AsSpan();
         var costs = _quotedCosts.AsSpan();
         var mask = _mask.AsSpan();
 
-        int total = OfferProvider.BuildActionList(in q, acts, costs, mask, gameIndex, _gs.CurrentPlayerId);
+        OfferBuild offerBuild;
+        offerBuild.query = query;
+        offerBuild.outActions = acts;
+        offerBuild.outCosts = costs;
+        offerBuild.outMask = mask;
+        offerBuild.gameIndex = gameIndex;
+        offerBuild.write = 0;
+        offerBuild.total = 0;
+        offerBuild.cap = 0;
+
+        int total = OfferProvider.BuildActionList(offerBuild);
         if (total <= 0) return false;
 
         int n = Math.Min(total, _cfg.maxOffersToConsider);
@@ -98,7 +108,7 @@ public sealed class PlayerAgent
         var costsN = costs.Slice(0, Math.Min(n, costs.Length));
         var maskN = mask.Slice(0, Math.Min(n, mask.Length));
 
-        int chosen = _policy?.PickAction(in q, actsN, costsN, maskN, gameIndex, _gs.CurrentPlayerId) ?? -1;
+        int chosen = _policy?.PickAction(in query, actsN, costsN, maskN, gameIndex, _gs.CurrentPlayerId) ?? -1;
         if (chosen < 0) chosen = FindEndTurn(actsN);
 
         if (chosen < 0) return false;

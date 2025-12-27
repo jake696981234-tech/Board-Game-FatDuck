@@ -60,7 +60,7 @@ public static class SpawnAction
                     TargetCellId = (ushort)empties[i],
                     aux = (ushort)targetType // carry target type for UI/debug readability
                 };
-                newOfferProvider.Emit(theAction, offerBuild);
+                OfferProvider.Emit(theAction, offerBuild);
             }
         }
 

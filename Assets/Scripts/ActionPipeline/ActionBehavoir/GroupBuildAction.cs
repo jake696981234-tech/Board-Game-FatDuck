@@ -3,6 +3,7 @@ using Game.Core;
 using Action = Game.Core.Action;
 using static Game.Core.ActionKind; // import enum values
 using System;
+using System.Collections.Generic;
 
 public static class GroupBuildAction
 {
@@ -69,7 +70,7 @@ public static class GroupBuildAction
             byte actorType = bm.GetPieceType(actorPid);
             if (PieceDefinition.groupBuild_deletion[actorType])
             {
-                var list = GameActions.CollectClusterCells(actorType, ActorsCellId, gameIndex);
+                var list = CollectClusterCells(actorType, ActorsCellId, gameIndex);
                 int need = PieceDefinition.groupBuild_requireNumber[actorType];
                 list.Sort();
                 for (int i = 0; i < need && i < list.Count; i++)
@@ -83,6 +84,42 @@ public static class GroupBuildAction
 
         GameActions.RefreshConnectorState(gameIndex);
     }
+
+    public static List<int> CollectClusterCells(byte type, int startCell, int gameIndex)
+        {
+            var bm = GameRegistry.game[gameIndex].boardModel;
+
+            var cells = new List<int>();
+            if (startCell < 0) return cells;
+            var visited = Scratch.GetScratchCellBuffer(gameIndex);
+            Array.Clear(visited, 0, visited.Length);
+            int[] queue = Scratch.GetScratchCellBuffer(gameIndex);
+            int head = 0, tail = 0;
+            queue[tail++] = startCell;
+            visited[startCell] = 1;
+            while (head < tail)
+            {
+                int cell = queue[head++];
+                int pid = bm.GetCellOccupant(cell);
+                if (pid >= 0 && bm.GetPieceType(pid) == type)
+                {
+                    cells.Add(cell);
+                    int[] neigh = Scratch.GetScratchNeighborBuffer(gameIndex);
+                    int n = bm.GetNeighbors(cell, neigh);
+                    for (int i = 0; i < n; i++)
+                    {
+                        int nb = neigh[i];
+                        if (nb < 0 || nb >= visited.Length) continue;
+                        if (visited[nb] != 0) continue;
+                        int nbPid = bm.GetCellOccupant(nb);
+                        if (nbPid < 0 || bm.GetPieceType(nbPid) != type) continue;
+                        visited[nb] = 1;
+                        queue[tail++] = nb;
+                    }
+                }
+            }
+            return cells;
+        }
 
     private static void EnumerateGroupBuildCreates(OfferBuild offerBuild, byte targetType, int clusterRepresentativeCell, byte actorType)
     {
@@ -104,7 +141,7 @@ public static class GroupBuildAction
                 TargetCellId = (ushort)cell,
                 aux = 0
             };
-            newOfferProvider.Emit(a, offerBuild);
+            OfferProvider.Emit(a, offerBuild);
         }
     }
 }

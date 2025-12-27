@@ -29,7 +29,7 @@ public static class CoreDamageAction
             TargetCellId = dstCore,
             aux = 0
         };
-        newOfferProvider.Emit(theAction, offerBuild);
+        OfferProvider.Emit(theAction, offerBuild);
     }
 
     /// <summary>
