@@ -258,24 +258,44 @@ public static class CreateAction
 
 
 
-
-
     public static void Apply(in Action theAction, byte player, int gameIndex)
     {
         var gameState = GameRegistry.game[gameIndex].gameState;
         var bm = GameRegistry.game[gameIndex].boardModel;
-        
 
-        // Upgrade-create: ActorsCellId carries source piece id (for upgrade flow)
-        int sourcePid = bm.GetCellOccupant(theAction.ActorsCellId);
-        bool isUpgradeCreate = PieceDefinition.upgrade_enabled[theAction.pieceType] && sourcePid >= 0 && bm.IsValidPieceId(sourcePid);
-        byte sourceType = isUpgradeCreate ? bm.GetPieceType(sourcePid) : (byte)0xFF;
-        if (isUpgradeCreate)
+        PaySacCost(theAction, player, gameIndex);
+
+        int pid = bm.AllocateRow();
+        bm.PlacePieceRow(pid, player, (byte)theAction.pieceType, theAction.TargetCellId, PieceDefinition.maxHP[theAction.pieceType]);
+        bm.pieceConnectorConfig[pid] = (byte)theAction.aux;
+        int g = PieceDefinition.digitItGives[(byte)theAction.pieceType];
+        if (g >= 0) gameState.ps[player].GrantDigit(g);
+
+        MultiCreateExecute(theAction, gameIndex);
+
+        GameActions.RefreshConnectorState(gameIndex);
+    }
+
+    public static void MultiCreateExecute(Action theAction, int gameIndex)
+    {
+        var gameState = GameRegistry.game[gameIndex].gameState;
+        if (PieceDefinition.multiCreate_enabledByType[theAction.pieceType])
         {
-            int expectedSourceType = PieceDefinition.upgrade_target[theAction.pieceType];
-            if (sourceType != expectedSourceType) isUpgradeCreate = false;
+            int total = Math.Max(1, PieceDefinition.multiCreate_amountByType[theAction.pieceType]);
+            if (total > 1)
+            {
+                gameState.multiCreateActive = true;
+                gameState.multiCreateType = (byte)theAction.pieceType;
+                gameState.multiCreateBorder = PieceDefinition.multiCreate_isBoardering[theAction.pieceType];
+                gameState.multiCreateRemaining = total - 1;
+                gameState.multiCreateCells.Clear();
+                gameState.multiCreateCells.Add(theAction.TargetCellId);
+            }
         }
-
+    }
+    public static void PaySacCost(Action theAction, byte player, int gameIndex)
+    {
+        var bm = GameRegistry.game[gameIndex].boardModel;
         if (PieceDefinition.sacrificeCost_enabled[theAction.pieceType])
         {
             int need = PieceDefinition.sacrificeCost_howManyItNeeds[theAction.pieceType];
@@ -292,39 +312,6 @@ public static class CreateAction
                 }
                 if (killed < need) return; // safety: not enough valid sacrifices
             }
-        }
-
-        int pid = bm.AllocateRow();
-        bm.PlacePieceRow(pid, player, (byte)theAction.pieceType, theAction.TargetCellId, PieceDefinition.maxHP[theAction.pieceType]);
-        // Set connector config if applicable (Create uses aux for config index)
-        bm.pieceConnectorConfig[pid] = (byte)theAction.aux;
-        // Preserve connector config from source on upgrade
-        if (isUpgradeCreate && sourcePid >= 0)
-            bm.pieceConnectorConfig[pid] = bm.pieceConnectorConfig[sourcePid];
-        // Grant digit if this type provides one
-        int g = PieceDefinition.digitItGives[(byte)theAction.pieceType];
-        if (g >= 0) gameState.ps[player].GrantDigit(g);
-
-        if (PieceDefinition.multiCreate_enabledByType[theAction.pieceType])
-        {
-            int total = Math.Max(1, PieceDefinition.multiCreate_amountByType[theAction.pieceType]);
-            if (total > 1)
-            {
-                gameState.multiCreateActive = true;
-                gameState.multiCreateType = (byte)theAction.pieceType;
-                gameState.multiCreateBorder = PieceDefinition.multiCreate_isBoardering[theAction.pieceType];
-                gameState.multiCreateRemaining = total - 1;
-                gameState.multiCreateCells.Clear();
-                gameState.multiCreateCells.Add(theAction.TargetCellId);
-            }
-        }
-
-        GameActions.RefreshConnectorState(gameIndex);
-
-        // Remove source piece after placing new one (no connector wipe for intermediate state)
-        if (isUpgradeCreate && bm.IsValidPieceId(sourcePid))
-        {
-            bm.FreeRowSwapBack(sourcePid);
         }
     }
 }

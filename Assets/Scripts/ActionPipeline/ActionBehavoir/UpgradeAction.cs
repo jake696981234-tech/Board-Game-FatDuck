@@ -2,45 +2,55 @@ using UnityEngine;
 using Game.Core;
 using Action = Game.Core.Action;
 using static Game.Core.ActionKind; // import enum values
+using System.Collections.Generic;
 
 public static class UpgradeAction
 {
-    public static void CreateActions()
+    public static void CreateActions(int pieceId, byte actorType, int cell, OfferBuild offerBuild)
     {
         // Upgrade-as-piece-action: find destination types that upgrade from this actorType
         for (int upgradedToPieceType = 0; upgradedToPieceType < PieceDefinition.typeCount; upgradedToPieceType++)
         {
             if (!PieceDefinition.upgrade_enabled[upgradedToPieceType]) continue;
             if (PieceDefinition.upgrade_target[upgradedToPieceType] != actorType) continue;
-            int reqDigit = PieceDefinition.requiredDigit[(byte)upgradedToPieceType];
-            if (reqDigit >= 0 && !gameState.ps[player].HasDigit(reqDigit)) continue;
+            if (CreateAction.HasRequiredDigits(upgradedToPieceType, offerBuild)) continue;
+           
 
-            var a = new Action
+            var theAction = new Action
             {
                 kind = Upgrade,
-                pieceType = actorType, // destination type
+                pieceType = (byte)upgradedToPieceType, // destination type
                 ActorsCellId = (ushort)cell, // to do need to change the rest of the method - I switched this around. PieceType = used to be upgradedToPieceType- and TargetCellId used to be cell.
-                TargetCellId = (byte)upgradedToPieceType,
+                TargetCellId = actorType,
                 aux = 0
             };
 
-            if (PieceDefinition.sacrificeCost_enabled[upgradedToPieceType]) //pretty sure this sets Aux as piece IDs, i made this be reflected in UI. If theres issues, check this.
-            {
-                SacrificeCostOptions.Clear();
-                if (PassiveActions.GenerateSacrificeCosts(in a, player, gameIndex, SacrificeCostOptions))
-                {
-                    for (int opt = 0; opt < SacrificeCostOptions.Count; opt++)
-                    {
-                        var withCost = a;
-                        withCost.addCost = SacrificeCostOptions[opt];
-                        Emit(ref withCost, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
-                    }
-                }
-            }
-            else
-            {
-                Emit(ref a, ref write, ref total, cap, outActions, q, outCosts, outMask, gameIndex, player);
-            }
+            List<Action> CreateActions = new List<Action> {theAction};
+            if (PieceDefinition.sacrificeCost_enabled[upgradedToPieceType] && !CreateAction.GenerateSacrificeCosts(CreateActions, offerBuild)) return;
+            for (int i = 0; i < CreateActions.Count; i++) { newOfferProvider.Emit(CreateActions[i], offerBuild); }
         }
+    }
+
+    //isItLegal
+
+
+    public static void Apply(in Action theAction, byte player, int gameIndex)
+    {
+        var gameState = GameRegistry.game[gameIndex].gameState;
+        var bm = GameRegistry.game[gameIndex].boardModel;
+
+        CreateAction.PaySacCost(theAction, player, gameIndex);
+
+        var UpgradedFromPieceId = bm.GetCellOccupant(theAction.ActorsCellId);
+        var sourceConnector = bm.pieceConnectorConfig[UpgradedFromPieceId];
+        bm.FreeRowSwapBack(UpgradedFromPieceId);
+
+        int PieceId = bm.AllocateRow();
+        bm.PlacePieceRow(PieceId, player, (byte)theAction.pieceType, theAction.ActorsCellId, PieceDefinition.maxHP[theAction.pieceType]);
+        if (PieceDefinition.connectors_enabled[theAction.TargetCellId]) { bm.pieceConnectorConfig[PieceId] = sourceConnector; } else { bm.pieceConnectorConfig[PieceId] = (byte)theAction.aux; }
+        int g = PieceDefinition.digitItGives[(byte)theAction.pieceType];
+        if (g >= 0) gameState.ps[player].GrantDigit(g);
+
+        GameActions.RefreshConnectorState(gameIndex);
     }
 }

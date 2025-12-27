@@ -112,16 +112,16 @@ namespace Game.Core
 
         #endregion
         #region The Action method
-        public bool Perform(in Action a)
+        public bool Perform(in Action theAction)
         {
             ref var cur = ref ps[currentPlayer];
 
-            if (!FastCheck(a))
+            if (!FastCheck(theAction))
             {
                 Debug.Log("FastCheck returned false");
                 return false;
             }
-            if (!IsItLegal.IsStillLegal(in a, currentPlayer, gameIndex))
+            if (!IsItLegal.IsStillLegal(in theAction, currentPlayer, gameIndex))
             {
                 Debug.Log("Is Still Legal returned false");
                 return false;
@@ -129,11 +129,11 @@ namespace Game.Core
             events.actionBegin(new ActionContext { ThePlayer = currentPlayer });
 
             CostEngine.CostBreakdown quote = default;
-            bool isMultiPlacement = multiCreateActive && a.kind == Create && a.pieceType == multiCreateType;
+            bool isMultiPlacement = multiCreateActive && theAction.kind == Create && theAction.pieceType == multiCreateType;
 
-            if (a.kind != EndTurn && !isMultiPlacement)
+            if (theAction.kind != EndTurn && !isMultiPlacement)
             {
-                if (!CostEngine.IsAffordable(in cur, in a, out quote, gameIndex))
+                if (!CostEngine.IsAffordable(in cur, in theAction, out quote, gameIndex))
                 {
                     Debug.Log("CostEngine Is Affordable Returned False");
                     return false;
@@ -147,22 +147,22 @@ namespace Game.Core
 
             // logging stuff
             int loggedplayer = currentPlayer;
-            int loggedType = a.kind;
+            int loggedType = theAction.kind;
             int? pieceTypeForLog = null;
 
-            if (a.kind == Create)
+            if (theAction.kind == Create)
             {
-                pieceTypeForLog = a.pieceType;           // which piece we're creating
+                pieceTypeForLog = theAction.pieceType;           // which piece we're creating
             }
-            else if (a.kind != EndTurn)
+            else if (theAction.kind != EndTurn)
             {
-                int actorPid = bm.GetCellOccupant(a.ActorsCellId);
+                int actorPid = bm.GetCellOccupant(theAction.ActorsCellId);
                 if (actorPid >= 0)
                     pieceTypeForLog = bm.GetPieceType(actorPid);
             }
 
             // Special-case EndTurn: log it against the current turn before handoff
-            if (a.kind == EndTurn)
+            if (theAction.kind == EndTurn)
             {
                 events.RaiseActionLog(new EventManager.ActionLogEvent(
                     loggedType,
@@ -184,14 +184,14 @@ namespace Game.Core
             var coreBefore = SnapshotCoreHP(this);
 
 
-            switch (a.kind)
+            switch (theAction.kind)
             {
-                case Move: GameActions.ApplyMove(in a, currentPlayer, gameIndex); break;
-                case Shoot: GameActions.ApplyShoot(in a, currentPlayer, gameIndex); break;
+                case Move: GameActions.ApplyMove(in theAction, currentPlayer, gameIndex); break;
+                case Shoot: GameActions.ApplyShoot(in theAction, currentPlayer, gameIndex); break;
                 case Create:
-                    if (multiCreateActive && a.pieceType == multiCreateType)
+                    if (multiCreateActive && theAction.pieceType == multiCreateType)
                     {
-                        GameActions.ApplyMultiCreatePlacement(in a, currentPlayer, gameIndex);
+                        GameActions.ApplyMultiCreatePlacement(in theAction, currentPlayer, gameIndex);
                     }
                     else
                     {
@@ -202,26 +202,26 @@ namespace Game.Core
                             return false;
                         }
 
-                        GameActions.ApplyCreate(in a, currentPlayer, gameIndex);
+                        GameActions.ApplyCreate(in theAction, currentPlayer, gameIndex);
                     }
                     break;
-                case Push: GameActions.ApplyPush(in a, currentPlayer, gameIndex); break;
-                case Upgrade: GameActions.ApplyUpgrade(in a, currentPlayer, gameIndex); break;
-                case Launcher: GameActions.ApplyLauncher(in a, currentPlayer, gameIndex); break;
-                case Spawner: GameActions.ApplySpawner(in a, currentPlayer, gameIndex); break;
-                case GroupBuild: GameActions.ApplyGroupBuild(in a, currentPlayer, gameIndex); break;
-                case CaptureVP: GameActions.ApplyCaptureVP(in a, currentPlayer, gameIndex); break; // sets flags + VP counters + vpPool
-                case CoreDamage: GameActions.ApplyCoreDamage(in a, currentPlayer, gameIndex); break; // sets flag + damages enemy core + elim check
+                case Push: GameActions.ApplyPush(in theAction, currentPlayer, gameIndex); break;
+                case Upgrade: GameActions.ApplyUpgrade(in theAction, currentPlayer, gameIndex); break;
+                case Launcher: GameActions.ApplyLauncher(in theAction, currentPlayer, gameIndex); break;
+                case Spawner: GameActions.ApplySpawner(in theAction, currentPlayer, gameIndex); break;
+                case GroupBuild: GameActions.ApplyGroupBuild(in theAction, currentPlayer, gameIndex); break;
+                case CaptureVP: GameActions.ApplyCaptureVP(in theAction, currentPlayer, gameIndex); break; // sets flags + VP counters + vpPool
+                case CoreDamage: GameActions.ApplyCoreDamage(in theAction, currentPlayer, gameIndex); break; // sets flag + damages enemy core + elim check
                 case EndTurn: ApplyEndTurn(); break; // unreachable due to early return above
-                case SacrificeFactory: GameActions.ApplySacrificeFactory(in a, currentPlayer, gameIndex); break;
-                case ConversionFactory: GameActions.ApplyConversionFactory(in a, currentPlayer, gameIndex); break;
+                case SacrificeFactory: GameActions.ApplySacrificeFactory(in theAction, currentPlayer, gameIndex); break;
+                case ConversionFactory: GameActions.ApplyConversionFactory(in theAction, currentPlayer, gameIndex); break;
                 default:
                     Debug.Log("Find Action Match returned false");
                     return false;
             }
 
             // For non-EndTurn actions, apply costs and advance index
-            bool skipCost = multiCreateActive && a.kind == Create && a.pieceType == multiCreateType;
+            bool skipCost = multiCreateActive && theAction.kind == Create && theAction.pieceType == multiCreateType;
             if (!skipCost)
             {
                 cur.AddBudget(-(float)quote.Total);

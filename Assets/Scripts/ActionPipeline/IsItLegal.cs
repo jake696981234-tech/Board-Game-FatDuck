@@ -203,7 +203,7 @@ public static class IsItLegal
     }
 
     #region IsStillLegal Method
-    public static bool IsStillLegal(in Game.Core.Action a, byte player, int gameIndex)
+    public static bool IsStillLegal(in Game.Core.Action theAction, byte player, int gameIndex)
     {
         var gameState = GameRegistry.game[gameIndex].gameState;
         var controller = GameRegistry.game[gameIndex].gameController;
@@ -211,29 +211,29 @@ public static class IsItLegal
 
 
         // EndTurn: always structurally legal
-        if (a.kind == EndTurn) return true;
+        if (theAction.kind == EndTurn) return true;
 
         // Plan-B: Create has no actor/slot/ability; structural rule only
-        if (a.kind == Create)
+        if (theAction.kind == Create)
         {
-            bool isUpgradeCreate = PieceDefinition.upgrade_enabled[a.pieceType];
-            // int upgradeSourceType = isUpgradeCreate ? PieceDefinition.upgrade_target[a.pieceType] : -1;
+            // bool isUpgradeCreate = PieceDefinition.upgrade_enabled[a.pieceType];
+            // // int upgradeSourceType = isUpgradeCreate ? PieceDefinition.upgrade_target[a.pieceType] : -1;
 
-            if (isUpgradeCreate)
-            {
-                // ActorsCellId carries source piece id for upgrade-create
-                int srcPid = bm.GetCellOccupant(a.ActorsCellId);
-                if (srcPid < 0) return false;
-                if (bm.GetPieceOwner(srcPid) != player) return false;
-                if (bm.GetPieceType(srcPid) != a.pieceType) return false;
-                // Target must be the same cell as source
-                if (bm.GetPieceCell(srcPid) != a.TargetCellId) return false;
-            }
+            // if (isUpgradeCreate)
+            // {
+            //     // ActorsCellId carries source piece id for upgrade-create
+            //     int srcPid = bm.GetCellOccupant(a.ActorsCellId);
+            //     if (srcPid < 0) return false;
+            //     if (bm.GetPieceOwner(srcPid) != player) return false;
+            //     if (bm.GetPieceType(srcPid) != a.pieceType) return false;
+            //     // Target must be the same cell as source
+            //     if (bm.GetPieceCell(srcPid) != a.TargetCellId) return false;
+            // }
 
             // If pending multi-create placements are active, treat this as a placement
-            if (gameState.multiCreateActive && a.pieceType == gameState.multiCreateType)
+            if (gameState.multiCreateActive && theAction.pieceType == gameState.multiCreateType)
             {
-                if (bm.GetCellOccupant(a.TargetCellId) >= 0) return false;
+                if (bm.GetCellOccupant(theAction.TargetCellId) >= 0) return false;
                 if (controller.PieceLimitEnabled && controller.PieceLimitPerPlayer > 0 &&
                     bm.GetPieceCountForPlayer(player) >= controller.PieceLimitPerPlayer)
                     return false;
@@ -241,7 +241,7 @@ public static class IsItLegal
                 {
                     bool adjacent = false;
                     var scratch = Scratch.GetScratchNeighborBuffer(gameIndex);
-                    int n = bm.GetNeighbors(a.TargetCellId, scratch);
+                    int n = bm.GetNeighbors(theAction.TargetCellId, scratch);
                     for (int i = 0; i < n; i++)
                     {
                         int nb = scratch[i];
@@ -251,14 +251,14 @@ public static class IsItLegal
                 }
                 else
                 {
-                    if (!BmAbilityCac.IsCreateGeometryLegal(a.TargetCellId, player, gameIndex))
+                    if (!BmAbilityCac.IsCreateGeometryLegal(theAction.TargetCellId, player, gameIndex))
                         return false;
                 }
                 return true;
             }
 
             // cell must be empty
-            if (!isUpgradeCreate && bm.GetCellOccupant(a.TargetCellId) >= 0)
+            if (!isUpgradeCreate && bm.GetCellOccupant(theAction.TargetCellId) >= 0)
             {
                 Debug.Log("GetCellOccupant returned false");
                 return false;
@@ -269,17 +269,17 @@ public static class IsItLegal
             {
                 bool geomOk = false;
                 int core = bm.GetPlayerCoreCellId(player);
-                if (a.TargetCellId == core) { geomOk = true; }
+                if (theAction.TargetCellId == core) { geomOk = true; }
                 if (!geomOk)
                 {
                     var scratch = Scratch.GetScratchCellBuffer(gameIndex);
                     int n = bm.GetNeighbors(core, scratch);
-                    for (int i = 0; i < n; i++) { if (scratch[i] == a.TargetCellId) { geomOk = true; break; } }
+                    for (int i = 0; i < n; i++) { if (scratch[i] == theAction.TargetCellId) { geomOk = true; break; } }
                 }
                 if (!geomOk)
                 {
                     var scratch2 = Scratch.GetScratchCellBuffer(gameIndex);
-                    int n2 = bm.GetNeighbors(a.TargetCellId, scratch2);
+                    int n2 = bm.GetNeighbors(theAction.TargetCellId, scratch2);
                     for (int i = 0; i < n2; i++)
                     {
                         int nb = scratch2[i];
@@ -303,7 +303,7 @@ public static class IsItLegal
             //     Debug.Log("isBuilding flag Returned False");
             //     return false;
             // }
-            int req = PieceDefinition.requiredDigit[a.pieceType];
+            int req = PieceDefinition.requiredDigit[theAction.pieceType];
             if (req >= 0 && !gameState.ps[player].HasDigit(req))
             {
                 Debug.Log("Required digit gate Returned False");
@@ -311,10 +311,10 @@ public static class IsItLegal
             }
 
             // Sacrifice cost gate: ensure specified pieces are available and owned
-            if (PieceDefinition.sacrificeCost_enabled[a.pieceType])
+            if (PieceDefinition.sacrificeCost_enabled[theAction.pieceType])
             {
-                int need = PieceDefinition.sacrificeCost_howManyItNeeds[a.pieceType];
-                var cost = a.addCost;
+                int need = PieceDefinition.sacrificeCost_howManyItNeeds[theAction.pieceType];
+                var cost = theAction.addCost;
                 if (need > 0)
                 {
                     if (cost == null || cost.Length < need)
@@ -341,15 +341,15 @@ public static class IsItLegal
             }
 
             // Connector legality: config index is carried in aux
-            if (PieceDefinition.connectors_enabled[a.pieceType] && !isUpgradeCreate)
+            if (PieceDefinition.connectors_enabled[theAction.pieceType] && !isUpgradeCreate)
             {
-                int cfg = a.aux;
-                if (!PieceDefinition.IsConnectorConfigAllowed(a.pieceType, cfg))
+                int cfg = theAction.aux;
+                if (!PieceDefinition.IsConnectorConfigAllowed(theAction.pieceType, cfg))
                 {
                     Debug.Log("IsConnectorConfigAllowed Returned False");
                     return false;
                 }
-                if (!PiecesSides.IsConnectorPlacementLegal(a.TargetCellId, a.pieceType, cfg, player, gameIndex))
+                if (!PiecesSides.IsConnectorPlacementLegal(theAction.TargetCellId, theAction.pieceType, cfg, player, gameIndex))
                 {
                     Debug.Log("IsConnectorPlacementLegal Returned False");
                     return false;
@@ -357,10 +357,10 @@ public static class IsItLegal
             }
 
             // Sacrifice cost gate: ensure specified pieces are available and owned
-            if (PieceDefinition.sacrificeCost_enabled[a.pieceType])
+            if (PieceDefinition.sacrificeCost_enabled[theAction.pieceType])
             {
-                int need = PieceDefinition.sacrificeCost_howManyItNeeds[a.pieceType];
-                var cost = a.addCost;
+                int need = PieceDefinition.sacrificeCost_howManyItNeeds[theAction.pieceType];
+                var cost = theAction.addCost;
                 if (need > 0)
                 {
                     if (cost == null || cost.Length < need)
@@ -387,7 +387,7 @@ public static class IsItLegal
         }
 
         // Non-Create actions (Move/Shoot/CaptureVP/CoreDamage) – old path:
-        int actorPid = bm.GetCellOccupant(a.ActorsCellId);
+        int actorPid = bm.GetCellOccupant(theAction.ActorsCellId);
         if (actorPid < 0)
         {
             Debug.Log("Theres no target Returned False");
@@ -405,11 +405,11 @@ public static class IsItLegal
         int[] targets = Scratch.GetScratchCellBuffer(gameIndex);
         int[] targetsPiece = Scratch.GetScratchCellBuffer(gameIndex);
         int count;
-        switch (a.kind)
+        switch (theAction.kind)
         {
             case Move:
-                count = GetLegalTargets.GetLegalTargets_Move(actorPid, a.pieceType, targets, gameIndex);
-                if (ContainsFirstN(targets, count, a.TargetCellId))
+                count = GetLegalTargets.GetLegalTargets_Move(actorPid, theAction.pieceType, targets, gameIndex);
+                if (ContainsFirstN(targets, count, theAction.TargetCellId))
                 {
                     return true;
                 }
@@ -419,8 +419,8 @@ public static class IsItLegal
                     return false; // slot-kind drift guard
                 }
             case Shoot:
-                count = GetLegalTargets.GetLegalTargets_Shoot(actorPid, a.pieceType, targets, gameIndex);
-                if (ContainsFirstN(targets, count, a.aux /* targetPieceId */))
+                count = GetLegalTargets.GetLegalTargets_Shoot(actorPid, theAction.pieceType, targets, gameIndex);
+                if (ContainsFirstN(targets, count, theAction.aux /* targetPieceId */))
                 {
                     return true;
                 }
@@ -430,7 +430,7 @@ public static class IsItLegal
                     return false; // slot-kind drift guard
                 }
             case Push:
-                if (IsLegal_Push(actorPid, a.pieceType, in a, gameIndex))
+                if (IsLegal_Push(actorPid, theAction.pieceType, in theAction, gameIndex))
                 {
                     return true;
                 }
@@ -440,7 +440,7 @@ public static class IsItLegal
                     return false; // slot-kind drift guard
                 }
             case Launcher:
-                if (IsLegal_Launcher(actorPid, a.pieceType, in a, gameIndex))
+                if (IsLegal_Launcher(actorPid, theAction.pieceType, in theAction, gameIndex))
                 {
                     return true;
                 }
@@ -450,7 +450,7 @@ public static class IsItLegal
                     return false; // slot-kind drift guard
                 }
             case Spawner:
-                if (IsLegal_Spawner(actorPid, type, in a, player, gameIndex))
+                if (IsLegal_Spawner(actorPid, type, in theAction, player, gameIndex))
                 {
                     return true;
                 }
@@ -460,7 +460,7 @@ public static class IsItLegal
                     return false; // slot-kind drift guard
                 }
             case GroupBuild:
-                if (IsLegal_GroupBuild(actorPid, a.pieceType, in a, player, gameIndex))
+                if (IsLegal_GroupBuild(actorPid, theAction.pieceType, in theAction, player, gameIndex))
                 {
                     return true;
                 }
@@ -492,7 +492,7 @@ public static class IsItLegal
             case Upgrade:
                 {
                     byte actorType = bm.GetPieceType(actorPid);
-                    byte destType = a.pieceType;
+                    byte destType = theAction.pieceType;
                     if (!PieceDefinition.upgrade_enabled[destType])
                     {
                         Debug.Log("Upgrade - (!PieceDefinition.upgrade_enabled[destType]) Returned False");
@@ -503,12 +503,12 @@ public static class IsItLegal
                         Debug.Log("Upgrade - (PieceDefinition.upgrade_target[destType] != actorType)Returned False");
                         return false;
                     }
-                    if (a.TargetCellId != a.ActorsCellId)
+                    if (theAction.TargetCellId != theAction.ActorsCellId)
                     {
                         Debug.Log("Upgrade - (a.TargetCellId != a.ActorsCellId) Returned False");
                         return false;
                     }
-                    if (bm.GetPieceCell(actorPid) != a.ActorsCellId)
+                    if (bm.GetPieceCell(actorPid) != theAction.ActorsCellId)
                     {
                         Debug.Log("Upgrade - (bm.GetPieceCell(actorPid) != a.ActorsCellId) Returned False");
                         return false;
@@ -522,7 +522,7 @@ public static class IsItLegal
                     if (PieceDefinition.sacrificeCost_enabled[destType])
                     {
                         int need = PieceDefinition.sacrificeCost_howManyItNeeds[destType];
-                        var cost = a.addCost;
+                        var cost = theAction.addCost;
                         if (need > 0)
                         {
                             if (cost == null || cost.Length < need)
@@ -548,8 +548,8 @@ public static class IsItLegal
                     return true;
                 }
             case SacrificeFactory:
-                count = GetLegalTargets.GetLegalTargets_SacrificeFactory(actorPid, a.pieceType, targetsPiece, gameIndex);
-                if (ContainsFirstN(targets, count, a.aux /* targetPieceId */))
+                count = GetLegalTargets.GetLegalTargets_SacrificeFactory(actorPid, theAction.pieceType, targetsPiece, gameIndex);
+                if (ContainsFirstN(targets, count, theAction.aux /* targetPieceId */))
                 {
                     return true;
                 }
