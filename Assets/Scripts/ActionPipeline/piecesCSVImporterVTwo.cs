@@ -74,6 +74,8 @@ public static class PiecesCsvImporter
             #region Upgrade
             PieceDefinition.upgrade_enabled[typeId] = GetBool(cols, H, "upgrade_enabled", defaultValue: false);
             PieceDefinition.upgrade_target[typeId] = GetInt(cols, H, "upgrade_target", defaultValue: -1);
+            PieceDefinition.upgrade_killsNeeded[typeId] = GetInt(cols, H, "upgrade_killsNeeded", defaultValue: 0);
+            PieceDefinition.upgrade_isGoalKills[typeId] = GetBool(cols, H, "upgrade_isGoalKills", defaultValue: false);
             PieceDefinition.upgrade_botSurcharge[typeId] = GetInt(cols, H, "upgrade_botSurcharge", defaultValue: 0);
 
             #endregion
@@ -341,6 +343,8 @@ public static class PiecesCsvImporter
         PieceDefinition.upgrade_enabled = new bool[count];
         PieceDefinition.upgrade_target = new int[count];
         PieceDefinition.upgrade_botSurcharge = new int[count];
+        PieceDefinition.upgrade_killsNeeded = new int[count];
+        PieceDefinition.upgrade_isGoalKills = new bool[count];        
 
         #endregion
         #region launcher

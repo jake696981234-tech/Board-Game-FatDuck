@@ -42,9 +42,9 @@ public static class PushAction
         bool allowBuildings = PieceDefinition.push_IsTargetsBuildings[actorType];
         bool allowSoldiers = PieceDefinition.push_isTargetsSoldiers[actorType];
         byte tgtType = bm.GetPieceType(targetPid);
-        bool isBuilding = PieceDefinition.isBuilding[actorType];
-        if (isBuilding && !allowBuildings) return false;
-        if (!isBuilding && !allowSoldiers) return false;
+        bool targetIsBuilding = PieceDefinition.isBuilding[tgtType];
+        if (targetIsBuilding && !allowBuildings) return false;
+        if (!targetIsBuilding && !allowSoldiers) return false;
 
         int rangeMax = PieceDefinition.push_rangeMax[actorType];
         int originCell = bm.GetPieceCell(actorPid);
@@ -85,9 +85,9 @@ public static class PushAction
             if (!allowFriendly && bm.GetPieceOwner(victimId) == actorOwner) continue;
 
             byte type = bm.GetPieceType(victimId);
-            bool isBuilding = PieceDefinition.isBuilding[actorType];
-            if (isBuilding && !allowBuildings) continue;
-            if (!isBuilding && !allowSoldiers) continue;
+            bool targetIsBuilding = PieceDefinition.isBuilding[type];
+            if (targetIsBuilding && !allowBuildings) continue;
+            if (!targetIsBuilding && !allowSoldiers) continue;
 
             int dist = bm.Distance(originCell, c);
             if (dist < 1 || dist > rangeMax) continue;

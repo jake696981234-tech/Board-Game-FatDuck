@@ -56,7 +56,8 @@ public static class PieceDefinition
     #region Upgrade
     public static bool[] upgrade_enabled;
     public static int[] upgrade_target;
-    // New meaning: upgradesTo type X requires a source of type upgrade_target[X]
+    public static bool[] upgrade_isGoalKills;
+    public static int[] upgrade_killsNeeded;
     public static int[] upgrade_botSurcharge;
     #endregion
     #region launcher

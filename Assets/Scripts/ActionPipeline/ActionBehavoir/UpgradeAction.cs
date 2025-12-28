@@ -8,13 +8,18 @@ public static class UpgradeAction
 {
     public static void CreateActions(int pieceId, byte actorType, int cell, ref OfferBuild offerBuild)
     {
+        var bm = GameRegistry.game[gameIndex].boardModel;
         // Upgrade-as-piece-action: find destination types that upgrade from this actorType
         for (int upgradedToPieceType = 0; upgradedToPieceType < PieceDefinition.typeCount; upgradedToPieceType++)
         {
             if (!PieceDefinition.upgrade_enabled[upgradedToPieceType]) continue;
             if (PieceDefinition.upgrade_target[upgradedToPieceType] != actorType) continue;
             if (!CreateAction.HasRequiredDigits(upgradedToPieceType, ref offerBuild)) continue;
-           
+            if (PieceDefinition.upgrade_isGoalKills[upgradedToPieceType])
+            {
+                    if (PieceDefinition.upgrade_killsNeeded[upgradedToPieceType] <= bm.pieceKillCount[pieceId]) continue;
+            }
+            
             var theAction = new Action
             {
                 kind = Upgrade,

@@ -97,7 +97,6 @@ public static class PieceActionFilter
                 return;
             }
             kind = UIFilter.clickedActionKind;
-            Debug.Log($"kind clicked: {kind}");
             isKind = true;
 
             UIFilter.ResetClickedData();
@@ -220,7 +219,6 @@ public static class PieceActionFilter
 
     private static void UpgradeFilter()
     {
-        Debug.Log("Reached code path upgrade");
         // TargetCellId = (ushort)PieceDefinition.upgrade_target[UIFilter.clickedCellId];
         // isTargetCellId = true;
         isAux = true;
@@ -457,7 +455,6 @@ public static class PieceActionFilter
             bool legal = UIBridge._mask[i] != 0;           // 1 = affordable+legal; 0 = masked out by cost, etc. :contentReference[oaicite:8]{index=8}
 
             items.Add(theAction);
-            Debug.Log("Added Upgrade Item");
             uiInfo.Add(new UIInfo(legal, fullCost));
         }
         UI.hic.buildMenu.Show(items, uiInfo, UI.hic.config);
@@ -532,6 +529,8 @@ public static class PieceActionFilter
             var action = UIBridge._offers[i];
             if (action.kind == Game.Core.ActionKind.EndTurn) continue; // exclude non-piece actions
             if (action.ActorsCellId != (ushort)ActorsCellId) continue;               // only actions from this piece
+            // Upgrade actions carry destination type in pieceType; bypass strict type check for upgrades
+            if (action.kind != Game.Core.ActionKind.Upgrade && action.pieceType != pieceType) continue;
 
             // Show only one Move per selected piece unless raw offers requested
             if (action.kind == Game.Core.ActionKind.Move && !UI.hic.config.GiveRawActionOffers)

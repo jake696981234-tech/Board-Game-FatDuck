@@ -19,11 +19,11 @@ public static class UIFilter
     }
     private static void topFilter()
     {
-        if (uIType == UIType.EndTurnButton)
-        {
-            UIBridge.PerformActionIndex(UIHelpers.FindEndTurnIndex());
-            reset();
-        }
+        // if (uIType == UIType.EndTurnButton)
+        // {
+        //     UIBridge.PerformActionIndex(UIHelpers.FindEndTurnIndex());
+        //     reset();
+        // }
 
 
         if (uIType == UIType.Cancel)
@@ -68,9 +68,10 @@ public static class UIFilter
 
     public static void HookPresenters()
     {
-        UI.hic.endTurnButton.onClick.AddListener(onEndTurnButton);
+        // UI.hic.endTurnButton.onClick.AddListener(onEndTurnButton);
         UI.hic.buildMenu.OnItemClicked += OnBuildItemClicked;
         UI.hic.pieceActionListFull.OnItemClicked += OnPieceActionClicked;
+        UI.hic.nonPieceActionList.OnItemClicked += OnNonPieceActionClicked;
         // UI.hic.SeePerPieceTypeTotalsButton.onClick.AddListener(() => ShowFactoryBonusByPieceTypePrefabs()); //to do
     }
 
@@ -109,6 +110,18 @@ public static class UIFilter
         uIType = UIType.PieceActionKind;
         clickedActionKind = (byte)item.kind;
         topFilter();
+    }
+
+    private static void OnNonPieceActionClicked(ActionItem item)
+    {
+        // Currently only EndTurn lives here; execute immediately.
+        if (!int.TryParse(item.id, out var index)) return;
+        if (index < 0 || index >= UIBridge._count) return;
+        if (UIBridge._mask[index] == 0) return; // should always be legal for EndTurn
+
+        var action = UIBridge._offers[index];
+        UIBridge.PerformActionIndex(action);
+        reset();
     }
 
     public static void onCancel()

@@ -101,6 +101,7 @@ public static class UI
 
     private static void whenTurnBegins(TurnContext turnContext)
     {
+        UIFilter.reset();
         playerTurn[turnContext.ThePlayer]++;
         playerAction[turnContext.ThePlayer] = 0;
         turnNumber++;
