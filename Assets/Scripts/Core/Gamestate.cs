@@ -2,6 +2,7 @@ using System;
 using static Game.Core.ActionKind;
 using UnityEngine;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Game.Core
 {
@@ -290,9 +291,25 @@ namespace Game.Core
                 if (theAction.ActorsCellId != offers[i].ActorsCellId) continue;
                 if (theAction.TargetCellId != offers[i].TargetCellId) continue;
                 if (theAction.aux != offers[i].aux) continue;
+                if ((theAction.kind == Create || theAction.kind == Upgrade) && PieceDefinition.sacrificeCost_enabled[theAction.pieceType])
+                {
+                    if (!SacCostEquals(theAction.addCost, offers[i].addCost)) continue;
+                }
                 return true;
             }
             return false;
+        }
+
+        private static bool SacCostEquals(int[] a, int[] b)
+        {
+            if (ReferenceEquals(a, b)) return true;
+            if (a == null || b == null) return false;
+            if (a.Length != b.Length) return false;
+            for (int i = 0; i < a.Length; i++)
+            {
+                if (a[i] != b[i]) return false;
+            }
+            return true;
         }
 
         #endregion

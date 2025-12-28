@@ -79,7 +79,7 @@ public static class CreateActionFilter
         }
         if (!isAddCost)
         {
-            SacrificeCostOptions();
+            SacrificeCostOptions(kind, pieceType, ref cachedLegalAddCost);
             UIFilter.ResetClickedData();
             return;
         }
@@ -173,7 +173,12 @@ public static class CreateActionFilter
         } 
         addCost.Add(UIBridge.bm.occupantPieceId[UIFilter.clickedCellId]);
         ActionCostRequiresAddCost = true;
-        if (addCost.Count == PieceDefinition.sacrificeCost_howManyItNeeds[pieceType]) isAddCost = true;
+        if (addCost.Count == PieceDefinition.sacrificeCost_howManyItNeeds[pieceType])
+        {
+            addCost.Sort();
+            addCost.Reverse();
+            isAddCost = true;
+        } 
         cleanUpSet();
     }
     
@@ -196,10 +201,6 @@ public static class CreateActionFilter
     }
     
     
-
-
-    
-
      private static void CreateCellOptions()
     {
         showBoard.ClearHighlights();
@@ -238,21 +239,21 @@ public static class CreateActionFilter
         PanelToggles.TogglePanels(build: false, create: false, action: false, pieceFull: false, execute: false, walls: false, secondWalls: true);
     }
 
-    private static void SacrificeCostOptions()
+    public static void SacrificeCostOptions(byte inkind, int inPieceType, ref List<int> cachedLegalTargets)
     {
         showBoard.ClearHighlights();
         showBoard.ApplyDefaultCellColor(UI.hic.config.defaultCellColor);
 
-        showBoard.HighlightCells(computeSacrficeTargets(), UI.hic.config.SacrificeCostCellHighlight);
+        showBoard.HighlightCells(computeSacrficeTargets(inkind, inPieceType, ref cachedLegalTargets), UI.hic.config.SacrificeCostCellHighlight);
         PanelToggles.TogglePanels(build: false, create: true, action: false, pieceFull: false, execute: false, walls: false, secondWalls: false); // could change this to sac specfic
 
         UIHelpers.SetBackdropColor(UI.hic.config.createModeBackground);
         UIHelpers.SetPanelBackdropColor(UI.hic.config.createModePanelBackground);
-        if (UI.hic.createTitleText) UI.hic.createTitleText.text = $"Choose Sacrfice/s for: {PieceDefinition.name[pieceType]}";
-        if (UI.hic.createCostText) UI.hic.createCostText.text = $"Cost: {PieceDefinition.BuildCost[pieceType]}"; //to do, this does not show full cost
+        if (UI.hic.createTitleText) UI.hic.createTitleText.text = $"Choose Sacrfice/s for: {PieceDefinition.name[inPieceType]}";
+        if (UI.hic.createCostText) UI.hic.createCostText.text = $"Cost: {PieceDefinition.BuildCost[inPieceType]}"; //to do, this does not show full cost
         if (UI.hic.createSprite)
         {
-            var s = !string.IsNullOrEmpty(PieceDefinition.spritePath[pieceType]) ? Resources.Load<Sprite>(PieceDefinition.spritePath[pieceType]) : null;
+            var s = !string.IsNullOrEmpty(PieceDefinition.spritePath[inPieceType]) ? Resources.Load<Sprite>(PieceDefinition.spritePath[inPieceType]) : null;
             UI.hic.createSprite.sprite = s;
             UI.hic.createSprite.enabled = (s != null);
         }
@@ -277,31 +278,83 @@ public static class CreateActionFilter
         return wallConfigs;
     }
 
-    private static IEnumerable<int> computeSacrficeTargets()
+    // private static IEnumerable<int> computeSacrficeTargets()
+    // {
+    //     List<int> SacrficeTargets = new List<int>(128);
+    //     var seen = new HashSet<int>();
+    //     var bm = UIBridge.bm;
+    //     for (int i = 0; i < UIBridge._count; i++)
+    //     {
+    //         var actions = UIBridge._offers[i];
+    //         if (actions.kind != Create) continue;
+    //         if (actions.pieceType != pieceType) continue;
+    //         if (UIBridge._mask[i] == 0) continue;
+
+    //         if (actions.addCost == null || actions.addCost.Length == 0) continue;
+
+    //         if (PieceDefinition.sacrificeCost_isNeedsSpecificPiece[pieceType])
+    //         {
+    //             int requiredType = PieceDefinition.sacrificeCost_specificPiece[pieceType];
+    //             bool hasRequired = false;
+    //             for (int b = 0; b < actions.addCost.Length; b++)
+    //             {
+    //                 if (bm.pieceType[actions.addCost[b]] == requiredType)
+    //                 {
+    //                     hasRequired = true;
+    //                     break;
+    //                 }
+    //             }
+    //             if (!hasRequired) continue;
+    //         }
+
+    //         //to do - need to remove the prevoius selected option if, there was one
+            
+    //         for (int b = 0; b < actions.addCost.Length; b++)
+    //         {
+    //             if (!seen.Add(actions.addCost[b])) continue; // skip duplicates
+    //             SacrficeTargets.Add(bm.pieceCellId[actions.addCost[b]]); 
+    //         }
+    //     }
+    //     cachedLegalAddCost = SacrficeTargets;
+    //     return SacrficeTargets;
+    // } 
+
+    public static IEnumerable<int> computeSacrficeTargets(byte inKind, int inPieceType, ref List<int> cachedLegalTargets)
     {
         List<int> SacrficeTargets = new List<int>(128);
         var seen = new HashSet<int>();
+        var bm = UIBridge.bm;
         for (int i = 0; i < UIBridge._count; i++)
         {
             var actions = UIBridge._offers[i];
-            if (actions.kind != Create) continue;
-            if (actions.pieceType != pieceType) continue;
+            if (actions.kind != inKind) continue;
+            if (actions.pieceType != inPieceType) continue;
             if (UIBridge._mask[i] == 0) continue;
 
-            if (PieceDefinition.sacrificeCost_isNeedsSpecificPiece[pieceType])
-            {
-                if (PieceDefinition.sacrificeCost_specificPiece[pieceType] != actions.TargetCellId) continue;
-            }
+            if (actions.addCost == null || actions.addCost.Length == 0) continue;
 
-            //to do - need to remove the prevoius selected option if, there was one
+            if (PieceDefinition.sacrificeCost_isNeedsSpecificPiece[inPieceType])
+            {
+                int requiredType = PieceDefinition.sacrificeCost_specificPiece[inPieceType];
+                bool hasRequired = false;
+                for (int b = 0; b < actions.addCost.Length; b++)
+                {
+                    if (bm.pieceType[actions.addCost[b]] == requiredType)
+                    {
+                        hasRequired = true;
+                        break;
+                    }
+                }
+                if (!hasRequired) continue;
+            }
             
-            for (int b = 0; b < PieceDefinition.sacrificeCost_howManyItNeeds[pieceType]; b++)
+            for (int b = 0; b < actions.addCost.Length; b++)
             {
                 if (!seen.Add(actions.addCost[b])) continue; // skip duplicates
-                SacrficeTargets.Add(UIBridge.bm.pieceCellId[actions.addCost[b]]); 
+                SacrficeTargets.Add(bm.pieceCellId[actions.addCost[b]]); 
             }
         }
-        cachedLegalAddCost = SacrficeTargets;
+        cachedLegalTargets = SacrficeTargets;
         return SacrficeTargets;
     } 
 

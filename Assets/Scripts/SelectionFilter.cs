@@ -68,7 +68,7 @@ public static class UIFilter
 
     public static void HookPresenters()
     {
-        // UI.hic.endTurnButton.onClick.AddListener(onEndTurnButton);
+        UI.hic.endTurnButton.onClick.AddListener(onEndTurnButton);
         UI.hic.buildMenu.OnItemClicked += OnBuildItemClicked;
         UI.hic.pieceActionListFull.OnItemClicked += OnPieceActionClicked;
         // UI.hic.SeePerPieceTypeTotalsButton.onClick.AddListener(() => ShowFactoryBonusByPieceTypePrefabs()); //to do

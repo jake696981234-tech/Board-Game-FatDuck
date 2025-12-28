@@ -174,9 +174,7 @@ public static class CreateAction
         int[] owned = Scratch.GetScratchCellBuffer(offerBuild.gameIndex);
         int ownedCount = bm.GetOwnedPieceIds(offerBuild.query.playerId, owned);
 
-        int totalNeed = needPerAction * actionCount;
-
-        if (ownedCount < totalNeed)
+        if (ownedCount < needPerAction)
             return false;
 
         // ------------------------------------------------------------------
@@ -186,71 +184,68 @@ public static class CreateAction
         for (int i = 0; i < ownedCount; i++)
         {
             int pid = owned[i];
-
+            if (firstAction.kind == Upgrade)
+            {
+              if (bm.pieceCellId[pid] == firstAction.ActorsCellId) continue;  
+            }  
             if (!bm.IsValidPieceId(pid)) continue;
             if (requiresSpecific && bm.pieceType[pid] != requiredType) continue;
 
             owned[eligibleCount++] = pid;
         }
 
-        if (eligibleCount < totalNeed)
+        if (eligibleCount < needPerAction)
             return false;
 
         Array.Sort(owned, 0, eligibleCount); // deterministic
 
         // ------------------------------------------------------------------
-        // 3) Pick the FIRST valid combination of totalNeed pieces
+        // 3) Generate ALL valid combinations per action
         // ------------------------------------------------------------------
-        int[] chosen = new int[totalNeed];
-        bool found = false;
+        bool foundAny = false;
+        int[] combination = new int[needPerAction];
 
-        void RecurseChoose(int startIndex, int depth)
+        void RecurseChoose(int startIndex, int depth, Game.Core.Action baseAction)
         {
-            if (found) return;
-
-            if (depth == totalNeed)
+            if (depth == needPerAction)
             {
-                // We now OVERWRITE the original list contents
-                actions.Clear();
+                int[] addCost = new int[needPerAction];
+                Array.Copy(combination, addCost, needPerAction);
 
-                int read = 0;
-                for (int ai = 0; ai < actionCount; ai++)
+                // Sort addCost descending
+                Array.Sort(addCost);
+                Array.Reverse(addCost);
+
+                actions.Add(new Game.Core.Action
                 {
-                    int[] addCost = new int[needPerAction];
-                    Array.Copy(chosen, read, addCost, 0, needPerAction);
-                    read += needPerAction;
+                    kind = baseAction.kind,
+                    pieceType = baseAction.pieceType,
+                    ActorsCellId = baseAction.ActorsCellId,
+                    TargetCellId = baseAction.TargetCellId,
+                    aux = baseAction.aux,
+                    addCost = addCost
+                });
 
-                    // Sort addCost descending
-                    Array.Sort(addCost);
-                    Array.Reverse(addCost);
-
-                    var src = sourceActions[ai];
-                    actions.Add(new Game.Core.Action
-                    {
-                        kind = src.kind,
-                        pieceType = src.pieceType,
-                        ActorsCellId = src.ActorsCellId,
-                        TargetCellId = src.TargetCellId,
-                        aux = src.aux,
-                        addCost = addCost
-                    });
-                }
-
-                found = true;
+                foundAny = true;
                 return;
             }
 
-            int remaining = totalNeed - depth;
+            int remaining = needPerAction - depth;
             for (int i = startIndex; i <= eligibleCount - remaining; i++)
             {
-                chosen[depth] = owned[i];
-                RecurseChoose(i + 1, depth + 1);
-                if (found) return;
+                combination[depth] = owned[i];
+                RecurseChoose(i + 1, depth + 1, baseAction);
             }
         }
 
-        RecurseChoose(0, 0);
-        return found;
+        actions.Clear();
+        for (int ai = 0; ai < actionCount; ai++)
+        {
+            var baseAction = sourceActions[ai];
+            RecurseChoose(0, 0, baseAction);
+        }
+
+        return foundAny;
     }
 
 

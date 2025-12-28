@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
+using static Game.Core.ActionKind;
 
 public sealed class BuildMenuPresenter : MonoBehaviour
 {
@@ -19,7 +20,7 @@ public sealed class BuildMenuPresenter : MonoBehaviour
     {
         IEnumerable<Game.Core.Action> items;
         var UiInfo = new List<UIInfo>();
-        if (config.GiveRawActionOffers)
+        if (config.GiveRawActionOffers || rawItems.FirstOrDefault().kind == Upgrade)
         {
             items = rawItems;
             UiInfo = uiInfo;

@@ -15,7 +15,6 @@ public static class UpgradeAction
             if (PieceDefinition.upgrade_target[upgradedToPieceType] != actorType) continue;
             if (!CreateAction.HasRequiredDigits(upgradedToPieceType, ref offerBuild)) continue;
            
-
             var theAction = new Action
             {
                 kind = Upgrade,
