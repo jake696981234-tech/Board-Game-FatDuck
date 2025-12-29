@@ -17,10 +17,12 @@ public static class PieceDefinition
         Spawner = 10,
         SacrificeFactory = 11,
         ConversionFactory = 12,
-        Factory = 13,
-        Sanctuary = 14,
-        Eat = 15,
-        Custom2 = 16,
+        explosive = 13,
+        build = 14,
+        Factory = 15,
+        Sanctuary = 16,
+        Eat = 17,
+        Custom2 = 18,
     }
 
     public static int typeCount;
@@ -97,6 +99,12 @@ public static class PieceDefinition
     public static bool[] factory_isRoundMultiplier;
     public static bool[] factory_isGroup;
     public static int[] factory_groupAmount;
+    public static bool[] factory_isInstantPayOut;
+    public static int[] factory_instantPayOutAmount;
+    public static bool[] factory_isKillPenalty;
+    public static int[] factory_killsNeeded;
+    public static int[] factory_killsPunishment;
+    
     #endregion
     #region sanctuary
     public static bool[] sanctuary_enabled;
@@ -155,7 +163,19 @@ public static class PieceDefinition
     public static bool[] feedingGround_enabled;
     public static int[] feedingGround_Range;
     public static int[] feedingGround_payOut;
-
+    #endregion
+    #region Explosive
+    public static bool[] explosive_enabled;
+    public static bool[] explosive_isFriendlyFire; 
+    public static bool[] explosive_isKillItself; 
+    public static int[] explosive_damage;
+    public static int[] explosive_range;
+    #endregion
+    #region 
+    public static bool[] build_enabled;
+    public static int[] build_range;
+    public static int[][] build_targetIds;
+    
     #endregion
     public static bool IsConnectorConfigAllowed(byte type, int configIndex)
     {

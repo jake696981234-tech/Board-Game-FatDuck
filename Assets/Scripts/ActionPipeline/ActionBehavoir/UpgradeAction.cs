@@ -8,7 +8,7 @@ public static class UpgradeAction
 {
     public static void CreateActions(int pieceId, byte actorType, int cell, ref OfferBuild offerBuild)
     {
-        var bm = GameRegistry.game[gameIndex].boardModel;
+        var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
         // Upgrade-as-piece-action: find destination types that upgrade from this actorType
         for (int upgradedToPieceType = 0; upgradedToPieceType < PieceDefinition.typeCount; upgradedToPieceType++)
         {

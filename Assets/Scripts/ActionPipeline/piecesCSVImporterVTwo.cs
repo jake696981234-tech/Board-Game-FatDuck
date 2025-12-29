@@ -122,6 +122,12 @@ public static class PiecesCsvImporter
             PieceDefinition.factory_isGroup[typeId] = GetBool(cols, H, "factory_isGroup", defaultValue: false);
             PieceDefinition.factory_groupAmount[typeId] = GetInt(cols, H, "factory_groupAmount", defaultValue: 0);
 
+            PieceDefinition.factory_isInstantPayOut[typeId] = GetBool(cols, H, "factory_isInstantPayOut", defaultValue: false);
+            PieceDefinition.factory_instantPayOutAmount[typeId] = GetInt(cols, H, "factory_instantPayOutAmount", defaultValue: 0);
+            PieceDefinition.factory_isKillPenalty[typeId] = GetBool(cols, H, "factory_isKillPenalty", defaultValue: false);
+            PieceDefinition.factory_killsNeeded[typeId] = GetInt(cols, H, "factory_killsNeeded", defaultValue: 0);
+            PieceDefinition.factory_killsPunishment[typeId] = GetInt(cols, H, "factory_killsPunishment", defaultValue: 0);
+            
             #endregion
             #region sanctuary
             PieceDefinition.sanctuary_enabled[typeId] = GetBool(cols, H, "sanctuary_enabled", defaultValue: false);
@@ -190,7 +196,18 @@ public static class PiecesCsvImporter
             PieceDefinition.feedingGround_enabled[typeId] = GetBool(cols, H, "feedingGround_enabled", defaultValue: false);
             PieceDefinition.feedingGround_payOut[typeId] = GetInt(cols, H, "feedingGround_payOut", defaultValue: -1);
             PieceDefinition.feedingGround_Range[typeId] = GetInt(cols, H, "feedingGround_Range", defaultValue: -1);
-
+            #endregion
+            #region Explosive
+            PieceDefinition.explosive_enabled[typeId] = GetBool(cols, H, "explosive_enabled", defaultValue: false);
+            PieceDefinition.explosive_isFriendlyFire[typeId] = GetBool(cols, H, "explosive_isFriendlyFire", defaultValue: false);
+            PieceDefinition.explosive_isKillItself[typeId] = GetBool(cols, H, "explosive_isKillItself", defaultValue: false);
+            PieceDefinition.explosive_damage[typeId] = GetInt(cols, H, "explosive_damage", defaultValue: 0);
+            PieceDefinition.explosive_range[typeId] = GetInt(cols, H, "explosive_range", defaultValue: 0);
+            #endregion
+            #region build
+            PieceDefinition.build_enabled[typeId] = GetBool(cols, H, "build_enabled", defaultValue: false);            
+            PieceDefinition.build_range[typeId] = GetInt(cols, H, "build_range", defaultValue: 0);
+            PieceDefinition.build_targetIds[typeId] = GetIntArray(cols, H, "build_targetIds", defaultValue: 0);
             #endregion
         }
     }
@@ -240,22 +257,29 @@ public static class PiecesCsvImporter
         return new UTF8Encoding(false);
     }
 
-    private static Dictionary<string, int> BuildHeaderIndex(string[] headers)
+    private static Dictionary<string, List<int>> BuildHeaderIndex(string[] headers)
     {
-        var map = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        var map = new Dictionary<string, List<int>>(StringComparer.OrdinalIgnoreCase);
         for (int i = 0; i < headers.Length; i++)
         {
             string h = headers[i]?.Trim() ?? string.Empty;
             if (h.Length == 0) continue;
-            map[h] = i;
+            if (!map.TryGetValue(h, out var list))
+            {
+                list = new List<int>();
+                map[h] = list;
+            }
+            list.Add(i);
         }
         return map;
     }
 
-    private static string Get(string[] cols, Dictionary<string, int> H, string key, bool required = false, string defaultValue = "")
+    private static string Get(string[] cols, Dictionary<string, List<int>> H, string key, bool required = false, string defaultValue = "")
     {
-        if (H.TryGetValue(key, out int idx) && idx >= 0 && idx < cols.Length)
+        if (H.TryGetValue(key, out var idxs) && idxs.Count > 0)
         {
+            int idx = idxs[0];
+            if (idx >= 0 && idx < cols.Length)
             return cols[idx];
         }
         if (required)
@@ -263,14 +287,14 @@ public static class PiecesCsvImporter
         return defaultValue;
     }
 
-    private static int GetInt(string[] cols, Dictionary<string, int> H, string key, int defaultValue)
+    private static int GetInt(string[] cols, Dictionary<string, List<int>> H, string key, int defaultValue)
     {
         string s = Get(cols, H, key, required: false, defaultValue: string.Empty);
         if (int.TryParse(s, NumberStyles.Integer, CultureInfo.InvariantCulture, out int v)) return v;
         return defaultValue;
     }
 
-    private static bool GetBool(string[] cols, Dictionary<string, int> H, string key, bool defaultValue)
+    private static bool GetBool(string[] cols, Dictionary<string, List<int>> H, string key, bool defaultValue)
     {
         string s = Get(cols, H, key, required: false, defaultValue: string.Empty);
         if (string.IsNullOrWhiteSpace(s)) return defaultValue;
@@ -296,6 +320,27 @@ public static class PiecesCsvImporter
             }
         }
         return mask;
+    }
+
+    private static int[] GetIntArray(string[] cols, Dictionary<string, List<int>> H, string key, int defaultValue)
+    {
+        var values = new List<int>();
+        if (H.TryGetValue(key, out var idxs))
+        {
+            for (int i = 0; i < idxs.Count; i++)
+            {
+                int idx = idxs[i];
+                if (idx < 0 || idx >= cols.Length) continue;
+                string s = cols[idx];
+                if (string.IsNullOrWhiteSpace(s)) continue;
+                if (int.TryParse(s, NumberStyles.Integer, CultureInfo.InvariantCulture, out int v))
+                {
+                    values.Add(v);
+                }
+            }
+        }
+        if (values.Count == 0) values.Add(defaultValue);
+        return values.ToArray();
     }
 
     private static int ClampToShort(int v) => Math.Max(short.MinValue, Math.Min(short.MaxValue, v));
@@ -389,6 +434,13 @@ public static class PiecesCsvImporter
         PieceDefinition.factory_isGroup = new bool[count];
         PieceDefinition.factory_groupAmount = new int[count];
 
+        PieceDefinition.factory_isInstantPayOut = new bool[count];
+        PieceDefinition.factory_instantPayOutAmount = new int[count];
+        PieceDefinition.factory_isKillPenalty = new bool[count];
+        PieceDefinition.factory_killsNeeded = new int[count];
+        PieceDefinition.factory_killsPunishment = new int[count];
+
+
         #endregion
         #region sanctuary
         PieceDefinition.sanctuary_enabled = new bool[count];
@@ -452,6 +504,18 @@ public static class PiecesCsvImporter
         PieceDefinition.feedingGround_enabled = new bool[count];
         PieceDefinition.feedingGround_payOut = new int[count];
         PieceDefinition.feedingGround_Range = new int[count];
+        #endregion
+        #region explosive
+        PieceDefinition.explosive_enabled = new bool[count];
+        PieceDefinition.explosive_isFriendlyFire = new bool[count];
+        PieceDefinition.explosive_isKillItself = new bool[count];
+        PieceDefinition.explosive_damage = new int[count];
+        PieceDefinition.explosive_range = new int[count];
+        #endregion
+        #region
+        PieceDefinition.build_enabled = new bool[count];        
+        PieceDefinition.build_range = new int[count];
+        PieceDefinition.build_targetIds = new int[count][];
         #endregion
     }
 

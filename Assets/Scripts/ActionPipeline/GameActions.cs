@@ -23,12 +23,13 @@ namespace Game.Core
         public static void pieceKilled(int victim, int gameIndex, Action theAction)
         {
             var bm = GameRegistry.game[gameIndex].boardModel;
+            var gameState = GameRegistry.game[gameIndex].gameState;
 
             int pieceId = bm.GetCellOccupant(theAction.ActorsCellId);
 
             bm.pieceKillCount[pieceId]++;
             bm.pieceFactoryAux[pieceId] += PieceDefinition.eat_amount[theAction.pieceType];
-
+            gameState.ps[bm.pieceOwner[pieceId]].perRoundPieceKillCount++;
 
             PassiveActions.FeedingGround(gameIndex, victim);
 

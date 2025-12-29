@@ -263,6 +263,10 @@ public static class CreateAction
         int g = PieceDefinition.digitItGives[(byte)theAction.pieceType];
         if (g >= 0) gameState.ps[player].GrantDigit(g);
 
+        if (PieceDefinition.factory_isKillPenalty[theAction.pieceType]) bm.pieceFactoryKillGoalAux[pid] = PieceDefinition.factory_killsNeeded[pid];
+        if (PieceDefinition.factory_isInstantPayOut[theAction.pieceType]) gameState.ps[player].budget += PieceDefinition.factory_instantPayOutAmount[pid];
+
+
         MultiCreateExecute(theAction, gameIndex);
 
         GameActions.RefreshConnectorState(gameIndex);
@@ -270,20 +274,20 @@ public static class CreateAction
 
     public static void MultiCreateExecute(Action theAction, int gameIndex)
     {
+        if (!PieceDefinition.multiCreate_enabledByType[theAction.pieceType]) return;
         var gameState = GameRegistry.game[gameIndex].gameState;
-        if (PieceDefinition.multiCreate_enabledByType[theAction.pieceType])
+        
+        int total = Math.Max(1, PieceDefinition.multiCreate_amountByType[theAction.pieceType]);
+        if (total > 1)
         {
-            int total = Math.Max(1, PieceDefinition.multiCreate_amountByType[theAction.pieceType]);
-            if (total > 1)
-            {
-                gameState.multiCreateActive = true;
-                gameState.multiCreateType = (byte)theAction.pieceType;
-                gameState.multiCreateBorder = PieceDefinition.multiCreate_isBoardering[theAction.pieceType];
-                gameState.multiCreateRemaining = total - 1;
-                gameState.multiCreateCells.Clear();
-                gameState.multiCreateCells.Add(theAction.TargetCellId);
-            }
+            gameState.multiCreateActive = true;
+            gameState.multiCreateType = (byte)theAction.pieceType;
+            gameState.multiCreateBorder = PieceDefinition.multiCreate_isBoardering[theAction.pieceType];
+            gameState.multiCreateRemaining = total - 1;
+            gameState.multiCreateCells.Clear();
+            gameState.multiCreateCells.Add(theAction.TargetCellId);
         }
+        
     }
     public static void PaySacCost(Action theAction, byte player, int gameIndex)
     {

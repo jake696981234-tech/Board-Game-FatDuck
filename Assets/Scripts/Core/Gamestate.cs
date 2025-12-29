@@ -277,7 +277,7 @@ namespace Game.Core
 
         private bool FastCheck(in Action a)
         {
-            if (a.kind > ConversionFactory) return false;
+            if (a.kind > explosive) return false;
             if (currentPlayer >= 4) return false;
             return true;
         }
@@ -392,8 +392,17 @@ namespace Game.Core
             }
         }
 
+        int[] cachedPieceDrivenPenalties = new int[4];
         private void EndRound()
         {
+            for (int i = 0; i < 4; i++)
+            {
+                cachedPieceDrivenPenalties[i] = 0;
+                for (int c = 0; c < bm.pieceCount; c++)
+                {
+                    if (PieceDefinition.factory_isKillPenalty[bm.pieceType[c]]) cachedPieceDrivenPenalties[i] += PieceDefinition.factory_killsPunishment[bm.pieceType[c]];
+                }
+            }
             events.roundBegin();
             turnOrdinal = 0;
             Array.Clear(playerTurnOrdinals, 0, playerTurnOrdinals.Length);
@@ -441,7 +450,8 @@ namespace Game.Core
                     ComputePlayerVPReward(playerId) +
                     ComputePlayeroreDamageReward(playerId) +
                     hub.match_startingBudgetPerRound[currentRoundNumber - 1] +
-                    perPlayerFactoryIncome[playerId];
+                    perPlayerFactoryIncome[playerId] +
+                    cachedPieceDrivenPenalties[playerId];
 
             return payout;
         }

@@ -45,6 +45,7 @@ namespace Game.Core
         public string name;
         public bool isAI;
         public int team;
+        public int perRoundPieceKillCount;
         
         public bool applyBotSurcharges;
         /// <summary>Spendable currency for actions/builds.</summary>
@@ -90,6 +91,7 @@ namespace Game.Core
         {
             vpGainedThisRound = 0;
             coreHitsThisRound = 0;
+            perRoundPieceKillCount = 0;
         }
 
         /// <summary>Record a successful VP capture (used by reducer/CostEngine.Spend).</summary>
