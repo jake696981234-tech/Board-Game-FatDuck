@@ -36,17 +36,17 @@ public static class PushAction
         if (targetPid < 0 || !bm.IsValidPieceId(targetPid)) return false;
         if (bm.GetPieceCell(targetPid) != a.TargetCellId) return false;
 
-        bool allowFriendly = PieceDefinition.push_isFriendlyFire[actorType];
+        bool allowFriendly = Piece.push_isFriendlyFire[actorType];
         if (!allowFriendly && bm.GetPieceOwner(targetPid) == actorOwner) return false;
 
-        bool allowBuildings = PieceDefinition.push_IsTargetsBuildings[actorType];
-        bool allowSoldiers = PieceDefinition.push_isTargetsSoldiers[actorType];
+        bool allowBuildings = Piece.push_IsTargetsBuildings[actorType];
+        bool allowSoldiers = Piece.push_isTargetsSoldiers[actorType];
         byte tgtType = bm.GetPieceType(targetPid);
-        bool targetIsBuilding = PieceDefinition.isBuilding[tgtType];
+        bool targetIsBuilding = Piece.isBuilding[tgtType];
         if (targetIsBuilding && !allowBuildings) return false;
         if (!targetIsBuilding && !allowSoldiers) return false;
 
-        int rangeMax = PieceDefinition.push_rangeMax[actorType];
+        int rangeMax = Piece.push_rangeMax[actorType];
         int originCell = bm.GetPieceCell(actorPid);
         int targetCell = bm.GetPieceCell(targetPid);
         int dist = bm.Distance(originCell, targetCell);
@@ -68,10 +68,10 @@ public static class PushAction
 
         int actorOwner = bm.GetPieceOwner(actorPieceId);
 
-        bool allowBuildings = PieceDefinition.push_IsTargetsBuildings[actorType];
-        bool allowSoldiers = PieceDefinition.push_isTargetsSoldiers[actorType];
-        int rangeMax = PieceDefinition.push_rangeMax[actorType];
-        bool allowFriendly = PieceDefinition.push_isFriendlyFire[actorType];
+        bool allowBuildings = Piece.push_IsTargetsBuildings[actorType];
+        bool allowSoldiers = Piece.push_isTargetsSoldiers[actorType];
+        int rangeMax = Piece.push_rangeMax[actorType];
+        bool allowFriendly = Piece.push_isFriendlyFire[actorType];
 
         int cap = outPieceIds != null ? outPieceIds.Length : 0;
         int count = 0;
@@ -85,7 +85,7 @@ public static class PushAction
             if (!allowFriendly && bm.GetPieceOwner(victimId) == actorOwner) continue;
 
             byte type = bm.GetPieceType(victimId);
-            bool targetIsBuilding = PieceDefinition.isBuilding[type];
+            bool targetIsBuilding = Piece.isBuilding[type];
             if (targetIsBuilding && !allowBuildings) continue;
             if (!targetIsBuilding && !allowSoldiers) continue;
 
@@ -116,7 +116,7 @@ public static class PushAction
 
         byte actorType = bm.GetPieceType(actorPid);
 
-        int dmg = PieceDefinition.push_damage[theAction.pieceType];
+        int dmg = Piece.push_damage[theAction.pieceType];
         bool killed = GameActions.ApplyDamageWithCapital(theAction.ActorsCellId, victimID, dmg, gameIndex);
         if (killed)
         {

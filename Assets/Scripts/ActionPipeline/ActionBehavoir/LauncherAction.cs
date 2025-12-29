@@ -64,10 +64,10 @@ public static class LauncherAction
         var bm = GameRegistry.game[gameIndex].boardModel;
 
 
-        int inputRange = PieceDefinition.launcher_inputRange[actorType];
-        int outputRange = PieceDefinition.launcher_outputRange[actorType];
-        bool allowFriendly = PieceDefinition.launcher_isfriendlyFire[actorType];
-        bool allowEnemy = PieceDefinition.launcher_isEnemyFire[actorType];
+        int inputRange = Piece.launcher_inputRange[actorType];
+        int outputRange = Piece.launcher_outputRange[actorType];
+        bool allowFriendly = Piece.launcher_isfriendlyFire[actorType];
+        bool allowEnemy = Piece.launcher_isEnemyFire[actorType];
 
         int originCell = bm.GetPieceCell(actorPid);
         if (originCell < 0) return 0;

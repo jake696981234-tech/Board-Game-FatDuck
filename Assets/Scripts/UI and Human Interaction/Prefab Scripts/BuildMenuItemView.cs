@@ -20,9 +20,9 @@ public sealed class BuildMenuItemView : MonoBehaviour
 
     public void Bind(Game.Core.Action data, UIInfo uiInfo, Action<Game.Core.Action, UIInfo> onClick)
     {
-        FactionColourSet.color = FactionColorUtil.ColorFromString(PieceDefinition.factionName[data.pieceType]);
+        FactionColourSet.color = FactionColorUtil.ColorFromString(Piece.factionName[data.pieceType]);
 
-        if (PieceDefinition.isBuilding[data.pieceType])
+        if (Piece.isBuilding[data.pieceType])
         {
             BuildingColourSet.color = Color.darkCyan;
         }
@@ -32,12 +32,12 @@ public sealed class BuildMenuItemView : MonoBehaviour
         }
 
         _data = data;
-        if (nameText) nameText.text = PieceDefinition.name[data.pieceType];
+        if (nameText) nameText.text = Piece.name[data.pieceType];
         if (costText) costText.text = uiInfo.fullCost.ToString();
 
         if (icon)
         {
-            var sprite = !string.IsNullOrEmpty(PieceDefinition.spritePath[data.pieceType]) ? Resources.Load<Sprite>(PieceDefinition.spritePath[data.pieceType]) : null;
+            var sprite = !string.IsNullOrEmpty(Piece.spritePath[data.pieceType]) ? Resources.Load<Sprite>(Piece.spritePath[data.pieceType]) : null;
             icon.sprite = sprite;
             icon.enabled = (sprite != null);
         }

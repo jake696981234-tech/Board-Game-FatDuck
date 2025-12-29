@@ -9,10 +9,10 @@ public static class GroupBuildAction
 {
     public static void CreateActions(int pieceId, byte actorType, int cell, ref OfferBuild offerBuild)
     {
-        int tgtType = PieceDefinition.groupBuild_target[actorType];
-        if (tgtType >= 0 && tgtType < PieceDefinition.typeCount)
+        int tgtType = Piece.groupBuild_target[actorType];
+        if (tgtType >= 0 && tgtType < Piece.typeCount)
         {
-            int require = PieceDefinition.groupBuild_requireNumber[actorType];
+            int require = Piece.groupBuild_requireNumber[actorType];
             if (require > 1)
             {
                 // Cluster check
@@ -32,13 +32,13 @@ public static class GroupBuildAction
         var gameState = GameRegistry.game[gameIndex].gameState;
 
         byte actorType = bm.GetPieceType(actorPid);
-        if (!PieceDefinition.groupBuild_enabled[actorType]) return false;
-        int targetType = PieceDefinition.groupBuild_target[actorType];
-        if (targetType < 0 || targetType >= PieceDefinition.typeCount) return false;
+        if (!Piece.groupBuild_enabled[actorType]) return false;
+        int targetType = Piece.groupBuild_target[actorType];
+        if (targetType < 0 || targetType >= Piece.typeCount) return false;
 
         // Create legality for target type at dstCell
         if (bm.GetCellOccupant(a.TargetCellId) >= 0) return false;
-        int reqDigit = PieceDefinition.requiredDigit[(byte)targetType];
+        int reqDigit = Piece.requiredDigit[(byte)targetType];
         if (reqDigit >= 0 && !gameState.ps[currentPlayer].HasDigit(reqDigit)) return false;
 
         // geometric create gate (core/building adjacency)
@@ -47,7 +47,7 @@ public static class GroupBuildAction
 
         // Cluster size check
         int clusterSize = BmAbilityCac.CountClusterOfType(actorType, bm.GetPieceCell(actorPid), gameIndex);
-        return clusterSize >= PieceDefinition.groupBuild_target[actorType];
+        return clusterSize >= Piece.groupBuild_target[actorType];
     }
 
     public static void Apply(in Action theAction, byte p, int gameIndex)
@@ -59,8 +59,8 @@ public static class GroupBuildAction
         int targetType = theAction.pieceType;
         int dst = theAction.TargetCellId;
         int pid = bm.AllocateRow();
-        bm.PlacePieceRow(pid, p, (byte)targetType, dst, PieceDefinition.maxHP[targetType]);
-        int g = PieceDefinition.digitItGives[(byte)targetType];
+        bm.PlacePieceRow(pid, p, (byte)targetType, dst, Piece.maxHP[targetType]);
+        int g = Piece.digitItGives[(byte)targetType];
         if (g >= 0) gameState.ps[p].GrantDigit(g);
 
         int ActorsCellId = theAction.ActorsCellId;
@@ -68,10 +68,10 @@ public static class GroupBuildAction
         if (actorPid >= 0)
         {
             byte actorType = bm.GetPieceType(actorPid);
-            if (PieceDefinition.groupBuild_deletion[actorType])
+            if (Piece.groupBuild_deletion[actorType])
             {
                 var list = CollectClusterCells(actorType, ActorsCellId, gameIndex);
-                int need = PieceDefinition.groupBuild_requireNumber[actorType];
+                int need = Piece.groupBuild_requireNumber[actorType];
                 list.Sort();
                 for (int i = 0; i < need && i < list.Count; i++)
                 {
@@ -131,7 +131,7 @@ public static class GroupBuildAction
         {
             if (!bm.IsEmpty(cell)) continue;
             if (!BmAbilityCac.IsCreateGeometryLegal(cell, offerBuild.query.playerId, offerBuild.gameIndex)) continue;
-            int reqDigit = PieceDefinition.requiredDigit[targetType];
+            int reqDigit = Piece.requiredDigit[targetType];
             if (reqDigit >= 0 && !gameState.ps[offerBuild.query.playerId].HasDigit(reqDigit)) continue;
             var a = new Action
             {

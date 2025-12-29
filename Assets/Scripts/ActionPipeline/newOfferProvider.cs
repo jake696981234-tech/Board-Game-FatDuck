@@ -44,17 +44,17 @@ public static class OfferProvider
 
         byte actorType = bm.GetPieceType(pieceId);
 
-        if (PieceDefinition.move_enabled[actorType]) MoveAction.CreateActions(pieceId, actorType, cell, ref offerBuild);
-        if (PieceDefinition.shoot_enabled[actorType]) ShootAction.CreateActions(pieceId, actorType, cell, ref offerBuild);
-        if (PieceDefinition.captureVP_enabled[actorType]) CaptureVPAction.CreateActions(actorType, cell, ref offerBuild);
-        if (PieceDefinition.coreDamage_enabled[actorType]) CoreDamageAction.CreateActions(actorType, cell, ref offerBuild);
-        if (PieceDefinition.push_enabled[actorType]) PushAction.CreateActions(pieceId, actorType, cell, ref offerBuild);
-        if (PieceDefinition.groupBuild_enabled[actorType]) GroupBuildAction.CreateActions(pieceId, actorType, cell, ref offerBuild);
-        if (PieceDefinition.launcher_enabled[actorType]) LauncherAction.CreateActions(pieceId, actorType, cell, ref offerBuild);
-        if (PieceDefinition.spawn_enabled[actorType]) SpawnAction.CreateActions(pieceId, actorType, cell, ref offerBuild);
-        if (PieceDefinition.sacrificeFactory_enabled[actorType]) SacrificeFactoryAction.CreateActions(pieceId, actorType, cell, ref offerBuild);
-        if (PieceDefinition.conversionFactory_enabled[actorType]) ConversionFactoryAction.CreateActions(pieceId, actorType, cell, ref offerBuild);
-        if (PieceDefinition.explosive_enabled[actorType]) ExplosiveAction.CreateAction(pieceId, actorType, cell, ref offerBuild);
+        if (Piece.move_enabled[actorType]) MoveAction.CreateActions(pieceId, actorType, cell, ref offerBuild);
+        if (Piece.shoot_enabled[actorType]) ShootAction.CreateActions(pieceId, actorType, cell, ref offerBuild);
+        if (Piece.captureVP_enabled[actorType]) CaptureVPAction.CreateActions(actorType, cell, ref offerBuild);
+        if (Piece.coreDamage_enabled[actorType]) CoreDamageAction.CreateActions(actorType, cell, ref offerBuild);
+        if (Piece.push_enabled[actorType]) PushAction.CreateActions(pieceId, actorType, cell, ref offerBuild);
+        if (Piece.groupBuild_enabled[actorType]) GroupBuildAction.CreateActions(pieceId, actorType, cell, ref offerBuild);
+        if (Piece.launcher_enabled[actorType]) LauncherAction.CreateActions(pieceId, actorType, cell, ref offerBuild);
+        if (Piece.spawn_enabled[actorType]) SpawnAction.CreateActions(pieceId, actorType, cell, ref offerBuild);
+        if (Piece.sacrificeFactory_enabled[actorType]) SacrificeFactoryAction.CreateActions(pieceId, actorType, cell, ref offerBuild);
+        if (Piece.conversionFactory_enabled[actorType]) ConversionFactoryAction.CreateActions(pieceId, actorType, cell, ref offerBuild);
+        if (Piece.explosive_enabled[actorType]) ExplosiveAction.CreateAction(pieceId, actorType, cell, ref offerBuild);
         UpgradeAction.CreateActions(pieceId, actorType, cell, ref offerBuild);
     }
 

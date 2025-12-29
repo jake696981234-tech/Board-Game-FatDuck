@@ -10,7 +10,7 @@ public static class CoreDamageAction
         var gameState = GameRegistry.game[offerBuild.gameIndex].gameState;
         var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
 
-        if (!PieceDefinition.coreDamage_enabled[actorType]) return;
+        if (!Piece.coreDamage_enabled[actorType]) return;
         if (!bm.IsEnemyCoreCell(cell, offerBuild.query.playerId)) return;
 
         byte enemy = bm.OwnerOfCoreCell(cell);
@@ -41,7 +41,7 @@ public static class CoreDamageAction
         byte enemy = bm.OwnerOfCoreCell(theAction.TargetCellId);
         if (enemy >= 4) { Debug.Log("Action Fail"); return; }
 
-        int dmg = PieceDefinition.coreDamage_damage[theAction.pieceType];
+        int dmg = Piece.coreDamage_damage[theAction.pieceType];
 
         int hp = gameState.GetCoreHealth(enemy);
         gameState.SetCoreHealth(enemy, hp - dmg);

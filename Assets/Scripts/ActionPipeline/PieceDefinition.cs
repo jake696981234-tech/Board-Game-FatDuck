@@ -1,6 +1,6 @@
 
 
-public static class PieceDefinition
+public static class Piece
 {
     public enum AbilityKind : byte
     {
@@ -18,11 +18,11 @@ public static class PieceDefinition
         SacrificeFactory = 11,
         ConversionFactory = 12,
         explosive = 13,
-        build = 14,
+        pieceBuild = 14,
         Factory = 15,
         Sanctuary = 16,
         Eat = 17,
-        Custom2 = 18,
+        placeRestrict = 18,
     }
 
     public static int typeCount;
@@ -172,10 +172,14 @@ public static class PieceDefinition
     public static int[] explosive_range;
     #endregion
     #region 
-    public static bool[] build_enabled;
-    public static int[] build_range;
-    public static int[][] build_targetIds;
-    
+    public static bool[] pieceBuild_enabled;
+    public static int[] pieceBuild_range;
+    public static int[][] pieceBuild_targetIds;
+    #endregion
+    #region 
+    public static bool[] placeRestrict_enabled;
+    public static int[] placeRestrict_ActionRestricted; //you could change this to a Jagged array if you want multple diffrent options. 
+    public static int[] placeRestrict_type;
     #endregion
     public static bool IsConnectorConfigAllowed(byte type, int configIndex)
     {

@@ -16,7 +16,7 @@ public static class PassiveActions
 
         var bm = GameRegistry.game[gameIndex].boardModel;
 
-        int need = PieceDefinition.sacrificeCost_howManyItNeeds[theAction.pieceType];
+        int need = Piece.sacrificeCost_howManyItNeeds[theAction.pieceType];
         if (need <= 0) return false;
 
         int[] owned = Scratch.GetScratchCellBuffer(gameIndex);
@@ -32,8 +32,8 @@ public static class PassiveActions
 
         // Filter eligible pieces into the front of the same buffer
         int eligibleCount = 0;
-        bool requiresSpecific = PieceDefinition.sacrificeCost_isNeedsSpecificPiece[theAction.pieceType];
-        int requiredType = PieceDefinition.sacrificeCost_specificPiece[theAction.pieceType];
+        bool requiresSpecific = Piece.sacrificeCost_isNeedsSpecificPiece[theAction.pieceType];
+        int requiredType = Piece.sacrificeCost_specificPiece[theAction.pieceType];
 
         for (int i = 0; i < ownedCount; i++)
         {
@@ -127,19 +127,19 @@ public static class PassiveActions
             int type = kv.Key.type;
             int count = kv.Value;
 
-            if (!PieceDefinition.factory_enabled[type]) continue;
+            if (!Piece.factory_enabled[type]) continue;
 
             float AuxPayout = AuxFactoryPayout(owner, type, gameIndex);
 
-            int baseAmt = PieceDefinition.factory_amount[type];
+            int baseAmt = Piece.factory_amount[type];
             if (baseAmt == 0 && AuxPayout == 0) continue;
 
             // Flags for scaling
-            bool roundMul = PieceDefinition.factory_isRoundMultiplier[type];
+            bool roundMul = Piece.factory_isRoundMultiplier[type];
 
-            bool group = PieceDefinition.factory_isGroup[type];
+            bool group = Piece.factory_isGroup[type];
 
-            int groupAmt = PieceDefinition.factory_groupAmount[type];
+            int groupAmt = Piece.factory_groupAmount[type];
 
             int pay = baseAmt;
             if (roundMul) pay *= roundNum;
@@ -209,8 +209,8 @@ public static class PassiveActions
 
             // Find a Sanctuary ability on this type and grab its range
 
-            if (!PieceDefinition.sanctuary_enabled[type]) continue;
-            sanctuaryRange = PieceDefinition.sanctuary_range[type];
+            if (!Piece.sanctuary_enabled[type]) continue;
+            sanctuaryRange = Piece.sanctuary_range[type];
 
             if (sanctuaryRange < 0) continue;
             int centerCell = bm.pieceCellId[pid];
@@ -271,9 +271,9 @@ public static class PassiveActions
         {
             if (bm.pieceOwner[pid] == Player) continue;
             int pieceType = bm.pieceType[pid];
-            if (!PieceDefinition.feedingGround_enabled[pieceType]) continue;
+            if (!Piece.feedingGround_enabled[pieceType]) continue;
 
-            for (int range = 0; range <= PieceDefinition.feedingGround_Range[pieceType]; range++)
+            for (int range = 0; range <= Piece.feedingGround_Range[pieceType]; range++)
             {
                 int found = BmAbilityCac.pieceIdsRingAroundCell(bm.pieceCellId[pid], range, PiecesInRange, gameIndex);
 
@@ -282,7 +282,7 @@ public static class PassiveActions
                 for (int i = 0; i < found; i++)
                 {
                     if (PiecesInRange[i] != pieceIDKilled) continue;
-                    bm.pieceFactoryAux[pid] += PieceDefinition.feedingGround_payOut[pieceType];
+                    bm.pieceFactoryAux[pid] += Piece.feedingGround_payOut[pieceType];
                 }
             }
         }

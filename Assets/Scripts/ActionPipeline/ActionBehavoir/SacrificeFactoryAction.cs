@@ -34,8 +34,8 @@ public static class SacrificeFactoryAction
         if (originCell < 0) return 0;
         int actorOwner = bm.GetPieceOwner(actorPieceId);
 
-        int rmin = PieceDefinition.sacrificeFactory_rangeMin[actorType];
-        int rmax = PieceDefinition.sacrificeFactory_rangeMax[actorType];
+        int rmin = Piece.sacrificeFactory_rangeMin[actorType];
+        int rmax = Piece.sacrificeFactory_rangeMax[actorType];
 
         if (rmax < rmin) { int t = rmax; rmax = rmin; rmin = t; }
 
@@ -67,7 +67,7 @@ public static class SacrificeFactoryAction
         int victimID = theAction.aux;
         if (victimID < 0) return;
         int Pieceid = bm.GetCellOccupant(theAction.ActorsCellId);
-        bm.pieceFactoryAux[Pieceid] += PieceDefinition.sacrificeFactory_amount[theAction.pieceType];
+        bm.pieceFactoryAux[Pieceid] += Piece.sacrificeFactory_amount[theAction.pieceType];
 
         GameActions.pieceKilled(victimID, gameIndex, theAction);
         GameActions.RefreshConnectorState(gameIndex);

@@ -40,7 +40,7 @@ public static class ShowLeftPanel
 
             var prefabScript = prefab.GetComponent<FactoryPerTypePayOut>();
             prefabScript.SetValues(
-                PieceDefinition.name[type],
+                Piece.name[type],
                 payout.PieceTypePayOut[i]
             );
             spawnedPerTypeFactoryPayOutPrefab.Add(prefab);

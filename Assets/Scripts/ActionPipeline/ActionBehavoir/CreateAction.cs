@@ -13,7 +13,7 @@ public static class CreateAction
         if (PieceLimitReached(ref offerBuild)) return;
         if (!isCellLegalPlacement(cell, ref offerBuild)) return;
 
-        int typeCount = PieceDefinition.typeCount;
+        int typeCount = Piece.typeCount;
         for (int type = 0; type < typeCount; type++)
         {
             if (!isPieceTypeLegal(type, ref offerBuild)) continue;
@@ -32,8 +32,8 @@ public static class CreateAction
             aux = 0
         };
         List<Action> CreateActions = new List<Action> {theAction};
-        if (PieceDefinition.connectors_enabled[theAction.pieceType] && !CreateConnectorOptions(CreateActions, ref offerBuild)) return;
-        if (PieceDefinition.sacrificeCost_enabled[theAction.pieceType] && !GenerateSacrificeCosts(CreateActions, ref offerBuild)) return;
+        if (Piece.connectors_enabled[theAction.pieceType] && !CreateConnectorOptions(CreateActions, ref offerBuild)) return;
+        if (Piece.sacrificeCost_enabled[theAction.pieceType] && !GenerateSacrificeCosts(CreateActions, ref offerBuild)) return;
         for (int i = 0; i < CreateActions.Count; i++) { OfferProvider.Emit(CreateActions[i], ref offerBuild); }
     } 
 
@@ -83,11 +83,11 @@ public static class CreateAction
 
     public static bool isPieceTypeLegal(int type, ref OfferBuild offerBuild)
     {
-        if (!PieceDefinition.isBuildable[type]) return false; // buildable gate (CSV flag)
+        if (!Piece.isBuildable[type]) return false; // buildable gate (CSV flag)
         if (!HasRequiredDigits(type, ref offerBuild)) return false;                                            
         
-        bool hasConn = PieceDefinition.connectors_enabled[type];
-        ulong allowedMask = hasConn ? PieceDefinition.connector_allowedMasks[type] : 0UL;
+        bool hasConn = Piece.connectors_enabled[type];
+        ulong allowedMask = hasConn ? Piece.connector_allowedMasks[type] : 0UL;
         if (hasConn && allowedMask == 0UL) return false;
 
         return true;
@@ -132,7 +132,7 @@ public static class CreateAction
             if (OfferProvider.IsInvalid(bm, nbPid)) continue;
             if (bm.GetPieceOwner(nbPid) != offerBuild.query.playerId) continue;
             byte nbType = bm.GetPieceType(nbPid);
-            if (PieceDefinition.isBuilding[nbType]) return true;
+            if (Piece.isBuilding[nbType]) return true;
         }
         return false;
     }
@@ -140,7 +140,7 @@ public static class CreateAction
     public static bool HasRequiredDigits(int type, ref OfferBuild offerBuild)
     {
         var gameState = GameRegistry.game[offerBuild.gameIndex].gameState;
-        int req = PieceDefinition.requiredDigit[(byte)type];
+        int req = Piece.requiredDigit[(byte)type];
         if (req >= 0 && !gameState.ps[offerBuild.query.playerId].HasDigit(req)) return false;
         return true;
     }
@@ -163,9 +163,9 @@ public static class CreateAction
         var firstAction = sourceActions[0];
         int pieceType = firstAction.pieceType;
 
-        int needPerAction = PieceDefinition.sacrificeCost_howManyItNeeds[pieceType];
-        bool requiresSpecific = PieceDefinition.sacrificeCost_isNeedsSpecificPiece[pieceType];
-        int requiredType = PieceDefinition.sacrificeCost_specificPiece[pieceType];
+        int needPerAction = Piece.sacrificeCost_howManyItNeeds[pieceType];
+        bool requiresSpecific = Piece.sacrificeCost_isNeedsSpecificPiece[pieceType];
+        int requiredType = Piece.sacrificeCost_specificPiece[pieceType];
 
         var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
         // ------------------------------------------------------------------
@@ -258,13 +258,13 @@ public static class CreateAction
         PaySacCost(theAction, player, gameIndex);
 
         int pid = bm.AllocateRow();
-        bm.PlacePieceRow(pid, player, (byte)theAction.pieceType, theAction.TargetCellId, PieceDefinition.maxHP[theAction.pieceType]);
+        bm.PlacePieceRow(pid, player, (byte)theAction.pieceType, theAction.TargetCellId, Piece.maxHP[theAction.pieceType]);
         bm.pieceConnectorConfig[pid] = (byte)theAction.aux;
-        int g = PieceDefinition.digitItGives[(byte)theAction.pieceType];
+        int g = Piece.digitItGives[(byte)theAction.pieceType];
         if (g >= 0) gameState.ps[player].GrantDigit(g);
 
-        if (PieceDefinition.factory_isKillPenalty[theAction.pieceType]) bm.pieceFactoryKillGoalAux[pid] = PieceDefinition.factory_killsNeeded[pid];
-        if (PieceDefinition.factory_isInstantPayOut[theAction.pieceType]) gameState.ps[player].budget += PieceDefinition.factory_instantPayOutAmount[pid];
+        if (Piece.factory_isKillPenalty[theAction.pieceType]) bm.pieceFactoryKillGoalAux[pid] = Piece.factory_killsNeeded[pid];
+        if (Piece.factory_isInstantPayOut[theAction.pieceType]) gameState.ps[player].budget += Piece.factory_instantPayOutAmount[pid];
 
 
         MultiCreateExecute(theAction, gameIndex);
@@ -274,15 +274,15 @@ public static class CreateAction
 
     public static void MultiCreateExecute(Action theAction, int gameIndex)
     {
-        if (!PieceDefinition.multiCreate_enabledByType[theAction.pieceType]) return;
+        if (!Piece.multiCreate_enabledByType[theAction.pieceType]) return;
         var gameState = GameRegistry.game[gameIndex].gameState;
         
-        int total = Math.Max(1, PieceDefinition.multiCreate_amountByType[theAction.pieceType]);
+        int total = Math.Max(1, Piece.multiCreate_amountByType[theAction.pieceType]);
         if (total > 1)
         {
             gameState.multiCreateActive = true;
             gameState.multiCreateType = (byte)theAction.pieceType;
-            gameState.multiCreateBorder = PieceDefinition.multiCreate_isBoardering[theAction.pieceType];
+            gameState.multiCreateBorder = Piece.multiCreate_isBoardering[theAction.pieceType];
             gameState.multiCreateRemaining = total - 1;
             gameState.multiCreateCells.Clear();
             gameState.multiCreateCells.Add(theAction.TargetCellId);
@@ -292,9 +292,9 @@ public static class CreateAction
     public static void PaySacCost(Action theAction, byte player, int gameIndex)
     {
         var bm = GameRegistry.game[gameIndex].boardModel;
-        if (PieceDefinition.sacrificeCost_enabled[theAction.pieceType])
+        if (Piece.sacrificeCost_enabled[theAction.pieceType])
         {
-            int need = PieceDefinition.sacrificeCost_howManyItNeeds[theAction.pieceType];
+            int need = Piece.sacrificeCost_howManyItNeeds[theAction.pieceType];
             if (need > 0 && theAction.addCost != null)
             {
                 int killed = 0;

@@ -541,7 +541,7 @@ public static class GameStateUtilities
         for (int pid = bm.pieceCount - 1; pid >= 0; pid--)
         {
             byte t = bm.pieceType[pid];
-            bool isBuilding = PieceDefinition.isBuilding[t];
+            bool isBuilding = Piece.isBuilding[t];
             if (isBuilding || PassiveActions.IsPieceApartOfSpan(pid, protectedpieces, numberOfProtectedPieces)) continue;
 
             // Free row (handles occupancy + swap-back)

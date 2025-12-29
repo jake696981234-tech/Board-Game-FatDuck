@@ -10,14 +10,14 @@ public static class UpgradeAction
     {
         var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
         // Upgrade-as-piece-action: find destination types that upgrade from this actorType
-        for (int upgradedToPieceType = 0; upgradedToPieceType < PieceDefinition.typeCount; upgradedToPieceType++)
+        for (int upgradedToPieceType = 0; upgradedToPieceType < Piece.typeCount; upgradedToPieceType++)
         {
-            if (!PieceDefinition.upgrade_enabled[upgradedToPieceType]) continue;
-            if (PieceDefinition.upgrade_target[upgradedToPieceType] != actorType) continue;
+            if (!Piece.upgrade_enabled[upgradedToPieceType]) continue;
+            if (Piece.upgrade_target[upgradedToPieceType] != actorType) continue;
             if (!CreateAction.HasRequiredDigits(upgradedToPieceType, ref offerBuild)) continue;
-            if (PieceDefinition.upgrade_isGoalKills[upgradedToPieceType])
+            if (Piece.upgrade_isGoalKills[upgradedToPieceType])
             {
-                    if (PieceDefinition.upgrade_killsNeeded[upgradedToPieceType] <= bm.pieceKillCount[pieceId]) continue;
+                    if (Piece.upgrade_killsNeeded[upgradedToPieceType] <= bm.pieceKillCount[pieceId]) continue;
             }
             
             var theAction = new Action
@@ -30,7 +30,7 @@ public static class UpgradeAction
             };
 
             List<Action> CreateActions = new List<Action> {theAction};
-            if (PieceDefinition.sacrificeCost_enabled[upgradedToPieceType] && !CreateAction.GenerateSacrificeCosts(CreateActions, ref offerBuild)) return;
+            if (Piece.sacrificeCost_enabled[upgradedToPieceType] && !CreateAction.GenerateSacrificeCosts(CreateActions, ref offerBuild)) return;
             for (int i = 0; i < CreateActions.Count; i++) { OfferProvider.Emit(CreateActions[i], ref offerBuild); }
         }
     }
@@ -50,9 +50,9 @@ public static class UpgradeAction
         bm.FreeRowSwapBack(UpgradedFromPieceId);
 
         int PieceId = bm.AllocateRow();
-        bm.PlacePieceRow(PieceId, player, (byte)theAction.pieceType, theAction.ActorsCellId, PieceDefinition.maxHP[theAction.pieceType]);
-        if (PieceDefinition.connectors_enabled[theAction.pieceType]) { bm.pieceConnectorConfig[PieceId] = sourceConnector; } else { bm.pieceConnectorConfig[PieceId] = (byte)theAction.aux; }
-        int g = PieceDefinition.digitItGives[(byte)theAction.pieceType];
+        bm.PlacePieceRow(PieceId, player, (byte)theAction.pieceType, theAction.ActorsCellId, Piece.maxHP[theAction.pieceType]);
+        if (Piece.connectors_enabled[theAction.pieceType]) { bm.pieceConnectorConfig[PieceId] = sourceConnector; } else { bm.pieceConnectorConfig[PieceId] = (byte)theAction.aux; }
+        int g = Piece.digitItGives[(byte)theAction.pieceType];
         if (g >= 0) gameState.ps[player].GrantDigit(g);
 
         GameActions.RefreshConnectorState(gameIndex);

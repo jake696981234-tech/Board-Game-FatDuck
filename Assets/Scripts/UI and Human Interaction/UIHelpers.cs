@@ -362,7 +362,7 @@ public static class UIHelpers
             case Game.Core.ActionKind.Launcher: return $"Launch {a.aux} → {a.TargetCellId}";
             case Game.Core.ActionKind.Spawner:
                 // pieceType carries the actor type; aux carries the target type for readability
-                return $"Spawn x? {(a.aux != 0 ? a.aux : PieceDefinition.spawn_targetType[a.pieceType])} @ {a.TargetCellId}";
+                return $"Spawn x? {(a.aux != 0 ? a.aux : Piece.spawn_targetType[a.pieceType])} @ {a.TargetCellId}";
             case Game.Core.ActionKind.SacrificeFactory: return $"Sacrifice Factory {a.ActorsCellId} → {a.TargetCellId}";
             case Game.Core.ActionKind.ConversionFactory: return $"ConversionFactory";
             case Game.Core.ActionKind.EndTurn: return "End Turn";

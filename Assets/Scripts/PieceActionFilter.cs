@@ -187,7 +187,7 @@ public static class PieceActionFilter
                 return;
             }
             TargetCellId = UIFilter.clickedCellId;
-            aux = (ushort)PieceDefinition.spawn_targetType[pieceType];
+            aux = (ushort)Piece.spawn_targetType[pieceType];
             isActionRequiresAux = true;
 
             isTargetCellId = true;
@@ -239,7 +239,7 @@ public static class PieceActionFilter
             return;
         }
 
-        if (!PieceDefinition.sacrificeCost_enabled[TargetCellId]) isAddCost = true;
+        if (!Piece.sacrificeCost_enabled[TargetCellId]) isAddCost = true;
         if (!isAddCost)
         {
             if (UIFilter.uIType != UIFilter.UIType.Cell  || !cachedLegalAddCost.Contains(UIFilter.clickedCellId))
@@ -249,7 +249,7 @@ public static class PieceActionFilter
             } 
             addCost.Add(UIBridge.bm.occupantPieceId[UIFilter.clickedCellId]);
             ActionCostRequiresAddCost = true;
-            if (addCost.Count == PieceDefinition.sacrificeCost_howManyItNeeds[TargetCellId])
+            if (addCost.Count == Piece.sacrificeCost_howManyItNeeds[TargetCellId])
             {
                 addCost.Sort();
                 addCost.Reverse();

@@ -36,6 +36,6 @@ public static class ConversionFactoryAction
         int Pieceid = bm.GetCellOccupant(theAction.ActorsCellId);
 
         gameState.ps[player].vpTotal--;
-        bm.pieceFactoryAux[Pieceid] += PieceDefinition.conversionFactory_amount[theAction.pieceType];
+        bm.pieceFactoryAux[Pieceid] += Piece.conversionFactory_amount[theAction.pieceType];
     }
 }

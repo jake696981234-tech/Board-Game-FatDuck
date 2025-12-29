@@ -7,6 +7,8 @@ public static class ShootAction
 {
     public static void CreateActions(int pieceId, byte actorType, int cell, ref OfferBuild offerBuild)
     {
+        if (placeRestrict_enabled)
+
         var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
 
         int[] scratch = Scratch.GetScratchCellBuffer(offerBuild.gameIndex);
@@ -35,8 +37,8 @@ public static class ShootAction
         if (originCell < 0) return 0;
         int actorOwner = bm.GetPieceOwner(actorPieceId);
 
-        int rmin = PieceDefinition.shoot_rangeMin[actorType];
-        int rmax = PieceDefinition.shoot_rangeMax[actorType];
+        int rmin = Piece.shoot_rangeMin[actorType];
+        int rmax = Piece.shoot_rangeMax[actorType];
         if (rmax < rmin) { int t = rmax; rmax = rmin; rmin = t; }
 
         int cap = outTargets != null ? outTargets.Length : 0;
@@ -66,7 +68,7 @@ public static class ShootAction
 
         int victimID = theAction.aux;
         if (victimID < 0) return;
-        int dmg = PieceDefinition.shoot_damage[theAction.pieceType];
+        int dmg = Piece.shoot_damage[theAction.pieceType];
         bool killed = GameActions.ApplyDamageWithCapital(theAction.ActorsCellId, victimID, dmg, gameIndex);
         if (killed)
         {

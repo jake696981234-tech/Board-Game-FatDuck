@@ -12,7 +12,7 @@ public static class CaptureVPAction
 
         ushort vpCell = (ushort)bm.GetVictoryPointCellId();
         if (cell != vpCell) return;
-        if (!PieceDefinition.captureVP_enabled[actorType]) return;
+        if (!Piece.captureVP_enabled[actorType]) return;
 
         var theAction = new Action
         {

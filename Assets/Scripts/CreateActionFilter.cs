@@ -128,12 +128,12 @@ public static class CreateActionFilter
         pieceType = UIFilter.clickedBuildPieceType;
         isPieceType = true;
         
-        if (!PieceDefinition.connectors_enabled[UIFilter.clickedBuildPieceType])
+        if (!Piece.connectors_enabled[UIFilter.clickedBuildPieceType])
         {
             isAux = true;
             isNumberOfWalls = true;
         }
-        if (!PieceDefinition.sacrificeCost_enabled[pieceType]) isAddCost = true;
+        if (!Piece.sacrificeCost_enabled[pieceType]) isAddCost = true;
 
         cleanUpSet();
     }
@@ -173,7 +173,7 @@ public static class CreateActionFilter
         } 
         addCost.Add(UIBridge.bm.occupantPieceId[UIFilter.clickedCellId]);
         ActionCostRequiresAddCost = true;
-        if (addCost.Count == PieceDefinition.sacrificeCost_howManyItNeeds[pieceType])
+        if (addCost.Count == Piece.sacrificeCost_howManyItNeeds[pieceType])
         {
             addCost.Sort();
             addCost.Reverse();
@@ -211,11 +211,11 @@ public static class CreateActionFilter
 
         UIHelpers.SetBackdropColor(UI.hic.config.createModeBackground);
         UIHelpers.SetPanelBackdropColor(UI.hic.config.createModePanelBackground);
-        if (UI.hic.createTitleText) UI.hic.createTitleText.text = $"Create: {PieceDefinition.name[pieceType]}";
-        if (UI.hic.createCostText) UI.hic.createCostText.text = $"Cost: {PieceDefinition.BuildCost[pieceType]}"; //to do, this does not show full cost
+        if (UI.hic.createTitleText) UI.hic.createTitleText.text = $"Create: {Piece.name[pieceType]}";
+        if (UI.hic.createCostText) UI.hic.createCostText.text = $"Cost: {Piece.BuildCost[pieceType]}"; //to do, this does not show full cost
         if (UI.hic.createSprite)
         {
-            var s = !string.IsNullOrEmpty(PieceDefinition.spritePath[pieceType]) ? Resources.Load<Sprite>(PieceDefinition.spritePath[pieceType]) : null;
+            var s = !string.IsNullOrEmpty(Piece.spritePath[pieceType]) ? Resources.Load<Sprite>(Piece.spritePath[pieceType]) : null;
             UI.hic.createSprite.sprite = s;
             UI.hic.createSprite.enabled = (s != null);
         }
@@ -249,11 +249,11 @@ public static class CreateActionFilter
 
         UIHelpers.SetBackdropColor(UI.hic.config.createModeBackground);
         UIHelpers.SetPanelBackdropColor(UI.hic.config.createModePanelBackground);
-        if (UI.hic.createTitleText) UI.hic.createTitleText.text = $"Choose Sacrfice/s for: {PieceDefinition.name[inPieceType]}";
-        if (UI.hic.createCostText) UI.hic.createCostText.text = $"Cost: {PieceDefinition.BuildCost[inPieceType]}"; //to do, this does not show full cost
+        if (UI.hic.createTitleText) UI.hic.createTitleText.text = $"Choose Sacrfice/s for: {Piece.name[inPieceType]}";
+        if (UI.hic.createCostText) UI.hic.createCostText.text = $"Cost: {Piece.BuildCost[inPieceType]}"; //to do, this does not show full cost
         if (UI.hic.createSprite)
         {
-            var s = !string.IsNullOrEmpty(PieceDefinition.spritePath[inPieceType]) ? Resources.Load<Sprite>(PieceDefinition.spritePath[inPieceType]) : null;
+            var s = !string.IsNullOrEmpty(Piece.spritePath[inPieceType]) ? Resources.Load<Sprite>(Piece.spritePath[inPieceType]) : null;
             UI.hic.createSprite.sprite = s;
             UI.hic.createSprite.enabled = (s != null);
         }
@@ -333,9 +333,9 @@ public static class CreateActionFilter
 
             if (actions.addCost == null || actions.addCost.Length == 0) continue;
 
-            if (PieceDefinition.sacrificeCost_isNeedsSpecificPiece[inPieceType])
+            if (Piece.sacrificeCost_isNeedsSpecificPiece[inPieceType])
             {
-                int requiredType = PieceDefinition.sacrificeCost_specificPiece[inPieceType];
+                int requiredType = Piece.sacrificeCost_specificPiece[inPieceType];
                 bool hasRequired = false;
                 for (int b = 0; b < actions.addCost.Length; b++)
                 {
@@ -366,7 +366,7 @@ public static class CreateActionFilter
             var theAction = UIBridge._offers[i];
             if (theAction.kind != Create) continue;   // byte code
 
-            if (PieceDefinition.connectors_enabled[pieceType])
+            if (Piece.connectors_enabled[pieceType])
             {
                 if (theAction.aux != aux) continue;
             }

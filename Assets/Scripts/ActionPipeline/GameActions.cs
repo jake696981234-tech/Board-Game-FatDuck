@@ -14,7 +14,7 @@ namespace Game.Core
 
             int deadOwner = bm.GetPieceOwner(victim);
             byte deadType = bm.GetPieceType(victim);
-            int g = PieceDefinition.digitItGives[deadType];
+            int g = Piece.digitItGives[deadType];
             if (g >= 0) gameState.ps[deadOwner].RevokeDigit(g);
             bm.FreeRowSwapBack(victim);
             RefreshConnectorState(gameIndex);
@@ -28,7 +28,7 @@ namespace Game.Core
             int pieceId = bm.GetCellOccupant(theAction.ActorsCellId);
 
             bm.pieceKillCount[pieceId]++;
-            bm.pieceFactoryAux[pieceId] += PieceDefinition.eat_amount[theAction.pieceType];
+            bm.pieceFactoryAux[pieceId] += Piece.eat_amount[theAction.pieceType];
             gameState.ps[bm.pieceOwner[pieceId]].perRoundPieceKillCount++;
 
             PassiveActions.FeedingGround(gameIndex, victim);
@@ -44,7 +44,7 @@ namespace Game.Core
             if (targetPid < 0 || dmg <= 0) return false;
 
             int incomingDir = BmAbilityCac.GetDirectionIndex(attackerCell, bm.GetPieceCell(targetPid), gameIndex);
-            if (incomingDir >= 0 && PieceDefinition.connectors_enabled[bm.GetPieceType(targetPid)])
+            if (incomingDir >= 0 && Piece.connectors_enabled[bm.GetPieceType(targetPid)])
             {
                 int hitSide = PiecesSides.OppositeDir(incomingDir);
                 bool sideIsConnector = PiecesSides.IsConnectorSide(bm.pieceConnectorConfig[targetPid], hitSide);
@@ -93,7 +93,7 @@ namespace Game.Core
         {
             var bm = GameRegistry.game[gameIndex].boardModel;
 
-            int dmg = PieceDefinition.move_damage[theAction.pieceType];
+            int dmg = Piece.move_damage[theAction.pieceType];
             bool killed = ApplyDamageWithCapital(actorPid, victimID, dmg, gameIndex);
             if (killed)
             {

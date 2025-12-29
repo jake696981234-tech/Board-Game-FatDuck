@@ -277,7 +277,7 @@ namespace Game.Core
 
         private bool FastCheck(in Action a)
         {
-            if (a.kind > explosive) return false;
+            if (a.kind > pieceBuild) return false;
             if (currentPlayer >= 4) return false;
             return true;
         }
@@ -291,7 +291,7 @@ namespace Game.Core
                 if (theAction.ActorsCellId != offers[i].ActorsCellId) continue;
                 if (theAction.TargetCellId != offers[i].TargetCellId) continue;
                 if (theAction.aux != offers[i].aux) continue;
-                if ((theAction.kind == Create || theAction.kind == Upgrade) && PieceDefinition.sacrificeCost_enabled[theAction.pieceType])
+                if ((theAction.kind == Create || theAction.kind == Upgrade) && Piece.sacrificeCost_enabled[theAction.pieceType])
                 {
                     if (!SacCostEquals(theAction.addCost, offers[i].addCost)) continue;
                 }
@@ -400,7 +400,7 @@ namespace Game.Core
                 cachedPieceDrivenPenalties[i] = 0;
                 for (int c = 0; c < bm.pieceCount; c++)
                 {
-                    if (PieceDefinition.factory_isKillPenalty[bm.pieceType[c]]) cachedPieceDrivenPenalties[i] += PieceDefinition.factory_killsPunishment[bm.pieceType[c]];
+                    if (Piece.factory_isKillPenalty[bm.pieceType[c]]) cachedPieceDrivenPenalties[i] += Piece.factory_killsPunishment[bm.pieceType[c]];
                 }
             }
             events.roundBegin();

@@ -25,9 +25,9 @@ public static class ExplosiveAction
     {
         var bm = GameRegistry.game[gameIndex].boardModel;
 
-        int dmg = PieceDefinition.explosive_damage[theAction.pieceType];
-        int maxRange = PieceDefinition.explosive_range[theAction.pieceType];
-        bool friendlyFire = PieceDefinition.explosive_isFriendlyFire[theAction.pieceType];
+        int dmg = Piece.explosive_damage[theAction.pieceType];
+        int maxRange = Piece.explosive_range[theAction.pieceType];
+        bool friendlyFire = Piece.explosive_isFriendlyFire[theAction.pieceType];
 
         for (int range = 0; range <= maxRange; range++)
         {
@@ -49,6 +49,6 @@ public static class ExplosiveAction
                 }
             }
         }
-        if (PieceDefinition.explosive_isKillItself[theAction.pieceType]) GameActions.pieceKilled(bm.GetCellOccupant(theAction.ActorsCellId), gameIndex);
+        if (Piece.explosive_isKillItself[theAction.pieceType]) GameActions.pieceKilled(bm.GetCellOccupant(theAction.ActorsCellId), gameIndex);
     }
 }

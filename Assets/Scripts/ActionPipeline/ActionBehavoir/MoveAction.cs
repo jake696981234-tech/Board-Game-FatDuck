@@ -35,8 +35,8 @@ public static class MoveAction
         int originCell = bm.GetPieceCell(actorPieceId);
         if (originCell < 0) return 0;
 
-        int rmin = PieceDefinition.move_rangeMin[actorType];
-        int rmax = PieceDefinition.move_rangeMax[actorType];
+        int rmin = Piece.move_rangeMin[actorType];
+        int rmax = Piece.move_rangeMax[actorType];
         if (rmax < rmin) { int t = rmax; rmax = rmin; rmin = t; }
 
         int count = 0;

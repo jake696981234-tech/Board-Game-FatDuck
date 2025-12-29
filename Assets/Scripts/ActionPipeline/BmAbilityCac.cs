@@ -246,11 +246,11 @@ public static class BmAbilityCac
             return bm.InvalidId;
 
 
-        int pushAmount = PieceDefinition.push_pushAmount[actorType];
+        int pushAmount = Piece.push_pushAmount[actorType];
         if (pushAmount <= 0)
             return bm.InvalidId;
 
-        bool isPull = PieceDefinition.push_isPull[actorType];
+        bool isPull = Piece.push_isPull[actorType];
 
         int dir = isPull
             ? GetDirectionIndex(targetCell, actorCell, gameIndex)
@@ -398,7 +398,7 @@ public static class BmAbilityCac
             if (pid < 0) continue;
             if (bm.GetPieceOwner(pid) != player) continue;
             byte t = bm.GetPieceType(pid);
-            if (PieceDefinition.isBuilding[t]) return true;
+            if (Piece.isBuilding[t]) return true;
         }
         return false;
     }

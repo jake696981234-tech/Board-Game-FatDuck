@@ -15,14 +15,14 @@ public static class SpawnAction
             var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
             var gameState = GameRegistry.game[offerBuild.gameIndex].gameState;
 
-            int amount = PieceDefinition.spawn_pieceAmount[actorType];
-            int range = PieceDefinition.spawn_range[actorType];
-            int targetType = PieceDefinition.spawn_targetType[actorType];
-            bool once = PieceDefinition.spawn_isOnlyOncePerTurn[actorType];
-            if (amount <= 0 || targetType < 0 || targetType >= PieceDefinition.typeCount) return;
+            int amount = Piece.spawn_pieceAmount[actorType];
+            int range = Piece.spawn_range[actorType];
+            int targetType = Piece.spawn_targetType[actorType];
+            bool once = Piece.spawn_isOnlyOncePerTurn[actorType];
+            if (amount <= 0 || targetType < 0 || targetType >= Piece.typeCount) return;
 
             // Digit gate; buildable override allowed
-            int reqDigit = PieceDefinition.requiredDigit[(byte)targetType];
+            int reqDigit = Piece.requiredDigit[(byte)targetType];
             if (reqDigit >= 0 && !gameState.ps[offerBuild.query.playerId].HasDigit(reqDigit)) return;
 
             // Collect empty, LOS-valid cells within range from launcher
@@ -71,16 +71,16 @@ public static class SpawnAction
         var controller = GameRegistry.game[gameIndex].gameController;
 
 
-        int targetType = PieceDefinition.spawn_targetType[actorType];
-        if (targetType < 0 || targetType >= PieceDefinition.typeCount)
+        int targetType = Piece.spawn_targetType[actorType];
+        if (targetType < 0 || targetType >= Piece.typeCount)
         {
             Debug.Log("IsLegal_Spawner - (targetType < 0 || targetType >= PieceDefinition.typeCount) Returned False");
             return false;
         }
 
-        int amount = PieceDefinition.spawn_pieceAmount[actorType];
-        int range = PieceDefinition.spawn_range[actorType];
-        bool once = PieceDefinition.spawn_isOnlyOncePerTurn[actorType];
+        int amount = Piece.spawn_pieceAmount[actorType];
+        int range = Piece.spawn_range[actorType];
+        bool once = Piece.spawn_isOnlyOncePerTurn[actorType];
 
         if (once && bm.spawnerUsedThisTurn.Contains(actorPid))
         {
@@ -98,7 +98,7 @@ public static class SpawnAction
 
 
         // Digit gate for target type
-        int reqDigit = PieceDefinition.requiredDigit[(byte)targetType];
+        int reqDigit = Piece.requiredDigit[(byte)targetType];
         if (reqDigit >= 0 && !gameState.ps[currentPlayer].HasDigit(reqDigit))
         {
             Debug.Log("IsLegal_Spawner - (reqDigit >= 0 && !gameState.ps[currentPlayer].HasDigit(reqDigit)) Returned False)");
@@ -146,9 +146,9 @@ public static class SpawnAction
         if (actorPid < 0) return;
 
 
-        int targetType = PieceDefinition.spawn_targetType[theAction.pieceType];
-        int amount = PieceDefinition.spawn_pieceAmount[theAction.pieceType];
-        int range = PieceDefinition.spawn_range[theAction.pieceType];
+        int targetType = Piece.spawn_targetType[theAction.pieceType];
+        int amount = Piece.spawn_pieceAmount[theAction.pieceType];
+        int range = Piece.spawn_range[theAction.pieceType];
 
         int origin = bm.GetPieceCell(actorPid);
         int[] empties = Scratch.GetScratchCellBuffer(gameIndex);
@@ -187,8 +187,8 @@ public static class SpawnAction
         if (ChosenCellIsLegal && spawned < canCreate)
         {
             int pid = bm.AllocateRow();
-            bm.PlacePieceRow(pid, currentPlayer, (byte)targetType, theAction.TargetCellId, PieceDefinition.maxHP[targetType]);
-            int g = PieceDefinition.digitItGives[(byte)targetType];
+            bm.PlacePieceRow(pid, currentPlayer, (byte)targetType, theAction.TargetCellId, Piece.maxHP[targetType]);
+            int g = Piece.digitItGives[(byte)targetType];
             if (g >= 0) gameState.ps[currentPlayer].GrantDigit(g);
             spawned++;
         }
@@ -198,14 +198,14 @@ public static class SpawnAction
             int cell = empties[i];
             if (cell == theAction.TargetCellId) continue; // already used chosen cell
             int pid = bm.AllocateRow();
-            bm.PlacePieceRow(pid, currentPlayer, (byte)targetType, cell, PieceDefinition.maxHP[targetType]);
-            int g = PieceDefinition.digitItGives[(byte)targetType];
+            bm.PlacePieceRow(pid, currentPlayer, (byte)targetType, cell, Piece.maxHP[targetType]);
+            int g = Piece.digitItGives[(byte)targetType];
             if (g >= 0) gameState.ps[currentPlayer].GrantDigit(g);
             spawned++;
         }
 
         // Mark once-per-turn flag
-        if (PieceDefinition.spawn_isOnlyOncePerTurn[theAction.pieceType])
+        if (Piece.spawn_isOnlyOncePerTurn[theAction.pieceType])
             bm.spawnerUsedThisTurn.Add(actorPid);
 
         GameActions.RefreshConnectorState(gameIndex);

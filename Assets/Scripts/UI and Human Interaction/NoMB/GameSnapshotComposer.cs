@@ -47,7 +47,7 @@ public sealed class GameSnapshotComposer
         int i = 0;
         foreach (byte Piece in board.pieceType)
         {
-            if (PieceDefinition.connectors_enabled[Piece])
+            if (global::Piece.connectors_enabled[Piece])
             {
                 FilteredPieces.Add(board.pieceConnectorConfig[i]);
             }
@@ -99,8 +99,8 @@ public sealed class GameSnapshotComposer
         }
 
         // per-type UI metadata (safe to share)
-        snapshot.spritePathByType = PieceDefinition.spritePath;
-        snapshot.displayNameByType = PieceDefinition.name;
+        snapshot.spritePathByType = Piece.spritePath;
+        snapshot.displayNameByType = Piece.name;
 
         // default owner palette (can replace later)
         snapshot.ownerTintByPlayer = new Color[4] { Color.red, Color.blue, Color.green, Color.silver };
