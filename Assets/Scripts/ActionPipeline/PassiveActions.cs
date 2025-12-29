@@ -4,9 +4,7 @@ using Game.Core;
 
 public static class PassiveActions
 {
-    #region place Restrict
-
-    #endregion
+    
     private const int MaxSacrificeCombos = 64;
 
     /// <summary>
@@ -221,7 +219,7 @@ public static class PassiveActions
 
             for (int range = 0; range <= sanctuaryRange; range++)
             {
-                int found = BmAbilityCac.pieceIdsRingAroundCell(centerCell, range, protectedpieces, gameIndex);
+                int found = BmCac.pieceIdsRingAroundCell(centerCell, range, protectedpieces, gameIndex);
 
                 if (found <= 0) continue;
 
@@ -278,7 +276,7 @@ public static class PassiveActions
 
             for (int range = 0; range <= Piece.feedingGround_Range[pieceType]; range++)
             {
-                int found = BmAbilityCac.pieceIdsRingAroundCell(bm.pieceCellId[pid], range, PiecesInRange, gameIndex);
+                int found = BmCac.pieceIdsRingAroundCell(bm.pieceCellId[pid], range, PiecesInRange, gameIndex);
 
                 if (found <= 0) continue;
 

@@ -51,9 +51,9 @@ public static class PushAction
         int targetCell = bm.GetPieceCell(targetPid);
         int dist = bm.Distance(originCell, targetCell);
         if (dist < 1 || dist > rangeMax) return false;
-        if (!BmAbilityCac.LineOfSightClear(originCell, targetCell, gameIndex)) return false;
+        if (!BmCac.LineOfSightClear(originCell, targetCell, gameIndex)) return false;
 
-        int pushDest = BmAbilityCac.ComputePushDestination(actorPid, actorType, targetPid, gameIndex);
+        int pushDest = BmCac.ComputePushDestination(actorPid, actorType, targetPid, gameIndex);
         return pushDest >= 0 && bm.IsValidCellId(pushDest);
     }
 
@@ -91,9 +91,9 @@ public static class PushAction
 
             int dist = bm.Distance(originCell, c);
             if (dist < 1 || dist > rangeMax) continue;
-            if (!BmAbilityCac.LineOfSightClear(originCell, c, gameIndex)) continue;
+            if (!BmCac.LineOfSightClear(originCell, c, gameIndex)) continue;
 
-            int pushDest = BmAbilityCac.ComputePushDestination(actorPieceId, actorType, victimId, gameIndex);
+            int pushDest = BmCac.ComputePushDestination(actorPieceId, actorType, victimId, gameIndex);
             if (pushDest < 0 || !bm.IsValidCellId(pushDest)) continue;
 
             if (count < cap) outPieceIds[count] = victimId;
@@ -125,7 +125,7 @@ public static class PushAction
         }
         else
         {
-            int pushedCellID = BmAbilityCac.ComputePushDestination(actorPid, actorType, victimID, gameIndex);
+            int pushedCellID = BmCac.ComputePushDestination(actorPid, actorType, victimID, gameIndex);
             bm.MovePieceRow(victimID, pushedCellID);
         }
         GameActions.RefreshConnectorState(gameIndex);

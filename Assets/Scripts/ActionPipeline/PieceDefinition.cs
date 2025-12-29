@@ -179,8 +179,11 @@ public static class Piece
     #region sniper
     public static bool[] sniper_enabled;
     public static int[] sniper_minRange;
+    public static int[] sniper_damage;
     public static int[] sniper_maxRange;
     public static bool[] sniper_isonlySoldiers;
+    public static bool[] sniper_isLineOfSight;
+    public static bool[] sniper_isFriendlyFire;
     public static int[] sniper_lineLength;
     #endregion
     #region Zombie

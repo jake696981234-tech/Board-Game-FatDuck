@@ -90,7 +90,7 @@ public static class LauncherAction
 
             int distIn = bm.Distance(originCell, c);
             if (distIn < 1 || distIn > inputRange) continue;
-            if (!BmAbilityCac.LineOfSightClear(originCell, c, gameIndex)) continue;
+            if (!BmCac.LineOfSightClear(originCell, c, gameIndex)) continue;
 
             // For each candidate destination within outputRange from launcher
             for (int dst = 0; dst < cellCount; dst++)
@@ -98,7 +98,7 @@ public static class LauncherAction
                 if (!bm.IsEmpty(dst)) continue;
                 int distOut = bm.Distance(originCell, dst);
                 if (distOut < 1 || distOut > outputRange) continue;
-                if (!BmAbilityCac.LineOfSightClear(originCell, dst, gameIndex)) continue;
+                if (!BmCac.LineOfSightClear(originCell, dst, gameIndex)) continue;
 
                 if (write + 1 >= cap) return write; // buffer full; return what we wrote
 

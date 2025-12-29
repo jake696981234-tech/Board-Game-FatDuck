@@ -33,7 +33,25 @@ namespace Game.Core
 
             PassiveActions.FeedingGround(gameIndex, victim);
 
+            if (Piece.zombie_enabled[theAction.pieceType]) //move this above the above the other benefifts if you dont want the others to trigger
+            {
+                Zombie(victim, gameIndex, theAction);
+                return;
+            }
             pieceKilled(victim, gameIndex);
+        }
+
+        private static void Zombie(int victim, int gameIndex, Action theAction)
+        {
+            var bm = GameRegistry.game[gameIndex].boardModel;
+            var gameState = GameRegistry.game[gameIndex].gameState;
+
+            bm.pieceOwner[victim] = bm.pieceOwner[bm.occupantPieceId[theAction.ActorsCellId]];
+            bm.pieceHP[victim] = Piece.maxHP[bm.pieceType[victim]];
+
+            int g = Piece.digitItGives[(byte)theAction.pieceType];
+            if (g >= 0) gameState.ps[bm.pieceOwner[victim]].GrantDigit(g);
+            RefreshConnectorState(gameIndex);
         }
 
 
@@ -43,7 +61,7 @@ namespace Game.Core
 
             if (targetPid < 0 || dmg <= 0) return false;
 
-            int incomingDir = BmAbilityCac.GetDirectionIndex(attackerCell, bm.GetPieceCell(targetPid), gameIndex);
+            int incomingDir = BmCac.GetDirectionIndex(attackerCell, bm.GetPieceCell(targetPid), gameIndex);
             if (incomingDir >= 0 && Piece.connectors_enabled[bm.GetPieceType(targetPid)])
             {
                 int hitSide = PiecesSides.OppositeDir(incomingDir);
@@ -102,7 +120,7 @@ namespace Game.Core
             else
             {
                 int origin = theAction.ActorsCellId;
-                int best = BmAbilityCac.FindNearestEmptyAdjacent(origin, bm.GetPieceCell(victimID), gameIndex);
+                int best = BmCac.FindNearestEmptyAdjacent(origin, bm.GetPieceCell(victimID), gameIndex);
                 if (best >= 0) bm.MovePieceRow(actorPid, best);
             }
             // Connector state refresh happens in GameActions after move/shoot/push/kill

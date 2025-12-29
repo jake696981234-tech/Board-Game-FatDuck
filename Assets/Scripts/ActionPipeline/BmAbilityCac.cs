@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
 
-public static class BmAbilityCac
+public static class BmCac
 {
     //The Aim of this script is to contain board Model related Methods, that are needed for abilitys
 
-    public static int[] OccupiedCellsInLine(int StartingCell, int maxRange, int minRange, int direction, bool needsLineOfSight, bool friendlyFire, int player, int gameIndex)
+    public static int[] OccupiedCellsInLine(int StartingCell, int maxRange, int minRange, int direction, bool needsLineOfSight, bool friendlyFire, bool onlySoldiers, int player, int gameIndex)
     {
         var bm = GameRegistry.game[gameIndex].boardModel;
 
@@ -36,6 +36,12 @@ public static class BmAbilityCac
 
             if (occupant == bm._invalidId)
                 continue;
+
+            if (onlySoldiers && Piece.isBuilding[bm.GetPieceType(occupant)])
+            {
+                if (needsLineOfSight) break;
+                continue;
+            }
 
             if (friendlyFire && bm.GetPieceOwner(occupant) == player)
             {

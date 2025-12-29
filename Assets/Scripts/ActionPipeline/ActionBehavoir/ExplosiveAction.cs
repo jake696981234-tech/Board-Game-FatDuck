@@ -32,7 +32,7 @@ public static class ExplosiveAction
         for (int range = 0; range <= maxRange; range++)
         {
             int[] pieceVictims = Scratch.GetScratchCellBuffer(gameIndex);
-            int howManyVictims = BmAbilityCac.pieceIdsRingAroundCell(theAction.ActorsCellId, range, pieceVictims, gameIndex);
+            int howManyVictims = BmCac.pieceIdsRingAroundCell(theAction.ActorsCellId, range, pieceVictims, gameIndex);
             int[] victimCellIds = new int[howManyVictims];
             for (int i = 0; i < howManyVictims; i++) { victimCellIds[i] = bm.pieceCellId[pieceVictims[i]]; }
             if (howManyVictims <= 0) 

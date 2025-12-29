@@ -1,69 +1,72 @@
 using Game.Core;
+using UnityEngine;
 using Action = Game.Core.Action;
 using static Game.Core.ActionKind; // import enum values
+using System.Collections.Generic;
 
 public static class SniperAction
 {
-    public static void CreateActions(int pieceId, byte actorType, int cell, ref OfferBuild offerBuild)
+    public static void CreateActions(int pieceId, byte actorType, int cell, int player, ref OfferBuild offerBuild)
     {
         var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
 
         //work out Direction and Length-move to its own method when ready
-
-        
-
-
-
-        int[] scratch = Scratch.GetScratchCellBuffer(offerBuild.gameIndex);
-        int theNumberOfTargets = GetLegalTargets(pieceId, actorType, scratch, offerBuild.gameIndex);
-        for (int i = 0; i < theNumberOfTargets; i++)
+        List<int> directions = new List<int>();
+        var PieceIdsTofindDirections = Scratch.GetScratchNeighborBuffer(offerBuild.gameIndex);
+        var numberOfCells =  BmCac.pieceIdsRingAroundCell(cell, 1, PieceIdsTofindDirections, offerBuild.gameIndex);
+        if (numberOfCells <= 0) return;
+        for (int i = 0; i < numberOfCells; i++)
         {
-            int tgtPid = scratch[i];
-            ushort targetCellId = (ushort)bm.GetPieceCell(tgtPid);
+            if (Piece.sniper_enabled[PieceIdsTofindDirections[bm.pieceType[i]]])
+            {
+                var direction = BmCac.GetDirectionIndex(cell, bm.pieceCellId[i], offerBuild.gameIndex);
+                var OccCellsinDirection = BmCac.OccupiedCellsInLine(cell, 64, 1, direction, false, false, false, player, offerBuild.gameIndex);
+                if (ifSniperHasRequiredBuildings(actorType, OccCellsinDirection, offerBuild.gameIndex)) directions.Add(direction);
+            } 
+        }
+        if (directions.Count <= 0) return;
+        for (int i = 0; i < directions.Count; i++)
+        {
+            var victimsCells = BmCac.OccupiedCellsInLine(cell, Piece.sniper_maxRange[actorType], Piece.sniper_minRange[actorType], directions[i], Piece.sniper_isLineOfSight[actorType], Piece.sniper_isFriendlyFire[actorType], Piece.sniper_isonlySoldiers[actorType], player, offerBuild.gameIndex);
+            if (victimsCells.Length <= 0) continue;
+
             var theAction = new Action
             {
-                kind = Shoot,
+                kind = sniper,
                 pieceType = actorType,
                 ActorsCellId = (ushort)cell,
-                TargetCellId = targetCellId,
-                aux = (ushort)tgtPid
+                TargetCellId = (ushort)victimsCells[victimsCells.Length - 1],
+                aux = (ushort)directions[i],
             };
             OfferProvider.Emit(theAction, ref offerBuild);
         }
     }
 
 
+    public static bool ifSniperHasRequiredBuildings(int actorType, int[] occCells, int gameIndex)
+    {
+        var bm = GameRegistry.game[gameIndex].boardModel;
+        for (int c = 0; c < Piece.sniper_lineLength[actorType]; c++)
+        {
+            if (!Piece.sniper_enabled[bm.GetPieceTypeFromCell(occCells[c])]) return false;
+        }
+        return true;
+    }
 
-     public static int GetLegalTargets(int actorPieceId, int actorType, int[] outTargets, int gameIndex)
+
+    public static void Apply(in Action theAction, byte player, int gameIndex)
     {
         var bm = GameRegistry.game[gameIndex].boardModel;
 
-        int originCell = bm.GetPieceCell(actorPieceId);
-        if (originCell < 0) return 0;
-        int actorOwner = bm.GetPieceOwner(actorPieceId);
+        var victimsCells = BmCac.OccupiedCellsInLine(theAction.ActorsCellId, Piece.sniper_maxRange[theAction.pieceType], Piece.sniper_minRange[theAction.pieceType], theAction.aux, Piece.sniper_isLineOfSight[theAction.pieceType], Piece.sniper_isFriendlyFire[theAction.pieceType], Piece.sniper_isonlySoldiers[theAction.pieceType], player, gameIndex);
+        if (victimsCells.Length <= 0) { Debug.Log("sniper Action Encoding is broken, this should not be possible"); return; }
+        int dmg = Piece.sniper_damage[theAction.pieceType];
 
-        int rmin = Piece.sniper_minRange[actorType];
-        int rmax = Piece.sniper_maxRange[actorType];
-        if (rmax < rmin) { int t = rmax; rmax = rmin; rmin = t; }
-
-        int cap = outTargets != null ? outTargets.Length : 0;
-        int count = 0;
-
-        int cellCount = bm.GetCellCount();
-        for (int c = 0; c < cellCount; c++)
+        for (int i = 0; i < victimsCells.Length; i++)
         {
-            int pid = bm.GetCellOccupant(c);
-            if (pid < 0) continue;
-            if (bm.GetPieceOwner(pid) == actorOwner) continue;
-            if (Piece.sniper_isonlySoldiers[actorType] && !Piece.isBuilding[bm.pieceType[pid]])
-
-            int d = bm.Distance(originCell, c);
-            if (d < rmin || d > rmax) continue;
-            if (!BmAbilityCac.LineOfSightClear(originCell, c, gameIndex)) continue;
-
-            if (count < cap) outTargets[count] = pid; // pieceId target
-            count++;
+            bool killed = GameActions.ApplyDamageWithCapital(theAction.ActorsCellId, bm.occupantPieceId[victimsCells[i]], dmg, gameIndex);
+            if (killed) GameActions.pieceKilled(bm.occupantPieceId[victimsCells[i]], gameIndex, theAction);
+            GameActions.RefreshConnectorState(gameIndex);
         }
-        return count;
     }
 }

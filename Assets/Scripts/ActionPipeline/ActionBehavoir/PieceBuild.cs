@@ -14,7 +14,7 @@ public static class PieceBuildActions
         for (int i = 0; i < maxRange; i++)
         {
             var EmptyCells = Scratch.GetScratchCellBuffer(offerBuild.gameIndex);
-            int NumberOfEmptyCells = BmAbilityCac.cellIdsRingAroundCell(cell, i, true, EmptyCells, offerBuild.gameIndex);
+            int NumberOfEmptyCells = BmCac.cellIdsRingAroundCell(cell, i, true, EmptyCells, offerBuild.gameIndex);
 
             for (int c = 0; c < NumberOfEmptyCells; c++)
             {

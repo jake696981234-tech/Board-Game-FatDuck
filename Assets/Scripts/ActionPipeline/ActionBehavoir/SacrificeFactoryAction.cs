@@ -51,7 +51,7 @@ public static class SacrificeFactoryAction
 
             int d = bm.Distance(originCell, c);
             if (d < rmin || d > rmax) continue;
-            if (!BmAbilityCac.LineOfSightClear(originCell, c, gameIndex)) continue;
+            if (!BmCac.LineOfSightClear(originCell, c, gameIndex)) continue;
 
             if (count < cap) outTargets[count] = pid; // pieceId target
             count++;

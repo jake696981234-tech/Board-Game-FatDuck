@@ -51,7 +51,7 @@ public static class ShootAction
 
             int d = bm.Distance(originCell, c);
             if (d < rmin || d > rmax) continue;
-            if (!BmAbilityCac.LineOfSightClear(originCell, c, gameIndex)) continue;
+            if (!BmCac.LineOfSightClear(originCell, c, gameIndex)) continue;
 
             if (count < cap) outTargets[count] = pid; // pieceId target
             count++;
@@ -65,7 +65,7 @@ public static class ShootAction
         var events = GameRegistry.game[gameIndex].eventManager;
 
         int victimID = theAction.aux;
-        if (victimID < 0) return;
+        if (victimID < 0) { Debug.Log("Shoot Action Encoding is broken, this should not be possible"); return; }
         int dmg = Piece.shoot_damage[theAction.pieceType];
         bool killed = GameActions.ApplyDamageWithCapital(theAction.ActorsCellId, victimID, dmg, gameIndex);
         if (killed)

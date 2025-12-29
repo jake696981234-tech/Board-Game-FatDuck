@@ -34,7 +34,7 @@ public static class SpawnAction
                 if (!bm.IsEmpty(c)) continue;
                 int dist = bm.Distance(actorCell, c);
                 if (dist < 1 || dist > range) continue;
-                if (!BmAbilityCac.LineOfSightClear(actorCell, c, offerBuild.gameIndex)) continue;
+                if (!BmCac.LineOfSightClear(actorCell, c, offerBuild.gameIndex)) continue;
                 empties[eCount++] = c;
             }
             if (eCount <= 0) return;
@@ -115,7 +115,7 @@ public static class SpawnAction
             if (!bm.IsEmpty(c)) continue;
             int dist = bm.Distance(origin, c);
             if (dist < 1 || dist > range) continue;
-            if (!BmAbilityCac.LineOfSightClear(origin, c, gameIndex)) continue;
+            if (!BmCac.LineOfSightClear(origin, c, gameIndex)) continue;
             scratch[emptyCount++] = c;
         }
 
@@ -159,7 +159,7 @@ public static class SpawnAction
             if (!bm.IsEmpty(c)) continue;
             int dist = bm.Distance(origin, c);
             if (dist < 1 || dist > range) continue;
-            if (!BmAbilityCac.LineOfSightClear(origin, c, gameIndex)) continue;
+            if (!BmCac.LineOfSightClear(origin, c, gameIndex)) continue;
             empties[eCount++] = c;
         }
         Array.Sort(empties, 0, eCount);

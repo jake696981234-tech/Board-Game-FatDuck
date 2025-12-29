@@ -16,7 +16,7 @@ public static class GroupBuildAction
             if (require > 1)
             {
                 // Cluster check
-                int clusterSize = BmAbilityCac.CountClusterOfType(actorType, cell, offerBuild.gameIndex);
+                int clusterSize = BmCac.CountClusterOfType(actorType, cell, offerBuild.gameIndex);
                 if (clusterSize >= require)
                 {
                     // Enumerate legal create destinations for target type
@@ -42,11 +42,11 @@ public static class GroupBuildAction
         if (reqDigit >= 0 && !gameState.ps[currentPlayer].HasDigit(reqDigit)) return false;
 
         // geometric create gate (core/building adjacency)
-        if (!BmAbilityCac.IsCreateGeometryLegal(a.TargetCellId, currentPlayer, gameIndex))
+        if (!BmCac.IsCreateGeometryLegal(a.TargetCellId, currentPlayer, gameIndex))
             return false;
 
         // Cluster size check
-        int clusterSize = BmAbilityCac.CountClusterOfType(actorType, bm.GetPieceCell(actorPid), gameIndex);
+        int clusterSize = BmCac.CountClusterOfType(actorType, bm.GetPieceCell(actorPid), gameIndex);
         return clusterSize >= Piece.groupBuild_target[actorType];
     }
 
@@ -130,7 +130,7 @@ public static class GroupBuildAction
         for (int cell = 0; cell < cellCount; cell++)
         {
             if (!bm.IsEmpty(cell)) continue;
-            if (!BmAbilityCac.IsCreateGeometryLegal(cell, offerBuild.query.playerId, offerBuild.gameIndex)) continue;
+            if (!BmCac.IsCreateGeometryLegal(cell, offerBuild.query.playerId, offerBuild.gameIndex)) continue;
             int reqDigit = Piece.requiredDigit[targetType];
             if (reqDigit >= 0 && !gameState.ps[offerBuild.query.playerId].HasDigit(reqDigit)) continue;
             var a = new Action
