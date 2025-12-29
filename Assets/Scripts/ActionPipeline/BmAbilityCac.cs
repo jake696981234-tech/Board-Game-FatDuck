@@ -1,8 +1,57 @@
 using System;
+using System.Collections.Generic;
 
 public static class BmAbilityCac
 {
     //The Aim of this script is to contain board Model related Methods, that are needed for abilitys
+
+    public static int[] OccupiedCellsInLine(int StartingCell, int maxRange, int minRange, int direction, bool needsLineOfSight, bool friendlyFire, int player, int gameIndex)
+    {
+        var bm = GameRegistry.game[gameIndex].boardModel;
+
+        if (!bm.IsValidCellId(StartingCell) || maxRange <= 0 || (uint)direction >= 6)
+            return Array.Empty<int>();
+
+        // normalize ranges
+        if (maxRange < minRange) { int t = maxRange; maxRange = minRange; minRange = t; }
+        if (minRange < 1) minRange = 1;
+
+        List<int> occupiedCells = null;
+
+        for (int step = 1; step <= maxRange; step++)
+        {
+            int cell = StepInDirection(StartingCell, direction, step, gameIndex);
+            if (!bm.IsValidCellId(cell) || cell == bm._invalidId)
+                break;
+
+            int occupant = bm.GetCellOccupant(cell);
+
+            // line of sight stops at the first blocker, even if outside minRange
+            if (step < minRange)
+            {
+                if (needsLineOfSight && occupant != bm._invalidId)
+                    break;
+                continue;
+            }
+
+            if (occupant == bm._invalidId)
+                continue;
+
+            if (friendlyFire && bm.GetPieceOwner(occupant) == player)
+            {
+                if (needsLineOfSight) break;
+                continue;
+            }
+
+            occupiedCells ??= new List<int>();
+            occupiedCells.Add(cell);
+
+            if (needsLineOfSight)
+                break;
+        }
+
+        return occupiedCells?.ToArray() ?? Array.Empty<int>();
+    }
 
     /// <summary>
     /// Returns an approximate hex direction index 0..5 from fromCell to toCell,

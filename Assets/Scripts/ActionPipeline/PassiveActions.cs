@@ -4,6 +4,9 @@ using Game.Core;
 
 public static class PassiveActions
 {
+    #region place Restrict
+
+    #endregion
     private const int MaxSacrificeCombos = 64;
 
     /// <summary>

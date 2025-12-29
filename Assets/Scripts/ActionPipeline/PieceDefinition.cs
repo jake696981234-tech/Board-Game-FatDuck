@@ -19,10 +19,10 @@ public static class Piece
         ConversionFactory = 12,
         explosive = 13,
         pieceBuild = 14,
-        Factory = 15,
-        Sanctuary = 16,
-        Eat = 17,
-        placeRestrict = 18,
+        sniper = 15,
+        Factory = 16,
+        Sanctuary = 17,
+        Eat = 18,
     }
 
     public static int typeCount;
@@ -171,15 +171,22 @@ public static class Piece
     public static int[] explosive_damage;
     public static int[] explosive_range;
     #endregion
-    #region 
+    #region piece Build
     public static bool[] pieceBuild_enabled;
     public static int[] pieceBuild_range;
     public static int[][] pieceBuild_targetIds;
     #endregion
-    #region 
-    public static bool[] placeRestrict_enabled;
-    public static int[] placeRestrict_ActionRestricted; //you could change this to a Jagged array if you want multple diffrent options. 
-    public static int[] placeRestrict_type;
+    #region sniper
+    public static bool[] sniper_enabled;
+    public static int[] sniper_minRange;
+    public static int[] sniper_maxRange;
+    public static bool[] sniper_isonlySoldiers;
+    public static int[] sniper_lineLength;
+    #endregion
+    #region Zombie
+    public static bool[] zombie_enabled;
+    #endregion
+    #region necroSpawn
     #endregion
     public static bool IsConnectorConfigAllowed(byte type, int configIndex)
     {

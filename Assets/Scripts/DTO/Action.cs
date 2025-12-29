@@ -81,5 +81,6 @@ namespace Game.Core
         public const byte ConversionFactory = 12;
         public const byte explosive = 13;
         public const byte pieceBuild = 14;
+        public const byte sniper = 15;
     }
 }

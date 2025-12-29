@@ -8,7 +8,7 @@ using System;
 
 public static class ExplosiveAction
 {
-    public static void CreateAction(int pieceId, byte actorType, int cell, ref OfferBuild offerBuild)
+    public static void CreateActions(int pieceId, byte actorType, int cell, ref OfferBuild offerBuild)
     {
         var theAction = new Action
             {

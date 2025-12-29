@@ -1,13 +1,18 @@
-using UnityEngine;
 using Game.Core;
 using Action = Game.Core.Action;
 using static Game.Core.ActionKind; // import enum values
 
-public static class ShootAction
+public static class SniperAction
 {
     public static void CreateActions(int pieceId, byte actorType, int cell, ref OfferBuild offerBuild)
     {
         var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
+
+        //work out Direction and Length-move to its own method when ready
+
+        
+
+
 
         int[] scratch = Scratch.GetScratchCellBuffer(offerBuild.gameIndex);
         int theNumberOfTargets = GetLegalTargets(pieceId, actorType, scratch, offerBuild.gameIndex);
@@ -27,7 +32,9 @@ public static class ShootAction
         }
     }
 
-    public static int GetLegalTargets(int actorPieceId, int actorType, int[] outTargets, int gameIndex)
+
+
+     public static int GetLegalTargets(int actorPieceId, int actorType, int[] outTargets, int gameIndex)
     {
         var bm = GameRegistry.game[gameIndex].boardModel;
 
@@ -35,8 +42,8 @@ public static class ShootAction
         if (originCell < 0) return 0;
         int actorOwner = bm.GetPieceOwner(actorPieceId);
 
-        int rmin = Piece.shoot_rangeMin[actorType];
-        int rmax = Piece.shoot_rangeMax[actorType];
+        int rmin = Piece.sniper_minRange[actorType];
+        int rmax = Piece.sniper_maxRange[actorType];
         if (rmax < rmin) { int t = rmax; rmax = rmin; rmin = t; }
 
         int cap = outTargets != null ? outTargets.Length : 0;
@@ -48,6 +55,7 @@ public static class ShootAction
             int pid = bm.GetCellOccupant(c);
             if (pid < 0) continue;
             if (bm.GetPieceOwner(pid) == actorOwner) continue;
+            if (Piece.sniper_isonlySoldiers[actorType] && !Piece.isBuilding[bm.pieceType[pid]])
 
             int d = bm.Distance(originCell, c);
             if (d < rmin || d > rmax) continue;
@@ -57,22 +65,5 @@ public static class ShootAction
             count++;
         }
         return count;
-    }
-
-    public static void Apply(in Action theAction, byte player, int gameIndex)
-    {
-        var bm = GameRegistry.game[gameIndex].boardModel;
-        var events = GameRegistry.game[gameIndex].eventManager;
-
-        int victimID = theAction.aux;
-        if (victimID < 0) return;
-        int dmg = Piece.shoot_damage[theAction.pieceType];
-        bool killed = GameActions.ApplyDamageWithCapital(theAction.ActorsCellId, victimID, dmg, gameIndex);
-        if (killed)
-        {
-            // Revoke digit from the defender's owner if this type granted one
-            GameActions.pieceKilled(victimID, gameIndex, theAction);
-        }
-        GameActions.RefreshConnectorState(gameIndex);
     }
 }

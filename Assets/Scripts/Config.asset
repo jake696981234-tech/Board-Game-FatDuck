@@ -35,7 +35,7 @@ MonoBehaviour:
     maxRetries: 3
     retryBackoffMs: 250
   dumbGreg:
-    endTurnAfterFirstPct: 0.497
+    endTurnAfterFirstPct: 0.482
     shootInsteadPct: 0.387
     moveAnotherPct: 0.343
     moveBuildingPct: 0.05

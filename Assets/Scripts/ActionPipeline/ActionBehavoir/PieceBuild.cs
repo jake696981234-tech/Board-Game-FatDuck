@@ -4,7 +4,7 @@ using Action = Game.Core.Action;
 using static Game.Core.ActionKind; // import enum values
 using System.Collections.Generic;
 
-public static class pieceBuildAction
+public static class PieceBuildActions
 {
     public static void CreateActions(int pieceId, byte actorType, int cell, ref OfferBuild offerBuild)
     {
