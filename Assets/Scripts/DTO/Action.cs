@@ -82,5 +82,6 @@ namespace Game.Core
         public const byte explosive = 13;
         public const byte pieceBuild = 14;
         public const byte sniper = 15;
+        public const byte necroSpawn = 16;
     }
 }

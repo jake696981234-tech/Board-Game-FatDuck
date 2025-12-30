@@ -16,6 +16,7 @@ public static class CreateAction
         int typeCount = Piece.typeCount;
         for (int type = 0; type < typeCount; type++)
         {
+            if (!Piece.isBuildable[type]) continue; 
             if (!isPieceTypeLegal(type, ref offerBuild)) continue;
             GenerateCompleteCreateActions(in cell, in type, ref offerBuild);
         }
@@ -83,7 +84,7 @@ public static class CreateAction
 
     public static bool isPieceTypeLegal(int type, ref OfferBuild offerBuild)
     {
-        if (!Piece.isBuildable[type]) return false; // buildable gate (CSV flag)
+        
         if (!HasRequiredDigits(type, ref offerBuild)) return false;                                            
         
         bool hasConn = Piece.connectors_enabled[type];

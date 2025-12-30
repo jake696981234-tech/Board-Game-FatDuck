@@ -20,9 +20,10 @@ public static class Piece
         explosive = 13,
         pieceBuild = 14,
         sniper = 15,
-        Factory = 16,
-        Sanctuary = 17,
-        Eat = 18,
+        necroSpawn = 16,
+        Factory = 17,
+        Sanctuary = 18,
+        Eat = 19,
     }
 
     public static int typeCount;
@@ -190,6 +191,9 @@ public static class Piece
     public static bool[] zombie_enabled;
     #endregion
     #region necroSpawn
+    public static bool[] necroSpawn_enabled;
+    public static int[] necroSpawn_range;
+    public static int[] necroSpawn_botSurcharge;
     #endregion
     public static bool IsConnectorConfigAllowed(byte type, int configIndex)
     {

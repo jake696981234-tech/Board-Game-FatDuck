@@ -42,6 +42,7 @@ public class BoardModel
     public int[] pieceFactoryAux;
     public int[] pieceFactoryKillGoalAux;
     public int[] pieceKillCount;
+    public int[] necroSpawnStore;
     public byte[] pieceConnectorConfig; // [pieceId] -> connector configuration index (0-63) if hasConnectors, else 0
     public int[] pieceCapitalHP;       // [pieceId] -> current capital HP buff (0 if none)
 
@@ -272,6 +273,7 @@ public class BoardModel
         Array.Resize(ref pieceHP, newCap);
         Array.Resize(ref pieceFactoryAux, newCap);
         Array.Resize(ref pieceKillCount, newCap);
+        Array.Resize(ref necroSpawnStore, newCap);
         Array.Resize(ref pieceFactoryKillGoalAux, newCap);
         Array.Resize(ref pieceConnectorConfig, newCap);
         Array.Resize(ref pieceCapitalHP, newCap);
@@ -308,6 +310,7 @@ public class BoardModel
             pieceFactoryAux[pieceId] = pieceFactoryAux[last];
             pieceFactoryKillGoalAux[pieceId] = pieceFactoryKillGoalAux[last];
             pieceKillCount[pieceId] = pieceKillCount[last];
+            necroSpawnStore[pieceId] = necroSpawnStore[last];
             pieceConnectorConfig[pieceId] = pieceConnectorConfig[last];
             pieceCapitalHP[pieceId] = pieceCapitalHP[last];
 
@@ -327,7 +330,8 @@ public class BoardModel
         if (hp < 0) hp = 0;
         pieceHP[pieceId] = hp; // clamp to type maxHP happens in GameState via Pieces metadata, if needed
         pieceFactoryAux[pieceId] = 0; //Add to the paramter if you want this to actually have a starting value
-        pieceKillCount[pieceId] = 0;            
+        pieceKillCount[pieceId] = 0;
+        necroSpawnStore[pieceId] = 0;            
         pieceFactoryKillGoalAux[pieceId] = 0;
         pieceConnectorConfig[pieceId] = 0;
         pieceCapitalHP[pieceId] = 0;

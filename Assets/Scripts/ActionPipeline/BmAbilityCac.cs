@@ -124,6 +124,19 @@ public static class BmCac
         return current;
     }
 
+
+    public static int[] CellIdsRingAndLessthanRing(int originCell, int ringSize, bool requireEmpty, int gameIndex)
+    {
+        var cells = Scratch.GetScratchCellBuffer(gameIndex);
+        List<int> fullCells = new List<int>(256);
+        for (int i = 0; i < ringSize; i++)
+        {
+            cellIdsRingAroundCell(originCell, ringSize, requireEmpty, cells, gameIndex);
+            fullCells.AddRange(cells);
+        }
+        return fullCells.ToArray();
+    }
+
     /// <summary>
     /// Collects all cells at EXACT hex ringSize == ringSize from originCell.
     /// If requireEmpty == true, only returns empty cells.
