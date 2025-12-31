@@ -4,7 +4,7 @@ using Action = Game.Core.Action;
 using static Game.Core.ActionKind; // import enum values
 using System;
 
-public static class NecroSpawn
+public static class NecroSpawnActions
 {
         public static void CreateActions(
         int actorPid,

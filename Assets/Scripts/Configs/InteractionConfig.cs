@@ -45,4 +45,6 @@ public class InteractionConfig : ScriptableObject
 
     public bool DelayOnActions = false;
     public float TimeDelayOnActions = 0.1f;
+
+    public bool HumanTimeDecrease = false;
 }

@@ -26,29 +26,7 @@ public static class GroupBuildAction
         }
     }
 
-    public static bool IsLegal(int actorPid, int abilityId, in Game.Core.Action a, byte currentPlayer, int gameIndex)
-    {
-        var bm = GameRegistry.game[gameIndex].boardModel;
-        var gameState = GameRegistry.game[gameIndex].gameState;
-
-        byte actorType = bm.GetPieceType(actorPid);
-        if (!Piece.groupBuild_enabled[actorType]) return false;
-        int targetType = Piece.groupBuild_target[actorType];
-        if (targetType < 0 || targetType >= Piece.typeCount) return false;
-
-        // Create legality for target type at dstCell
-        if (bm.GetCellOccupant(a.TargetCellId) >= 0) return false;
-        int reqDigit = Piece.requiredDigit[(byte)targetType];
-        if (reqDigit >= 0 && !gameState.ps[currentPlayer].HasDigit(reqDigit)) return false;
-
-        // geometric create gate (core/building adjacency)
-        if (!BmCac.IsCreateGeometryLegal(a.TargetCellId, currentPlayer, gameIndex))
-            return false;
-
-        // Cluster size check
-        int clusterSize = BmCac.CountClusterOfType(actorType, bm.GetPieceCell(actorPid), gameIndex);
-        return clusterSize >= Piece.groupBuild_target[actorType];
-    }
+    
 
     public static void Apply(in Action theAction, byte p, int gameIndex)
     {
@@ -138,7 +116,7 @@ public static class GroupBuildAction
                 kind = GroupBuild,
                 pieceType = targetType,
                 ActorsCellId = (ushort)clusterRepresentativeCell,
-                TargetCellId = (ushort)cell,
+                TargetCellId = (ushort)actorType,
                 aux = 0
             };
             OfferProvider.Emit(a, ref offerBuild);

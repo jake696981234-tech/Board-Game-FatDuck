@@ -10,8 +10,7 @@ public static class UIBridge
     public static GameState gameState;
     public static BoardModel bm;
     private static int gameIndex;
-    public static bool IsCurrentPlayer = false;
-
+    public static bool IsCurrentPlayerTheHuman => gameState.CurrentPlayerId == _humanPlayer;
     public static byte _humanPlayer;
 
     public static void Init(HumanInteractionController theHic, int theGameIndex, byte seat)
@@ -22,7 +21,6 @@ public static class UIBridge
         var events = GameRegistry.game[gameIndex].eventManager;
 
         _humanPlayer = seat;
-        IsCurrentPlayer = UIBridge.gameState.CurrentPlayerId == _humanPlayer;
 
 
         snapShotHistory.Clear();
@@ -34,6 +32,12 @@ public static class UIBridge
 
         ShowLeftPanel.HudRefresh();
         showBoard.IndexCellViews();
+
+        if (UI.hic.config.HumanTimeDecrease)
+        { 
+            GameObject TimeDecrease = new GameObject("TimeDecrease");
+            TimeDecrease.AddComponent<HCost>();
+        }
     }
 
 
@@ -134,9 +138,9 @@ public static class UIBridge
 
         snapShotNumber = Mathf.Clamp(snapShotNumber, 0, snapShotHistory.Count - 1);
 
-        if (!UI.hic.config.ManualStepThroughSnapShots || snapShotHistory.Count == 1 || (!IsCurrentPlayer && snapShotNumber < snapShotHistory.Count))
+        if (!UI.hic.config.ManualStepThroughSnapShots || snapShotHistory.Count == 1 || (!IsCurrentPlayerTheHuman && snapShotNumber < snapShotHistory.Count))
         {
-            if (UI.hic.config.DelayOnActions && !IsCurrentPlayer)
+            if (UI.hic.config.DelayOnActions && !IsCurrentPlayerTheHuman)
             {
                 UI.hic.EnqueueSnapshotForDelayedApply(s);
             }

@@ -23,5 +23,13 @@ public sealed class ActionListItemView : MonoBehaviour
         button.onClick.RemoveAllListeners();
         button.onClick.AddListener(() => onClick?.Invoke(_data));
         button.interactable = data.legal; // or true to allow clicking and show why illegal
+
+        setLegality(data.legal);
+    }
+
+    public void setLegality(bool legal)
+    {
+        if (illegalBadge)   illegalBadge.SetActive(!legal);
+        button.interactable = legal; // or true to allow clicking and show why illegal
     }
 }

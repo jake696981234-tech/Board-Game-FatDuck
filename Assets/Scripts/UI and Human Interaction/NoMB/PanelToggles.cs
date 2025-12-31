@@ -13,7 +13,13 @@ public static class PanelToggles
         if (UI.hic.actionExecutePanel) UI.hic.actionExecutePanel.gameObject.SetActive(execute);
         UI.hic.WallCreatePanel1.SetActive(walls);
         UI.hic.WallCreatePanel2.SetActive(secondWalls);
+
+        if (!UI.hic.config.HumanTimeDecrease) return;
+        HCost.UpdateBuild = build;
+        HCost.UpdateBuild = pieceFull;
     }
+
+    
 
 
 

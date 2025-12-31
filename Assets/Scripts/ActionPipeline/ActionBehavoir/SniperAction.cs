@@ -4,9 +4,9 @@ using Action = Game.Core.Action;
 using static Game.Core.ActionKind; // import enum values
 using System.Collections.Generic;
 
-public static class SniperAction
+public static class SniperActions
 {
-    public static void CreateActions(int pieceId, byte actorType, int cell, int player, ref OfferBuild offerBuild)
+    public static void CreateActions(int pieceId, byte actorType, int cell, ref OfferBuild offerBuild)
     {
         var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
 
@@ -20,14 +20,14 @@ public static class SniperAction
             if (Piece.sniper_enabled[PieceIdsTofindDirections[bm.pieceType[i]]])
             {
                 var direction = BmCac.GetDirectionIndex(cell, bm.pieceCellId[i], offerBuild.gameIndex);
-                var OccCellsinDirection = BmCac.OccupiedCellsInLine(cell, 64, 1, direction, false, false, false, player, offerBuild.gameIndex);
+                var OccCellsinDirection = BmCac.OccupiedCellsInLine(cell, 64, 1, direction, false, false, false, offerBuild.query.playerId, offerBuild.gameIndex);
                 if (ifSniperHasRequiredBuildings(actorType, OccCellsinDirection, offerBuild.gameIndex)) directions.Add(direction);
             } 
         }
         if (directions.Count <= 0) return;
         for (int i = 0; i < directions.Count; i++)
         {
-            var victimsCells = BmCac.OccupiedCellsInLine(cell, Piece.sniper_maxRange[actorType], Piece.sniper_minRange[actorType], directions[i], Piece.sniper_isLineOfSight[actorType], Piece.sniper_isFriendlyFire[actorType], Piece.sniper_isonlySoldiers[actorType], player, offerBuild.gameIndex);
+            var victimsCells = BmCac.OccupiedCellsInLine(cell, Piece.sniper_maxRange[actorType], Piece.sniper_minRange[actorType], directions[i], Piece.sniper_isLineOfSight[actorType], Piece.sniper_isFriendlyFire[actorType], Piece.sniper_isonlySoldiers[actorType], offerBuild.query.playerId, offerBuild.gameIndex);
             if (victimsCells.Length <= 0) continue;
 
             var theAction = new Action

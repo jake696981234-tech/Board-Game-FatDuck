@@ -42,10 +42,15 @@ public sealed class BuildMenuItemView : MonoBehaviour
             icon.enabled = (sprite != null);
         }
 
-        if (illegalBadge) illegalBadge.SetActive(!uiInfo.legal);
-
         button.onClick.RemoveAllListeners();
         button.onClick.AddListener(() => onClick?.Invoke(_data, uiInfo));
-        button.interactable = uiInfo.legal; // change to true if you want illegal items clickable for tooltips
+
+        setLegality(uiInfo.legal);
+    }
+
+    public void setLegality(bool legal)
+    {
+        if (illegalBadge) illegalBadge.SetActive(!legal);
+        button.interactable = legal; // change to true if you want illegal items clickable for tooltips
     }
 }

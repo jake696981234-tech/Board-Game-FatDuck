@@ -13,7 +13,8 @@ public sealed class BuildMenuPresenter : MonoBehaviour
 
     public event Action<Game.Core.Action, UIInfo> OnItemClicked;
 
-    private readonly List<BuildMenuItemView> _pool = new();
+    public readonly List<BuildMenuItemView> _pool = new();
+    public List<UIInfo> theUIInfo = new();
 
 
     public void Show(IEnumerable<Game.Core.Action> rawItems, List<UIInfo> uiInfo, InteractionConfig config)
@@ -29,6 +30,8 @@ public sealed class BuildMenuPresenter : MonoBehaviour
         {
             items = filteredBuildOptions(rawItems, uiInfo, out uiInfo);
         }
+
+        theUIInfo = uiInfo;
 
         gameObject.SetActive(true);
         int i = 0;

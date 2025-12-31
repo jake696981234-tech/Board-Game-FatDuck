@@ -38,7 +38,7 @@ namespace Game.Core
                 Zombie(victim, gameIndex, theAction);
                 return;
             }
-            NecroSpawn.Record(gameIndex, victim);
+            NecroSpawnActions.Record(gameIndex, victim);
             pieceKilled(victim, gameIndex);
         }
 

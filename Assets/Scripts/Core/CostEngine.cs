@@ -1,7 +1,7 @@
 using System;
 using Game.Core;
 using Action = Game.Core.Action; // avoid System.Action clash
-
+using static Game.Core.ActionKind; // import enum values
 /// <summary>
 /// CostEngine (pricing-only)
 /// - Pure, allocation-free reads for quoting and affordability checks.
@@ -120,54 +120,56 @@ public static class CostEngine
         { TurnFee = tf; AbilityCost = ac; BuildCost = bc; Total = tf + ac + bc; }
     }
 
-    public static CostBreakdown QuoteBreakdown(in PlayerState cur, in Action a, int gameIndex)
+    public static CostBreakdown QuoteBreakdown(in PlayerState cur, in Action theAction)
     {
-        var bm = GameRegistry.game[gameIndex].boardModel;
+        return new CostBreakdown(turnFee(in cur), botSurcharge(cur, theAction), buildCost(theAction));
+    }
 
-        // Turn fee
-        int k = cur.actionIndexThisTurn;
-        int turnFee = (k == 0) ? 0 : RoundToInt(baseActionCost * MathF.Pow(actionGrowthFactor, k - 1));
-        // botSurcharge surcharge (non-EndTurn/Create)
-        int botSurcharge = 0;
-        if (cur.applyBotSurcharges)
-        {
-            botSurcharge = a.kind switch
-            {
-                (byte)Piece.AbilityKind.Move => Piece.move_botSurcharge[a.pieceType],
-                (byte)Piece.AbilityKind.Shoot => Piece.shoot_botSurcharge[a.pieceType],
-                (byte)Piece.AbilityKind.CaptureVP => Piece.captureVP_botSurcharge[a.pieceType],
-                (byte)Piece.AbilityKind.CoreDamage => Piece.coreDamage_botSurcharge[a.pieceType],
-                (byte)Piece.AbilityKind.GroupBuild => Piece.groupBuild_botSurcharge[a.pieceType],
-                (byte)Piece.AbilityKind.Upgrade => Piece.upgrade_botSurcharge[a.pieceType],
-                (byte)Piece.AbilityKind.Launcher => Piece.launcher_botSurcharge[a.pieceType],
-                (byte)Piece.AbilityKind.Spawner => Piece.spawn_botSurcharge[a.pieceType],
-                (byte)Piece.AbilityKind.SacrificeFactory => Piece.sacrificeFactory_botSurcharge[a.pieceType],
-                (byte)Piece.AbilityKind.ConversionFactory => Piece.conversionFactory_botSurcharge[a.pieceType],
-                _ => 0
-            };
-        }
+    public static int botSurcharge(in PlayerState cur, in Action theAction)
+    {
+        if (!cur.applyBotSurcharges) return 0;
 
-        int buildCost = 0;
-        // Build cost (Create only)
-        if (a.kind == ActionKind.Create)
+        return theAction.kind switch
         {
-            buildCost = Piece.BuildCost[a.pieceType];
-        }
-
-        if (a.kind == ActionKind.Spawner)
-        {
-            int targetType = Piece.spawn_targetType[a.pieceType];
-            int amount = Piece.spawn_pieceAmount[a.pieceType];
-            if (targetType >= 0 && amount > 0) buildCost = Piece.BuildCost[targetType] * amount;
-        }
-        if (a.kind == ActionKind.Upgrade)
-        {
-            buildCost = Piece.BuildCost[a.pieceType];
-        }
-        return new CostBreakdown(turnFee, botSurcharge, buildCost);
+            Move => Piece.move_botSurcharge[theAction.pieceType],
+            Shoot => Piece.shoot_botSurcharge[theAction.pieceType],
+            CaptureVP => Piece.captureVP_botSurcharge[theAction.pieceType],
+            CoreDamage => Piece.coreDamage_botSurcharge[theAction.pieceType],
+            GroupBuild => Piece.groupBuild_botSurcharge[theAction.pieceType],
+            Upgrade => Piece.upgrade_botSurcharge[theAction.pieceType],
+            Launcher => Piece.launcher_botSurcharge[theAction.pieceType],
+            Spawner => Piece.spawn_botSurcharge[theAction.pieceType],
+            SacrificeFactory => Piece.sacrificeFactory_botSurcharge[theAction.pieceType],
+            ConversionFactory => Piece.conversionFactory_botSurcharge[theAction.pieceType],
+            _ => 0
+        };
     }
 
 
+    public static int turnFee(in PlayerState cur)
+    {
+        int k = cur.actionIndexThisTurn;
+        return (k == 0) ? 0 : RoundToInt(baseActionCost * MathF.Pow(actionGrowthFactor, k - 1));
+    }
+
+    public static int buildCost(Action theAction)
+    {
+        return theAction.kind switch
+            {
+                Create => Piece.BuildCost[theAction.pieceType],
+                Upgrade => Piece.BuildCost[theAction.pieceType],
+                Spawner => spawnerBuildCost(theAction),
+                _ => 0
+            };
+    }
+
+    private static int spawnerBuildCost(Action theAction)
+    {
+        int targetType = Piece.spawn_targetType[theAction.pieceType];
+        int amount = Piece.spawn_pieceAmount[theAction.pieceType];
+        if (targetType >= 0 && amount > 0) return Piece.BuildCost[targetType] * amount;
+        return 0;
+    }
 
 
     // ---- NEW: overload that also returns the breakdown (non-breaking addition) ----
@@ -178,25 +180,12 @@ public static class CostEngine
             breakdown = new CostBreakdown(0, 0, 0);
             return true;
         }
-        breakdown = QuoteBreakdown(cur, a, gameIndex);
+        breakdown = QuoteBreakdown(cur, a);
         if (cur.budget < breakdown.Total) return false;
         if (a.kind == ActionKind.CaptureVP && cur.didCaptureVP) return false;
         if (a.kind == ActionKind.CoreDamage && cur.didCoreDamage) return false;
         return true;
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 }
