@@ -136,29 +136,7 @@ public static class GroupBuildAction
             return cells;
         }
 
-    // private static void EnumerateGroupBuildCreates(ref OfferBuild offerBuild, byte targetType, int clusterRepresentativeCell, byte actorType)
-    // {
-    //     var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
-    //     var gameState = GameRegistry.game[offerBuild.gameIndex].gameState;
 
-    //     int cellCount = bm.GetCellCount();
-    //     for (int cell = 0; cell < cellCount; cell++)
-    //     {
-    //         if (!bm.IsEmpty(cell)) continue;
-    //         if (!BmCac.IsCreateGeometryLegal(cell, offerBuild.query.playerId, offerBuild.gameIndex)) continue;
-    //         int reqDigit = Piece.requiredDigit[targetType];
-    //         if (reqDigit >= 0 && !gameState.ps[offerBuild.query.playerId].HasDigit(reqDigit)) continue;
-    //         var a = new Action
-    //         {
-    //             kind = GroupBuild,
-    //             pieceType = targetType,
-    //             ActorsCellId = (ushort)clusterRepresentativeCell,
-    //             TargetCellId = (ushort)actorType,
-    //             aux = 0
-    //         };
-    //         OfferProvider.Emit(a, ref offerBuild);
-    //     }
-    // }
 
     public static void Apply(in Action theAction, byte player, int gameIndex)
     {

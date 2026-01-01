@@ -263,10 +263,13 @@ public static class CreateAction
         var gameState = GameRegistry.game[gameIndex].gameState;
         var bm = GameRegistry.game[gameIndex].boardModel;
 
+         var TargetCell = theAction.TargetCellId;
+         if (theAction.kind == GroupBuild) TargetCell = theAction.ActorsCellId;
+
         PaySacCost(theAction, player, gameIndex);
 
         int pid = bm.AllocateRow();
-        bm.PlacePieceRow(pid, player, (byte)theAction.pieceType, theAction.TargetCellId, Piece.maxHP[theAction.pieceType]);
+        bm.PlacePieceRow(pid, player, (byte)theAction.pieceType, TargetCell, Piece.maxHP[theAction.pieceType]);
         bm.pieceConnectorConfig[pid] = (byte)theAction.aux;
         int g = Piece.digitItGives[(byte)theAction.pieceType];
         if (g >= 0) gameState.ps[player].GrantDigit(g);

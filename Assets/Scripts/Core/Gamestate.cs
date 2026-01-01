@@ -117,11 +117,11 @@ namespace Game.Core
         {
             ref var cur = ref ps[currentPlayer];
 
-            if (!FastCheck(theAction))
-            {
-                Debug.Log("FastCheck returned false");
-                return false;
-            }
+            // if (!FastCheck(theAction))
+            // {
+            //     Debug.Log("FastCheck returned false");
+            //     return false;
+            // }
             // if (!IsItLegal.IsStillLegal(in theAction, currentPlayer, gameIndex))
             // {
             //     Debug.Log("Is Still Legal returned false");

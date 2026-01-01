@@ -270,11 +270,26 @@ public static class PieceActionFilter
     private static void GroupBuildFilter()
     {
         isAux = true;
-        isActionRequiresAux = false;
-        ActionCostRequiresAddCost = Piece.groupBuild_deletion[pieceType];
-        isTargetCellId = false;
-        isAddCost = !Piece.groupBuild_deletion[pieceType];
-        addCost.Clear();
+        isTargetCellId = true;
+
+        if (!isAddCost)
+        {
+            if (UIFilter.uIType != UIFilter.UIType.Cell  || !cachedLegalAddCost.Contains(UIFilter.clickedCellId))
+            {
+                Debug.Log($"Does it contain {!cachedLegalAddCost.Contains(UIFilter.clickedCellId)}");
+                Debug.Log($"Right UI type {UIFilter.uIType != UIFilter.UIType.Cell}");
+                UIFilter.ResetClickedData();
+                return;
+            } 
+            addCost.Add(UIFilter.clickedCellId);
+            ActionCostRequiresAddCost = true;
+            if (addCost.Count == Piece.groupBuild_requireNumber[pieceType])
+            {
+                addCost.Sort();
+                addCost.Reverse();
+                isAddCost = true;
+            } 
+        }
         UIFilter.ResetClickedData();
         showNextActionOption();
     }
@@ -303,15 +318,16 @@ public static class PieceActionFilter
 
         if (!isTargetCellId)
         {
-            if (kind == Upgrade)
+            if (kind == GroupBuild)
             {
-                ShowUpgradeOptions();
+                isTargetCellId = true;
+                CreateActionFilter.SacrificeCostOptions(computeGroupBuildDeletionTargets(), pieceType);
                 UIFilter.ResetClickedData();
                 return;
             }
-            if (kind == GroupBuild)
+            if (kind == Upgrade)
             {
-                TargetGroupBuildOptions();
+                ShowUpgradeOptions();
                 UIFilter.ResetClickedData();
                 return;
             }
@@ -331,13 +347,8 @@ public static class PieceActionFilter
         {
             if (kind == GroupBuild)
             {
-                if (BindGroupBuildSelection())
-                {
-                    UIFilter.ResetClickedData();
-                    showNextActionOption();
-                    return;
-                }
-                UIFilter.reset();
+                CreateActionFilter.SacrificeCostOptions(computeGroupBuildDeletionTargets(), pieceType);
+                UIFilter.ResetClickedData();
                 return;
             } 
             CreateActionFilter.SacrificeCostOptions(CreateActionFilter.computeSacrficeTargets(kind, pieceType, ref cachedLegalAddCost), pieceType);
@@ -346,6 +357,14 @@ public static class PieceActionFilter
         }
 
         if (kind == Upgrade) (pieceType, TargetCellId) = (TargetCellId, (ushort)pieceType);
+
+        if (kind == GroupBuild)
+        {
+            var store = pieceType;
+            pieceType = Piece.groupBuild_target[store];
+            TargetCellId = (ushort)store;
+        }
+
 
 
         if (ActionCostRequiresAddCost && !isActionRequiresAux) // to do- probs need to resort the addcost array order. Look at -case PanelToggles.Mode.SacrificeSelect:- Inside old UIInput, Could be use full code that does this, and few ther essetentials.   
@@ -383,13 +402,12 @@ public static class PieceActionFilter
     {
         List<int> deletionTargets = new List<int>(128);
         var seen = new HashSet<int>();
-        var bm = UIBridge.bm;
         for (int i = 0; i < UIBridge._count; i++)
         {
             var actions = UIBridge._offers[i];
             if (actions.kind != kind) continue;
-            if (actions.pieceType != ActorsCellId) continue;
-            if (actions.ActorsCellId != pieceType) continue;
+            if (pieceType != actions.TargetCellId) continue;
+            if (ActorsCellId != actions.ActorsCellId) continue;
             if (addCost.Count > 0)
             {
                 for (int c = 0; c < addCost.Count; c++)
@@ -409,69 +427,6 @@ public static class PieceActionFilter
     } 
 
 
-
-    // private static void SacrificeCostOptions()
-    // {
-    //     showBoard.ClearHighlights();
-    //     showBoard.ApplyDefaultCellColor(UI.hic.config.defaultCellColor);
-
-    //     showBoard.HighlightCells(CreateActionFilter.computeSacrficeTargets(Upgrade, TargetCellId), UI.hic.config.SacrificeCostCellHighlight);
-    //     PanelToggles.TogglePanels(build: false, create: true, action: false, pieceFull: false, execute: false, walls: false, secondWalls: false); // could change this to sac specfic
-
-    //     UIHelpers.SetBackdropColor(UI.hic.config.createModeBackground);
-    //     UIHelpers.SetPanelBackdropColor(UI.hic.config.createModePanelBackground);
-    //     if (UI.hic.createTitleText) UI.hic.createTitleText.text = $"Choose Sacrfices for the upgrade: {PieceDefinition.name[pieceType]}";
-    //     if (UI.hic.createCostText) UI.hic.createCostText.text = $"Cost: {PieceDefinition.BuildCost[pieceType]}"; //to do, this does not show full cost
-    //     if (UI.hic.createSprite)
-    //     {
-    //         var s = !string.IsNullOrEmpty(PieceDefinition.spritePath[pieceType]) ? Resources.Load<Sprite>(PieceDefinition.spritePath[pieceType]) : null;
-    //         UI.hic.createSprite.sprite = s;
-    //         UI.hic.createSprite.enabled = (s != null);
-    //     }
-
-    //     ShowLeftPanel.HudRefresh();
-    // }
-
-    //  private static IEnumerable<int> computeSacrficeTargets()
-    // {
-    //     List<int> SacrficeTargets = new List<int>(128);
-    //     var seen = new HashSet<int>();
-    //     for (int i = 0; i < UIBridge._count; i++)
-    //     {
-    //         var actions = UIBridge._offers[i];
-    //         if (actions.kind != Upgrade) continue;
-    //         if (actions.pieceType != pieceType) continue;
-    //         if (UIBridge._mask[i] == 0) continue;
-
-    //         if (PieceDefinition.sacrificeCost_isNeedsSpecificPiece[pieceType])
-    //         {
-    //             // Check the type of the sacrificed piece, not the source upgrade type
-    //             int requiredType = PieceDefinition.sacrificeCost_specificPiece[pieceType];
-    //             bool hasRequiredType = false;
-    //             for (int b = 0; b < actions.addCost.Length; b++)
-    //             {
-    //                 int sacrificePid = actions.addCost[b];
-    //                 if (!UIBridge.bm.IsValidPieceId(sacrificePid)) continue;
-    //                 if (UIBridge.bm.GetPieceType(sacrificePid) == requiredType)
-    //                 {
-    //                     hasRequiredType = true;
-    //                     break;
-    //                 }
-    //             }
-    //             if (!hasRequiredType) continue;
-    //         }
-
-    //         //to do - need to remove the prevoius selected option if, there was one
-            
-    //         for (int b = 0; b < PieceDefinition.sacrificeCost_howManyItNeeds[pieceType]; b++)
-    //         {
-    //             if (!seen.Add(actions.addCost[b])) continue; // skip duplicates
-    //             SacrficeTargets.Add(UIBridge.bm.pieceCellId[actions.addCost[b]]); // to do, check if this is the right thing to add
-    //         }    
-    //     }
-    //     cachedLegalAddCost = SacrficeTargets;
-    //     return SacrficeTargets;
-    // } 
 
     private static void secondTargetlauncherOptions() // this is for aux, probs could work for more than just the launcher
     {
@@ -546,22 +501,6 @@ public static class PieceActionFilter
         ShowLeftPanel.HudRefresh();
     }
 
-    private static void TargetGroupBuildOptions()
-    {
-        showBoard.ClearHighlights();
-
-        UIHelpers.SetBackdropColor(UI.hic.config.actionExecuteBackground);
-        UIHelpers.SetPanelBackdropColor(UI.hic.config.actionExecutePanelBackground);
-
-        PanelToggles.TogglePanels(build: false, create: false, action: false, pieceFull: false, execute: true, walls: false, secondWalls: false);
-
-        showBoard.HighlightCells(ComputeGroupBuildTargetCells(), UI.hic.config.actionLegalTargetHighlight);
-
-        if (UI.hic.actionTitleText) UI.hic.actionTitleText.text = $"Action: {kind}";
-        if (UI.hic.actionPieceText) UI.hic.actionPieceText.text = $"Piece #{UIBridge.bm.occupantPieceId[ActorsCellId]}";
-
-        ShowLeftPanel.HudRefresh();
-    }
 
 
     private static IEnumerable<int> ComputeTargetCellsForAction()
@@ -605,36 +544,7 @@ public static class PieceActionFilter
         return targetCells;
     }
 
-    private static bool BindGroupBuildSelection()
-    {
-        int actorCell = ActorsCellId;
-        byte actorType = (byte)pieceType;
-        int buildCell = TargetCellId;
-
-        for (int i = 0; i < UIBridge._count; i++)
-        {
-            var action = UIBridge._offers[i];
-            if (action.kind != GroupBuild) continue;
-            if (UIBridge._mask[i] == 0) continue;
-            if (action.TargetCellId != actorType) continue;
-            if (action.ActorsCellId != buildCell) continue;
-            if (action.addCost == null || action.addCost.Length == 0) continue;
-            if (!action.addCost.Contains(actorCell)) continue;
-
-            addCost = action.addCost.ToList();
-            addCost.Sort();
-            addCost.Reverse();
-
-            pieceType = action.pieceType;
-            ActorsCellId = action.ActorsCellId; // build destination
-            TargetCellId = action.TargetCellId; // actor type
-
-            ActionCostRequiresAddCost = addCost.Count > 0;
-            isAddCost = true;
-            return true;
-        }
-        return false;
-    }
+   
 
     private static IEnumerable<int> ComputeAuxCellsForAction()
     {
@@ -683,6 +593,8 @@ public static class PieceActionFilter
                 moveAddedForCell = true;
             }
 
+            
+
             int kind = action.kind;
             string label = UIHelpers.PrettyAction(action);
             int cost = Mathf.RoundToInt(UIBridge._quoted[i]);
@@ -692,6 +604,10 @@ public static class PieceActionFilter
         
         UI.hic.pieceActionListFull.Show(items);
     }
+
+    //Buildings
+    //Factions
+    //Legal
 
     private static bool IsGroupBuildForSelection(Game.Core.Action action, byte mask)
     {
