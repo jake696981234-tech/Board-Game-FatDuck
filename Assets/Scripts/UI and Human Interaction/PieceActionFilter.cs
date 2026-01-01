@@ -271,6 +271,8 @@ public static class PieceActionFilter
         isAddCost = true;
         isTargetCellId = true;
 
+        if (kind == GroupBuild) TargetCellId = (ushort)Piece.groupBuild_target[pieceType];
+
         UIFilter.ResetClickedData();
         showNextActionOption();
     }
@@ -314,7 +316,9 @@ public static class PieceActionFilter
             return;
         }
 
-        if (kind == Upgrade || kind == GroupBuild) (pieceType, TargetCellId) = (TargetCellId, (ushort)pieceType);
+        if (kind == Upgrade) (pieceType, TargetCellId) = (TargetCellId, (ushort)pieceType);
+        if (kind == GroupBuild) (pieceType, TargetCellId) = (TargetCellId, (ushort)pieceType);
+
 
         if (ActionCostRequiresAddCost && !isActionRequiresAux) // to do- probs need to resort the addcost array order. Look at -case PanelToggles.Mode.SacrificeSelect:- Inside old UIInput, Could be use full code that does this, and few ther essetentials.   
         {
@@ -535,7 +539,7 @@ public static class PieceActionFilter
             if (action.kind == Game.Core.ActionKind.EndTurn) continue; // exclude non-piece actions
             if (action.ActorsCellId != (ushort)ActorsCellId) continue;               // only actions from this piece
             // Upgrade actions carry destination type in pieceType; bypass strict type check for upgrades
-            if ((action.kind != Upgrade || action.kind != GroupBuild) && action.pieceType != pieceType) continue;
+            if ((action.kind != Upgrade & action.kind != GroupBuild) && action.pieceType != pieceType) continue;
 
             // Show only one Move per selected piece unless raw offers requested
             if (action.kind == Game.Core.ActionKind.Move && !UI.hic.config.GiveRawActionOffers)

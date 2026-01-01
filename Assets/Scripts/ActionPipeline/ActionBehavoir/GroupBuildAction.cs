@@ -9,59 +9,96 @@ public static class GroupBuildAction
 {
     public static void CreateActions(int pieceId, byte actorType, int cell, ref OfferBuild offerBuild)
     {
-        int tgtType = Piece.groupBuild_target[actorType];
-        if (tgtType >= 0 && tgtType < Piece.typeCount)
-        {
-            int require = Piece.groupBuild_requireNumber[actorType];
-            if (require > 1)
+        // Cluster check
+        if (!CreateAction.isPieceTypeLegal(actorType, ref offerBuild)) return;
+        int clusterSize = BmCac.CountClusterOfType(actorType, cell, offerBuild.gameIndex);
+        if (clusterSize < Piece.groupBuild_requireNumber[actorType]) return;
+
+        var theAction = new Action
             {
-                // Cluster check
-                int clusterSize = BmCac.CountClusterOfType(actorType, cell, offerBuild.gameIndex);
-                if (clusterSize >= require)
-                {
-                    // Enumerate legal create destinations for target type
-                    EnumerateGroupBuildCreates(ref offerBuild, (byte)tgtType, cell, actorType);
-                }
-            }
+                kind = GroupBuild,
+                pieceType = (byte)Piece.groupBuild_target[actorType],
+                ActorsCellId = (ushort)cell,
+                TargetCellId = (ushort)actorType,
+                aux = 0
+            };
+
+        var actions = new List<Action> {theAction};
+
+        if (!generateGroupBuildClusters(actions, ref offerBuild)) return;
+
+        
+        if (Piece.groupBuild_deletion[actorType]) 
+        {
+            for (int i = 0; i < actions.Count; i++) OfferProvider.Emit(actions[i], ref offerBuild);
+            return;
         }
+        EmitGroupBuild(actions.ToArray(), ref offerBuild);
     }
 
-    
-
-    public static void Apply(in Action theAction, byte p, int gameIndex)
+    public static void EmitGroupBuild(Action[] theActions, ref OfferBuild offerBuild)
     {
-        var gameState = GameRegistry.game[gameIndex].gameState;
-        var bm = GameRegistry.game[gameIndex].boardModel;
-        var events = GameRegistry.game[gameIndex].eventManager;
+        if (CreateAction.PieceLimitReached(ref offerBuild)) return;
 
-        int targetType = theAction.pieceType;
-        int dst = theAction.TargetCellId;
-        int pid = bm.AllocateRow();
-        bm.PlacePieceRow(pid, p, (byte)targetType, dst, Piece.maxHP[targetType]);
-        int g = Piece.digitItGives[(byte)targetType];
-        if (g >= 0) gameState.ps[p].GrantDigit(g);
+        var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
+        int cellCount = bm.GetCellCount();
 
-        int ActorsCellId = theAction.ActorsCellId;
-        int actorPid = bm.GetCellOccupant(ActorsCellId);
-        if (actorPid >= 0)
+        for (int cell = 0; cell < cellCount; cell++)
         {
-            byte actorType = bm.GetPieceType(actorPid);
-            if (Piece.groupBuild_deletion[actorType])
+            if (!CreateAction.isCellLegalPlacement(cell, ref offerBuild)) continue;
+            for (int i = 0; i < theActions.Length; i++)
             {
-                var list = CollectClusterCells(actorType, ActorsCellId, gameIndex);
-                int need = Piece.groupBuild_requireNumber[actorType];
-                list.Sort();
-                for (int i = 0; i < need && i < list.Count; i++)
+                Action theAction = new Action
                 {
-                    int cell = list[i];
-                    int victim = bm.GetCellOccupant(cell);
-                    if (victim >= 0) GameActions.pieceKilled(victim, gameIndex, theAction);
-                }
+                    kind = theActions[i].kind,
+                    pieceType = theActions[i].pieceType,
+                    ActorsCellId = (ushort)cell,
+                    TargetCellId = theActions[i].TargetCellId,
+                    aux = (ushort)theActions[i].aux, // carry config index
+                    addCost = theActions[i].addCost,
+                };
+                OfferProvider.Emit(theAction, ref offerBuild);
             }
         }
-
-        GameActions.RefreshConnectorState(gameIndex);
     }
+
+    private static bool generateGroupBuildClusters(List<Action> actions, ref OfferBuild offerBuild)
+    {
+        if (actions == null || actions.Count == 0) return false;
+
+        var sourceActions = new List<Action>(actions);
+        actions.Clear();
+
+        bool foundAny = false;
+        for (int i = 0; i < sourceActions.Count; i++)
+        {
+            var baseAction = sourceActions[i];
+            byte actorType = (byte)baseAction.TargetCellId;
+            int startCell = baseAction.ActorsCellId;
+
+            var clusterCells = CollectClusterCells(actorType, startCell, offerBuild.gameIndex);
+            if (clusterCells.Count == 0) continue;
+
+            // Deterministic ordering for addCost
+            clusterCells.Sort();
+            clusterCells.Reverse();
+
+            actions.Add(new Action
+            {
+                kind = baseAction.kind,
+                pieceType = baseAction.pieceType,
+                ActorsCellId = baseAction.ActorsCellId,
+                TargetCellId = baseAction.TargetCellId,
+                aux = baseAction.aux,
+                addCost = clusterCells.ToArray()
+            });
+            foundAny = true;
+        }
+
+        return foundAny;
+    }
+
+     
 
     public static List<int> CollectClusterCells(byte type, int startCell, int gameIndex)
         {
@@ -99,27 +136,48 @@ public static class GroupBuildAction
             return cells;
         }
 
-    private static void EnumerateGroupBuildCreates(ref OfferBuild offerBuild, byte targetType, int clusterRepresentativeCell, byte actorType)
-    {
-        var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
-        var gameState = GameRegistry.game[offerBuild.gameIndex].gameState;
+    // private static void EnumerateGroupBuildCreates(ref OfferBuild offerBuild, byte targetType, int clusterRepresentativeCell, byte actorType)
+    // {
+    //     var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
+    //     var gameState = GameRegistry.game[offerBuild.gameIndex].gameState;
 
-        int cellCount = bm.GetCellCount();
-        for (int cell = 0; cell < cellCount; cell++)
+    //     int cellCount = bm.GetCellCount();
+    //     for (int cell = 0; cell < cellCount; cell++)
+    //     {
+    //         if (!bm.IsEmpty(cell)) continue;
+    //         if (!BmCac.IsCreateGeometryLegal(cell, offerBuild.query.playerId, offerBuild.gameIndex)) continue;
+    //         int reqDigit = Piece.requiredDigit[targetType];
+    //         if (reqDigit >= 0 && !gameState.ps[offerBuild.query.playerId].HasDigit(reqDigit)) continue;
+    //         var a = new Action
+    //         {
+    //             kind = GroupBuild,
+    //             pieceType = targetType,
+    //             ActorsCellId = (ushort)clusterRepresentativeCell,
+    //             TargetCellId = (ushort)actorType,
+    //             aux = 0
+    //         };
+    //         OfferProvider.Emit(a, ref offerBuild);
+    //     }
+    // }
+
+    public static void Apply(in Action theAction, byte player, int gameIndex)
+    {
+        groupBuildDeletion(theAction, gameIndex);
+        CreateAction.placePiece(theAction, player, gameIndex);
+    }
+
+    private static void groupBuildDeletion(Action theAction, int gameIndex)
+    {
+        var bm = GameRegistry.game[gameIndex].boardModel;
+
+        if (!Piece.groupBuild_deletion[theAction.TargetCellId]) return;
+        
+        var victimsCells = CollectClusterCells((byte)theAction.TargetCellId, theAction.ActorsCellId, gameIndex);
+        victimsCells.Sort((a, b) => b.CompareTo(a));
+        for (int i = 0; i < Piece.groupBuild_requireNumber[theAction.TargetCellId]; i++)
         {
-            if (!bm.IsEmpty(cell)) continue;
-            if (!BmCac.IsCreateGeometryLegal(cell, offerBuild.query.playerId, offerBuild.gameIndex)) continue;
-            int reqDigit = Piece.requiredDigit[targetType];
-            if (reqDigit >= 0 && !gameState.ps[offerBuild.query.playerId].HasDigit(reqDigit)) continue;
-            var a = new Action
-            {
-                kind = GroupBuild,
-                pieceType = targetType,
-                ActorsCellId = (ushort)clusterRepresentativeCell,
-                TargetCellId = (ushort)actorType,
-                aux = 0
-            };
-            OfferProvider.Emit(a, ref offerBuild);
-        }
+            int victim = bm.GetCellOccupant(victimsCells[i]);
+            GameActions.pieceKilled(victim, gameIndex);
+        }   
     }
 }

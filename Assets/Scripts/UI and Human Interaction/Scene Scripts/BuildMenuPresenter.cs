@@ -16,12 +16,17 @@ public sealed class BuildMenuPresenter : MonoBehaviour
     public readonly List<BuildMenuItemView> _pool = new();
     public List<UIInfo> theUIInfo = new();
 
+    private static bool isWeirdAction(IEnumerable<Game.Core.Action> rawItems) //please rename me
+    {
+        var item = rawItems.FirstOrDefault().kind;
+        return item == Upgrade || item == GroupBuild;
+    }
 
     public void Show(IEnumerable<Game.Core.Action> rawItems, List<UIInfo> uiInfo, InteractionConfig config)
     {
         IEnumerable<Game.Core.Action> items;
         var UiInfo = new List<UIInfo>();
-        if (config.GiveRawActionOffers || rawItems.FirstOrDefault().kind == Upgrade)
+        if (config.GiveRawActionOffers || isWeirdAction(rawItems))
         {
             items = rawItems;
             UiInfo = uiInfo;
@@ -56,9 +61,8 @@ public sealed class BuildMenuPresenter : MonoBehaviour
             if (iHaveAlreadySeenYou.Add(item.pieceType))
             {
                 filteredItems.Add(item);
-                i++;
                 filteredUiInfo.Add(uiInfo[i]);
-
+                i++;
             }
         }
         outUiInfo = filteredUiInfo;
