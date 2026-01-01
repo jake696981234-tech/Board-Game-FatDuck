@@ -52,9 +52,9 @@ public static class GroupBuildAction
                 {
                     kind = theActions[i].kind,
                     pieceType = theActions[i].pieceType,
-                    ActorsCellId = (ushort)cell,
+                    ActorsCellId = theActions[i].ActorsCellId,
                     TargetCellId = theActions[i].TargetCellId,
-                    aux = (ushort)theActions[i].aux, // carry config index
+                    aux = (ushort)cell, 
                     addCost = theActions[i].addCost,
                 };
                 OfferProvider.Emit(theAction, ref offerBuild);
@@ -162,7 +162,7 @@ public static class GroupBuildAction
 
     public static void Apply(in Action theAction, byte player, int gameIndex)
     {
-        groupBuildDeletion(theAction, gameIndex);
+        if (Piece.groupBuild_deletion[theAction.TargetCellId]) groupBuildDeletion(theAction, gameIndex);
         CreateAction.placePiece(theAction, player, gameIndex);
     }
 
@@ -170,13 +170,9 @@ public static class GroupBuildAction
     {
         var bm = GameRegistry.game[gameIndex].boardModel;
 
-        if (!Piece.groupBuild_deletion[theAction.TargetCellId]) return;
-        
-        var victimsCells = CollectClusterCells((byte)theAction.TargetCellId, theAction.ActorsCellId, gameIndex);
-        victimsCells.Sort((a, b) => b.CompareTo(a));
-        for (int i = 0; i < Piece.groupBuild_requireNumber[theAction.TargetCellId]; i++)
+        for (int i = 0; i < theAction.addCost.Length; i++)
         {
-            int victim = bm.GetCellOccupant(victimsCells[i]);
+            int victim = bm.GetCellOccupant(theAction.addCost[i]);
             GameActions.pieceKilled(victim, gameIndex);
         }   
     }

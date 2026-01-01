@@ -79,7 +79,7 @@ public static class CreateActionFilter
         }
         if (!isAddCost)
         {
-            SacrificeCostOptions(kind, pieceType, ref cachedLegalAddCost);
+            SacrificeCostOptions(computeSacrficeTargets(kind, pieceType, ref cachedLegalAddCost), pieceType);
             UIFilter.ResetClickedData();
             return;
         }
@@ -239,12 +239,12 @@ public static class CreateActionFilter
         PanelToggles.TogglePanels(build: false, create: false, action: false, pieceFull: false, execute: false, walls: false, secondWalls: true);
     }
 
-    public static void SacrificeCostOptions(byte inkind, int inPieceType, ref List<int> cachedLegalTargets)
+    public static void SacrificeCostOptions(IEnumerable<int> Targets, int inPieceType)
     {
         showBoard.ClearHighlights();
         showBoard.ApplyDefaultCellColor(UI.hic.config.defaultCellColor);
 
-        showBoard.HighlightCells(computeSacrficeTargets(inkind, inPieceType, ref cachedLegalTargets), UI.hic.config.SacrificeCostCellHighlight);
+        showBoard.HighlightCells(Targets, UI.hic.config.SacrificeCostCellHighlight);
         PanelToggles.TogglePanels(build: false, create: true, action: false, pieceFull: false, execute: false, walls: false, secondWalls: false); // could change this to sac specfic
 
         UIHelpers.SetBackdropColor(UI.hic.config.createModeBackground);

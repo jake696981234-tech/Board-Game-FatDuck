@@ -68,10 +68,12 @@ public static class PieceActionFilter
                 launcherFilter();
                 return;
             case CaptureVP:
-            case GroupBuild:
             case CoreDamage:
             case ConversionFactory:
                 SetOneInputKindFilter();
+                return;
+            case GroupBuild:
+                GroupBuildFilter();
                 return;
         }
         Debug.Log($"Missing Ability Kind Filter {kind}");
@@ -265,13 +267,23 @@ public static class PieceActionFilter
         showNextActionOption();
     }
 
+    private static void GroupBuildFilter()
+    {
+        isAux = true;
+        isActionRequiresAux = false;
+        ActionCostRequiresAddCost = Piece.groupBuild_deletion[pieceType];
+        isTargetCellId = false;
+        isAddCost = !Piece.groupBuild_deletion[pieceType];
+        addCost.Clear();
+        UIFilter.ResetClickedData();
+        showNextActionOption();
+    }
+
     private static void SetOneInputKindFilter()
     {
         isAux = true;
         isAddCost = true;
         isTargetCellId = true;
-
-        if (kind == GroupBuild) TargetCellId = (ushort)Piece.groupBuild_target[pieceType];
 
         UIFilter.ResetClickedData();
         showNextActionOption();
@@ -297,6 +309,12 @@ public static class PieceActionFilter
                 UIFilter.ResetClickedData();
                 return;
             }
+            if (kind == GroupBuild)
+            {
+                TargetGroupBuildOptions();
+                UIFilter.ResetClickedData();
+                return;
+            }
             TargetCellIdsOptions();
             UIFilter.ResetClickedData();
             return;
@@ -311,13 +329,23 @@ public static class PieceActionFilter
 
         if (!isAddCost)
         {
-            CreateActionFilter.SacrificeCostOptions(kind, TargetCellId, ref cachedLegalAddCost);
+            if (kind == GroupBuild)
+            {
+                if (BindGroupBuildSelection())
+                {
+                    UIFilter.ResetClickedData();
+                    showNextActionOption();
+                    return;
+                }
+                UIFilter.reset();
+                return;
+            } 
+            CreateActionFilter.SacrificeCostOptions(CreateActionFilter.computeSacrficeTargets(kind, pieceType, ref cachedLegalAddCost), pieceType);
             UIFilter.ResetClickedData();
             return;
         }
 
         if (kind == Upgrade) (pieceType, TargetCellId) = (TargetCellId, (ushort)pieceType);
-        if (kind == GroupBuild) (pieceType, TargetCellId) = (TargetCellId, (ushort)pieceType);
 
 
         if (ActionCostRequiresAddCost && !isActionRequiresAux) // to do- probs need to resort the addcost array order. Look at -case PanelToggles.Mode.SacrificeSelect:- Inside old UIInput, Could be use full code that does this, and few ther essetentials.   
@@ -350,6 +378,35 @@ public static class PieceActionFilter
         }
         Debug.Log($"showNextActionOption failed this is very unexpected");
     }
+
+    public static IEnumerable<int> computeGroupBuildDeletionTargets()
+    {
+        List<int> deletionTargets = new List<int>(128);
+        var seen = new HashSet<int>();
+        var bm = UIBridge.bm;
+        for (int i = 0; i < UIBridge._count; i++)
+        {
+            var actions = UIBridge._offers[i];
+            if (actions.kind != kind) continue;
+            if (actions.pieceType != ActorsCellId) continue;
+            if (actions.ActorsCellId != pieceType) continue;
+            if (addCost.Count > 0)
+            {
+                for (int c = 0; c < addCost.Count; c++)
+                {
+                    if (!actions.addCost.Contains(addCost[c])) continue;
+                }
+            } 
+            
+            for (int b = 0; b < actions.addCost.Length; b++)
+            {
+                if (!seen.Add(actions.addCost[b])) continue; // skip duplicates
+                deletionTargets.Add(actions.addCost[b]); 
+            }
+        }
+        cachedLegalAddCost = deletionTargets;
+        return deletionTargets;
+    } 
 
 
 
@@ -489,9 +546,28 @@ public static class PieceActionFilter
         ShowLeftPanel.HudRefresh();
     }
 
+    private static void TargetGroupBuildOptions()
+    {
+        showBoard.ClearHighlights();
+
+        UIHelpers.SetBackdropColor(UI.hic.config.actionExecuteBackground);
+        UIHelpers.SetPanelBackdropColor(UI.hic.config.actionExecutePanelBackground);
+
+        PanelToggles.TogglePanels(build: false, create: false, action: false, pieceFull: false, execute: true, walls: false, secondWalls: false);
+
+        showBoard.HighlightCells(ComputeGroupBuildTargetCells(), UI.hic.config.actionLegalTargetHighlight);
+
+        if (UI.hic.actionTitleText) UI.hic.actionTitleText.text = $"Action: {kind}";
+        if (UI.hic.actionPieceText) UI.hic.actionPieceText.text = $"Piece #{UIBridge.bm.occupantPieceId[ActorsCellId]}";
+
+        ShowLeftPanel.HudRefresh();
+    }
+
 
     private static IEnumerable<int> ComputeTargetCellsForAction()
     {
+        if (kind == GroupBuild) return ComputeGroupBuildTargetCells();
+
         List<int> targetCells = new List<int>(128);
 
         for (int i = 0; i < UIBridge._count; i++)
@@ -506,6 +582,58 @@ public static class PieceActionFilter
         }
         cachedLegalTargetCellId = targetCells;
         return targetCells;
+    }
+
+    private static IEnumerable<int> ComputeGroupBuildTargetCells()
+    {
+        List<int> targetCells = new List<int>(128);
+        int actorCell = ActorsCellId;
+        byte actorType = (byte)pieceType;
+
+        for (int i = 0; i < UIBridge._count; i++)
+        {
+            var action = UIBridge._offers[i];
+            if (action.kind != GroupBuild) continue;
+            if (UIBridge._mask[i] == 0) continue;
+            if (action.TargetCellId != actorType) continue;
+            if (action.addCost == null || action.addCost.Length == 0) continue;
+            if (!action.addCost.Contains(actorCell)) continue;
+            if (!targetCells.Contains(action.ActorsCellId))
+                targetCells.Add(action.ActorsCellId);
+        }
+        cachedLegalTargetCellId = targetCells;
+        return targetCells;
+    }
+
+    private static bool BindGroupBuildSelection()
+    {
+        int actorCell = ActorsCellId;
+        byte actorType = (byte)pieceType;
+        int buildCell = TargetCellId;
+
+        for (int i = 0; i < UIBridge._count; i++)
+        {
+            var action = UIBridge._offers[i];
+            if (action.kind != GroupBuild) continue;
+            if (UIBridge._mask[i] == 0) continue;
+            if (action.TargetCellId != actorType) continue;
+            if (action.ActorsCellId != buildCell) continue;
+            if (action.addCost == null || action.addCost.Length == 0) continue;
+            if (!action.addCost.Contains(actorCell)) continue;
+
+            addCost = action.addCost.ToList();
+            addCost.Sort();
+            addCost.Reverse();
+
+            pieceType = action.pieceType;
+            ActorsCellId = action.ActorsCellId; // build destination
+            TargetCellId = action.TargetCellId; // actor type
+
+            ActionCostRequiresAddCost = addCost.Count > 0;
+            isAddCost = true;
+            return true;
+        }
+        return false;
     }
 
     private static IEnumerable<int> ComputeAuxCellsForAction()
@@ -537,9 +665,16 @@ public static class PieceActionFilter
         {
             var action = UIBridge._offers[i];
             if (action.kind == Game.Core.ActionKind.EndTurn) continue; // exclude non-piece actions
-            if (action.ActorsCellId != (ushort)ActorsCellId) continue;               // only actions from this piece
-            // Upgrade actions carry destination type in pieceType; bypass strict type check for upgrades
-            if ((action.kind != Upgrade & action.kind != GroupBuild) && action.pieceType != pieceType) continue;
+            if (action.kind == GroupBuild)
+            {
+                if (!IsGroupBuildForSelection(action, UIBridge._mask[i])) continue;
+            }
+            else
+            {
+                if (action.ActorsCellId != (ushort)ActorsCellId) continue;               // only actions from this piece
+                // Upgrade actions carry destination type in pieceType; bypass strict type check for upgrades
+                if (action.kind != Upgrade && action.pieceType != pieceType) continue;
+            }
 
             // Show only one Move per selected piece unless raw offers requested
             if (action.kind == Game.Core.ActionKind.Move && !UI.hic.config.GiveRawActionOffers)
@@ -556,6 +691,16 @@ public static class PieceActionFilter
         }
         
         UI.hic.pieceActionListFull.Show(items);
+    }
+
+    private static bool IsGroupBuildForSelection(Game.Core.Action action, byte mask)
+    {
+        if (mask == 0) return false;
+        int actorCell = ActorsCellId;
+        byte actorType = (byte)pieceType;
+        if (action.TargetCellId != actorType) return false;
+        if (action.addCost == null || action.addCost.Length == 0) return false;
+        return action.addCost.Contains(actorCell);
     }
 
 }
