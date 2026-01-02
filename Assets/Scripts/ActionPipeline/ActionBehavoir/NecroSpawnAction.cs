@@ -25,7 +25,7 @@ public static class NecroSpawnActions
             {
                 Action theAction = new Game.Core.Action
                 {
-                    kind = necroSpawn,
+                    kind = NecroSpawn,
                     pieceType = (byte)actorType,
                     ActorsCellId = (ushort)actorCell,
                     TargetCellId = (ushort)emptyCells[i],

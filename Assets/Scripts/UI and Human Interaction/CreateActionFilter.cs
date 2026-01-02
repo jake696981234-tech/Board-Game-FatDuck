@@ -211,8 +211,14 @@ public static class CreateActionFilter
 
         UIHelpers.SetBackdropColor(UI.hic.config.createModeBackground);
         UIHelpers.SetPanelBackdropColor(UI.hic.config.createModePanelBackground);
-        if (UI.hic.createTitleText) UI.hic.createTitleText.text = $"Create: {Piece.name[pieceType]}";
-        if (UI.hic.createCostText) UI.hic.createCostText.text = $"Cost: {Piece.BuildCost[pieceType]}"; //to do, this does not show full cost
+        var BuildCost = Piece.BuildCost[pieceType];
+        totalCost = BuildCost - ShowLeftPanel.curActionFee;
+
+        UI.hic.createTitleText.text = $"Create: {Piece.name[pieceType]}";
+        UI.hic.createCostText.text = $"Build Cost: {BuildCost}"; 
+        UI.hic.createActionTurnFee.text = $"Action Fee: {ShowLeftPanel.curActionFee}"; 
+        if (UI.hic.createTotalCost) UI.hic.createTotalCost.text = $"Total Cost: {totalCost}"; 
+        UpdateCreateCost();
         if (UI.hic.createSprite)
         {
             var s = !string.IsNullOrEmpty(Piece.spritePath[pieceType]) ? Resources.Load<Sprite>(Piece.spritePath[pieceType]) : null;
@@ -222,6 +228,15 @@ public static class CreateActionFilter
 
         ShowLeftPanel.HudRefresh();
     }
+
+    private static int totalCost; //do not refrence this value
+    public static void UpdateCreateCost()
+    {
+        var budgetAfter = UIBridge.gameState.ps[UIBridge._humanPlayer].budget - totalCost;
+        if (UI.hic.createBudgetAfter) UI.hic.createBudgetAfter.text = $"Budget After: {budgetAfter}"; 
+    }
+
+
 
     // need to add go back to defualt Option
     private static void NumberOfWallOptions()

@@ -17,6 +17,7 @@ public static class PanelToggles
         if (!UI.hic.config.HumanTimeDecrease) return;
         HCost.UpdateBuild = build;
         HCost.UpdateBuild = pieceFull;
+        HCost.UpdateCreate = create;
     }
 
     

@@ -40,6 +40,11 @@ public sealed class HumanInteractionController : MonoBehaviour
     public GameObject WallCreatePanel1;
     public TMP_Text createTitleText;
     public TMP_Text createCostText;
+    public TMP_Text createActionTurnFee;
+    public TMP_Text createTotalCost;
+    public TMP_Text createBudgetAfter;
+
+
     public Image createSprite;
 
     public GameObject WallOptionPanelObject;
@@ -71,6 +76,8 @@ public sealed class HumanInteractionController : MonoBehaviour
     [Header("HUD / Player Panel - Personal")]
     public TMP_Text Personal_BudgetText;
     public TMP_Text Personal_VPText;
+    public TMP_Text Personal_ActionFee;
+    public TMP_Text Personal_BudgetAfterActionFee;
     public TMP_Text Personal_CoreHPText;
     public Image Personal_TintSwatch; // optional
 

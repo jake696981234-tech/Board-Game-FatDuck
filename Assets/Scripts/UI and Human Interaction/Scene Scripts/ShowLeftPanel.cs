@@ -110,6 +110,7 @@ public static class ShowLeftPanel
         if (tintImg) tintImg.enabled = false;
     }
 
+    public static int curActionFee; 
     public static void HudRefresh()
     {
         if (UIBridge.gameState == null) return;
@@ -120,6 +121,9 @@ public static class ShowLeftPanel
 
         // --- Personal stats (your seat) ---
         if (UI.hic.Personal_BudgetText) UI.hic.Personal_BudgetText.text = "Budget: " + $"{Mathf.RoundToInt(UIBridge.gameState.GetBudget(UIBridge._humanPlayer))}";
+        curActionFee = CostEngine.turnFee(in UIBridge.gameState.ps[UIBridge._humanPlayer]);
+        if (UI.hic.Personal_ActionFee) UI.hic.Personal_ActionFee.text = "Action Fee: " + $"{curActionFee}";
+        
         if (UI.hic.Personal_VPText) UI.hic.Personal_VPText.text = "VP: " + $"{UIBridge.gameState.GetVP(UIBridge._humanPlayer)}";
         if (UI.hic.Personal_CoreHPText) UI.hic.Personal_CoreHPText.text = "Core Hp: " + $"{UIBridge.gameState.GetCoreHealth(UIBridge._humanPlayer)}";
         // Tint swatch optional; if you have a palette somewhere you can assign it here.

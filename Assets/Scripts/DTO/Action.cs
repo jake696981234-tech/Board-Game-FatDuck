@@ -79,9 +79,9 @@ namespace Game.Core
         public const byte Spawner = 10;
         public const byte SacrificeFactory = 11;
         public const byte ConversionFactory = 12;
-        public const byte explosive = 13;
-        public const byte pieceBuild = 14;
-        public const byte sniper = 15;
-        public const byte necroSpawn = 16;
+        public const byte Explosive = 13;
+        public const byte PieceBuild = 14;
+        public const byte Sniper = 15;
+        public const byte NecroSpawn = 16;
     }
 }

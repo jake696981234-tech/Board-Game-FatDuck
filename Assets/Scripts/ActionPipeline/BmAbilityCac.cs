@@ -100,6 +100,27 @@ public static class BmCac
         return bestDir;
     }
 
+    public static int ReverseDirection(int dir)
+    {
+        return (dir >= 0 && dir < 6) ? (dir + 3) % 6 : -1;
+    }
+
+    public static bool TryReverseDirection(int cell, int dir, int gameIndex, out int reversedDir)
+    {
+        reversedDir = -1;
+        var bm = GameRegistry.game[gameIndex].boardModel;
+        if (!bm.IsValidCellId(cell)) return false;
+
+        int rev = ReverseDirection(dir);
+        if (rev < 0) return false;
+
+        int neighbor = bm.geo.neighborsById[cell][rev];
+        if (neighbor < 0) return false;
+
+        reversedDir = rev;
+        return true;
+    }
+
     /// <summary>
     /// Walks up to <paramref name="steps"/> steps from startCell in direction dir.
     /// Stops early if off-board. Returns final cellId or InvalidId if we stepped off.

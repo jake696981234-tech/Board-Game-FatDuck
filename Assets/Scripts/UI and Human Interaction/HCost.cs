@@ -4,6 +4,7 @@ public class HCost : MonoBehaviour
 {
     public static bool UpdateBuild = false;
     public static bool UpdatePieceActions = false;
+    public static bool UpdateCreate = false;
     float secondAccumulator;
 
     void Update()
@@ -22,7 +23,9 @@ public class HCost : MonoBehaviour
         UIBridge.gameState.ps[UIBridge._humanPlayer].budget -= 1;
 
         UI.hic.Personal_BudgetText.text = "Budget: " + $"{UIBridge.gameState.ps[UIBridge._humanPlayer].budget}";
+        UI.hic.Personal_BudgetAfterActionFee.text = "Budget - Action Fee: " + $"{UIBridge.gameState.ps[UIBridge._humanPlayer].budget - ShowLeftPanel.curActionFee}";
         if (UpdateBuild) UpdateBuildActionsLegality();
+        if (UpdateCreate) CreateActionFilter.UpdateCreateCost();
         if (UpdatePieceActions) UpdatePieceActionsLegality();
     }
 

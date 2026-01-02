@@ -223,6 +223,11 @@ namespace Game.Core
                 case EndTurn: ApplyEndTurn(); break; // unreachable due to early return above
                 case SacrificeFactory: SacrificeFactoryAction.Apply(in theAction, currentPlayer, gameIndex); break;
                 case ConversionFactory: ConversionFactoryAction.Apply(in theAction, currentPlayer, gameIndex); break;
+                case Explosive: ExplosiveAction.Apply(in theAction, currentPlayer, gameIndex); break;
+                // case PieceBuild: PieceBuildAction.Apply(in theAction, currentPlayer, gameIndex); break;
+                case Sniper: SniperAction.Apply(in theAction, currentPlayer, gameIndex); break;
+                case NecroSpawn: SniperAction.Apply(in theAction, currentPlayer, gameIndex); break;
+                
                 default:
                     Debug.Log("Find Action Match returned false");
                     return false;
@@ -277,7 +282,7 @@ namespace Game.Core
 
         private bool FastCheck(in Action a)
         {
-            if (a.kind > pieceBuild) return false;
+            if (a.kind > PieceBuild) return false;
             if (currentPlayer >= 4) return false;
             return true;
         }

@@ -12,7 +12,7 @@ public static class ExplosiveAction
     {
         var theAction = new Action
             {
-                kind = explosive,
+                kind = Explosive,
                 pieceType = actorType,
                 ActorsCellId = (ushort)cell,
                 TargetCellId = (ushort)cell,

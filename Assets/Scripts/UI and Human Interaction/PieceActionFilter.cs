@@ -56,6 +56,7 @@ public static class PieceActionFilter
             case Shoot:
             case Push:
             case SacrificeFactory:
+            case Sniper:
                 SetShootKindFilter();
                 return;
              case Upgrade:
@@ -363,6 +364,21 @@ public static class PieceActionFilter
             var store = pieceType;
             pieceType = Piece.groupBuild_target[store];
             TargetCellId = (ushort)store;
+        }
+
+        if (kind == Sniper)
+        {
+            for (int i = 0; i < UIBridge._count; i++)
+            {
+                var action = UIBridge._offers[i];
+                if (action.kind != kind) continue;
+                if (action.ActorsCellId != ActorsCellId) continue;
+                if (action.pieceType != pieceType) continue;
+                if (action.TargetCellId != TargetCellId) continue;
+                if (UIBridge._mask[i] == 0) continue; // masked out = illegal
+                aux = action.aux;
+            }
+  
         }
 
 
