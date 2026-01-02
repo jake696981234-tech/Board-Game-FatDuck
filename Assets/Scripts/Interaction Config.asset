@@ -34,3 +34,4 @@ MonoBehaviour:
   ManualStepThroughSnapShots: 0
   DelayOnActions: 0
   TimeDelayOnActions: 0.21
+  HumanTimeDecrease: 1

@@ -38,6 +38,8 @@ public static class UIBridge
             GameObject TimeDecrease = new GameObject("TimeDecrease");
             TimeDecrease.AddComponent<HCost>();
         }
+
+        ShowRightPanel.BuildMeanufilterSubscribe();
     }
 
 

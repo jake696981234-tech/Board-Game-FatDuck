@@ -13,6 +13,14 @@ public sealed class HumanInteractionController : MonoBehaviour
 {
     #region Refrences
 
+    [Header("Create Menu Filters")]
+    public Button legalButtonFilter;
+    public Button BuildingButtonFilter;
+    public Button SolidierButtonFilter;
+    public Button BearButtonFilter;
+    public Button PenguinButtonFilter;
+    public Button FrogButtonFilter;
+
     [Header("Config & Refs")]
     public InteractionConfig config;
 

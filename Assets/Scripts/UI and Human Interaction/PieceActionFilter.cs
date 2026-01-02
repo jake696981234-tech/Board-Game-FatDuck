@@ -565,6 +565,10 @@ public static class PieceActionFilter
         return targetAuxCells;
     }
 
+    
+    
+    
+    
 
     private static void PushPieceActionListForSelection()
     {
@@ -593,12 +597,14 @@ public static class PieceActionFilter
                 moveAddedForCell = true;
             }
 
+            bool legal = UIBridge._mask[i] != 0;
+
             
 
             int kind = action.kind;
             string label = UIHelpers.PrettyAction(action);
             int cost = Mathf.RoundToInt(UIBridge._quoted[i]);
-            bool legal = UIBridge._mask[i] != 0;
+            
             items.Add(new ActionItem(i.ToString(), label, cost, legal, Array.Empty<int>(), kind));
         }
         
