@@ -22,37 +22,40 @@ public sealed class BuildMenuPresenter : MonoBehaviour
         return item == Upgrade || item == GroupBuild;
     }
 
-    public void Show(IEnumerable<Game.Core.Action> rawItems, List<UIInfo> uiInfo, InteractionConfig config)
+    public void Show(IEnumerable<Game.Core.Action> rawItems, InteractionConfig config)
     {
         IEnumerable<Game.Core.Action> items;
-        var UiInfo = new List<UIInfo>();
+        
         if (config.GiveRawActionOffers || isWeirdAction(rawItems))
         {
             items = rawItems;
-            UiInfo = uiInfo;
         }
         else
         {
-            items = filteredBuildOptions(rawItems, uiInfo, out uiInfo);
+            items = filteredBuildOptions(rawItems);
         }
 
-        theUIInfo = uiInfo;
+        
 
         gameObject.SetActive(true);
+        List<UIInfo> UiInfo = new();
         int i = 0;
         foreach (var item in items)
         {
+            UIInfo uiinfo = new(UIBridge.gameState.ps[UIBridge._humanPlayer].budget > Piece.BuildCost[item.pieceType], Piece.BuildCost[item.pieceType]);
+            UiInfo.Add(uiinfo);
+            
             var view = Ensure(i++);
-            view.Bind(item, uiInfo[i - 1], OnItemClicked);
+            view.Bind(item, uiinfo, OnItemClicked);
             view.gameObject.SetActive(true);
         }
         for (; i < _pool.Count; i++) _pool[i].gameObject.SetActive(false);
+        theUIInfo = UiInfo;
     }
 
-    private IEnumerable<Game.Core.Action> filteredBuildOptions(IEnumerable<Game.Core.Action> items, List<UIInfo> uiInfo, out List<UIInfo> outUiInfo)
+    private IEnumerable<Game.Core.Action> filteredBuildOptions(IEnumerable<Game.Core.Action> items)
     {
         var filteredItems = new List<Game.Core.Action>();
-        var filteredUiInfo = new List<UIInfo>();
         var iHaveAlreadySeenYou = new HashSet<byte>();
 
         int i = 0;
@@ -61,11 +64,9 @@ public sealed class BuildMenuPresenter : MonoBehaviour
             if (iHaveAlreadySeenYou.Add(item.pieceType))
             {
                 filteredItems.Add(item);
-                filteredUiInfo.Add(uiInfo[i]);
                 i++;
             }
         }
-        outUiInfo = filteredUiInfo;
         return filteredItems;
     }
 

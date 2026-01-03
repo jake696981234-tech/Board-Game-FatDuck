@@ -53,6 +53,7 @@ public static class PieceActionFilter
             case Move:
                 SetMoveFilter();
                 return;
+            case Explosive:
             case Shoot:
             case Push:
             case SacrificeFactory:
@@ -98,10 +99,11 @@ public static class PieceActionFilter
     private static void setActionKind()
     {
         if (UIFilter.uIType != UIFilter.UIType.PieceActionKind)
-            {
-                UIFilter.ResetClickedData();
-                return;
-            }
+        {
+            UIFilter.ResetClickedData();
+            return;
+        }
+
             kind = UIFilter.clickedActionKind;
             isKind = true;
 
@@ -332,6 +334,14 @@ public static class PieceActionFilter
                 UIFilter.ResetClickedData();
                 return;
             }
+            if (kind == Explosive)
+            {
+                TargetCellId = ActorsCellId;
+                isTargetCellId = true;
+                UIFilter.ResetClickedData();
+                showNextActionOption();
+                return;
+            }
             TargetCellIdsOptions();
             UIFilter.ResetClickedData();
             return;
@@ -494,7 +504,7 @@ public static class PieceActionFilter
             items.Add(theAction);
             uiInfo.Add(new UIInfo(legal, fullCost));
         }
-        UI.hic.buildMenu.Show(items, uiInfo, UI.hic.config);
+        UI.hic.buildMenu.Show(items, UI.hic.config);
     }
 
     

@@ -52,7 +52,7 @@ public static class ShowRightPanel
                 uiInfo.Add(new UIInfo(legal, fullCost));
             }
         }
-        UI.hic.buildMenu.Show(items, uiInfo, UI.hic.config);
+        UI.hic.buildMenu.Show(items, UI.hic.config);
     }
 
     public static void PushNonPieceActionList()
