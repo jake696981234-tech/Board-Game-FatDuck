@@ -30,15 +30,16 @@ public static class ExplosiveAction
         int maxRange = Piece.explosive_range[theAction.pieceType];
         bool friendlyFire = Piece.explosive_isFriendlyFire[theAction.pieceType];
 
-        Debug.Log($"[ExplosiveAction] Apply actorType={theAction.pieceType} actorCell={theAction.ActorsCellId} player={player} dmg={dmg} range={maxRange} friendlyFire={friendlyFire} gameIndex={gameIndex}");
+        Debug.Log($"dmg={dmg} maxRange={maxRange} friendlyFire={friendlyFire} dmg={dmg}");
 
-        Span<int> occcells = Scratch.GetScratchCellBuffer(gameIndex);
-        int howManyVictims = BmCac.OccCellIdsRingAndLessthanRing(theAction.ActorsCellId, maxRange, occcells, gameIndex);
-        Debug.Log($"[ExplosiveAction] CellsWithOccupantsWithinRange={howManyVictims} bufferLen={occcells.Length}");
-        for (int i = 0; i < howManyVictims; i++)
+        // Span<int> occcells = Scratch.GetScratchCellBuffer(gameIndex);
+        var occCells = BmCac.CellIdsRingAndLessthanRing(theAction.ActorsCellId, maxRange, false, true, gameIndex);
+        Debug.Log($"CellIdsRingAndLessthanRing={occCells.Count}");
+        for (int i = 0; i < occCells.Count; i++)
         {
-            int victim = bm.GetCellOccupant(occcells[i]);
-            Debug.Log($"[ExplosiveAction]   candidateCell={occcells[i]} victimPieceId={victim} owner={(victim >= 0 && bm.IsValidPieceId(victim) ? bm.pieceOwner[victim].ToString() : \"invalid\")}");
+            if (occCells[i] == theAction.ActorsCellId) continue;
+            int victim = bm.GetCellOccupant(occCells[i]);
+            // Debug.Log($"[ExplosiveAction]   candidateCell={occcells[i]} victimPieceId={victim} owner={(victim >= 0 && bm.IsValidPieceId(victim) ? bm.pieceOwner[victim].ToString() : "invalid")}");
             if (!friendlyFire && bm.pieceOwner[victim] == player)
             {
                 Debug.Log($"[ExplosiveAction]   skippedFriendlyFire victimPieceId={victim}");
@@ -49,14 +50,12 @@ public static class ExplosiveAction
             if (killed)
             {
                 Debug.Log($"[ExplosiveAction]   pieceKilled victimPieceId={victim}");
-                GameActions.pieceKilled(victim, gameIndex, theAction);
+                if (Piece.explosive_isKillItself[theAction.pieceType]) { GameActions.pieceKilled(victim, gameIndex); } {GameActions.pieceKilled(victim, gameIndex, theAction);}
             }
         }
-        if (Piece.explosive_isKillItself[theAction.pieceType])
-        {
-            int selfPid = bm.GetCellOccupant(theAction.ActorsCellId);
-            Debug.Log($"[ExplosiveAction] selfDestruct flag true, killing selfPid={selfPid}");
-            GameActions.pieceKilled(selfPid, gameIndex);
-        }
+        if (!Piece.explosive_isKillItself[theAction.pieceType]) return;
+        int selfPid = bm.GetCellOccupant(theAction.ActorsCellId);
+        Debug.Log($"[ExplosiveAction] selfDestruct flag true, killing selfPid={selfPid}");
+        GameActions.pieceKilled(selfPid, gameIndex);
     }
 }

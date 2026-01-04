@@ -61,7 +61,7 @@ MonoBehaviour:
     stepPenalty: 0
     endTurnPenalty: 0
   autoSim:
-    autoRestartOnGameOver: 1
+    autoRestartOnGameOver: 0
     maxAutoGames: 1
   board:
     radius: 8

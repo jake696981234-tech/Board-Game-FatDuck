@@ -153,54 +153,46 @@ public static class BmCac
         return result;
     }
 
-    public static int OccCellIdsRingAndLessthanRing(int originCell, int ringSize, Span<int> outCells, int gameIndex)
-    {
-        var bm = GameRegistry.game[gameIndex].boardModel;
+    // public static int OccCellIdsRingAndLessthanRing(int originCell, int ringSize, Span<int> outCells, int gameIndex)
+    // {
+    //     var bm = GameRegistry.game[gameIndex].boardModel;
 
-        Span<int> cells = Scratch.GetScratchCellBuffer(gameIndex);
-        int totalCells = CellIdsRingAndLessthanRing(originCell, ringSize, requireEmpty: false, cells, gameIndex);
+    //     Span<int> cells = Scratch.GetScratchCellBuffer(gameIndex);
+    //     int totalCells = CellIdsRingAndLessthanRing(originCell, ringSize, requireEmpty: false, cells, gameIndex);
 
-        Debug.Log($"[BmCac] OccCellIdsRingAndLessthanRing origin={originCell} ringSize={ringSize} totalCellsWithinRange={totalCells} gameIndex={gameIndex}");
+    //     Debug.Log($"[BmCac] OccCellIdsRingAndLessthanRing origin={originCell} ringSize={ringSize} totalCellsWithinRange={totalCells} gameIndex={gameIndex}");
 
-        int written = 0;
-        for (int i = 0; i < totalCells && written < outCells.Length; i++)
-        {
-            int cell = cells[i];
-            if (bm.IsEmpty(cell)) continue;
-            outCells[written++] = cell;
-        }
+    //     int written = 0;
+    //     for (int i = 0; i < totalCells && written < outCells.Length; i++)
+    //     {
+    //         int cell = cells[i];
+    //         if (bm.IsEmpty(cell)) continue;
+    //         outCells[written++] = cell;
+    //     }
 
-        Debug.Log($"[BmCac] OccCellIdsRingAndLessthanRing wroteOccupied={written} bufferLen={outCells.Length}");
-        return written;
-    }
+    //     Debug.Log($"[BmCac] OccCellIdsRingAndLessthanRing wroteOccupied={written} bufferLen={outCells.Length}");
+    //     return written;
+    // }
 
         
     
-    public static int CellIdsRingAndLessthanRing(int originCell, int ringSize, bool requireEmpty, Span<int> outCells, int gameIndex)
+    public static List<int> CellIdsRingAndLessthanRing(int originCell, int ringSize, bool requireEmpty, bool requireOcc, int gameIndex)
     {
         var bm = GameRegistry.game[gameIndex].boardModel;
 
-        if (!bm.IsValidCellId(originCell) || ringSize < 0) return 0;
+        List<int> outCells = new();
 
-        Span<int> scratch = Scratch.GetScratchCellBuffer(gameIndex);
-        int written = 0;
-
-        Debug.Log($"[BmCac] CellIdsRingAndLessthanRing origin={originCell} ringSize={ringSize} requireEmpty={requireEmpty} bufferLen={outCells.Length} gameIndex={gameIndex}");
-
-        for (int dist = 0; dist <= ringSize && written < outCells.Length; dist++)
+        Span<int> cells = Scratch.GetScratchCellBuffer(gameIndex);
+        for (int CheckRingSize = 0; CheckRingSize < ringSize; CheckRingSize++)
         {
-            int foundAtDist = cellIdsRingAroundCell(originCell, dist, requireEmpty, scratch, gameIndex);
-            int copyCount = Math.Min(foundAtDist, outCells.Length - written);
-            for (int i = 0; i < copyCount; i++)
+            int foundAtDist = cellIdsRingAroundCell(originCell, CheckRingSize, requireEmpty, cells, gameIndex);
+            for (int i = 0; i < foundAtDist; i++)
             {
-                outCells[written + i] = scratch[i];
-            }
-            written += copyCount;
-            Debug.Log($"[BmCac]   dist={dist} foundAtDist={foundAtDist} copied={copyCount} totalWritten={written}");
+                 if (requireOcc && bm.IsEmpty(cells[i])) continue;
+                 outCells.Add(cells[i]);
+            } 
         }
-
-        Debug.Log($"[BmCac] CellIdsRingAndLessthanRing returning count={written}");
-        return written;
+        return outCells;
     }
 
     /// <summary>

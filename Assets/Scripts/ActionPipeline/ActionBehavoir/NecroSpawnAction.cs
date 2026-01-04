@@ -14,26 +14,26 @@ public static class NecroSpawnActions
         {
             var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
 
-            if (bm.necroSpawnStore[actorType] < 0) return;
-            if (CreateAction.PieceLimitReached(ref offerBuild)) return;
-            int type = bm.necroSpawnStore[actorType];
-            if (!CreateAction.isPieceTypeLegal(type, ref offerBuild)) return;
-            if (Piece.isBuilding[type]) return;
-            Span<int> emptyCells = Scratch.GetScratchCellBuffer(offerBuild.gameIndex);
-            int HowManyEmptyCells = BmCac.CellIdsRingAndLessthanRing(actorCell, Piece.necroSpawn_range[actorType], true, emptyCells,  offerBuild.gameIndex);
-            if (HowManyEmptyCells < 0) return;
-            for (int i = 0; i < emptyCells.Length; i++)
-            {
-                Action theAction = new Game.Core.Action
-                {
-                    kind = NecroSpawn,
-                    pieceType = (byte)actorType,
-                    ActorsCellId = (ushort)actorCell,
-                    TargetCellId = (ushort)emptyCells[i],
-                    aux = (ushort)type,
-                };
-                OfferProvider.Emit(theAction, ref offerBuild);
-            }
+            // if (bm.necroSpawnStore[actorType] < 0) return;
+            // if (CreateAction.PieceLimitReached(ref offerBuild)) return;
+            // int type = bm.necroSpawnStore[actorType];
+            // if (!CreateAction.isPieceTypeLegal(type, ref offerBuild)) return;
+            // if (Piece.isBuilding[type]) return;
+            // Span<int> emptyCells = Scratch.GetScratchCellBuffer(offerBuild.gameIndex);
+            // int HowManyEmptyCells = BmCac.CellIdsRingAndLessthanRing(actorCell, Piece.necroSpawn_range[actorType], true, false, emptyCells,  offerBuild.gameIndex);
+            // if (HowManyEmptyCells < 0) return;
+            // for (int i = 0; i < emptyCells.Length; i++)
+            // {
+            //     Action theAction = new Game.Core.Action
+            //     {
+            //         kind = NecroSpawn,
+            //         pieceType = (byte)actorType,
+            //         ActorsCellId = (ushort)actorCell,
+            //         TargetCellId = (ushort)emptyCells[i],
+            //         aux = (ushort)type,
+            //     };
+            //     OfferProvider.Emit(theAction, ref offerBuild);
+            // }
         }
 
     public static void Record(int gameIndex, int pieceIDKilled)
