@@ -331,7 +331,7 @@ public class BoardModel
         pieceHP[pieceId] = hp; // clamp to type maxHP happens in GameState via Pieces metadata, if needed
         pieceFactoryAux[pieceId] = 0; //Add to the paramter if you want this to actually have a starting value
         pieceKillCount[pieceId] = 0;
-        necroSpawnStore[pieceId] = 0;            
+        necroSpawnStore[pieceId] = -1;            
         pieceFactoryKillGoalAux[pieceId] = 0;
         pieceConnectorConfig[pieceId] = 0;
         pieceCapitalHP[pieceId] = 0;

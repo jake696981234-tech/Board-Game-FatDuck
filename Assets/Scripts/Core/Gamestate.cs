@@ -11,9 +11,11 @@ namespace Game.Core
     // and read-only OfferProvider. All state mutations happen through here.
 
 
-    //general to do list: 
-    // 1. Methods that kill mutliple units at once i think is casuing an issue. for example, sacrfice cost. maybe aswell sacrfice factory. Why do I think this? because im using pieceIds as my way of telling the system what to kill. But after the first pieceID is killed, the swap back happens, and the piece IDS change. Shouldnt be to hard of a problem to solve.
-
+    //general to do list:
+    //1. Design New dumbbob.
+    //2. Play agaisnt dumb Bob to get a feel of the game 
+    //3. Probs spin up to the web - or move on to fleshing out the ML agent system.  
+    //when ready. Convert to using multiple descrete actions.
     public class GameState
     {
         #region Class's Refrences
@@ -226,9 +228,8 @@ namespace Game.Core
                 case Explosive: ExplosiveAction.Apply(in theAction, currentPlayer, gameIndex); break;
                 // case PieceBuild: PieceBuildAction.Apply(in theAction, currentPlayer, gameIndex); break;
                 case Sniper: SniperAction.Apply(in theAction, currentPlayer, gameIndex); break;
-                case NecroSpawn: SniperAction.Apply(in theAction, currentPlayer, gameIndex); break;
-                
-                default:
+                case NecroSpawn: NecroSpawnAction.Apply(in theAction, currentPlayer, gameIndex); break;
+                        default:
                     Debug.Log("Find Action Match returned false");
                     return false;
             }

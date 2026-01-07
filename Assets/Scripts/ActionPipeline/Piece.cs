@@ -24,6 +24,10 @@ public static class Piece
         Factory = 17,
         Sanctuary = 18,
         Eat = 19,
+        SacrificeCost = 20,
+        FeedingGround = 21,
+        Zombie = 22,
+        Invalid = 23,
     }
 
     public static int typeCount;

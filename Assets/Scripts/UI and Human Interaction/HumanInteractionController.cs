@@ -115,6 +115,9 @@ public sealed class HumanInteractionController : MonoBehaviour
     [Header("Prefabs")]
     public PieceView piecePrefab;
 
+    [Header("Piece Extended Information")]
+    public TMP_Text[] pieceInfoHeaders;
+    public TMP_Text[] pieceInfoFeilds;
 
     [Header("Toggles")]
     public bool showCellIds = false;

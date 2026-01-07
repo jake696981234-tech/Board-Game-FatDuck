@@ -75,8 +75,8 @@ namespace Game.Core
         public const byte Push = 6;
         public const byte GroupBuild = 7;
         public const byte Upgrade = 8;
-        public const byte Launcher = 9;
-        public const byte Spawner = 10;
+        public const byte Launcher = 9; //frog
+        public const byte Spawner = 10; //frog and penguin
         public const byte SacrificeFactory = 11;
         public const byte ConversionFactory = 12;
         public const byte Explosive = 13;
