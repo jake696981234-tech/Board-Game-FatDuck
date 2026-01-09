@@ -16,6 +16,26 @@ public static class PiecesSides
     public static int OppositeDir(int dir) => (dir + 3) % 6;
 
     /// <summary>
+    /// Returns true if all wall sides form a single contiguous block around the hex.
+    /// </summary>
+    public static bool AreWallsContiguous(int configIndex)
+    {
+        bool firstIsWall = !IsConnectorSide(configIndex, 0);
+        bool prevIsWall = firstIsWall;
+        int transitions = 0;
+
+        for (int d = 1; d < 6; d++)
+        {
+            bool isWall = !IsConnectorSide(configIndex, d);
+            if (isWall != prevIsWall && ++transitions > 2) return false;
+            prevIsWall = isWall;
+        }
+
+        if (prevIsWall != firstIsWall) transitions++;
+        return transitions <= 2;
+    }
+
+    /// <summary>
     /// Returns true if placing a piece of <paramref name="type"/> with the given connector config at <paramref name="cell"/>
     /// does not violate connector-vs-wall adjacency, and (if required) is connected via connectors to a capital.
     /// </summary>

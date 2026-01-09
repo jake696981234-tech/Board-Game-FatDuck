@@ -47,4 +47,6 @@ public class InteractionConfig : ScriptableObject
     public float TimeDelayOnActions = 0.1f;
 
     public bool HumanTimeDecrease = false;
+    public bool altWallSelect = false;
+    public bool skipNumberWallSelect = false;
 }

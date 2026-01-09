@@ -25,7 +25,7 @@ public class HCost : MonoBehaviour
         UI.hic.Personal_BudgetText.text = "Budget: " + $"{UIBridge.gameState.ps[UIBridge._humanPlayer].budget}";
         UI.hic.Personal_BudgetAfterActionFee.text = "Budget - Action Fee: " + $"{UIBridge.gameState.ps[UIBridge._humanPlayer].budget - ShowLeftPanel.curActionFee}";
         if (UpdateBuild) UpdateBuildActionsLegality();
-        if (UpdateCreate) CreateActionFilter.UpdateCreateCost();
+        if (UpdateCreate) PieceInfo.UpdateCreateCost();
         if (UpdatePieceActions) UpdatePieceActionsLegality();
     }
 

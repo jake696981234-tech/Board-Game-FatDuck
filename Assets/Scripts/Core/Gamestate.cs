@@ -12,6 +12,8 @@ namespace Game.Core
 
 
     //general to do list:
+    //1740.53 x 488.2369
+    //1. Add info When press on a unit. 
     //1. Design New dumbbob.
     //2. Play agaisnt dumb Bob to get a feel of the game 
     //3. Probs spin up to the web - or move on to fleshing out the ML agent system.  

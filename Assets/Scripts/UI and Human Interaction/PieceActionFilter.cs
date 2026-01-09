@@ -461,7 +461,8 @@ public static class PieceActionFilter
         UIHelpers.SetBackdropColor(UI.hic.config.actionExecuteBackground);
         UIHelpers.SetPanelBackdropColor(UI.hic.config.actionExecutePanelBackground);
 
-        PanelToggles.TogglePanels(build: false, create: false, action: false, pieceFull: false, execute: true, walls: false, secondWalls: false);
+        PieceInfo.SetPieceInfo(pieceType);
+        PanelToggles.TogglePanels(build: false, create: true, action: false, pieceFull: false, execute: true, walls: false, secondWalls: false);
 
         showBoard.HighlightCells(ComputeAuxCellsForAction(), UI.hic.config.actionLegalTargetHighlight);
 
@@ -474,7 +475,8 @@ public static class PieceActionFilter
         showBoard.ApplyDefaultCellColor(UI.hic.config.defaultCellColor);
         UIHelpers.SetBackdropColor(UI.hic.config.pieceActionBackground);
         UIHelpers.SetPanelBackdropColor(UI.hic.config.pieceActionPanelBackground);
-        PanelToggles.TogglePanels(build: false, create: false, action: false, pieceFull: true, execute: false, walls: false, secondWalls: false);
+        PieceInfo.SetPieceInfo(pieceType);
+        PanelToggles.TogglePanels(build: false, create: true, action: false, pieceFull: true, execute: false, walls: false, secondWalls: false);
 
         PushPieceActionListForSelection();
 

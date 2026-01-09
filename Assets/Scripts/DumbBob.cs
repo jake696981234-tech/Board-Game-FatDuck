@@ -6,6 +6,7 @@
 
 // public class DumbBob
 // {
+//     private int FactoryPayOutAim;
 //     public int PickAction(in OfferQuery q,
 //                           ReadOnlySpan<Action> acts,
 //                           ReadOnlySpan<float> costs,
@@ -25,7 +26,10 @@
 //         if (countOfSortedActions[CoreDamage] > 0) return sortedActions[CoreDamage, 0];
 //         float chance = UnityEngine.Random.value; 
 
-//         if ()
+//         if (PassiveActions.ComputeFactoryIncome((int)playerId, gameIndex) < FactoryPayOutAim && (countOfSortedActions[CaptureVP] > 0))
+//         {
+//             if (a
+//         }
 
 //         return -1;
 //     }

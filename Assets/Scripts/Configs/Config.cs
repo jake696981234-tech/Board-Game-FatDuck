@@ -8,9 +8,8 @@ using System.Collections.Generic;
 [CreateAssetMenu(fileName = "Config", menuName = "Game/Config", order = 0)]
 public sealed class Config : ScriptableObject
 {
-
-
-
+    [Header("Wall config")]
+    public bool ContiguousWalls = false;
 
 
     [Header("Agent (global)")]
@@ -329,6 +328,7 @@ public sealed class Config : ScriptableObject
 
 
         return new GameConfigHub(
+            ContiguousWalls: ContiguousWalls,
             board_radius: board.radius,
             board_totalCells: totalCells,
             board_invalidCellId: board.invalidId,

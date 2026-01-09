@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dd830153b3ff57c4e8e6a5eaec83d024, type: 3}
   m_Name: Config
   m_EditorClassIdentifier: Assembly-CSharp::Config
+  ContiguousWalls: 1
   agent:
     maxOffersToConsider: 10000
     rolloutDepth: 0
@@ -72,7 +73,7 @@ MonoBehaviour:
     coreShuffleSeed: 0
   match:
     startingBudgetPerRound:
-    - 10000
+    - 500
     - 0
     - 0
     - 0
@@ -83,7 +84,7 @@ MonoBehaviour:
     startCoreHp: 3
   costs:
     baseActionCost: 10
-    actionGrowthFactor: 0.5
+    actionGrowthFactor: 1.5
   rewards:
     budgetBonusForVP: 5
     budgetBonusForCoreDamage: 5
@@ -116,8 +117,8 @@ MonoBehaviour:
     team: 0
   - name: P1
     isAI: 0
-    applyBotSurcharges: 1
-    applyStartOfTurnBudgetDecrease: 1
+    applyBotSurcharges: 0
+    applyStartOfTurnBudgetDecrease: 0
     startingBudgetOverride: -1
     team: 2
   - name: P2

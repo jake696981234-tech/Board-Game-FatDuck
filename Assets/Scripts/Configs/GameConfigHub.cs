@@ -107,10 +107,11 @@ public readonly struct GameConfigHub
         }
     }
 
-
+    public readonly bool ContiguousWalls;
 
 
     public GameConfigHub(
+        bool ContiguousWalls,
         byte board_radius,
         short board_totalCells,
         int board_invalidCellId,
@@ -149,6 +150,7 @@ public readonly struct GameConfigHub
         BehaviorParametersConfig mlBehavior
     )
     {
+        this.ContiguousWalls = ContiguousWalls;
         this.board_radius = board_radius;
         this.board_totalCells = board_totalCells;
         this.board_invalidCellId = board_invalidCellId;

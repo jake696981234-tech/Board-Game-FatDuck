@@ -25,6 +25,9 @@ public sealed class HumanInteractionController : MonoBehaviour
     public InteractionConfig config;
 
     [Header("Canvas/UI")]
+    
+    public Button BackgroundExitButton;
+    public RectTransform BackgroundExit;
     public Image backdrop;
     public Image panelBackDrop;
     public GameObject blockInputOverlay;
@@ -36,6 +39,7 @@ public sealed class HumanInteractionController : MonoBehaviour
     [Header("Panels")]
     public BuildMenuPresenter buildMenu;         // BuildPanel
     public RectTransform createPanel;       // CreatePanel
+    public RectTransform CreatePanelBackGround;
     public GameObject WallCreatePanel2;
     public GameObject WallCreatePanel1;
     public TMP_Text createTitleText;
@@ -106,6 +110,14 @@ public sealed class HumanInteractionController : MonoBehaviour
 
     public GameObject PerTypeFactoryPayOutPrefab;
     public RectTransform PerTypeFactoryPayOutRoot;
+
+    [Header("new factory Totals")]
+
+    public Button ShowMeEndRoundTotals;
+    public TMP_Text newTotalFactoryTotalText;
+    public TMP_Text newVpBonusText;
+    public TMP_Text newCoreBonusText;
+    public TMP_Text newPerTypeCurrentPayOut;
 
     //Stuff from Baoard Controller
     [Header("Scene/Hierarchy")]

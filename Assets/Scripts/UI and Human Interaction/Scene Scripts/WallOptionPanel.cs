@@ -45,7 +45,25 @@ public sealed class WallOptionPanel : MonoBehaviour
         }
     }
 
+    public void showWallConfigOptions()
+    {
+        DestoryAllWallOptions();
+        wallConfigOption.Clear();
 
+        IEnumerable<ushort> wallsToShow;
+
+        var seen = new HashSet<ushort>();
+            wallsToShow = cachedwallOptions
+                .Where(w => seen.Add(w));   // only first time a value appears
+        
+        foreach (var wall in wallsToShow)
+        {
+            var prefabReference = Instantiate(wallOptionPrefab, WallContent);
+            prefabReference.gameObject.SetActive(true);
+            wallConfigOption.Add(prefabReference);
+            prefabReference.SeedData(wall);
+        }
+    }
 
     public void showWallConfigOptions(int howMany)
     {

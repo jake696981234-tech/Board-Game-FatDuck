@@ -25,12 +25,18 @@ public static class UIFilter
         //     reset();
         // }
 
+        if (uIType == UIType.Cell) UI.hic.BackgroundExit.gameObject.SetActive(true);
+
 
         if (uIType == UIType.Cancel)
         {
             reset();
             return;
         }
+
+        displayPieceInfo();
+
+        
 
         switch (state)
         {
@@ -62,6 +68,19 @@ public static class UIFilter
             }
         }
     }
+
+    public static void displayPieceInfo()
+    {
+        var pieceId = UIBridge.bm.GetCellOccupant(clickedCellId);
+        if (uIType == UIType.Cell && (pieceId != UIBridge.bm._invalidId))
+        {
+            if (UIBridge.bm.GetPieceOwnerFromCell(clickedCellId) == UIBridge._humanPlayer)
+            {
+                PieceInfo.SetPieceInfo(UIBridge.bm.pieceType[pieceId]);
+                PanelToggles.TogglePanels(build: false, create: true, action: false, pieceFull: false, execute: false, walls: false, secondWalls: false);
+            }
+        }
+    }
    
 
     #region Subscription
@@ -73,6 +92,13 @@ public static class UIFilter
         UI.hic.pieceActionListFull.OnItemClicked += OnPieceActionClicked;
         UI.hic.nonPieceActionList.OnItemClicked += OnNonPieceActionClicked;
         // UI.hic.SeePerPieceTypeTotalsButton.onClick.AddListener(() => ShowFactoryBonusByPieceTypePrefabs()); //to do
+         UI.hic.BackgroundExitButton.onClick.AddListener(() => BackgroundExitButton());
+    }
+
+    private static void BackgroundExitButton()
+    {
+        uIType = UIType.Cancel;
+        topFilter();
     }
 
 

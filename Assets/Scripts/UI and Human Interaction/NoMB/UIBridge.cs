@@ -22,7 +22,6 @@ public static class UIBridge
 
         _humanPlayer = seat;
 
-
         snapShotHistory.Clear();
         snapShotNumber = 0;
         _pendingSnapshots.Clear();
@@ -40,6 +39,7 @@ public static class UIBridge
         }
 
         ShowRightPanel.BuildMeanufilterSubscribe();
+        UI.hic.BackgroundExit.gameObject.SetActive(false);
     }
 
 

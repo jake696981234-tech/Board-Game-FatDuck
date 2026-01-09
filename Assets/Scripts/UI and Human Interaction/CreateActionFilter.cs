@@ -32,12 +32,16 @@ public static class CreateActionFilter
     public static List<int> addCost = new List<int>(256);
     public static List<int> cachedLegalAddCost = new List<int>(256);
 
-
     public static void Filter()
     {
         if (!isPieceType)
         {
             SetFilter();
+            return;
+        }
+        if (UI.hic.config.altWallSelect)
+        {
+            enterAltWallSelect();
             return;
         }
         if (!isNumberOfWalls)
@@ -59,35 +63,88 @@ public static class CreateActionFilter
         {
             setTargetCell();
             return;
-        }
-        
+        } 
     }
 
-    private static void showNextOption()
+    public static void enterAltWallSelect()
     {
+        if (!isTargetCellId)
+        {
+            setTargetCell();
+            return;
+        } 
         if (!isNumberOfWalls)
         {
-            NumberOfWallOptions();
-            UIFilter.ResetClickedData();
+            setNumberOfWalls();
             return;
         }
         if (!isAux)
         {
-            WallConfigOptions();
-            UIFilter.ResetClickedData();
+            setWallConfig();
             return;
         }
         if (!isAddCost)
         {
-            SacrificeCostOptions(computeSacrficeTargets(kind, pieceType, ref cachedLegalAddCost), pieceType);
-            UIFilter.ResetClickedData();
+            setSacCost();
             return;
         }
-        if (!isTargetCellId)
+    }
+
+    private static void showNextOption()
+    {
+        if (UI.hic.config.altWallSelect )
         {
-            CreateCellOptions();
-            UIFilter.ResetClickedData();
-            return;
+            if (!isTargetCellId)
+            {
+                CreateCellOptions();
+                UIFilter.ResetClickedData();
+                return;
+            }
+            if (!isNumberOfWalls)
+            {
+                NumberOfWallOptions();
+                UIFilter.ResetClickedData();
+                return;
+            }
+            if (!isAux)
+            {
+                WallConfigOptions();
+                UIFilter.ResetClickedData();
+                return;
+            }
+            if (!isAddCost)
+            {
+                SacrificeCostOptions(computeSacrficeTargets(kind, pieceType, ref cachedLegalAddCost), pieceType);
+                UIFilter.ResetClickedData();
+                return;
+            }   
+        }
+        else
+        {
+            if (!isNumberOfWalls)
+            {
+                NumberOfWallOptions();
+                UIFilter.ResetClickedData();
+                return;
+            }
+            if (!isAux)
+            {
+                WallConfigOptions();
+                UIFilter.ResetClickedData();
+                return;
+            }
+            if (!isAddCost)
+            {
+                SacrificeCostOptions(computeSacrficeTargets(kind, pieceType, ref cachedLegalAddCost), pieceType);
+                UIFilter.ResetClickedData();
+                return;
+            }
+            if (!isTargetCellId)
+            {
+                CreateCellOptions();
+                UIFilter.ResetClickedData();
+                return;
+            }
         }
         //Perform Actions
         if (ActionCostRequiresAddCost && !ActionRequiresAux) // to do- probs need to resort the addcost array order.
@@ -207,51 +264,39 @@ public static class CreateActionFilter
         showBoard.ApplyDefaultCellColor(UI.hic.config.defaultCellColor);
         
         showBoard.HighlightCells(computeCreateCellOptions(), UI.hic.config.createModeCellHighlight);
+        PieceInfo.SetPieceInfo(pieceType);
         PanelToggles.TogglePanels(build: false, create: true, action: false, pieceFull: false, execute: false, walls: false, secondWalls: false); 
 
         UIHelpers.SetBackdropColor(UI.hic.config.createModeBackground);
         UIHelpers.SetPanelBackdropColor(UI.hic.config.createModePanelBackground);
-        var BuildCost = Piece.BuildCost[pieceType];
-        totalCost = BuildCost - ShowLeftPanel.curActionFee;
-
-        UI.hic.createTitleText.text = $"Create: {Piece.name[pieceType]}";
-        UI.hic.createCostText.text = $"Build Cost: {BuildCost}"; 
-        UI.hic.createActionTurnFee.text = $"Action Fee: {ShowLeftPanel.curActionFee}"; 
-        if (UI.hic.createTotalCost) UI.hic.createTotalCost.text = $"Total Cost: {totalCost}"; 
-        UpdateCreateCost();
-        if (UI.hic.createSprite)
-        {
-            var s = !string.IsNullOrEmpty(Piece.spritePath[pieceType]) ? Resources.Load<Sprite>(Piece.spritePath[pieceType]) : null;
-            UI.hic.createSprite.sprite = s;
-            UI.hic.createSprite.enabled = (s != null);
-        }
-
         ShowLeftPanel.HudRefresh();
     }
-
-    private static int totalCost; //do not refrence this value
-    public static void UpdateCreateCost()
-    {
-        var budgetAfter = UIBridge.gameState.ps[UIBridge._humanPlayer].budget - totalCost;
-        if (UI.hic.createBudgetAfter) UI.hic.createBudgetAfter.text = $"Budget After: {budgetAfter}"; 
-    }
-
-
-
     // need to add go back to defualt Option
     private static void NumberOfWallOptions()
     {
         showBoard.ClearHighlights();
         UI.hic.wallOptionPanel.showNumberOfWallS(ComputeWallOptions());
         UIHelpers.SetBackdropColor(UI.hic.config.ConnectorModeBackground);
-        PanelToggles.TogglePanels(build: false, create: false, action: false, pieceFull: false, execute: false, walls: true, secondWalls: false); // populate this to pther areas
+        if (UI.hic.config.skipNumberWallSelect)
+        {
+            isNumberOfWalls = true;
+            if (UI.hic.wallOptionPanel.FirstWallOptionPanel)
+            {
+                UI.hic.wallOptionPanel.FirstWallOptionPanel.SetActive(false);
+            }
+            WallConfigOptions();
+            return;
+        }
+        PieceInfo.SetPieceInfo(pieceType);
+        PanelToggles.TogglePanels(build: false, create: true, action: false, pieceFull: false, execute: false, walls: true, secondWalls: false);
     }
 
     private static void WallConfigOptions()
     {
         showBoard.ClearHighlights();
-        UI.hic.wallOptionPanel.showWallConfigOptions(WallNumber);
-        PanelToggles.TogglePanels(build: false, create: false, action: false, pieceFull: false, execute: false, walls: false, secondWalls: true);
+        if (UI.hic.config.skipNumberWallSelect) { UI.hic.wallOptionPanel.showWallConfigOptions(); } else { UI.hic.wallOptionPanel.showWallConfigOptions(WallNumber); }
+        PieceInfo.SetPieceInfo(pieceType);
+        PanelToggles.TogglePanels(build: false, create: true, action: false, pieceFull: false, execute: false, walls: false, secondWalls: true);
     }
 
     public static void SacrificeCostOptions(IEnumerable<int> Targets, int inPieceType)
@@ -260,6 +305,7 @@ public static class CreateActionFilter
         showBoard.ApplyDefaultCellColor(UI.hic.config.defaultCellColor);
 
         showBoard.HighlightCells(Targets, UI.hic.config.SacrificeCostCellHighlight);
+        PieceInfo.SetPieceInfo(pieceType);
         PanelToggles.TogglePanels(build: false, create: true, action: false, pieceFull: false, execute: false, walls: false, secondWalls: false); // could change this to sac specfic
 
         UIHelpers.SetBackdropColor(UI.hic.config.createModeBackground);
@@ -288,51 +334,14 @@ public static class CreateActionFilter
             if (actions.kind != Create) continue;   // byte code
             if (actions.pieceType != pieceType) continue;
             if (UIBridge._mask[i] == 0) continue; // masked out = illegal/unaffordable
+            if (UI.hic.config.altWallSelect)
+            {
+                if (actions.TargetCellId != TargetCellId) continue;   // byte code
+            }
             wallConfigs.Add(actions.aux);
         }
         return wallConfigs;
     }
-
-    // private static IEnumerable<int> computeSacrficeTargets()
-    // {
-    //     List<int> SacrficeTargets = new List<int>(128);
-    //     var seen = new HashSet<int>();
-    //     var bm = UIBridge.bm;
-    //     for (int i = 0; i < UIBridge._count; i++)
-    //     {
-    //         var actions = UIBridge._offers[i];
-    //         if (actions.kind != Create) continue;
-    //         if (actions.pieceType != pieceType) continue;
-    //         if (UIBridge._mask[i] == 0) continue;
-
-    //         if (actions.addCost == null || actions.addCost.Length == 0) continue;
-
-    //         if (PieceDefinition.sacrificeCost_isNeedsSpecificPiece[pieceType])
-    //         {
-    //             int requiredType = PieceDefinition.sacrificeCost_specificPiece[pieceType];
-    //             bool hasRequired = false;
-    //             for (int b = 0; b < actions.addCost.Length; b++)
-    //             {
-    //                 if (bm.pieceType[actions.addCost[b]] == requiredType)
-    //                 {
-    //                     hasRequired = true;
-    //                     break;
-    //                 }
-    //             }
-    //             if (!hasRequired) continue;
-    //         }
-
-    //         //to do - need to remove the prevoius selected option if, there was one
-            
-    //         for (int b = 0; b < actions.addCost.Length; b++)
-    //         {
-    //             if (!seen.Add(actions.addCost[b])) continue; // skip duplicates
-    //             SacrficeTargets.Add(bm.pieceCellId[actions.addCost[b]]); 
-    //         }
-    //     }
-    //     cachedLegalAddCost = SacrficeTargets;
-    //     return SacrficeTargets;
-    // } 
 
     public static IEnumerable<int> computeSacrficeTargets(byte inKind, int inPieceType, ref List<int> cachedLegalTargets)
     {
@@ -381,7 +390,7 @@ public static class CreateActionFilter
             var theAction = UIBridge._offers[i];
             if (theAction.kind != Create) continue;   // byte code
 
-            if (Piece.connectors_enabled[pieceType])
+            if (Piece.connectors_enabled[pieceType] && !UI.hic.config.altWallSelect)
             {
                 if (theAction.aux != aux) continue;
             }

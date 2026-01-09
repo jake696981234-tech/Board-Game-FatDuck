@@ -9,20 +9,21 @@ public static class PassiveActions
     public static float[] ComputePlayersFactoryIncome(int gameIndex)
     {
         float[] perPlayerFactoryIncome = new float[4];
-        Array.Clear(perPlayerFactoryIncome, 0, 4);
 
         for (int i = 0; i < 4; i++)
         {
-            PerPiecePayout income = ComputeDetailedPlayerFactoryIncome(i, gameIndex);
-            float total = 0f;
-
-            for (int c = 0; c < income.payout.Length; i++)
-            {
-                total += income.payout[c];
-            }
-            perPlayerFactoryIncome[i] = total;
+            perPlayerFactoryIncome[i] = ComputeFactoryIncome(i, gameIndex);
         }
         return perPlayerFactoryIncome;
+    }
+
+    public static float ComputeFactoryIncome(int player, int gameIndex)
+    {
+        float total = 0f;
+        PerPiecePayout income = ComputeDetailedPlayerFactoryIncome(player, gameIndex);
+
+        for (int i = 0; i < income.payout.Length; i++) { total += income.payout[i]; }
+        return total;
     }
 
     public static PerPiecePayout ComputeDetailedPlayerFactoryIncome(int playerId, int gameIndex)

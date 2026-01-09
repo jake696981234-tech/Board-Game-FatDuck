@@ -199,10 +199,12 @@ public static class Piece
     public static int[] necroSpawn_range;
     public static int[] necroSpawn_botSurcharge;
     #endregion
+    public static bool ContiguousWalls;
     public static bool IsConnectorConfigAllowed(byte type, int configIndex)
     {
         if (configIndex < 0 || configIndex >= 64) return false;
         if (type >= connector_allowedMasks.Length) return false;
+        if (!PiecesSides.AreWallsContiguous(configIndex) && ContiguousWalls) return false;
         ulong mask = connector_allowedMasks[type];
         return (mask & (1UL << configIndex)) != 0;
     }

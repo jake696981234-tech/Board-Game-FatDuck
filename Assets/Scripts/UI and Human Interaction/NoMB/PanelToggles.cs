@@ -6,6 +6,9 @@ public static class PanelToggles
     // public static Mode _mode = Mode.Build;
     public static void TogglePanels(bool build, bool create, bool action, bool pieceFull, bool execute, bool walls, bool secondWalls)
     {
+        moveCreatePanel(true);
+        if (create && !build && !action && !pieceFull && !execute && !walls && !secondWalls) moveCreatePanel(false);
+
         if (UI.hic.buildMenu) UI.hic.buildMenu.gameObject.SetActive(build);
         if (UI.hic.createPanel) UI.hic.createPanel.gameObject.SetActive(create);
         if (UI.hic.actionPanel) UI.hic.actionPanel.gameObject.SetActive(action);
@@ -18,6 +21,11 @@ public static class PanelToggles
         HCost.UpdateBuild = build;
         HCost.UpdateBuild = pieceFull;
         HCost.UpdateCreate = create;
+    }
+
+    private static void moveCreatePanel(bool firstPosition)
+    {
+        if (firstPosition) { UI.hic.createPanel.anchoredPosition = new Vector2(-407, -4); UI.hic.CreatePanelBackGround.gameObject.SetActive(true);  } else { UI.hic.createPanel.anchoredPosition = new Vector2(-260, -4); UI.hic.CreatePanelBackGround.gameObject.SetActive(false); }
     }
 
     

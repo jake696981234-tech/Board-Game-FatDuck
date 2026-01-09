@@ -35,3 +35,5 @@ MonoBehaviour:
   DelayOnActions: 0
   TimeDelayOnActions: 0.21
   HumanTimeDecrease: 1
+  altWallSelect: 1
+  skipNumberWallSelect: 1
