@@ -19,21 +19,21 @@ public static class UIInput
     
 
     #region non Crucial
-    public static void ShowFactoryBonusByPieceTypePrefabs() // to do, need add this back to the left panel. there is commented out action inside UIFilter that links to this.
-    {
-        PanelToggles.ToggleLeftPanels(true, PanelToggles.leftPanelMode == PanelToggles.LeftPanelsModes.EndRoundTotalPanel);
+    // public static void ShowFactoryBonusByPieceTypePrefabs() // to do, need add this back to the left panel. there is commented out action inside UIFilter that links to this.
+    // {
+    //     PanelToggles.ToggleLeftPanels(true, PanelToggles.leftPanelMode == PanelToggles.LeftPanelsModes.EndRoundTotalPanel);
 
-        if (PanelToggles.leftPanelMode == PanelToggles.LeftPanelsModes.EndRoundTotalPanel)
-        {
-            PanelToggles.leftPanelMode = PanelToggles.LeftPanelsModes.EndRoundTotalPanel2;
-        }
-        else
-        {
-            PanelToggles.leftPanelMode = PanelToggles.LeftPanelsModes.EndRoundTotalPanel;
-        }
+    //     if (PanelToggles.leftPanelMode == PanelToggles.LeftPanelsModes.EndRoundTotalPanel)
+    //     {
+    //         PanelToggles.leftPanelMode = PanelToggles.LeftPanelsModes.EndRoundTotalPanel2;
+    //     }
+    //     else
+    //     {
+    //         PanelToggles.leftPanelMode = PanelToggles.LeftPanelsModes.EndRoundTotalPanel;
+    //     }
 
 
-        ShowLeftPanel.updatePerTypeEndRoundTotals();
-    }
+    //     ShowLeftPanel.updatePerTypeEndRoundTotals();
+    // }
     #endregion
 }

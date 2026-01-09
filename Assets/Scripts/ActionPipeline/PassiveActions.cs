@@ -51,7 +51,7 @@ public static class PassiveActions
             int type = kv.Key.type;
             int count = kv.Value;
 
-            if (!Piece.factory_enabled[type]) continue;
+            if (!Piece.factory_enabled[type] && !Piece.feedingGround_enabled[type] && !Piece.sacrificeFactory_enabled[type] && !Piece.eat_enabled[type] && !Piece.conversionFactory_enabled[type]) continue;
 
             float AuxPayout = AuxFactoryPayout(owner, type, gameIndex);
 

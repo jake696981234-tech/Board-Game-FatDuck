@@ -9,7 +9,7 @@ public static class UIBridge
 
     public static GameState gameState;
     public static BoardModel bm;
-    private static int gameIndex;
+    public static int gameIndex;
     public static bool IsCurrentPlayerTheHuman => gameState.CurrentPlayerId == _humanPlayer;
     public static byte _humanPlayer;
 
@@ -39,6 +39,7 @@ public static class UIBridge
         }
 
         ShowRightPanel.BuildMeanufilterSubscribe();
+        EndRoundTotals.SubscribeEndRoundTotals();
         UI.hic.BackgroundExit.gameObject.SetActive(false);
     }
 

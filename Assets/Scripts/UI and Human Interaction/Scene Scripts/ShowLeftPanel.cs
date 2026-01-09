@@ -16,66 +16,66 @@ public static class ShowLeftPanel
     }
     public static EndRoundTotalsPlayer endRoundTotalsPlayer;
     private static readonly List<GameObject> spawnedPerTypeFactoryPayOutPrefab = new List<GameObject>();
-    public static void updatePerTypeEndRoundTotals()
-    {
-        for (int c = 0; c < spawnedPerTypeFactoryPayOutPrefab.Count; c++)
-        {
-            if (spawnedPerTypeFactoryPayOutPrefab[c] != null)
-            {
-                UnityEngine.Object.Destroy(spawnedPerTypeFactoryPayOutPrefab[c]);
-            }
-        }
-        spawnedPerTypeFactoryPayOutPrefab.Clear();
+    // public static void updatePerTypeEndRoundTotals()
+    // {
+    //     for (int c = 0; c < spawnedPerTypeFactoryPayOutPrefab.Count; c++)
+    //     {
+    //         if (spawnedPerTypeFactoryPayOutPrefab[c] != null)
+    //         {
+    //             UnityEngine.Object.Destroy(spawnedPerTypeFactoryPayOutPrefab[c]);
+    //         }
+    //     }
+    //     spawnedPerTypeFactoryPayOutPrefab.Clear();
 
-        var payout = UIBridge._snapshot.PerEndRoundPayOut[(int)endRoundTotalsPlayer];
-        if (payout.pieceType == null || payout.PieceTypePayOut == null) return;
-        int count = Math.Min(payout.pieceType.Length, payout.PieceTypePayOut.Length);
-        if (count <= 0) return;
+    //     var payout = UIBridge._snapshot.PerEndRoundPayOut[(int)endRoundTotalsPlayer];
+    //     if (payout.pieceType == null || payout.PieceTypePayOut == null) return;
+    //     int count = Math.Min(payout.pieceType.Length, payout.PieceTypePayOut.Length);
+    //     if (count <= 0) return;
 
-        for (int i = 0; i < payout.pieceType.Length; i++)
-        {
-            int type = payout.pieceType[i];
-            var prefab = UnityEngine.Object.Instantiate(UI.hic.PerTypeFactoryPayOutPrefab, UI.hic.PerTypeFactoryPayOutRoot);
-            prefab.SetActive(true);
+    //     for (int i = 0; i < payout.pieceType.Length; i++)
+    //     {
+    //         int type = payout.pieceType[i];
+    //         var prefab = UnityEngine.Object.Instantiate(UI.hic.PerTypeFactoryPayOutPrefab, UI.hic.PerTypeFactoryPayOutRoot);
+    //         prefab.SetActive(true);
 
-            var prefabScript = prefab.GetComponent<FactoryPerTypePayOut>();
-            prefabScript.SetValues(
-                Piece.name[type],
-                payout.PieceTypePayOut[i]
-            );
-            spawnedPerTypeFactoryPayOutPrefab.Add(prefab);
-        }
-    }
+    //         var prefabScript = prefab.GetComponent<FactoryPerTypePayOut>();
+    //         prefabScript.SetValues(
+    //             Piece.name[type],
+    //             payout.PieceTypePayOut[i]
+    //         );
+    //         spawnedPerTypeFactoryPayOutPrefab.Add(prefab);
+    //     }
+    // }
 
-    private static void showPlayerEndRoundTotals(int playerId)
-    {
-        PanelToggles.ToggleLeftPanels(PanelToggles.leftPanelMode == PanelToggles.LeftPanelsModes.DefaultPanel, false);
+    // private static void showPlayerEndRoundTotals(int playerId)
+    // {
+    //     PanelToggles.ToggleLeftPanels(PanelToggles.leftPanelMode == PanelToggles.LeftPanelsModes.DefaultPanel, false);
 
-        if (PanelToggles.leftPanelMode == PanelToggles.LeftPanelsModes.DefaultPanel)
-        {
-            PanelToggles.leftPanelMode = PanelToggles.LeftPanelsModes.EndRoundTotalPanel;
+    //     if (PanelToggles.leftPanelMode == PanelToggles.LeftPanelsModes.DefaultPanel)
+    //     {
+    //         PanelToggles.leftPanelMode = PanelToggles.LeftPanelsModes.EndRoundTotalPanel;
 
-            endRoundTotalsPlayer = (EndRoundTotalsPlayer)playerId;
-        }
-        else
-        {
-            PanelToggles.leftPanelMode = PanelToggles.LeftPanelsModes.DefaultPanel;
-        }
+    //         endRoundTotalsPlayer = (EndRoundTotalsPlayer)playerId;
+    //     }
+    //     else
+    //     {
+    //         PanelToggles.leftPanelMode = PanelToggles.LeftPanelsModes.DefaultPanel;
+    //     }
 
-        updatePlayerEndRoundTotals(playerId);
-    }
+    //     updatePlayerEndRoundTotals(playerId);
+    // }
 
-    public static void updatePlayerEndRoundTotals(int playerId)
-    {
-        float TotalFactory = UIBridge._snapshot.PerEndRoundPayOut[playerId].PieceTypePayOut.Sum();
+    // public static void updatePlayerEndRoundTotals(int playerId)
+    // {
+    //     float TotalFactory = UIBridge._snapshot.PerEndRoundPayOut[playerId].PieceTypePayOut.Sum();
 
-        UI.hic.TotalPayoutText.text = $"{TotalFactory + UIBridge._snapshot.PerEndRoundPayOut[playerId].BonusForVP + UIBridge._snapshot.PerEndRoundPayOut[playerId].BonusForCoreDamage}";
-        UI.hic.VpBonusText.text = $"{UIBridge._snapshot.PerEndRoundPayOut[playerId].BonusForVP}";
-        UI.hic.CoreBonusText.text = $"{UIBridge._snapshot.PerEndRoundPayOut[playerId].BonusForCoreDamage}";
-        UI.hic.TotalFactoryTotalText.text = $"{TotalFactory}";
+    //     UI.hic.TotalPayoutText.text = $"{TotalFactory + UIBridge._snapshot.PerEndRoundPayOut[playerId].BonusForVP + UIBridge._snapshot.PerEndRoundPayOut[playerId].BonusForCoreDamage}";
+    //     UI.hic.VpBonusText.text = $"{UIBridge._snapshot.PerEndRoundPayOut[playerId].BonusForVP}";
+    //     UI.hic.CoreBonusText.text = $"{UIBridge._snapshot.PerEndRoundPayOut[playerId].BonusForCoreDamage}";
+    //     UI.hic.TotalFactoryTotalText.text = $"{TotalFactory}";
 
-        if (PanelToggles.leftPanelMode == PanelToggles.LeftPanelsModes.EndRoundTotalPanel2) updatePerTypeEndRoundTotals();
-    }
+    //     if (PanelToggles.leftPanelMode == PanelToggles.LeftPanelsModes.EndRoundTotalPanel2) updatePerTypeEndRoundTotals();
+    // }
 
 
     private static void BindPlayerRow(RectTransform row, int playerId)
@@ -104,7 +104,7 @@ public static class ShowLeftPanel
         if (action) action.text = $"{UI.playerAction[playerId]}";
         if (passed) passed.text = $"{UIBridge.gameState.PassedTurn(playerId)}";
 
-        UI.hic.PlayerRow_Button[playerId].onClick.AddListener(() => showPlayerEndRoundTotals(playerId));
+        // UI.hic.PlayerRow_Button[playerId].onClick.AddListener(() => showPlayerEndRoundTotals(playerId));
 
         // Optional tint swatch: if you have a palette elsewhere, assign it here (left blank by default)
         if (tintImg) tintImg.enabled = false;

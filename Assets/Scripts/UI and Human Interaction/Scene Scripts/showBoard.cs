@@ -211,8 +211,8 @@ public static class showBoard
 
 
 
-        ShowLeftPanel.updatePlayerEndRoundTotals((int)ShowLeftPanel.endRoundTotalsPlayer);
-        if (PanelToggles.leftPanelMode == PanelToggles.LeftPanelsModes.EndRoundTotalPanel2) ShowLeftPanel.updatePerTypeEndRoundTotals();
+        // ShowLeftPanel.updatePlayerEndRoundTotals((int)ShowLeftPanel.endRoundTotalsPlayer);
+        // if (PanelToggles.leftPanelMode == PanelToggles.LeftPanelsModes.EndRoundTotalPanel2) ShowLeftPanel.updatePerTypeEndRoundTotals();
 
 
         // Pieces

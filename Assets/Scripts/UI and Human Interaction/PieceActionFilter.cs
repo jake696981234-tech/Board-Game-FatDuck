@@ -53,7 +53,6 @@ public static class PieceActionFilter
             case Move:
                 SetMoveFilter();
                 return;
-            case Explosive:
             case Shoot:
             case Push:
             case SacrificeFactory:
@@ -69,17 +68,143 @@ public static class PieceActionFilter
             case Launcher:
                 launcherFilter();
                 return;
-            case CaptureVP:
-            case CoreDamage:
-            case ConversionFactory:
-                SetOneInputKindFilter();
-                return;
+            // case CaptureVP:
+            // case CoreDamage:
+            // case ConversionFactory:
+            // case Explosive:
+            //     SetOneInputKindFilter();
+            //     return;
             case GroupBuild:
                 GroupBuildFilter();
                 return;
         }
         Debug.Log($"Missing Ability Kind Filter {kind}");
         UIFilter.reset();
+    }
+
+    private static void showNextActionOption() 
+    {
+        if (!isKind)
+        {
+            PieceKindOptions();
+            UIFilter.ResetClickedData();
+            return;
+        }
+
+        if (!isTargetCellId)
+        {
+            if (kind == CaptureVP || kind == CoreDamage || kind == ConversionFactory || kind == Explosive)
+            {
+                TargetCellId = ActorsCellId;
+                isTargetCellId = true;
+                aux = 0;
+                isAux = true;
+                isAddCost = true;
+                UIFilter.ResetClickedData();
+                showNextActionOption();
+                return;
+            }
+            if (kind == GroupBuild)
+            {
+                isTargetCellId = true;
+                CreateActionFilter.SacrificeCostOptions(computeGroupBuildDeletionTargets(), pieceType);
+                UIFilter.ResetClickedData();
+                return;
+            }
+            if (kind == Upgrade)
+            {
+                ShowUpgradeOptions();
+                UIFilter.ResetClickedData();
+                return;
+            }
+            if (kind == Explosive)
+            {
+                TargetCellId = ActorsCellId;
+                isTargetCellId = true;
+                UIFilter.ResetClickedData();
+                showNextActionOption();
+                return;
+            }
+            TargetCellIdsOptions();
+            UIFilter.ResetClickedData();
+            return;
+        }
+
+        if (!isAux)
+        {
+            secondTargetlauncherOptions();
+            UIFilter.ResetClickedData();
+            return;
+        }
+
+        if (!isAddCost)
+        {
+            if (kind == GroupBuild)
+            {
+                CreateActionFilter.SacrificeCostOptions(computeGroupBuildDeletionTargets(), pieceType);
+                UIFilter.ResetClickedData();
+                return;
+            } 
+            CreateActionFilter.SacrificeCostOptions(CreateActionFilter.computeSacrficeTargets(kind, pieceType, ref cachedLegalAddCost), pieceType);
+            UIFilter.ResetClickedData();
+            return;
+        }
+
+        if (kind == Upgrade) (pieceType, TargetCellId) = (TargetCellId, (ushort)pieceType);
+
+        if (kind == GroupBuild)
+        {
+            var store = pieceType;
+            pieceType = Piece.groupBuild_target[store];
+            TargetCellId = (ushort)store;
+        }
+
+        if (kind == Sniper)
+        {
+            for (int i = 0; i < UIBridge._count; i++)
+            {
+                var action = UIBridge._offers[i];
+                if (action.kind != kind) continue;
+                if (action.ActorsCellId != ActorsCellId) continue;
+                if (action.pieceType != pieceType) continue;
+                if (action.TargetCellId != TargetCellId) continue;
+                if (UIBridge._mask[i] == 0) continue; // masked out = illegal
+                aux = action.aux;
+            }
+  
+        }
+
+
+
+        if (ActionCostRequiresAddCost && !isActionRequiresAux) // to do- probs need to resort the addcost array order. Look at -case PanelToggles.Mode.SacrificeSelect:- Inside old UIInput, Could be use full code that does this, and few ther essetentials.   
+        {
+            Game.Core.Action theAction = new Game.Core.Action(kind, (byte)pieceType, ActorsCellId, TargetCellId, 0, addCost.ToArray());
+            UIBridge.PerformActionIndex(theAction);
+            UIFilter.reset();
+            return;
+        }
+        if (ActionCostRequiresAddCost && isActionRequiresAux)
+        {
+            Game.Core.Action theAction = new Game.Core.Action(kind, (byte)pieceType, ActorsCellId, TargetCellId, aux, addCost.ToArray());
+            UIBridge.PerformActionIndex(theAction);
+            UIFilter.reset();
+            return;
+        }
+        if (!ActionCostRequiresAddCost && isActionRequiresAux)
+        {
+            Game.Core.Action theAction = new Game.Core.Action(kind, (byte)pieceType, ActorsCellId, TargetCellId, aux);
+            UIBridge.PerformActionIndex(theAction);
+            UIFilter.reset();
+            return;
+        }
+        if (!ActionCostRequiresAddCost && !isActionRequiresAux)
+        {
+            Game.Core.Action theAction = new Game.Core.Action(kind, (byte)pieceType, ActorsCellId, TargetCellId);
+            UIBridge.PerformActionIndex(theAction);
+            UIFilter.reset();
+            return;
+        }
+        Debug.Log($"showNextActionOption failed this is very unexpected");
     }
 
     private static void setActorCellIdAndPieceType()
@@ -297,132 +422,20 @@ public static class PieceActionFilter
         showNextActionOption();
     }
 
-    private static void SetOneInputKindFilter()
-    {
-        isAux = true;
-        isAddCost = true;
-        isTargetCellId = true;
+    // private static void SetOneInputKindFilter()
+    // {
+    //     isAux = true;
+    //     isAddCost = true;
+    //     isTargetCellId = true;
 
-        UIFilter.ResetClickedData();
-        showNextActionOption();
-    }
+    //     UIFilter.ResetClickedData();
+    //     showNextActionOption();
+    // }
 
 
     
 
-    private static void showNextActionOption() 
-    {
-        if (!isKind)
-        {
-            PieceKindOptions();
-            UIFilter.ResetClickedData();
-            return;
-        }
-
-        if (!isTargetCellId)
-        {
-            if (kind == GroupBuild)
-            {
-                isTargetCellId = true;
-                CreateActionFilter.SacrificeCostOptions(computeGroupBuildDeletionTargets(), pieceType);
-                UIFilter.ResetClickedData();
-                return;
-            }
-            if (kind == Upgrade)
-            {
-                ShowUpgradeOptions();
-                UIFilter.ResetClickedData();
-                return;
-            }
-            if (kind == Explosive)
-            {
-                TargetCellId = ActorsCellId;
-                isTargetCellId = true;
-                UIFilter.ResetClickedData();
-                showNextActionOption();
-                return;
-            }
-            TargetCellIdsOptions();
-            UIFilter.ResetClickedData();
-            return;
-        }
-
-        if (!isAux)
-        {
-            secondTargetlauncherOptions();
-            UIFilter.ResetClickedData();
-            return;
-        }
-
-        if (!isAddCost)
-        {
-            if (kind == GroupBuild)
-            {
-                CreateActionFilter.SacrificeCostOptions(computeGroupBuildDeletionTargets(), pieceType);
-                UIFilter.ResetClickedData();
-                return;
-            } 
-            CreateActionFilter.SacrificeCostOptions(CreateActionFilter.computeSacrficeTargets(kind, pieceType, ref cachedLegalAddCost), pieceType);
-            UIFilter.ResetClickedData();
-            return;
-        }
-
-        if (kind == Upgrade) (pieceType, TargetCellId) = (TargetCellId, (ushort)pieceType);
-
-        if (kind == GroupBuild)
-        {
-            var store = pieceType;
-            pieceType = Piece.groupBuild_target[store];
-            TargetCellId = (ushort)store;
-        }
-
-        if (kind == Sniper)
-        {
-            for (int i = 0; i < UIBridge._count; i++)
-            {
-                var action = UIBridge._offers[i];
-                if (action.kind != kind) continue;
-                if (action.ActorsCellId != ActorsCellId) continue;
-                if (action.pieceType != pieceType) continue;
-                if (action.TargetCellId != TargetCellId) continue;
-                if (UIBridge._mask[i] == 0) continue; // masked out = illegal
-                aux = action.aux;
-            }
-  
-        }
-
-
-
-        if (ActionCostRequiresAddCost && !isActionRequiresAux) // to do- probs need to resort the addcost array order. Look at -case PanelToggles.Mode.SacrificeSelect:- Inside old UIInput, Could be use full code that does this, and few ther essetentials.   
-        {
-            Game.Core.Action theAction = new Game.Core.Action(kind, (byte)pieceType, ActorsCellId, TargetCellId, 0, addCost.ToArray());
-            UIBridge.PerformActionIndex(theAction);
-            UIFilter.reset();
-            return;
-        }
-        if (ActionCostRequiresAddCost && isActionRequiresAux)
-        {
-            Game.Core.Action theAction = new Game.Core.Action(kind, (byte)pieceType, ActorsCellId, TargetCellId, aux, addCost.ToArray());
-            UIBridge.PerformActionIndex(theAction);
-            UIFilter.reset();
-            return;
-        }
-        if (!ActionCostRequiresAddCost && isActionRequiresAux)
-        {
-            Game.Core.Action theAction = new Game.Core.Action(kind, (byte)pieceType, ActorsCellId, TargetCellId, aux);
-            UIBridge.PerformActionIndex(theAction);
-            UIFilter.reset();
-            return;
-        }
-        if (!ActionCostRequiresAddCost && !isActionRequiresAux)
-        {
-            Game.Core.Action theAction = new Game.Core.Action(kind, (byte)pieceType, ActorsCellId, TargetCellId);
-            UIBridge.PerformActionIndex(theAction);
-            UIFilter.reset();
-            return;
-        }
-        Debug.Log($"showNextActionOption failed this is very unexpected");
-    }
+    
 
     public static IEnumerable<int> computeGroupBuildDeletionTargets()
     {

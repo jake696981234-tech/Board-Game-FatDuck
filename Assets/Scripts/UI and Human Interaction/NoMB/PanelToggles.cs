@@ -34,11 +34,11 @@ public static class PanelToggles
 
     public enum LeftPanelsModes { DefaultPanel, EndRoundTotalPanel, EndRoundTotalPanel2 }
     public static LeftPanelsModes leftPanelMode = LeftPanelsModes.DefaultPanel;
-    public static void ToggleLeftPanels(bool EndRoundTotalPanel1, bool EndRoundTotalPanel2)
-    {
-        UI.hic.Payout_Panel1.SetActive(EndRoundTotalPanel1);
-        UI.hic.Payout_Panel2.SetActive(EndRoundTotalPanel2);
-    }
+    // public static void ToggleLeftPanels(bool EndRoundTotalPanel1, bool EndRoundTotalPanel2)
+    // {
+    //     UI.hic.Payout_Panel1.SetActive(EndRoundTotalPanel1);
+    //     UI.hic.Payout_Panel2.SetActive(EndRoundTotalPanel2);
+    // }
 
     // public static void SetWallOptionsSecondPanelMode()
     // {

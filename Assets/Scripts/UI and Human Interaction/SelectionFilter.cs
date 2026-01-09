@@ -207,6 +207,8 @@ public static class UIFilter
 
         ResetClickedData();
 
+        EndRoundTotals.updateEndRoundTotals();
+
         state = State.Idle;
 
         PieceActionFilter.isKind = false;

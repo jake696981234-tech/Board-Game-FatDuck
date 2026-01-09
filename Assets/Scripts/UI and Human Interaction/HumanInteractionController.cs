@@ -73,6 +73,7 @@ public sealed class HumanInteractionController : MonoBehaviour
     public TMP_Text Header_ModeText;
 
     //my own little additon- New Event Manager system, might update everything to go through that script
+    public GameObject SubscribedUIRoot;
     public TMP_Text turnNumberText;
     public TMP_Text roundNumberText;
     public TMP_Text gameNumberText;
@@ -101,23 +102,27 @@ public sealed class HumanInteractionController : MonoBehaviour
 
     [Header("Player End Round Totals")]
 
-    public GameObject Payout_Panel1;
-    public GameObject Payout_Panel2;
-    public TMP_Text TotalPayoutText;
-    public TMP_Text VpBonusText;
-    public TMP_Text CoreBonusText;
-    public TMP_Text TotalFactoryTotalText;
+    // public GameObject Payout_Panel1;
+    // public GameObject Payout_Panel2;
+    // public TMP_Text TotalPayoutText;
+    // public TMP_Text VpBonusText;
+    // public TMP_Text CoreBonusText;
+    // public TMP_Text TotalFactoryTotalText;
 
-    public GameObject PerTypeFactoryPayOutPrefab;
-    public RectTransform PerTypeFactoryPayOutRoot;
+    // public GameObject PerTypeFactoryPayOutPrefab;
+    // public RectTransform PerTypeFactoryPayOutRoot;
 
     [Header("new factory Totals")]
 
     public Button ShowMeEndRoundTotals;
-    public TMP_Text newTotalFactoryTotalText;
+    public GameObject EndRoundTotalsRoot;
+    public TMP_Text newTotalEndRoundPayOutText;
+    public TMP_Text newTotalEndRoundPayOutWithPenaltiesText;
     public TMP_Text newVpBonusText;
     public TMP_Text newCoreBonusText;
+    public TMP_Text newTotalPerPiecePayOutText;
     public TMP_Text newPerTypeCurrentPayOut;
+    public TMP_Text PieceDrivenPenalties;
 
     //Stuff from Baoard Controller
     [Header("Scene/Hierarchy")]

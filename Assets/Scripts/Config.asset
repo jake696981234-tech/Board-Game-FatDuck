@@ -36,10 +36,10 @@ MonoBehaviour:
     maxRetries: 3
     retryBackoffMs: 250
   dumbGreg:
-    endTurnAfterFirstPct: 0.482
-    shootInsteadPct: 0.387
-    moveAnotherPct: 0.343
-    moveBuildingPct: 0.05
+    endTurnAfterFirstPct: 0.804
+    shootInsteadPct: 0.666
+    moveAnotherPct: 0.63
+    moveBuildingPct: 0
     createInsteadPct: 0.347
     seedBase: 12345
     seedBySeat: 1
@@ -74,7 +74,6 @@ MonoBehaviour:
   match:
     startingBudgetPerRound:
     - 500
-    - 0
     - 0
     - 0
     - 0

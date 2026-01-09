@@ -400,16 +400,25 @@ namespace Game.Core
             }
         }
 
-        int[] cachedPieceDrivenPenalties = new int[4];
+        public int[] cachedPieceDrivenPenalties = new int[4];
+
+        public int playerPieceDrivenPenalties(int playerId)
+        {
+            int cachedPieceDrivenPenalties = 0;
+            for (int c = 0; c < bm.pieceCount; c++)
+            {
+                if (bm.pieceOwner[c] != playerId) continue;
+                if (Piece.factory_isKillPenalty[bm.pieceType[c]]) cachedPieceDrivenPenalties += Piece.factory_killsPunishment[bm.pieceType[c]];
+            }
+            return cachedPieceDrivenPenalties;
+        }
+
         private void EndRound()
         {
             for (int i = 0; i < 4; i++)
             {
                 cachedPieceDrivenPenalties[i] = 0;
-                for (int c = 0; c < bm.pieceCount; c++)
-                {
-                    if (Piece.factory_isKillPenalty[bm.pieceType[c]]) cachedPieceDrivenPenalties[i] += Piece.factory_killsPunishment[bm.pieceType[c]];
-                }
+                cachedPieceDrivenPenalties[i] = playerPieceDrivenPenalties(i);
             }
             events.roundBegin();
             turnOrdinal = 0;
