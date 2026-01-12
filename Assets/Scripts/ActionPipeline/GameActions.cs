@@ -113,15 +113,21 @@ namespace Game.Core
             var bm = GameRegistry.game[gameIndex].boardModel;
 
             int dmg = Piece.move_damage[theAction.pieceType];
-            bool killed = ApplyDamageWithCapital(actorPid, victimID, dmg, gameIndex);
+            int attackerCell = theAction.ActorsCellId;
+            int victimCell = bm.GetPieceCell(victimID);
+            bool killed = ApplyDamageWithCapital(attackerCell, victimID, dmg, gameIndex);
             if (killed)
             {
                 pieceKilled(victimID, gameIndex, theAction);
+                if (bm.IsValidCellId(victimCell) && bm.IsEmpty(victimCell))
+                {
+                    int attackerId = bm.GetCellOccupant(attackerCell);
+                    if (attackerId >= 0) bm.MovePieceRow(attackerId, victimCell);
+                }
             }
             else
             {
-                int origin = theAction.ActorsCellId;
-                int best = BmCac.FindNearestEmptyAdjacent(origin, bm.GetPieceCell(victimID), gameIndex);
+                int best = BmCac.FindNearestEmptyAdjacent(attackerCell, victimCell, gameIndex);
                 if (best >= 0) bm.MovePieceRow(actorPid, best);
             }
             // Connector state refresh happens in GameActions after move/shoot/push/kill

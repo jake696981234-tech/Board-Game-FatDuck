@@ -12,6 +12,16 @@ public static class Scratch
         return _scratchCells;
     }
 
+    private static int[] _scratchCells2;     // len == CellCount
+    public static int[] GetScratchCellBuffer2(int gameIndex)
+    {
+        var bm = GameRegistry.game[gameIndex].boardModel;
+
+        if (_scratchCells2 == null || _scratchCells2.Length != bm._cellCount)
+            _scratchCells2 = new int[bm._cellCount];
+        return _scratchCells2;
+    }
+
     private static int[] _scratchNeighbors; // len >= 6
     public static int[] GetScratchNeighborBuffer(int gameIndex)
     {

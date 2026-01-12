@@ -43,7 +43,7 @@ public static class MoveAction
         int cap = outTargets != null ? outTargets.Length : 0;
 
         // Reachable empty cells up to rmax
-        int[] tmpReachable = Scratch.GetScratchCellBuffer(gameIndex);
+        int[] tmpReachable = Scratch.GetScratchCellBuffer2(gameIndex);
         int reachCount = bm.EnumerateReachableEmpty(originCell, rmax, tmpReachable);
 
         // Emit EMPTY destinations (distance-filtered)
@@ -119,7 +119,6 @@ public static class MoveAction
         if (dstOcc >= 0)
         {
             GameActions.ResolveMelee(actorPid, dstOcc, in theAction, gameIndex);
-            bm.MovePieceRow(actorPid, theAction.ActorsCellId);
         }
         else
         {
