@@ -28,6 +28,7 @@ public sealed class GameBootstrapper : MonoBehaviour
         // 1) Freeze authoring into an immutable hub
         hub = config.BuildHub();
         Piece.ContiguousWalls = hub.ContiguousWalls;
+        Piece.AdjecentWallContiguous = hub.AdjecentWallContiguous;
         CostEngine.baseActionCost = hub.cost_baseActionCost;
         CostEngine.actionGrowthFactor = hub.cost_actionGrowthFactor;
 

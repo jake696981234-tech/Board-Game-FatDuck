@@ -56,6 +56,7 @@ public static class PiecesSides
             if (nbPid < 0) continue;
             byte nbType = bm.GetPieceType(nbPid);
             bool nbHasConn = Piece.connectors_enabled[nbType];
+            if (!nbHasConn) continue;
             int nbConfig = nbHasConn ? bm.pieceConnectorConfig[nbPid] : 0;
 
             bool ourConn = IsConnectorSide(configIndex, i);
@@ -63,6 +64,7 @@ public static class PiecesSides
 
             // Illegal if exactly one side is a connector (connector facing wall)
             if (ourConn != nbConn && (ourConn || nbConn)) return false;
+            if (Piece.AdjecentWallContiguous && !isAdjecentWallContiguousLegal(nbConfig, configIndex, i)) return false;
         }
 
         if (!Piece.connector_needsCapital[type])
@@ -75,6 +77,59 @@ public static class PiecesSides
         // BFS through connector edges to find any capital.
         return HasPathToCapital(cell, type, configIndex, playerId, gameIndex);
     }
+
+    private static bool isAdjecentWallContiguousLegal(int nbConfig, int configIndex, int direction)
+    {
+        int firstPieceDirectionToCheck;
+        if (direction == 0) 
+        { firstPieceDirectionToCheck = 5; }
+        else {firstPieceDirectionToCheck = direction - 1; }
+
+        int secondPieceDirectionToCheck;
+        if (direction == 5) { secondPieceDirectionToCheck = 0; }
+        else {secondPieceDirectionToCheck = direction + 1; }
+
+        bool firstDirectionLegality = (IsConnectorSide(nbConfig, OppositeDir(firstPieceDirectionToCheck)) && IsConnectorSide(configIndex, secondPieceDirectionToCheck)) || (!IsConnectorSide(nbConfig, OppositeDir(firstPieceDirectionToCheck)) && !IsConnectorSide(configIndex, secondPieceDirectionToCheck));
+        bool secoundDirectionLegality = (IsConnectorSide(nbConfig, OppositeDir(secondPieceDirectionToCheck)) && IsConnectorSide(configIndex, firstPieceDirectionToCheck)) || (!IsConnectorSide(nbConfig, OppositeDir(secondPieceDirectionToCheck)) && !IsConnectorSide(configIndex, firstPieceDirectionToCheck));
+
+        return firstDirectionLegality && secoundDirectionLegality;
+    }
+
+    // private static bool isAdjecentWallContiguousLegal(int cell, byte type, int configIndex, byte playerId, int gameIndex)
+    // {
+    //     var bm = GameRegistry.game[gameIndex].boardModel;
+
+    //     // Adjacent wall/connector compatibility
+    //     int[] neigh = Scratch.GetScratchNeighborBuffer(gameIndex);
+    //     int NumberofNeigh = bm.GetNeighbors(cell, neigh);
+    //     for (int i = 0; i < NumberofNeigh; i++)
+    //     {
+    //         int nbCell = neigh[i];
+    //         if (nbCell < 0) continue;
+    //         int nbPid = bm.GetCellOccupant(nbCell);
+    //         if (nbPid < 0) continue;
+    //         byte nbType = bm.GetPieceType(nbPid);
+    //         bool nbHasConn = Piece.connectors_enabled[nbType];
+    //         int nbConfig = nbHasConn ? bm.pieceConnectorConfig[nbPid] : 0;
+
+    //         // bool ourConn = IsConnectorSide(configIndex, i);
+    //         // bool nbConn = nbHasConn ? IsConnectorSide(nbConfig, OppositeDir(i)) : false;
+
+    //         int NeighPieceDirectionToCheck;
+    //         if (i == 0) 
+    //         { NeighPieceDirectionToCheck = 5; }
+    //         else {NeighPieceDirectionToCheck = i - 1; }
+
+    //         bool firstDirectionLegality = (IsConnectorSide(nbConfig, OppositeDir(NeighPieceDirectionToCheck)) && IsConnectorSide(configIndex, i + 1)) || (!IsConnectorSide(nbConfig, OppositeDir(NeighPieceDirectionToCheck)) && !IsConnectorSide(configIndex, i + 1));
+
+    //         if (i == 5) { NeighPieceDirectionToCheck = 0; }
+    //         else {NeighPieceDirectionToCheck = i + 1; }
+            
+    //         bool secoundDirectionLegality = (IsConnectorSide(nbConfig, OppositeDir(NeighPieceDirectionToCheck)) && IsConnectorSide(configIndex, i - 1)) || (!IsConnectorSide(nbConfig, OppositeDir(NeighPieceDirectionToCheck)) && !IsConnectorSide(configIndex, i - 1));
+
+    //         return firstDirectionLegality || secoundDirectionLegality;
+    //     }
+    // }
 
     private static bool HasPathToCapital(int startCell, byte startType, int startConfig, byte playerId, int gameIndex)
     {

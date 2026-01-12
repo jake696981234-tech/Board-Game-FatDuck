@@ -73,6 +73,7 @@ public class GameController : MonoBehaviour
 
     public GameSnapshot currentSnapshot;   // latest snapshot (read-only for views)
     public GameSnapshotComposer snapshotComposer;   // snapshot builder
+    private BoardGeometry geos;
 
     void Start()
     {
@@ -86,6 +87,7 @@ public class GameController : MonoBehaviour
         setGameConfigValues();
 
         var geometry = GeometryBuilder.Build();
+        geos = geometry;
         board = new BoardModel();
         var coreCells = BuildCoreCellsForNextMatch();
         board.Init(in geometry, coreCellIdOverride: coreCells);
@@ -395,7 +397,13 @@ public class GameController : MonoBehaviour
 
     private int[] BuildCoreCellsForNextMatch()
     {
-        var baseIds = (int[])GameBootstrapper.hub.board_coreCellIdByPlayer.Clone();
+        int[] baseIds = new int[4];
+        // (int[])GameBootstrapper.hub.board_coreCellIdByPlayer.Clone();
+
+        baseIds[0] = geos.idByAxial[GameBootstrapper.hub.board_PlayerCoreAxialCord[0]];
+        baseIds[1] = geos.idByAxial[GameBootstrapper.hub.board_PlayerCoreAxialCord[1]];
+        baseIds[2] = geos.idByAxial[GameBootstrapper.hub.board_PlayerCoreAxialCord[2]];
+        baseIds[3] = geos.idByAxial[GameBootstrapper.hub.board_PlayerCoreAxialCord[3]];
         if (config == null || !config.board.shuffleCoreCellsPerGame)
         {
             _matchIndex++;

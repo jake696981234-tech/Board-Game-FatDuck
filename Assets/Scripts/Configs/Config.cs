@@ -10,6 +10,7 @@ public sealed class Config : ScriptableObject
 {
     [Header("Wall config")]
     public bool ContiguousWalls = false;
+    public bool AdjecentWallContiguous = false;
 
 
     [Header("Agent (global)")]
@@ -334,6 +335,7 @@ public sealed class Config : ScriptableObject
 
 
         return new GameConfigHub(
+            AdjecentWallContiguous: AdjecentWallContiguous,
             ContiguousWalls: ContiguousWalls,
             board_radius: board.radius,
             board_totalCells: totalCells,

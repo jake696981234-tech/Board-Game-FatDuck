@@ -200,6 +200,7 @@ public static class Piece
     public static int[] necroSpawn_botSurcharge;
     #endregion
     public static bool ContiguousWalls;
+    public static bool AdjecentWallContiguous; 
     public static bool IsConnectorConfigAllowed(byte type, int configIndex)
     {
         if (configIndex < 0 || configIndex >= 64) return false;

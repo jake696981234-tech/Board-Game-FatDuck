@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Config
   m_EditorClassIdentifier: Assembly-CSharp::Config
   ContiguousWalls: 1
+  AdjecentWallContiguous: 1
   agent:
     maxOffersToConsider: 10000
     rolloutDepth: 0
@@ -65,12 +66,14 @@ MonoBehaviour:
     autoRestartOnGameOver: 0
     maxAutoGames: 1
   board:
-    radius: 8
+    radius: 6
     invalidId: -1
     victoryPointCellId: 108
     coreCellIdByPlayer: 56000000be000000820000001a000000
     firstCoreCellAxialByPlayer: faff000006000000
     secondCoreCellAxialByPlayer: 06000600fafffaff
+    firstVpAxial: 0
+    secoundVpAxial: 0
     shuffleCoreCellsPerGame: 1
     coreShuffleSeed: 0
   match:

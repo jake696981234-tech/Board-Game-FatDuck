@@ -123,9 +123,11 @@ public readonly struct GameConfigHub
     }
 
     public readonly bool ContiguousWalls;
+    public readonly bool AdjecentWallContiguous;
 
 
     public GameConfigHub(
+        bool AdjecentWallContiguous,
         bool ContiguousWalls,
         byte board_radius,
         short board_totalCells,
@@ -167,6 +169,7 @@ public readonly struct GameConfigHub
         BehaviorParametersConfig mlBehavior
     )
     {
+        this.AdjecentWallContiguous = AdjecentWallContiguous;
         this.ContiguousWalls = ContiguousWalls;
         this.board_radius = board_radius;
         this.board_totalCells = board_totalCells;
