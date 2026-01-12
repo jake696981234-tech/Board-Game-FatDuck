@@ -41,8 +41,23 @@ public readonly struct GameConfigHub
     public readonly byte board_radius;            // R
     public readonly short board_totalCells;        // 1 + 3R(R+1)
     public readonly int board_invalidCellId;     // usually -1
-    public readonly int board_vpCellId;          // e.g., center cell id
-    public readonly int[] board_coreCellIdByPlayer;// len = playerCount
+    // public readonly int board_vpCellId;          // e.g., center cell id
+    public readonly (short q, short r) board_vpAxial;          // e.g., center cell id
+
+
+    // public readonly int[] board_coreCellIdByPlayer;// len = playerCount
+    private readonly short[] board_firstCoreCellAxialByPlayer;// len = playerCount
+    private readonly short[] board_secondCoreCellAxialByPlayer;// len = playerCount
+
+    public readonly (short q, short r)[] board_PlayerCoreAxialCord =>
+    new (short q, short r)[]
+    {
+        (board_firstCoreCellAxialByPlayer[0], board_secondCoreCellAxialByPlayer[0]),
+        (board_firstCoreCellAxialByPlayer[1], board_secondCoreCellAxialByPlayer[1]),
+        (board_firstCoreCellAxialByPlayer[2], board_secondCoreCellAxialByPlayer[2]),
+        (board_firstCoreCellAxialByPlayer[3], board_secondCoreCellAxialByPlayer[3]),
+    };
+
 
     // --- Match defaults (GameState uses these to seed live counters) ---
     public readonly float[] match_startingBudgetPerRound;
@@ -115,8 +130,10 @@ public readonly struct GameConfigHub
         byte board_radius,
         short board_totalCells,
         int board_invalidCellId,
-        int board_vpCellId,
-        int[] board_coreCellIdByPlayer,
+        (short q, short r) board_vpAxial,
+        // int[] board_coreCellIdByPlayer,
+        short[] board_firstCoreCellAxialByPlayer,
+        short[] board_secondCoreCellAxialByPlayer,
         float[] match_startingBudgetPerRound,
         int match_numberOfRounds,
         int match_startOfTurnBudgetDecrease,
@@ -154,8 +171,11 @@ public readonly struct GameConfigHub
         this.board_radius = board_radius;
         this.board_totalCells = board_totalCells;
         this.board_invalidCellId = board_invalidCellId;
-        this.board_vpCellId = board_vpCellId;
-        this.board_coreCellIdByPlayer = board_coreCellIdByPlayer;
+        this.board_vpAxial = board_vpAxial;
+        // this.board_vpCellId = board_vpCellId;
+        // this.board_coreCellIdByPlayer = board_coreCellIdByPlayer;
+        this.board_firstCoreCellAxialByPlayer = board_firstCoreCellAxialByPlayer;
+        this.board_secondCoreCellAxialByPlayer = board_secondCoreCellAxialByPlayer;
 
         this.match_startingBudgetPerRound = match_startingBudgetPerRound;
         this.match_numberOfRounds = match_numberOfRounds;

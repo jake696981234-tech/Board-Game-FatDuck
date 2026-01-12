@@ -19,7 +19,7 @@ public class BoardModel
 
     // ---------- Scenario anchors (cell IDs; set at Init) ----------
     private int _vpCellId;
-    private int[] _coreCellIdByPlayer; // len = playerCount, cores assumed static
+    private int[] _coreCellIdByPlayer = new int[4]; // len = playerCount, cores assumed static
 
     // ---------- Geometry (injected at Init; shared, readonly) ----------
     public BoardGeometry geo;
@@ -69,11 +69,15 @@ public class BoardModel
         _radius = GameBootstrapper.hub.board_radius;
         _cellCount = GameBootstrapper.hub.board_totalCells;
         _invalidId = GameBootstrapper.hub.board_invalidCellId;
-        _vpCellId = GameBootstrapper.hub.board_vpCellId;
-        _coreCellIdByPlayer = coreCellIdOverride != null
-            ? (int[])coreCellIdOverride.Clone()
-            : (int[])GameBootstrapper.hub.board_coreCellIdByPlayer.Clone();
-
+        _vpCellId = geo.idByAxial[GameBootstrapper.hub.board_vpAxial];
+        // _coreCellIdByPlayer = coreCellIdOverride != null
+        //     ? (int[])coreCellIdOverride.Clone()
+        //     : (int[])GameBootstrapper.hub.board_coreCellIdByPlayer.Clone();
+        _coreCellIdByPlayer[0] = geo.idByAxial[GameBootstrapper.hub.board_PlayerCoreAxialCord[0]];
+        _coreCellIdByPlayer[1] = geo.idByAxial[GameBootstrapper.hub.board_PlayerCoreAxialCord[1]];
+        _coreCellIdByPlayer[2] = geo.idByAxial[GameBootstrapper.hub.board_PlayerCoreAxialCord[2]];
+        _coreCellIdByPlayer[3] = geo.idByAxial[GameBootstrapper.hub.board_PlayerCoreAxialCord[3]];
+        
         occupantPieceId = new int[_cellCount];
         for (int i = 0; i < _cellCount; i++) occupantPieceId[i] = _invalidId;
 

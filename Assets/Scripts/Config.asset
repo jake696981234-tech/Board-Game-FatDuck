@@ -13,7 +13,6 @@ MonoBehaviour:
   m_Name: Config
   m_EditorClassIdentifier: Assembly-CSharp::Config
   ContiguousWalls: 1
-  MatchAdjacentConnectorSides: 1
   agent:
     maxOffersToConsider: 10000
     rolloutDepth: 0
@@ -70,6 +69,8 @@ MonoBehaviour:
     invalidId: -1
     victoryPointCellId: 108
     coreCellIdByPlayer: 56000000be000000820000001a000000
+    firstCoreCellAxialByPlayer: faff000006000000
+    secondCoreCellAxialByPlayer: 06000600fafffaff
     shuffleCoreCellsPerGame: 1
     coreShuffleSeed: 0
   match:

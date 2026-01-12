@@ -168,6 +168,12 @@ public sealed class Config : ScriptableObject
         public int invalidId;
         public int victoryPointCellId;      // e.g., center
         public int[] coreCellIdByPlayer; // set per map
+        public short[] firstCoreCellAxialByPlayer;
+        public short[] secondCoreCellAxialByPlayer;
+        public short firstVpAxial;
+        public short secoundVpAxial;
+        public (short q, short r) VpAxial => (firstVpAxial, secoundVpAxial);
+
         [Tooltip("When enabled, shuffle the 4 core cell ids each game so seats spawn at different cores.")]
         public bool shuffleCoreCellsPerGame;
         [Tooltip("Optional seed for core shuffling. 0 = non-deterministic per match.")]
@@ -175,7 +181,7 @@ public sealed class Config : ScriptableObject
     }
 
     [Header("Board")]
-    public BoardAuthoring board = new BoardAuthoring { radius = 8, invalidId = -1, victoryPointCellId = 108, coreCellIdByPlayer = new int[4], shuffleCoreCellsPerGame = false, coreShuffleSeed = 0 };
+    public BoardAuthoring board = new BoardAuthoring { radius = 8, invalidId = -1, victoryPointCellId = 108, coreCellIdByPlayer = new int[4], firstCoreCellAxialByPlayer = new short[4], secondCoreCellAxialByPlayer = new short[4], shuffleCoreCellsPerGame = false, coreShuffleSeed = 0 };
 
     [System.Serializable]
     public struct MatchAuthoring
@@ -332,9 +338,11 @@ public sealed class Config : ScriptableObject
             board_radius: board.radius,
             board_totalCells: totalCells,
             board_invalidCellId: board.invalidId,
-            board_vpCellId: board.victoryPointCellId,
-            board_coreCellIdByPlayer: (int[])board.coreCellIdByPlayer.Clone(),
-
+            // board_vpCellId: board.victoryPointCellId,
+            board_vpAxial: board.VpAxial,
+            // board_coreCellIdByPlayer: (int[])board.coreCellIdByPlayer.Clone(),
+            board_firstCoreCellAxialByPlayer: board.firstCoreCellAxialByPlayer,
+            board_secondCoreCellAxialByPlayer:board.secondCoreCellAxialByPlayer,
             match_startingBudgetPerRound: (float[])match.startingBudgetPerRound.Clone(),
             match_numberOfRounds: match.numberOfRounds,
             match_startOfTurnBudgetDecrease: match.startOfTurnBudgetDecrease,
