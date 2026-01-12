@@ -30,7 +30,8 @@ public static class UIBridge
         UI.Init(theHic, events);
 
         ShowLeftPanel.HudRefresh();
-        showBoard.IndexCellViews();
+        // showBoard.IndexCellViews();
+        showBoard.IndexCellViewsByAxial();
 
         if (UI.hic.config.HumanTimeDecrease)
         { 

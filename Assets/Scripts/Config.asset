@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Config
   m_EditorClassIdentifier: Assembly-CSharp::Config
   ContiguousWalls: 1
+  MatchAdjacentConnectorSides: 1
   agent:
     maxOffersToConsider: 10000
     rolloutDepth: 0

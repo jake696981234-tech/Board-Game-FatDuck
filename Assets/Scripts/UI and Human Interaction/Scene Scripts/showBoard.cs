@@ -3,12 +3,14 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using System.Collections;
+using System.Linq;
 
 public static class showBoard
 {
     readonly static HashSet<int> _highlighted = new HashSet<int>();
 
     private static readonly Dictionary<int, CellView> _cellById = new();
+    private static readonly Dictionary<(short q, short r), CellView> _cellByAxial = new();
     private static readonly List<PieceView> _piecePool = new();
     private static readonly Dictionary<int, Sprite> _spriteCache = new();
 
@@ -28,6 +30,31 @@ public static class showBoard
                 _cellById.Add(cv.cellId, cv);
             }
             else Debug.LogWarning($"Duplicate CellView id={cv.cellId} on {cv.name}");
+        }
+    }
+
+    public static void IndexCellViewsByAxial()
+    {
+        _cellByAxial.Clear();
+        if (!UI.hic.cellRoot) UI.hic.cellRoot = UI.hic.transform;
+        var cells = UI.hic.cellRoot.GetComponentsInChildren<CellView>(includeInactive: true);
+        foreach (var cellView in cells)
+        {
+            if (!UIBridge.bm.geo.coordById.Contains(cellView.AxialCord))
+            {
+                cellView.gameObject.SetActive(false);
+                continue;
+            }
+
+            if (!_cellByAxial.ContainsKey(cellView.AxialCord))
+            {
+                cellView.Init();
+                _cellByAxial.Add(cellView.AxialCord, cellView);
+
+                cellView.cellId = UIBridge.bm.geo.idByAxial[cellView.AxialCord];
+                _cellById.Add(cellView.cellId, cellView);
+            }
+            else Debug.LogWarning($"Duplicate CellView Axial Cord={cellView.AxialCord} on {cellView.name}");
         }
     }
 

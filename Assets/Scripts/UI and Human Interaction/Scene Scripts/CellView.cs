@@ -6,6 +6,11 @@ public sealed class CellView : MonoBehaviour
     [Header("Identity")]
     public int cellId;
 
+    public int OneAxialCord;
+    public int TwoAxialCord;
+
+    public (short q, short r) AxialCord => ((short)OneAxialCord, (short)TwoAxialCord);
+
     public bool tintForced { get; private set; }
 
     [Header("Visuals")]
