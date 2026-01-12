@@ -104,7 +104,7 @@ public class GameController : MonoBehaviour
             ps[i].name = active ? GameBootstrapper.hub.player_name[i] : $"P{i}";
         }
 
-        gameState = new Game.Core.GameState();
+        gameState = new GameState();
         gameState.Initialize(board, ps, startingPlayer, eventManager, this, gameIndex);
         GameRegistry.Register(gameIndex, gameState, board, eventManager, this);
 
