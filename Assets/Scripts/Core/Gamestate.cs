@@ -47,24 +47,24 @@ namespace Game.Core
 
         //Apply Methods Values- taken from game Actions
 
-        public bool multiCreateActive;
-        public byte multiCreateType;
-        public bool multiCreateBorder;
-        public int multiCreateRemaining;
-        public List<int> multiCreateCells = new List<int>(8);
+        // public bool multiCreateActive;
+        // public byte multiCreateType;
+        // public bool multiCreateBorder;
+        // public int multiCreateRemaining;
+        // public List<int> multiCreateCells = new List<int>(8);
 
-        public int MultiCreateCellCount => multiCreateCells.Count;
+        // public int MultiCreateCellCount => multiCreateCells.Count;
 
         public readonly HashSet<int> dublicateFilter = new HashSet<int>();
 
-        public void ResetMultiCreate()
-        {
-            multiCreateActive = false;
-            multiCreateType = 0;
-            multiCreateBorder = false;
-            multiCreateRemaining = 0;
-            multiCreateCells.Clear();
-        }
+        // public void ResetMultiCreate()
+        // {
+        //     multiCreateActive = false;
+        //     multiCreateType = 0;
+        //     multiCreateBorder = false;
+        //     multiCreateRemaining = 0;
+        //     multiCreateCells.Clear();
+        // }
 
 
         #endregion
@@ -141,9 +141,9 @@ namespace Game.Core
             events.actionBegin(new ActionContext { ThePlayer = currentPlayer });
 
             CostEngine.CostBreakdown quote = default;
-            bool isMultiPlacement = multiCreateActive && theAction.kind == Create && theAction.pieceType == multiCreateType;
+            // bool isMultiPlacement = multiCreateActive && theAction.kind == Create && theAction.pieceType == multiCreateType;
 
-            if (theAction.kind != EndTurn && !isMultiPlacement)
+            if (theAction.kind != EndTurn /*&& !isMultiPlacement*/)
             {
                 if (!CostEngine.IsAffordable(in cur, in theAction, out quote, gameIndex))
                 {
@@ -237,12 +237,12 @@ namespace Game.Core
             }
 
             // For non-EndTurn actions, apply costs and advance index
-            bool skipCost = multiCreateActive && theAction.kind == Create && theAction.pieceType == multiCreateType;
-            if (!skipCost)
-            {
-                cur.AddBudget(-(float)quote.Total);
-                cur.AdvanceActionIndex();
-            }
+            // bool skipCost = multiCreateActive && theAction.kind == Create && theAction.pieceType == multiCreateType;
+            // if (!skipCost)
+            // {
+            //     cur.AddBudget(-(float)quote.Total);
+            //     cur.AdvanceActionIndex();
+            // }
 
 
             // Map DB fields so that actionCost == growth-based turn fee (from actionGrowthFactor)
@@ -326,7 +326,7 @@ namespace Game.Core
         private void BeginTurn()
         {
             events.turnBegin(new TurnContext { ThePlayer = currentPlayer });
-            ResetMultiCreate();
+            // ResetMultiCreate();
             ps[currentPlayer].BeginTurnReset();
 
 
@@ -352,7 +352,7 @@ namespace Game.Core
         {
             // Player who just ended
             byte ended = currentPlayer;
-            ResetMultiCreate();
+            // ResetMultiCreate();
 
 
             // Mark whether they ended without acting this turn

@@ -174,17 +174,17 @@ namespace Game.Core
 
 
 
-        public static void GetMultiCreateState(out bool active, out byte type, out bool border, out int remaining, out int[] cells, out int count, int gameIndex)
-        {
-            var gameState = GameRegistry.game[gameIndex].gameState;
+        // public static void GetMultiCreateState(out bool active, out byte type, out bool border, out int remaining, out int[] cells, out int count, int gameIndex)
+        // {
+        //     var gameState = GameRegistry.game[gameIndex].gameState;
 
-            active = gameState.multiCreateActive;
-            type = gameState.multiCreateType;
-            border = gameState.multiCreateBorder;
-            remaining = gameState.multiCreateRemaining;
-            cells = gameState.multiCreateCells.ToArray();
-            count = gameState.multiCreateCells.Count;
-        }
+        //     active = gameState.multiCreateActive;
+        //     type = gameState.multiCreateType;
+        //     border = gameState.multiCreateBorder;
+        //     remaining = gameState.multiCreateRemaining;
+        //     cells = gameState.multiCreateCells.ToArray();
+        //     count = gameState.multiCreateCells.Count;
+        // }
 
 
 //         #endregion

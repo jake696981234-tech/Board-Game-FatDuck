@@ -286,9 +286,9 @@ public class MLAgentController : Agent
     public int BuildOffersForCurrentPlayer()
     {
         // Build OfferQuery: (bm, pcs, ps, playerId, cost)
-        GameActions.GetMultiCreateState(out bool mcActive, out byte mcType, out bool mcBorder, out int mcRemaining, out int[] mcCells, out int mcCellCount, gameIndex);
-        var query = new OfferQuery(playerId, _gs.PieceLimitEnabled, _gs.pieceLimitPerPlayer,
-            mcActive, mcType, mcBorder, mcRemaining, mcCells, mcCellCount);
+        // GameActions.GetMultiCreateState(out bool mcActive, out byte mcType, out bool mcBorder, out int mcRemaining, out int[] mcCells, out int mcCellCount, gameIndex);
+        var query = new OfferQuery(playerId, _gs.PieceLimitEnabled, _gs.pieceLimitPerPlayer
+            /*mcActive, mcType, mcBorder, mcRemaining, mcCells, mcCellCount */);
 
         var acts = _offers.AsSpan();
         var costs = _quoted.AsSpan();

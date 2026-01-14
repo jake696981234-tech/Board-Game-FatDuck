@@ -69,7 +69,7 @@ public class GameController : MonoBehaviour
 
     }
 
-    public Game.Core.GameState gameState;
+    public GameState gameState;
 
     public GameSnapshot currentSnapshot;   // latest snapshot (read-only for views)
     public GameSnapshotComposer snapshotComposer;   // snapshot builder

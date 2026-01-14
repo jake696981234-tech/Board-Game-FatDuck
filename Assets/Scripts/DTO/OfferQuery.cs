@@ -22,25 +22,25 @@ namespace Game.Core
 
         public readonly bool pieceLimitEnabled;
         public readonly int pieceLimitPerPlayer;
-        public readonly bool multiCreateActive;
-        public readonly byte multiCreateType;
-        public readonly bool multiCreateBorder;
-        public readonly int multiCreateRemaining;
-        public readonly int[] multiCreateCells; // snapshot of already placed cells
-        public readonly int multiCreateCellCount;
+        // public readonly bool multiCreateActive;
+        // public readonly byte multiCreateType;
+        // public readonly bool multiCreateBorder;
+        // public readonly int multiCreateRemaining;
+        // public readonly int[] multiCreateCells; // snapshot of already placed cells
+        // public readonly int multiCreateCellCount;
 
-        public OfferQuery(byte playerId, bool pieceLimitEnabled, int pieceLimitPerPlayer,
-            bool multiCreateActive = false, byte multiCreateType = 0, bool multiCreateBorder = false, int multiCreateRemaining = 0, int[] multiCreateCells = null, int multiCreateCellCount = 0)
+        public OfferQuery(byte playerId, bool pieceLimitEnabled, int pieceLimitPerPlayer
+            /*bool multiCreateActive = false, byte multiCreateType = 0, bool multiCreateBorder = false, int multiCreateRemaining = 0, int[] multiCreateCells = null, int multiCreateCellCount = 0 */)
         {
             this.playerId = playerId;
             this.pieceLimitEnabled = pieceLimitEnabled;
             this.pieceLimitPerPlayer = pieceLimitPerPlayer;
-            this.multiCreateActive = multiCreateActive;
-            this.multiCreateType = multiCreateType;
-            this.multiCreateBorder = multiCreateBorder;
-            this.multiCreateRemaining = multiCreateRemaining;
-            this.multiCreateCells = multiCreateCells;
-            this.multiCreateCellCount = multiCreateCellCount;
+            // this.multiCreateActive = multiCreateActive;
+            // this.multiCreateType = multiCreateType;
+            // this.multiCreateBorder = multiCreateBorder;
+            // this.multiCreateRemaining = multiCreateRemaining;
+            // this.multiCreateCells = multiCreateCells;
+            // this.multiCreateCellCount = multiCreateCellCount;
         }
     }
 }

@@ -82,9 +82,9 @@ public sealed class PlayerAgent
     public bool DecideAndAct()
     {
         // Build the query the OfferProvider expects: (bm, pcs, PlayerState snapshot, playerId, cost).
-        GameActions.GetMultiCreateState(out bool mcActive, out byte mcType, out bool mcBorder, out int mcRemaining, out int[] mcCells, out int mcCellCount, gameIndex);
-        var query = new OfferQuery(_gs.CurrentPlayerId, _gs.PieceLimitEnabled, _gs.pieceLimitPerPlayer,
-            mcActive, mcType, mcBorder, mcRemaining, mcCells, mcCellCount); // :contentReference[oaicite:3]{index=3}
+        // GameActions.GetMultiCreateState(out bool mcActive, out byte mcType, out bool mcBorder, out int mcRemaining, out int[] mcCells, out int mcCellCount, gameIndex);
+        var query = new OfferQuery(_gs.CurrentPlayerId, _gs.PieceLimitEnabled, _gs.pieceLimitPerPlayer
+            /*mcActive, mcType, mcBorder, mcRemaining, mcCells, mcCellCount*/); // :contentReference[oaicite:3]{index=3}
 
         var acts = _offers.AsSpan();
         var costs = _quotedCosts.AsSpan();

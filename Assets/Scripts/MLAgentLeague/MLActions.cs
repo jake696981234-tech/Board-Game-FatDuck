@@ -6,10 +6,23 @@
 // using Unity.MLAgents.Actuators;
 // using Game.Core; // Action, OfferQuery, GameState, PlayerState
 
-// public class MLActions
+// public static class MLActions
 // {
-//     public override void WriteDiscreteActionMask(IDiscreteActionMask actionMask)
+//     public enum MLState
 //     {
-        
+//         ChoosingKind = 0,
+//         ChoosingActorsCell = 2,
+//         ChoosingTargetCell = 3,
+//         ChoosingPieceType = 4,
+//         ChoosingWallConfig = 5,
+//         ChoosingInstakeCellID = 6,
 //     }
+
+//     private static void peformAction(Action theAction)
+//     {
+//         mlState = ChoosingKind;
+//         Array.Clear(ChosenAction, 0, ChosenAction.Length);
+//         _gs.Perform(theAction, _offers);
+//     }
+
 // }
