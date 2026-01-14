@@ -15,4 +15,18 @@ public ref struct OfferBuild
     public int cap;
 }
 
+public ref struct newOfferBuild
+{
+    public OfferQuery query;
+    // public Span<Action> outActions;
+    public Span<int> whatAction;
+    public Span<int> actingCell;
+    public Span<byte> targetCell;
+    public Span<byte> aux;
+    public int gameIndex;
+    public int write;
+    public int total;
+    public int cap;
+}
+
 

@@ -283,12 +283,12 @@ namespace Game.Core
 
         }
 
-        private bool FastCheck(in Action a)
-        {
-            if (a.kind > PieceBuild) return false;
-            if (currentPlayer >= 4) return false;
-            return true;
-        }
+        // private bool FastCheck(in Action a)
+        // {
+        //     if (a.kind > PieceBuild) return false;
+        //     if (currentPlayer >= 4) return false;
+        //     return true;
+        // }
 
         public static bool IsStillLegal(Action[] offers, Action theAction)
         {

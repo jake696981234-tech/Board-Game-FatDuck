@@ -6,8 +6,32 @@ using Action = Game.Core.Action;
 using static Game.Core.ActionKind; // import enum values
 using UnityEngine;
 
-public static class OfferProvider
+public static class OfferProviderCopy
 {
+    //branches:
+    // Action kind
+    // ActorsCelID - choose whos peforming the action
+    // Target Cell ID
+    // Piece Type - for Building, Spawner, Upgrade
+    // Wall Config - for Building
+    // intake Cell ID - For Launcher
+    public static int cellCount; // this is not hooked up, this is a to do field
+
+    public static int[] ActionKinds = new int[16 + 1];
+    public static int[] ActorsCelID = new int[cellCount + 1];
+    public static int[] TargetCellID = new int[cellCount+ 1];
+    public static int[] PieceType = new int[Piece.name.Length+ 1];
+    public static int[] WallConfig = new int[32+ 1];
+    public static int[] IntakeCellID = new int[Piece.name.Length+ 1];
+
+
+    public static void BuildActionbranches(ref OfferBuild offerBuild)
+    {
+        // for (int i = 0; i < offerBuild.outActions.Length; i++)
+        // {
+        //     ActionKinds 
+        // }
+    }
      public static int BuildActionList(ref OfferBuild offerBuild)
     {
         offerBuild.cap =  offerBuild.outActions.Length;

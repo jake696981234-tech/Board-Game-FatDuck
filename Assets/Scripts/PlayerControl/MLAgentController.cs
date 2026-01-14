@@ -14,14 +14,14 @@ using Unity.MLAgents.Sensors;
 using Unity.MLAgents.Actuators;
 using Game.Core; // Action, OfferQuery, GameState, PlayerState
 
-public sealed class MLAgentController : Agent
+public class MLAgentController : Agent
 {
     [Header("Identity")]
     [SerializeField] private byte playerId = 0; // 0..3
 
     // Immutable config / shared systems (assigned by bootstrapper)
     private GameConfigHub _hub;
-    private GameState _gs;
+    public GameState _gs;
     private BoardModel _bm;
     private PlayerAgent _pa;        // reused for obs + offer build bridge
 
@@ -29,15 +29,15 @@ public sealed class MLAgentController : Agent
 
 
     // Offer buffers (capacity = hub.agent.maxOffersToConsider)
-    private Game.Core.Action[] _offers;
+    public Game.Core.Action[] _offers;
     private float[] _quoted;
-    private byte[] _mask;
+    public byte[] _mask;
 
     // Observation buffer (21 + 12*obs_maxCells)
     private float[] _obs;
 
     // Cached offer slice length for this decision
-    private int _emitCount;
+    public int _emitCount;
 
     // Rewards tuning (set by bootstrapper)
     public struct RewardsTuning
@@ -283,7 +283,7 @@ public sealed class MLAgentController : Agent
     // -------------------- Internals --------------------
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private int BuildOffersForCurrentPlayer()
+    public int BuildOffersForCurrentPlayer()
     {
         // Build OfferQuery: (bm, pcs, ps, playerId, cost)
         GameActions.GetMultiCreateState(out bool mcActive, out byte mcType, out bool mcBorder, out int mcRemaining, out int[] mcCells, out int mcCellCount, gameIndex);
