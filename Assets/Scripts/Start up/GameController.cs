@@ -75,7 +75,7 @@ public class GameController : MonoBehaviour
     public GameSnapshotComposer snapshotComposer;   // snapshot builder
     private BoardGeometry geos;
 
-    void Start()
+    public void Start()
     {
         if (gameBootstrapper == null)
         {
@@ -430,6 +430,12 @@ public class GameController : MonoBehaviour
         PieceLimitEnabled = perGameConfig.pieceLimitEnabled;
 
         PieceLimitPerPlayer = perGameConfig.pieceLimit;
+    }
+
+
+    public void SetLeaguePlayers()
+    {
+        
     }
 
 }

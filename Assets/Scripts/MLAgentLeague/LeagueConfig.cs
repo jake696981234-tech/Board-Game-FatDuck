@@ -6,8 +6,10 @@ using System.Collections.Generic;
 
 
 [CreateAssetMenu(fileName = "LeagueConfig", menuName = "Game/LeagueConfig", order = 4)]
-public sealed class LeagueConfig : ScriptableObject
+public class LeagueConfig : ScriptableObject
 {
     public int HowManyGamesForEachBot;
     public int HowManyBotsToTrain;
+
+    
 }

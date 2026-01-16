@@ -70,18 +70,17 @@ namespace Game.Core
         public const byte Shoot = 1;
         public const byte CaptureVP = 2;
         public const byte CoreDamage = 3;
-        public const byte Create = 4;
-        public const byte EndTurn = 5;
-        public const byte Push = 6;
-        public const byte GroupBuild = 7;
-        public const byte Upgrade = 8;
-        public const byte Launcher = 9; //frog
-        public const byte Spawner = 10; //frog and penguin
-        public const byte SacrificeFactory = 11;
-        public const byte ConversionFactory = 12;
-        public const byte Explosive = 13;
-        // public const byte PieceBuild = 14;
-        public const byte Sniper = 14;
-        public const byte NecroSpawn = 15;
+        public const byte Push = 4;
+        public const byte GroupBuild = 5;
+        public const byte Upgrade = 6;
+        public const byte Launcher = 7;
+        public const byte Spawner = 8;
+        public const byte SacrificeFactory = 9; 
+        public const byte ConversionFactory = 10;
+        public const byte Explosive = 11;
+        public const byte Sniper = 12;
+        public const byte NecroSpawn = 13;
+        public const byte Create = 14;
+        public const byte EndTurn = 15;
     }
 }

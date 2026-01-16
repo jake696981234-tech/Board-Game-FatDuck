@@ -152,6 +152,11 @@ public static class CostEngine
         return (ActionIndex == 0) ? 0 : RoundToInt(baseActionCost * MathF.Pow(actionGrowthFactor, ActionIndex - 1));
     }
 
+    public static int turnFee(int PlayerIndex, GameState gameState)
+    {
+        return turnFee(in gameState.ps[PlayerIndex]);
+    }
+
     public static int buildCost(Action theAction)
     {
         return theAction.kind switch

@@ -21,6 +21,7 @@ public sealed class GameBootstrapper : MonoBehaviour
 
         string csvPath = Path.Combine(Application.streamingAssetsPath, "pieces.csv");
         PiecesCsvImporter.Import(csvPath);
+        Piece.SetActiveAbilitesEnabledFromType();
 
 
         if (config == null) { Debug.LogError("Config asset not assigned."); return; }

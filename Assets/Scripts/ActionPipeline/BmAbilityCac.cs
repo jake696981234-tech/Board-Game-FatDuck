@@ -7,6 +7,12 @@ public static class BmCac
 {
     //The Aim of this script is to contain board Model related Methods, that are needed for abilitys
 
+    public static bool isConnectorSideFromCell(int cell, int Direction, int gameIndex)
+    {
+        var bm = GameRegistry.game[gameIndex].boardModel;
+        return PiecesSides.IsConnectorSide(bm.pieceConnectorConfig[bm.occupantPieceId[cell]], Direction);
+    }
+
     public static int[] OccupiedCellsInLine(int StartingCell, int maxRange, int minRange, int direction, bool needsLineOfSight, bool friendlyFire, bool onlySoldiers, int player, int gameIndex)
     {
         var bm = GameRegistry.game[gameIndex].boardModel;

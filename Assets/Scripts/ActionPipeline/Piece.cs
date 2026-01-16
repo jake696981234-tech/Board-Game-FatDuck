@@ -1,4 +1,4 @@
-
+using static Piece.AbilityKind;
 
 public static class Piece
 {
@@ -8,19 +8,18 @@ public static class Piece
         Shoot = 1,
         CaptureVP = 2,
         CoreDamage = 3,
-        Create = 4,
-        EndTurn = 5,
-        Push = 6,
-        GroupBuild = 7,
-        Upgrade = 8,
-        Launcher = 9,
-        Spawner = 10,
-        SacrificeFactory = 11,
-        ConversionFactory = 12,
-        Explosive = 13,
-        // PieceBuild = 14,
-        Sniper = 14,
-        NecroSpawn = 15,
+        Push = 4,
+        GroupBuild = 5,
+        Upgrade = 6,
+        Launcher = 7,
+        Spawner = 8,
+        SacrificeFactory = 9,
+        ConversionFactory = 10,
+        Explosive = 11,
+        Sniper = 12,
+        NecroSpawn = 13,
+        Create = 14,
+        EndTurn = 15,
         Factory = 16,
         Sanctuary = 17,
         Eat = 18,
@@ -28,6 +27,29 @@ public static class Piece
         FeedingGround = 20,
         Zombie = 21,
         Invalid = 22,
+    }
+
+    public const int ActiveAbilityCount = 15;
+    public static bool[,] ActiveAbilitesEnabledFromType = new bool[typeCount , ActiveAbilityCount]; 
+
+    public static void SetActiveAbilitesEnabledFromType()
+    {
+        for (int type = 0; type < typeCount; type++)
+        {
+            ActiveAbilitesEnabledFromType[type, (int)Move] = move_enabled[type];
+            ActiveAbilitesEnabledFromType[type, (int)Shoot] = shoot_enabled[type];
+            ActiveAbilitesEnabledFromType[type, (int)CaptureVP] = captureVP_enabled[type];
+            ActiveAbilitesEnabledFromType[type, (int)CoreDamage] = coreDamage_enabled[type];
+            ActiveAbilitesEnabledFromType[type, (int)GroupBuild] = groupBuild_enabled[type];
+            ActiveAbilitesEnabledFromType[type, (int)Upgrade] = upgrade_enabled[type];
+            ActiveAbilitesEnabledFromType[type, (int)Launcher] = launcher_enabled[type];
+            ActiveAbilitesEnabledFromType[type, (int)Spawner] = spawn_enabled[type];
+            ActiveAbilitesEnabledFromType[type, (int)SacrificeFactory] = sacrificeFactory_enabled[type];
+            ActiveAbilitesEnabledFromType[type, (int)ConversionFactory] = conversionFactory_enabled[type];
+            ActiveAbilitesEnabledFromType[type, (int)Explosive] = explosive_enabled[type];
+            ActiveAbilitesEnabledFromType[type, (int)Sniper] = sniper_enabled[type];
+            ActiveAbilitesEnabledFromType[type, (int)NecroSpawn] = necroSpawn_enabled[type];
+        }
     }
 
     public static int typeCount;

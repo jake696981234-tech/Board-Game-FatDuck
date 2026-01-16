@@ -127,6 +127,11 @@ public class BoardModel
         return pieceOwner[GetCellOccupant(cellId)];
     }
 
+    public int GetPieceHPFromCell(int cellId)
+    {
+        return PieceHP(GetCellOccupant(cellId));
+    }
+
     public int GetCellOccupant(int cellId)
         => (IsValidCellId(cellId) && occupantPieceId != null) ? occupantPieceId[cellId] : _invalidId;
 
