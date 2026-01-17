@@ -91,7 +91,7 @@ public readonly struct GameConfigHub
     public readonly AgentConfig agent;
 
     // ---- CONTROL & ML (NEW) ----
-    public enum ControlMode : byte { Human = 0, Heuristic = 1, ML = 2 }
+    public enum ControlMode : byte { Human = 0, DumbBot = 1, ML = 2 }
 
     // Bot policy kinds for heuristic seats
     public enum PolicyKind : byte { Heuristic = 0, DumbGreg = 1 }

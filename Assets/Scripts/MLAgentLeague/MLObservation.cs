@@ -18,7 +18,7 @@ public static class MLObservation
     // need to
     // 2. Action Cost Amount
 
-    public static void GiveMeObservations(VectorSensor sensor, theMLSam MLSam)
+    public static void GiveMeObservations(VectorSensor sensor, MLSam MLSam)
     {
         WriteObservations(MLSam);
 
@@ -28,7 +28,7 @@ public static class MLObservation
         }
     }
 
-    public static void WriteObservations(theMLSam MLSam)
+    public static void WriteObservations(MLSam MLSam)
     {
         var gameState = GameRegistry.game[MLSam.gameIndex].gameState;
         var bm = GameRegistry.game[MLSam.gameIndex].boardModel;
@@ -54,7 +54,7 @@ public static class MLObservation
     }
 
     #region Write Occ Cells
-    private static void WriteNotOccupiedCellObservations(theMLSam MLSam)
+    private static void WriteNotOccupiedCellObservations(MLSam MLSam)
     {
          for (int i = 0; i < 34; i++)
         {
@@ -62,7 +62,7 @@ public static class MLObservation
         }
     }
 
-    private static void WriteOccupiedCellObservations(int cell, theMLSam MLSam)
+    private static void WriteOccupiedCellObservations(int cell, MLSam MLSam)
     { //34
         var bm = GameRegistry.game[MLSam.gameIndex].boardModel;
 
@@ -88,7 +88,7 @@ public static class MLObservation
 
    
 
-    private static bool isLegalTarget(theMLSam MLSam, int cell)
+    private static bool isLegalTarget(MLSam MLSam, int cell)
     {
         for (int theAction = 0; theAction < MLSam.Offers.Length; theAction++)
         {
@@ -116,7 +116,7 @@ public static class MLObservation
         return false;
     }
 
-    private static bool isExplosiveVictimAction(Action theAction, theMLSam MLSam, int cell)
+    private static bool isExplosiveVictimAction(Action theAction, MLSam MLSam, int cell)
     {
         var bm = GameRegistry.game[MLSam.gameIndex].boardModel;
 
@@ -137,7 +137,7 @@ public static class MLObservation
 
      
 
-    private static bool isLegalActor(theMLSam MLSam, int cell)
+    private static bool isLegalActor(MLSam MLSam, int cell)
     {
         for (int theAction = 0; theAction < MLSam.Offers.Length; theAction++)
         {
@@ -148,7 +148,7 @@ public static class MLObservation
         return false;
     }
 
-    public static void WriteActiveAbilties(int cell, int PieceType, theMLSam MLSam)
+    public static void WriteActiveAbilties(int cell, int PieceType, MLSam MLSam)
     {
         for (int i = 0; i < Piece.ActiveAbilityCount; i++)
         {
@@ -156,7 +156,7 @@ public static class MLObservation
         }
     }
 
-    public static void WritePieceSides(int gameIndex, int cell, theMLSam MLSam)
+    public static void WritePieceSides(int gameIndex, int cell, MLSam MLSam)
     {
         var bm = GameRegistry.game[gameIndex].boardModel;
 
@@ -172,7 +172,7 @@ public static class MLObservation
         }
     }
     #endregion
-    private static void WritePlayersStats(GameState gameState, theMLSam MLSam)
+    private static void WritePlayersStats(GameState gameState, MLSam MLSam)
     {
         MLSam.Observations[MLSam.Count++] = Budget(gameState, MLSam.playerId);
         MLSam.Observations[MLSam.Count++] = VPGained(gameState, MLSam.playerId);
@@ -209,8 +209,8 @@ public static class MLObservation
     private static float PieceEnemy(BoardModel bm, int cell, int PlayerIndex) => (bm.GetPieceOwnerFromCell(cell) == PlayerIndex) ? 0f : 1f;
     private static float PieceHP(BoardModel bm, int cell) => normalize(bm.GetPieceHPFromCell(cell), MaxPieceHp);
     private static float isPieceVPCell(BoardModel bm, int cell) => (bm.GetVictoryPointCellId() == cell) ? 1f : 0f;
-    private static float isYourCore(BoardModel bm, theMLSam MLSam, int cell) => (bm.GetPlayerCoreCellId(MLSam.playerId) == cell) ? 1f : 0f;
-    private static float isEnemyCore(BoardModel bm, theMLSam MLSam, int cell)
+    private static float isYourCore(BoardModel bm, MLSam MLSam, int cell) => (bm.GetPlayerCoreCellId(MLSam.playerId) == cell) ? 1f : 0f;
+    private static float isEnemyCore(BoardModel bm, MLSam MLSam, int cell)
     {
         for (byte p = 0; p < MaxPlayers; p++)
         {

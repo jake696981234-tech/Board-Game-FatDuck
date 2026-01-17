@@ -12,6 +12,7 @@ namespace Game.Core
 
 
     //general to do list:
+    //0. Hook up Terminal end for the new ML agent
     //1. With ML agent training- If the ML agent being trained is eliminated, you can just skip to the next game. 
     //2. If a player has 0 budget, and their payout is zero, they should be eliminated.
     public class GameState
@@ -449,10 +450,10 @@ namespace Game.Core
 
             // 4) Victory check
             FinalWinCheckByVP();
+            if (isGameOver) controller.GameEnd();
 
             // 5) If game continues, begin next round on the already-selected currentPlayer
-            if (!isGameOver)
-                BeginTurn();
+            if (!isGameOver) BeginTurn();
         }
 
 

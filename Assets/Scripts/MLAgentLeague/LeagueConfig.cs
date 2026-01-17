@@ -11,5 +11,7 @@ public class LeagueConfig : ScriptableObject
     public int HowManyGamesForEachBot;
     public int HowManyBotsToTrain;
 
-    
 }
+
+
+

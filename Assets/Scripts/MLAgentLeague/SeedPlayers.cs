@@ -1,10 +1,10 @@
-public class seedPlayers
-{
-    public void seedPlayers()
-    {
-        LeagueConfig lConfig;
+// public class MLLeague
+// {
+//     public void seedPlayers()
+//     {
+//         LeagueConfig lConfig;
 
-       var playerOne = new theMLSam();
-       
-    }
-}
+//        var playerOne = new theMLSam();
+
+//     }
+// }

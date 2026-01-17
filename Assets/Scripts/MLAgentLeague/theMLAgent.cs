@@ -10,7 +10,7 @@ using System.Collections.Generic;
 using Action = Game.Core.Action;
 using static Game.Core.ActionKind; // import enum values
 
-public class theMLSam : Agent
+public class MLSam : Agent
 {
     [Header("Identity")]
     [SerializeField] public byte playerId = 0; // 0..3

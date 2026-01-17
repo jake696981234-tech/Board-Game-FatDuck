@@ -32,10 +32,10 @@ public sealed class Config : ScriptableObject
     // ---- NEW: Control & ML authoring ----
     [Header("Control")]
     public GameConfigHub.ControlMode[] playerControl = new GameConfigHub.ControlMode[4] {
-    GameConfigHub.ControlMode.Heuristic,
-    GameConfigHub.ControlMode.Heuristic,
-    GameConfigHub.ControlMode.Heuristic,
-    GameConfigHub.ControlMode.Heuristic
+    GameConfigHub.ControlMode.DumbBot,
+    GameConfigHub.ControlMode.DumbBot,
+    GameConfigHub.ControlMode.DumbBot,
+    GameConfigHub.ControlMode.DumbBot
 };
 
     [Header("Bot Policies (for Heuristic seats)")]

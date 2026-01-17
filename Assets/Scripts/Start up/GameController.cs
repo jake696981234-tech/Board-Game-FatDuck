@@ -9,9 +9,7 @@ public class GameController : MonoBehaviour
     public GameBootstrapper gameBootstrapper;
     public int gameIndex;
     public PerGameConfig perGameConfig;
-
     public EventManager eventManager;
-
     public bool inspectGame = false;
 
     private int _completedGamesCount = 0;
@@ -27,47 +25,11 @@ public class GameController : MonoBehaviour
 
 
     public bool PieceLimitEnabled;
-
     public int PieceLimitPerPlayer;
-
     public bool twoPlayerHurdle;
-
     public int learningAim = 50; //to do- set up this functionality
 
-
-    private void curriculumCheck()
-    {
-        if (perGameConfig.Curriculum.Count == 0) return;
-        Debug.Log(perGameConfig.Curriculum.Count);
-
-        foreach (var hurdle in perGameConfig.Curriculum)
-        {
-            if (hurdle.restriction == curriculumRestriction.onePiece)
-            {
-                if (hurdle.goalRequirement >= learningAim)
-                {
-                    PieceLimitEnabled = true;
-                    PieceLimitPerPlayer = 1;
-                }
-                else
-                {
-                    PieceLimitEnabled = false;
-                }
-            }
-            if (hurdle.restriction == curriculumRestriction.twoPlayer)
-            {
-                if (hurdle.goalRequirement >= learningAim)
-                {
-                    twoPlayerHurdle = true;
-                }
-                else
-                {
-                    twoPlayerHurdle = false;
-                }
-            }
-        }
-
-    }
+   
 
     public GameState gameState;
 
@@ -92,102 +54,37 @@ public class GameController : MonoBehaviour
         setInspectGame();
     }
 
-    void Update()
+    public void GameEnd()
     {
-        // Auto-restart flow: detect game end once and optionally restart
-        if (gameState != null && gameState.IsGameOver)
-        {
-            if (!_gameOverHandled)
-            {
-                _gameOverHandled = true;
-                _completedGamesCount++;
-                _resetPendingFromML = HasAnyMLControllers(); // set before broadcasting so ML callbacks can trigger restart
-                BroadcastTerminalRewards();
-
-                bool auto = (config != null && config.autoSim.autoRestartOnGameOver);
-                bool underCap = (config == null) || (config.autoSim.maxAutoGames <= 0) || (_completedGamesCount < config.autoSim.maxAutoGames);
-
-                if (!_resetPendingFromML && auto && underCap && !_restartInProgress)
-                {
-                    RestartMatch();
-                    return; // let the new match tick next frame
-                }
-            }
-            // If not auto-restarting, stop ticking
-            return;
-        }
-
-        byte cur = gameState.CurrentPlayerId;
-        if (GameBootstrapper.hub.playerControl[cur] == GameConfigHub.ControlMode.Heuristic)
-        {
-            var agent = heuristicControllers[cur];
-            if (agent != null) agent.Tick();
-        }
-        // ML seats: driven by ML-Agents components; Human seats: idle in Phase A
-    }
-
-    private void OnDestroy()
-    {
-        if (config != null && config.dbLogging.enabled && config.dbLogging.useSharedSession)
-            DbLoggingConfig.EndLoggingSession(commit: true);
-    }
-
-
-    private void RestartMatch()
-    {
+        BroadcastTerminalRewards();
+        _completedGamesCount++;
+        if (_completedGamesCount >= config.autoSim.maxAutoGames) return;
+        
         curriculumCheck();
         if (inspectGame && config.dbLogging.enabled)
         {
             DbLoggingConfig.prepDimGame();
             DbLoggingConfig.logRoundVersion();
         }
-        _restartInProgress = true;
-        try
-        {
-            // Clear the board
-            var coreCells = BuildCoreCellsForNextMatch();
-            if (board != null)
-            {
-                board.SetPlayerCoreCells(coreCells);
-                board.RemoveAllPieces();
-            }
+        
+        // Clear the board
+        var coreCells = BuildCoreCellsForNextMatch();
+        board.SetPlayerCoreCells(coreCells);
+        board.RemoveAllPieces();
+        
+        // Re-seed player state from hub
+        var ps = CreateAndSeedThePlayerStructs();
 
-            // Re-seed player state from hub
-            var ps = new PlayerState[4];
-            for (byte i = 0; i < 4; i++)
-            {
-                ps[i] = new PlayerState();
-                bool active = i < GameBootstrapper.hub.player_count;
-                ps[i].applyBotSurcharges = active && GameBootstrapper.hub.player_applyBotSurcharges[i];
-                ps[i].applyStartOfTurnBudgetDecrease = active && GameBootstrapper.hub.player_applyStartOfTurnBudgetDecrease[i];
-                ps[i].isAI = active && GameBootstrapper.hub.player_isAI[i];
-                ps[i].team = active ? GameBootstrapper.hub.player_team[i] : i;
-                ps[i].name = active ? GameBootstrapper.hub.player_name[i] : $"P{i}";
-            }
+        // Reset GameState (reuse same instance so controllers keep references)
+        gameState.Initialize(board, ps, startingPlayer, eventManager, this, gameIndex);
+        GameRegistry.Register(gameIndex, gameState, board, eventManager, this);
 
-            // Reset GameState (reuse same instance so controllers keep references)
-            gameState.Initialize(board, ps, startingPlayer, eventManager, this, gameIndex);
-            GameRegistry.Register(gameIndex, gameState, board, eventManager, this);
-
-
-            if (inspectGame)
-            {
-                // Push a fresh snapshot to the view
-                if (snapshotComposer != null)
-                {
-                    currentSnapshot = snapshotComposer.GetSnapshot();
-                    UIBridge.ApplySnapshot(currentSnapshot);
-                }
-            }
-
-            // Reset game-over gate
-            _gameOverHandled = false;
-        }
-        finally
-        {
-            _restartInProgress = false;
-        }
+        if (!inspectGame) return;
+        currentSnapshot = snapshotComposer.GetSnapshot();
+        UIBridge.ApplySnapshot(currentSnapshot);  
     }
+
+
 
     private void BroadcastTerminalRewards()
     {
@@ -200,13 +97,13 @@ public class GameController : MonoBehaviour
         }
     }
 
-    private void OnAgentEpisodeBegin(byte seat)
-    {
-        if (!_resetPendingFromML || _restartInProgress) return;
-        _resetPendingFromML = false;
-        _gameOverHandled = false;
-        RestartMatch();
-    }
+    // private void OnAgentEpisodeBegin(byte seat)
+    // {
+    //     if (!_resetPendingFromML || _restartInProgress) return;
+    //     _resetPendingFromML = false;
+    //     _gameOverHandled = false;
+    //     RestartMatch();
+    // }
 
     private bool HasAnyMLControllers()
     {
@@ -292,7 +189,7 @@ public class GameController : MonoBehaviour
         {
             switch (GameBootstrapper.hub.playerControl[seat])
             {
-                case GameConfigHub.ControlMode.Heuristic:
+                case GameConfigHub.ControlMode.DumbBot:
                     {
                         setControlDumbBot(seat);
                         break;
@@ -343,7 +240,7 @@ public class GameController : MonoBehaviour
         // Now add the Agent so Awake() reads the configured BehaviorParameters
         var ml = go.AddComponent<MLAgentController>();
         mlControllers[seat] = ml;
-        ml.SetEpisodeBeginCallback(OnAgentEpisodeBegin);
+        // ml.SetEpisodeBeginCallback(OnAgentEpisodeBegin);
 
         // Build a small PlayerAgent bridge for obs & offer building
         var paBridge = new PlayerAgent();
@@ -424,40 +321,165 @@ public class GameController : MonoBehaviour
     }
 
 
-    public void setInspectGame()
+    private void setInspectGame()
     {
-        if (inspectGame)
+        if (!inspectGame) return;
+        
+        var hic = FindFirstObjectByType<HumanInteractionController>();
+        
+        // pick the first seat marked Human
+        byte humanSeat = 0;
+        for (byte s = 0; s < GameBootstrapper.hub.player_count; s++)
         {
-            var hic = FindFirstObjectByType<HumanInteractionController>();
-            if (hic != null)
-            {
-                // pick the first seat marked Human
-                byte humanSeat = 0;
-                for (byte s = 0; s < GameBootstrapper.hub.player_count; s++)
-                {
-                    if (GameBootstrapper.hub.playerControl[s] == GameConfigHub.ControlMode.Human) { humanSeat = s; break; }
-                }
-
-                UIBridge.Init(hic, gameIndex, humanSeat);
-
-            }
-
-            // === Phase B: compose the initial snapshot & push to BoardView ===
-            snapshotComposer = new GameSnapshotComposer(
-                geometry,   // local variable from your builder call
-                gameIndex
-             );
-
-            // currentSnapshot = snapshotComposer.GetSnapshot();
-
-            // UIBridge.ApplySnapshot(currentSnapshot);
-
-            // Rebuild/push snapshot after every successful action
-            gameState.OnActionExecuted += () =>
-            {
-                currentSnapshot = snapshotComposer.GetSnapshot();
-                UIBridge.ApplySnapshot(currentSnapshot);
-            };
+            if (GameBootstrapper.hub.playerControl[s] == GameConfigHub.ControlMode.Human) { humanSeat = s; break; }
         }
+
+        UIBridge.Init(hic, gameIndex, humanSeat);
+
+        // === Phase B: compose the initial snapshot & push to BoardView ===
+        snapshotComposer = new GameSnapshotComposer(geos, gameIndex);
+
+        // currentSnapshot = snapshotComposer.GetSnapshot();
+
+        // UIBridge.ApplySnapshot(currentSnapshot);
+
+        // Rebuild/push snapshot after every successful action
+        gameState.OnActionExecuted += () =>
+        {
+            currentSnapshot = snapshotComposer.GetSnapshot();
+            UIBridge.ApplySnapshot(currentSnapshot);
+        };
+        
     }
+
+     private void curriculumCheck()
+    {
+        if (perGameConfig.Curriculum.Count == 0) return;
+        Debug.Log(perGameConfig.Curriculum.Count);
+
+        foreach (var hurdle in perGameConfig.Curriculum)
+        {
+            if (hurdle.restriction == curriculumRestriction.onePiece)
+            {
+                if (hurdle.goalRequirement >= learningAim)
+                {
+                    PieceLimitEnabled = true;
+                    PieceLimitPerPlayer = 1;
+                }
+                else
+                {
+                    PieceLimitEnabled = false;
+                }
+            }
+            if (hurdle.restriction == curriculumRestriction.twoPlayer)
+            {
+                if (hurdle.goalRequirement >= learningAim)
+                {
+                    twoPlayerHurdle = true;
+                }
+                else
+                {
+                    twoPlayerHurdle = false;
+                }
+            }
+        }
+
+    }
+
+     private void OnDestroy()
+    {
+        if (config != null && config.dbLogging.enabled && config.dbLogging.useSharedSession)
+            DbLoggingConfig.EndLoggingSession(commit: true);
+    }
+
+     // void Update()
+    // {
+    //     // Auto-restart flow: detect game end once and optionally restart
+    //     if (gameState != null && gameState.IsGameOver)
+    //     {
+    //         if (!_gameOverHandled)
+    //         {
+    //             _gameOverHandled = true;
+    //             _completedGamesCount++;
+    //             _resetPendingFromML = HasAnyMLControllers(); // set before broadcasting so ML callbacks can trigger restart
+    //             BroadcastTerminalRewards();
+
+    //             bool auto = config != null && config.autoSim.autoRestartOnGameOver;
+    //             bool underCap = (config == null) || (config.autoSim.maxAutoGames <= 0) || (_completedGamesCount < config.autoSim.maxAutoGames);
+
+    //             if (!_resetPendingFromML && auto && underCap && !_restartInProgress)
+    //             {
+    //                 RestartMatch();
+    //                 return; // let the new match tick next frame
+    //             }
+    //         }
+    //         // If not auto-restarting, stop ticking
+    //         return;
+    //     }
+
+    //     byte cur = gameState.CurrentPlayerId;
+    //     if (GameBootstrapper.hub.playerControl[cur] == GameConfigHub.ControlMode.Heuristic)
+    //     {
+    //         var agent = heuristicControllers[cur];
+    //         if (agent != null) agent.Tick();
+    //     }
+    //     // ML seats: driven by ML-Agents components; Human seats: idle in Phase A
+    // }
+
+    
+    // private void RestartMatch()
+    // {
+    //     curriculumCheck();
+    //     if (inspectGame && config.dbLogging.enabled)
+    //     {
+    //         DbLoggingConfig.prepDimGame();
+    //         DbLoggingConfig.logRoundVersion();
+    //     }
+    //     _restartInProgress = true;
+    //     try
+    //     {
+    //         // Clear the board
+    //         var coreCells = BuildCoreCellsForNextMatch();
+    //         if (board != null)
+    //         {
+    //             board.SetPlayerCoreCells(coreCells);
+    //             board.RemoveAllPieces();
+    //         }
+
+    //         // Re-seed player state from hub
+    //         var ps = new PlayerState[4];
+    //         for (byte i = 0; i < 4; i++)
+    //         {
+    //             ps[i] = new PlayerState();
+    //             bool active = i < GameBootstrapper.hub.player_count;
+    //             ps[i].applyBotSurcharges = active && GameBootstrapper.hub.player_applyBotSurcharges[i];
+    //             ps[i].applyStartOfTurnBudgetDecrease = active && GameBootstrapper.hub.player_applyStartOfTurnBudgetDecrease[i];
+    //             ps[i].isAI = active && GameBootstrapper.hub.player_isAI[i];
+    //             ps[i].team = active ? GameBootstrapper.hub.player_team[i] : i;
+    //             ps[i].name = active ? GameBootstrapper.hub.player_name[i] : $"P{i}";
+    //         }
+
+    //         // Reset GameState (reuse same instance so controllers keep references)
+    //         gameState.Initialize(board, ps, startingPlayer, eventManager, this, gameIndex);
+    //         GameRegistry.Register(gameIndex, gameState, board, eventManager, this);
+
+
+    //         if (inspectGame)
+    //         {
+    //             // Push a fresh snapshot to the view
+    //             if (snapshotComposer != null)
+    //             {
+    //                 currentSnapshot = snapshotComposer.GetSnapshot();
+    //                 UIBridge.ApplySnapshot(currentSnapshot);
+    //             }
+    //         }
+
+    //         // Reset game-over gate
+    //         _gameOverHandled = false;
+    //     }
+    //     finally
+    //     {
+    //         _restartInProgress = false;
+    //     }
+    // }
 }
