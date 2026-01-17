@@ -433,7 +433,11 @@ public class GameController : MonoBehaviour
     }
 
 
-    public void SetLeaguePlayers()
+    public void seedPlayers()
+    {
+        
+    }
+    public void CreateAndSetPlayers()
     {
         
     }

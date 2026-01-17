@@ -111,6 +111,11 @@ namespace Game.Core
             BeginTurn();
         }
 
+        public void TickPlayer()
+        {
+            
+        }
+
         #endregion
         #region The Action method
         public bool Perform(in Action theAction, Action[] offers)

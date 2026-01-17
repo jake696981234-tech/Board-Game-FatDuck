@@ -26,6 +26,11 @@ public class theMLSam : Agent
     public RewardsTuning rewards;
     public MLActions.MLState mlState = ChoosingKind;
 
+    public void TickMe()
+    {
+        RequestDecision();
+    }
+
     public override void OnActionReceived(ActionBuffers actions)
     {
         MLActions.ReceiveAction(actions, this);
