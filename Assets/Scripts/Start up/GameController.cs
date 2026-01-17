@@ -85,189 +85,11 @@ public class GameController : MonoBehaviour
         curriculumCheck();
         eventManager = new EventManager();
         setGameConfigValues();
-
-        var geometry = GeometryBuilder.Build();
-        geos = geometry;
-        board = new BoardModel();
-        var coreCells = BuildCoreCellsForNextMatch();
-        board.Init(in geometry, coreCellIdOverride: coreCells);
-
-        var ps = new PlayerState[4];
-        for (byte i = 0; i < 4; i++)
-        {
-            ps[i] = new PlayerState();
-            bool active = i < GameBootstrapper.hub.player_count;
-            ps[i].applyBotSurcharges = active && GameBootstrapper.hub.player_applyBotSurcharges[i];
-            ps[i].applyStartOfTurnBudgetDecrease = active && GameBootstrapper.hub.player_applyStartOfTurnBudgetDecrease[i];
-            ps[i].isAI = active && GameBootstrapper.hub.player_isAI[i];
-            ps[i].team = active ? GameBootstrapper.hub.player_team[i] : i;
-            ps[i].name = active ? GameBootstrapper.hub.player_name[i] : $"P{i}";
-        }
-
-        gameState = new GameState();
-        gameState.Initialize(board, ps, startingPlayer, eventManager, this, gameIndex);
-        GameRegistry.Register(gameIndex, gameState, board, eventManager, this);
-
-
-        if (inspectGame && config.dbLogging.enabled)
-        {
-            DbLoggingConfig.InitializeLoggingValues(eventManager);
-            // Apply runtime logging tuning from Config
-            DbLoggingConfig.ApplyConfig(in config.dbLogging);
-            DbLoggingConfig.DeleteConflictingSimIdRows();
-            DbLoggingConfig.logDimSim();
-            DbLoggingConfig.logDimActionType();
-            DbLoggingConfig.logDimPiece();
-            DbLoggingConfig.logPlayerVersion();
-            DbLoggingConfig.logWinTypeVersion();
-            DbLoggingConfig.prepDimGame();
-            DbLoggingConfig.logRoundVersion();
-            if (config.dbLogging.useSharedSession)
-                DbLoggingConfig.StartLoggingSession(transactional: config.dbLogging.transactionalSession);
-        }
-
-        heuristicControllers = new PlayerAgent[4];
-        mlControllers = new MLAgentController[4];
-
-
-
-        for (byte seat = 0; seat < GameBootstrapper.hub.player_count; seat++)
-        {
-            switch (GameBootstrapper.hub.playerControl[seat])
-            {
-                case GameConfigHub.ControlMode.Heuristic:
-                    {
-                        var agent = new PlayerAgent();
-                        // Select a policy per seat
-                        IBotPolicy policy;
-                        if (GameBootstrapper.hub.playerPolicy != null && seat < GameBootstrapper.hub.playerPolicy.Length)
-                        {
-                            switch (GameBootstrapper.hub.playerPolicy[seat])
-                            {
-                                case GameConfigHub.PolicyKind.DumbGreg:
-                                    {
-                                        var dg = (config != null) ? config.dumbGreg : default;
-                                        int? seed = null;
-                                        if (dg.seedBase != 0)
-                                        {
-                                            seed = dg.seedBySeat ? dg.seedBase + seat : dg.seedBase;
-                                        }
-                                        policy = new DumbGregBotPolicy(
-                                            endTurnAfterFirstPct: dg.endTurnAfterFirstPct,
-                                            shootInsteadPct: dg.shootInsteadPct,
-                                            moveAnotherPct: dg.moveAnotherPct,
-                                            moveBuildingPct: dg.moveBuildingPct,
-                                            createInsteadPct: dg.createInsteadPct,
-                                            seed: seed
-                                        );
-                                        break;
-                                    }
-                                case GameConfigHub.PolicyKind.Heuristic:
-                                default: policy = new HeuristicPolicy(); break;
-                            }
-                        }
-                        else { policy = new HeuristicPolicy(); }
-
-
-                        agent.Init(gameState, board, gameIndex, policy);
-                        agent.BindSeat(seat); // (see tiny method below)
-                        heuristicControllers[seat] = agent;
-                        break;
-                    }
-                case GameConfigHub.ControlMode.ML:
-                    {
-                        if (!GameBootstrapper.hub.enableMLAgents)
-                        {
-                            Debug.LogWarning($"Seat {seat}: ML requested but ML Agents disabled; seat left idle.");
-                            break;
-                        }
-                        // Create/attach ML Agent in scene (self-driven via ML-Agents)
-                        var go = new GameObject($"MLAgent_Player_{seat}");
-
-
-                        // --- Auto inject Behavior Parameters based on config ---
-                        var bp = go.AddComponent<Unity.MLAgents.Policies.BehaviorParameters>();
-                        bp.BehaviorName = GameBootstrapper.hub.mlBehavior.name;
-                        bp.UseChildSensors = GameBootstrapper.hub.mlBehavior.useChildSensors;
-                        bp.BrainParameters.VectorObservationSize = GameBootstrapper.hub.mlBehavior.obsSize;
-                        bp.BrainParameters.ActionSpec =
-                            Unity.MLAgents.Actuators.ActionSpec.MakeDiscrete(GameBootstrapper.hub.mlBehavior.actionBranchSize);
-                        bp.TeamId = (seat < GameBootstrapper.hub.player_team.Length)
-                            ? GameBootstrapper.hub.player_team[seat]
-                            : seat;
-
-                        var behaviorOverride = (config != null && config.playerBehaviorOverrides != null && seat < config.playerBehaviorOverrides.Length)
-                            ? config.playerBehaviorOverrides[seat]
-                            : default;
-                        bp.BehaviorType = behaviorOverride.behaviorType;
-                        bp.DeterministicInference = behaviorOverride.deterministicInference;
-                        if (behaviorOverride.modelAsset != null)
-                        {
-                            bp.Model = behaviorOverride.modelAsset;
-                        }
-                        // Now add the Agent so Awake() reads the configured BehaviorParameters
-                        var ml = go.AddComponent<MLAgentController>();
-                        mlControllers[seat] = ml;
-                        ml.SetEpisodeBeginCallback(OnAgentEpisodeBegin);
-
-                        // Build a small PlayerAgent bridge for obs & offer building
-                        var paBridge = new PlayerAgent();
-
-
-                        paBridge.BindSeat(seat);
-
-                        paBridge.Init(gameState, board, gameIndex);
-
-                        // Wire everything into the ML controller
-
-                        ml.Init(gameState, board, paBridge, seat, in config.mlRewards, gameIndex);
-                        break;
-                    }
-                case GameConfigHub.ControlMode.Human:
-                default:
-                    // No controller; human input not implemented in Phase A
-                    break;
-            }
-
-
-        }
-
-
-        if (inspectGame)
-        {
-            var hic = FindFirstObjectByType<HumanInteractionController>();
-            if (hic != null)
-            {
-                // pick the first seat marked Human
-                byte humanSeat = 0;
-                for (byte s = 0; s < GameBootstrapper.hub.player_count; s++)
-                {
-                    if (GameBootstrapper.hub.playerControl[s] == GameConfigHub.ControlMode.Human) { humanSeat = s; break; }
-                }
-
-                UIBridge.Init(hic, gameIndex, humanSeat);
-
-            }
-
-            // === Phase B: compose the initial snapshot & push to BoardView ===
-            snapshotComposer = new GameSnapshotComposer(
-                geometry,   // local variable from your builder call
-                gameIndex
-             );
-
-            // currentSnapshot = snapshotComposer.GetSnapshot();
-
-            // UIBridge.ApplySnapshot(currentSnapshot);
-
-            // Rebuild/push snapshot after every successful action
-            gameState.OnActionExecuted += () =>
-            {
-                currentSnapshot = snapshotComposer.GetSnapshot();
-                UIBridge.ApplySnapshot(currentSnapshot);
-            };
-
-
-        }
+        BuildTheBoard();
+        var players = SetPlayers();
+        setGameState(players);
+        SetDataBaseLogging();
+        setInspectGame();
     }
 
     void Update()
@@ -432,14 +254,210 @@ public class GameController : MonoBehaviour
         PieceLimitPerPlayer = perGameConfig.pieceLimit;
     }
 
-
-    public void seedPlayers()
+    private void setGameState(PlayerState[] players)
     {
-        
-    }
-    public void CreateAndSetPlayers()
-    {
-        
+        gameState = new GameState();
+        gameState.Initialize(board, players, startingPlayer, eventManager, this, gameIndex);
+        GameRegistry.Register(gameIndex, gameState, board, eventManager, this);
     }
 
+
+    private PlayerState[] SetPlayers()
+    {
+        var ps = CreateAndSeedThePlayerStructs();
+        SetWhoControlsPlayers();
+        return ps;
+    }
+    private PlayerState[] CreateAndSeedThePlayerStructs()
+    {
+        var ps = new PlayerState[4];
+        for (byte i = 0; i < 4; i++)
+        {
+            ps[i] = new PlayerState();
+            bool active = i < GameBootstrapper.hub.player_count;
+            ps[i].applyBotSurcharges = active && GameBootstrapper.hub.player_applyBotSurcharges[i];
+            ps[i].applyStartOfTurnBudgetDecrease = active && GameBootstrapper.hub.player_applyStartOfTurnBudgetDecrease[i];
+            ps[i].isAI = active && GameBootstrapper.hub.player_isAI[i];
+            ps[i].team = active ? GameBootstrapper.hub.player_team[i] : i;
+            ps[i].name = active ? GameBootstrapper.hub.player_name[i] : $"P{i}";
+        }
+        return ps;
+    }
+
+    private void SetWhoControlsPlayers()
+    {
+        heuristicControllers = new PlayerAgent[4];
+        mlControllers = new MLAgentController[4];
+        for (byte seat = 0; seat < GameBootstrapper.hub.player_count; seat++)
+        {
+            switch (GameBootstrapper.hub.playerControl[seat])
+            {
+                case GameConfigHub.ControlMode.Heuristic:
+                    {
+                        setControlDumbBot(seat);
+                        break;
+                    }
+                case GameConfigHub.ControlMode.ML:
+                    {
+                        setControlMLBot(seat);
+                        break;
+                    }
+                case GameConfigHub.ControlMode.Human:
+                default:
+                    // Dont Need go do anything- could change this for multple players, and/or can seed some values here 
+                    break;
+            }
+        }
+    }
+
+    private void setControlMLBot(byte seat)
+    {
+        if (!GameBootstrapper.hub.enableMLAgents)
+        {
+            Debug.LogWarning($"Seat {seat}: ML requested but ML Agents disabled; seat left idle.");
+            return;
+        }
+        // Create/attach ML Agent in scene (self-driven via ML-Agents)
+        var go = new GameObject($"MLAgent_Player_{seat}");
+
+        // --- Auto inject Behavior Parameters based on config ---
+        var bp = go.AddComponent<Unity.MLAgents.Policies.BehaviorParameters>();
+        bp.BehaviorName = GameBootstrapper.hub.mlBehavior.name;
+        bp.UseChildSensors = GameBootstrapper.hub.mlBehavior.useChildSensors;
+        bp.BrainParameters.VectorObservationSize = GameBootstrapper.hub.mlBehavior.obsSize;
+        bp.BrainParameters.ActionSpec =
+            Unity.MLAgents.Actuators.ActionSpec.MakeDiscrete(GameBootstrapper.hub.mlBehavior.actionBranchSize);
+        bp.TeamId = (seat < GameBootstrapper.hub.player_team.Length)
+            ? GameBootstrapper.hub.player_team[seat]
+            : seat;
+
+        var behaviorOverride = (config != null && config.playerBehaviorOverrides != null && seat < config.playerBehaviorOverrides.Length)
+            ? config.playerBehaviorOverrides[seat]
+            : default;
+        bp.BehaviorType = behaviorOverride.behaviorType;
+        bp.DeterministicInference = behaviorOverride.deterministicInference;
+        if (behaviorOverride.modelAsset != null)
+        {
+            bp.Model = behaviorOverride.modelAsset;
+        }
+        // Now add the Agent so Awake() reads the configured BehaviorParameters
+        var ml = go.AddComponent<MLAgentController>();
+        mlControllers[seat] = ml;
+        ml.SetEpisodeBeginCallback(OnAgentEpisodeBegin);
+
+        // Build a small PlayerAgent bridge for obs & offer building
+        var paBridge = new PlayerAgent();
+
+        paBridge.BindSeat(seat);
+
+        paBridge.Init(gameState, board, gameIndex);
+
+        // Wire everything into the ML controller
+        ml.Init(gameState, board, paBridge, seat, in config.mlRewards, gameIndex);
+    }
+
+    private void setControlDumbBot(byte seat)
+    {
+        var agent = new PlayerAgent();
+        // Select a policy per seat
+        IBotPolicy policy;
+        if (GameBootstrapper.hub.playerPolicy != null && seat < GameBootstrapper.hub.playerPolicy.Length)
+        {
+            switch (GameBootstrapper.hub.playerPolicy[seat])
+            {
+                case GameConfigHub.PolicyKind.DumbGreg:
+                    {
+                        var dg = (config != null) ? config.dumbGreg : default;
+                        int? seed = null;
+                        if (dg.seedBase != 0)
+                        {
+                            seed = dg.seedBySeat ? dg.seedBase + seat : dg.seedBase;
+                        }
+                        policy = new DumbGregBotPolicy(
+                            endTurnAfterFirstPct: dg.endTurnAfterFirstPct,
+                            shootInsteadPct: dg.shootInsteadPct,
+                            moveAnotherPct: dg.moveAnotherPct,
+                            moveBuildingPct: dg.moveBuildingPct,
+                            createInsteadPct: dg.createInsteadPct,
+                            seed: seed
+                        );
+                        break;
+                    }
+                case GameConfigHub.PolicyKind.Heuristic:
+                default: policy = new HeuristicPolicy(); break;
+            }
+        }
+        else { policy = new HeuristicPolicy(); }
+
+        agent.Init(gameState, board, gameIndex, policy);
+        agent.BindSeat(seat); // (see tiny method below)
+        heuristicControllers[seat] = agent;
+    }
+
+    public void BuildTheBoard()
+    {
+        var geometry = GeometryBuilder.Build();
+        geos = geometry;
+        board = new BoardModel();
+        var coreCells = BuildCoreCellsForNextMatch();
+        board.Init(in geometry, coreCellIdOverride: coreCells);
+    }
+
+    public void SetDataBaseLogging()
+    {
+        if (inspectGame && config.dbLogging.enabled)
+        {
+            DbLoggingConfig.InitializeLoggingValues(eventManager);
+            // Apply runtime logging tuning from Config
+            DbLoggingConfig.ApplyConfig(in config.dbLogging);
+            DbLoggingConfig.DeleteConflictingSimIdRows();
+            DbLoggingConfig.logDimSim();
+            DbLoggingConfig.logDimActionType();
+            DbLoggingConfig.logDimPiece();
+            DbLoggingConfig.logPlayerVersion();
+            DbLoggingConfig.logWinTypeVersion();
+            DbLoggingConfig.prepDimGame();
+            DbLoggingConfig.logRoundVersion();
+            if (config.dbLogging.useSharedSession)
+                DbLoggingConfig.StartLoggingSession(transactional: config.dbLogging.transactionalSession);
+        }
+    }
+
+
+    public void setInspectGame()
+    {
+        if (inspectGame)
+        {
+            var hic = FindFirstObjectByType<HumanInteractionController>();
+            if (hic != null)
+            {
+                // pick the first seat marked Human
+                byte humanSeat = 0;
+                for (byte s = 0; s < GameBootstrapper.hub.player_count; s++)
+                {
+                    if (GameBootstrapper.hub.playerControl[s] == GameConfigHub.ControlMode.Human) { humanSeat = s; break; }
+                }
+
+                UIBridge.Init(hic, gameIndex, humanSeat);
+
+            }
+
+            // === Phase B: compose the initial snapshot & push to BoardView ===
+            snapshotComposer = new GameSnapshotComposer(
+                geometry,   // local variable from your builder call
+                gameIndex
+             );
+
+            // currentSnapshot = snapshotComposer.GetSnapshot();
+
+            // UIBridge.ApplySnapshot(currentSnapshot);
+
+            // Rebuild/push snapshot after every successful action
+            gameState.OnActionExecuted += () =>
+            {
+                currentSnapshot = snapshotComposer.GetSnapshot();
+                UIBridge.ApplySnapshot(currentSnapshot);
+            };
+        }
+    }
 }
