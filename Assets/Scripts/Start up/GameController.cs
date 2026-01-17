@@ -5,55 +5,9 @@ using Unity.MLAgents.Policies;
 
 public class GameController : MonoBehaviour
 {
-    public Config config;     // assign in Inspector
-    public GameBootstrapper gameBootstrapper;
-    public int gameIndex;
-    public PerGameConfig perGameConfig;
-    public EventManager eventManager;
-    public bool inspectGame = false;
+    
 
-    private int _completedGamesCount = 0;
-    private bool _restartInProgress = false;
-    private bool _gameOverHandled = false;
-    public BoardModel board;
-
-    [Range(0, 3)] public byte startingPlayer = 0;
-    private PlayerAgent[] heuristicControllers;
-    private MLAgentController[] mlControllers;
-    private bool _resetPendingFromML = false;
-    private int _matchIndex = 0;
-
-
-    public bool PieceLimitEnabled;
-    public int PieceLimitPerPlayer;
-    public bool twoPlayerHurdle;
-    public int learningAim = 50; //to do- set up this functionality
-
-   
-
-    public GameState gameState;
-
-    public GameSnapshot currentSnapshot;   // latest snapshot (read-only for views)
-    public GameSnapshotComposer snapshotComposer;   // snapshot builder
-    private BoardGeometry geos;
-
-    public void Start()
-    {
-        if (gameBootstrapper == null)
-        {
-            Debug.LogError("GameController missing GameBootstrapper reference.");
-            return;
-        }
-        curriculumCheck();
-        eventManager = new EventManager();
-        setGameConfigValues();
-        BuildTheBoard();
-        var players = SetPlayers();
-        setGameState(players);
-        SetDataBaseLogging();
-        setInspectGame();
-    }
-
+    #region Game Flow
     public void GameEnd()
     {
         BroadcastTerminalRewards();
@@ -97,23 +51,9 @@ public class GameController : MonoBehaviour
         }
     }
 
-    // private void OnAgentEpisodeBegin(byte seat)
-    // {
-    //     if (!_resetPendingFromML || _restartInProgress) return;
-    //     _resetPendingFromML = false;
-    //     _gameOverHandled = false;
-    //     RestartMatch();
-    // }
+    #endregion
 
-    private bool HasAnyMLControllers()
-    {
-        for (int i = 0; i < mlControllers.Length; i++)
-        {
-            if (mlControllers[i] != null) return true;
-        }
-        return false;
-    }
-
+    #region Set Per Game
     private int[] BuildCoreCellsForNextMatch()
     {
         int[] baseIds = new int[4];
@@ -142,29 +82,6 @@ public class GameController : MonoBehaviour
         _matchIndex++;
         return baseIds;
     }
-
-
-    private void setGameConfigValues()
-    {
-        PieceLimitEnabled = perGameConfig.pieceLimitEnabled;
-
-        PieceLimitPerPlayer = perGameConfig.pieceLimit;
-    }
-
-    private void setGameState(PlayerState[] players)
-    {
-        gameState = new GameState();
-        gameState.Initialize(board, players, startingPlayer, eventManager, this, gameIndex);
-        GameRegistry.Register(gameIndex, gameState, board, eventManager, this);
-    }
-
-
-    private PlayerState[] SetPlayers()
-    {
-        var ps = CreateAndSeedThePlayerStructs();
-        SetWhoControlsPlayers();
-        return ps;
-    }
     private PlayerState[] CreateAndSeedThePlayerStructs()
     {
         var ps = new PlayerState[4];
@@ -180,7 +97,77 @@ public class GameController : MonoBehaviour
         }
         return ps;
     }
+    private void curriculumCheck()
+    {
+        if (perGameConfig.Curriculum.Count == 0) return;
+        Debug.Log(perGameConfig.Curriculum.Count);
 
+        foreach (var hurdle in perGameConfig.Curriculum)
+        {
+            if (hurdle.restriction == curriculumRestriction.onePiece)
+            {
+                if (hurdle.goalRequirement >= learningAim)
+                {
+                    PieceLimitEnabled = true;
+                    PieceLimitPerPlayer = 1;
+                }
+                else
+                {
+                    PieceLimitEnabled = false;
+                }
+            }
+            if (hurdle.restriction == curriculumRestriction.twoPlayer)
+            {
+                if (hurdle.goalRequirement >= learningAim)
+                {
+                    twoPlayerHurdle = true;
+                }
+                else
+                {
+                    twoPlayerHurdle = false;
+                }
+            }
+        }
+    }
+
+    #endregion
+
+    #region Set Once
+    public void Start()
+    {
+        if (gameBootstrapper == null)
+        {
+            Debug.LogError("GameController missing GameBootstrapper reference.");
+            return;
+        }
+        curriculumCheck();
+        eventManager = new EventManager();
+        setGameConfigValues();
+        BuildTheBoard();
+        var players = SetPlayers();
+        setGameState(players);
+        SetDataBaseLogging();
+        setInspectGame();
+    }
+    private void setGameConfigValues()
+    {
+        PieceLimitEnabled = perGameConfig.pieceLimitEnabled;
+
+        PieceLimitPerPlayer = perGameConfig.pieceLimit;
+    }
+
+    private void setGameState(PlayerState[] players)
+    {
+        gameState = new GameState();
+        gameState.Initialize(board, players, startingPlayer, eventManager, this, gameIndex);
+        GameRegistry.Register(gameIndex, gameState, board, eventManager, this);
+    }
+    private PlayerState[] SetPlayers()
+    {
+        var ps = CreateAndSeedThePlayerStructs();
+        SetWhoControlsPlayers();
+        return ps;
+    }
     private void SetWhoControlsPlayers()
     {
         heuristicControllers = new PlayerAgent[4];
@@ -206,7 +193,6 @@ public class GameController : MonoBehaviour
             }
         }
     }
-
     private void setControlMLBot(byte seat)
     {
         if (!GameBootstrapper.hub.enableMLAgents)
@@ -252,7 +238,6 @@ public class GameController : MonoBehaviour
         // Wire everything into the ML controller
         ml.Init(gameState, board, paBridge, seat, in config.mlRewards, gameIndex);
     }
-
     private void setControlDumbBot(byte seat)
     {
         var agent = new PlayerAgent();
@@ -290,7 +275,6 @@ public class GameController : MonoBehaviour
         agent.BindSeat(seat); // (see tiny method below)
         heuristicControllers[seat] = agent;
     }
-
     public void BuildTheBoard()
     {
         var geometry = GeometryBuilder.Build();
@@ -319,7 +303,6 @@ public class GameController : MonoBehaviour
                 DbLoggingConfig.StartLoggingSession(transactional: config.dbLogging.transactionalSession);
         }
     }
-
 
     private void setInspectGame()
     {
@@ -352,45 +335,69 @@ public class GameController : MonoBehaviour
         
     }
 
-     private void curriculumCheck()
-    {
-        if (perGameConfig.Curriculum.Count == 0) return;
-        Debug.Log(perGameConfig.Curriculum.Count);
-
-        foreach (var hurdle in perGameConfig.Curriculum)
-        {
-            if (hurdle.restriction == curriculumRestriction.onePiece)
-            {
-                if (hurdle.goalRequirement >= learningAim)
-                {
-                    PieceLimitEnabled = true;
-                    PieceLimitPerPlayer = 1;
-                }
-                else
-                {
-                    PieceLimitEnabled = false;
-                }
-            }
-            if (hurdle.restriction == curriculumRestriction.twoPlayer)
-            {
-                if (hurdle.goalRequirement >= learningAim)
-                {
-                    twoPlayerHurdle = true;
-                }
-                else
-                {
-                    twoPlayerHurdle = false;
-                }
-            }
-        }
-
-    }
-
      private void OnDestroy()
     {
         if (config != null && config.dbLogging.enabled && config.dbLogging.useSharedSession)
             DbLoggingConfig.EndLoggingSession(commit: true);
     }
+
+    #endregion
+
+    #region Fields
+    public Config config;     // assign in Inspector
+    public GameBootstrapper gameBootstrapper;
+    public int gameIndex;
+    public PerGameConfig perGameConfig;
+    public EventManager eventManager;
+    public bool inspectGame = false;
+
+    private int _completedGamesCount = 0;
+    private bool _restartInProgress = false;
+    private bool _gameOverHandled = false;
+    public BoardModel board;
+
+    [Range(0, 3)] public byte startingPlayer = 0;
+    private PlayerAgent[] heuristicControllers;
+    private MLAgentController[] mlControllers;
+    private bool _resetPendingFromML = false;
+    private int _matchIndex = 0;
+
+
+    public bool PieceLimitEnabled;
+    public int PieceLimitPerPlayer;
+    public bool twoPlayerHurdle;
+    public int learningAim = 50; //to do- set up this functionality
+
+   
+
+    public GameState gameState;
+
+    public GameSnapshot currentSnapshot;   // latest snapshot (read-only for views)
+    public GameSnapshotComposer snapshotComposer;   // snapshot builder
+    private BoardGeometry geos;
+
+    #endregion
+
+    #region GraveYard
+
+    // private void OnAgentEpisodeBegin(byte seat)
+    // {
+    //     if (!_resetPendingFromML || _restartInProgress) return;
+    //     _resetPendingFromML = false;
+    //     _gameOverHandled = false;
+    //     RestartMatch();
+    // }
+
+    private bool HasAnyMLControllers()
+    {
+        for (int i = 0; i < mlControllers.Length; i++)
+        {
+            if (mlControllers[i] != null) return true;
+        }
+        return false;
+    }
+
+    
 
      // void Update()
     // {
@@ -482,4 +489,5 @@ public class GameController : MonoBehaviour
     //         _restartInProgress = false;
     //     }
     // }
+     #endregion
 }
