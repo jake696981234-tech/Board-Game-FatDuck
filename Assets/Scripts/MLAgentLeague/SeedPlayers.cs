@@ -88,7 +88,7 @@ public class PlayerManager
                 case GameConfigHub.ControlMode.ML:
                     {
                         setControlMLBot(seat, gameIndex, config);
-                        setbehaviorName()
+                        // setbehaviorName()
                         break;
                     }
                 case GameConfigHub.ControlMode.Human:
