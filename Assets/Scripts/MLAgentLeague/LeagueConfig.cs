@@ -8,8 +8,27 @@ using System.Collections.Generic;
 [CreateAssetMenu(fileName = "LeagueConfig", menuName = "Game/LeagueConfig", order = 4)]
 public class LeagueConfig : ScriptableObject
 {
+    public bool EnableMLLeague;
+
+
     public int HowManyGamesForEachBot;
     public int HowManyBotsToTrain;
+
+
+    [Header("Brains to Learn")]
+    public int[] LearningPlayersBehaviorNames;
+
+    [Header("Pool of Enemys")]
+    public DumbGregAuthoring[] DumbGreg;
+     //add other bot policys here if wanted
+    public List<ModelAsset> FrozenBrians = new(); // need way to add the generated brains to here during runtime.
+   
+
+    
+
+
+    // public struct LearningPlayers
+    
 
 }
 

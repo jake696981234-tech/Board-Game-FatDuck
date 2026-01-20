@@ -80,18 +80,7 @@ public sealed class Config : ScriptableObject
         retryBackoffMs = 250
     };
 
-    [System.Serializable]
-    public struct DumbGregAuthoring
-    {
-        [Range(0f, 1f)] public float endTurnAfterFirstPct; // chance to end turn after first action
-        [Range(0f, 1f)] public float shootInsteadPct;       // chance to shoot instead within tiers
-        [Range(0f, 1f)] public float moveAnotherPct;        // chance to pick second-best move
-        [Range(0f, 1f)] public float moveBuildingPct;       // chance to move building instead
-        [Range(0f, 1f)] public float createInsteadPct;      // chance to create instead within tiers
-
-        public int seedBase;          // base seed used for RNG (combine with seat)
-        public bool seedBySeat;       // if true, actual seed = seedBase + seat
-    }
+    
 
     [Header("Dumb Greg Policy Tuning")]
     public DumbGregAuthoring dumbGreg = new DumbGregAuthoring
@@ -393,5 +382,18 @@ public sealed class Config : ScriptableObject
         );
     }
 }
+
+
+    public struct DumbGregAuthoring
+    {
+        [Range(0f, 1f)] public float endTurnAfterFirstPct; // chance to end turn after first action
+        [Range(0f, 1f)] public float shootInsteadPct;       // chance to shoot instead within tiers
+        [Range(0f, 1f)] public float moveAnotherPct;        // chance to pick second-best move
+        [Range(0f, 1f)] public float moveBuildingPct;       // chance to move building instead
+        [Range(0f, 1f)] public float createInsteadPct;      // chance to create instead within tiers
+
+        public int seedBase;          // base seed used for RNG (combine with seat)
+        public bool seedBySeat;       // if true, actual seed = seedBase + seat
+    }
 
 

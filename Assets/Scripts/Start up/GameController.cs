@@ -2,6 +2,7 @@ using UnityEngine;
 using Game.Core;
 using System;
 using Unity.MLAgents.Policies;
+using static PlayerManager.PlayerType;
 
 public class GameController : MonoBehaviour
 {
@@ -10,7 +11,7 @@ public class GameController : MonoBehaviour
     #region Game Flow
     public void GameEnd()
     {
-        BroadcastTerminalRewards();
+        playerManager.BroadcastTerminalRewards(gameIndex);
         _completedGamesCount++;
         if (_completedGamesCount >= config.autoSim.maxAutoGames) return;
         
@@ -27,7 +28,7 @@ public class GameController : MonoBehaviour
         board.RemoveAllPieces();
         
         // Re-seed player state from hub
-        var ps = CreateAndSeedThePlayerStructs();
+        var ps = playerManager.CreateAndSeedThePlayerStructs();
 
         // Reset GameState (reuse same instance so controllers keep references)
         gameState.Initialize(board, ps, startingPlayer, eventManager, this, gameIndex);
@@ -40,16 +41,7 @@ public class GameController : MonoBehaviour
 
 
 
-    private void BroadcastTerminalRewards()
-    {
-        byte winner = gameState.Winner;
-        for (int i = 0; i < mlControllers.Length; i++)
-        {
-            var ml = mlControllers[i];
-            if (ml == null) continue;
-            ml.ApplyTerminal(winner);
-        }
-    }
+   
 
     #endregion
 
@@ -82,21 +74,7 @@ public class GameController : MonoBehaviour
         _matchIndex++;
         return baseIds;
     }
-    private PlayerState[] CreateAndSeedThePlayerStructs()
-    {
-        var ps = new PlayerState[4];
-        for (byte i = 0; i < 4; i++)
-        {
-            ps[i] = new PlayerState();
-            bool active = i < GameBootstrapper.hub.player_count;
-            ps[i].applyBotSurcharges = active && GameBootstrapper.hub.player_applyBotSurcharges[i];
-            ps[i].applyStartOfTurnBudgetDecrease = active && GameBootstrapper.hub.player_applyStartOfTurnBudgetDecrease[i];
-            ps[i].isAI = active && GameBootstrapper.hub.player_isAI[i];
-            ps[i].team = active ? GameBootstrapper.hub.player_team[i] : i;
-            ps[i].name = active ? GameBootstrapper.hub.player_name[i] : $"P{i}";
-        }
-        return ps;
-    }
+    
     private void curriculumCheck()
     {
         if (perGameConfig.Curriculum.Count == 0) return;
@@ -144,7 +122,8 @@ public class GameController : MonoBehaviour
         eventManager = new EventManager();
         setGameConfigValues();
         BuildTheBoard();
-        var players = SetPlayers();
+
+        var players = playerManager.SetPlayers(gameIndex, config);
         setGameState(players);
         SetDataBaseLogging();
         setInspectGame();
@@ -162,119 +141,8 @@ public class GameController : MonoBehaviour
         gameState.Initialize(board, players, startingPlayer, eventManager, this, gameIndex);
         GameRegistry.Register(gameIndex, gameState, board, eventManager, this);
     }
-    private PlayerState[] SetPlayers()
-    {
-        var ps = CreateAndSeedThePlayerStructs();
-        SetWhoControlsPlayers();
-        return ps;
-    }
-    private void SetWhoControlsPlayers()
-    {
-        heuristicControllers = new PlayerAgent[4];
-        mlControllers = new MLAgentController[4];
-        for (byte seat = 0; seat < GameBootstrapper.hub.player_count; seat++)
-        {
-            switch (GameBootstrapper.hub.playerControl[seat])
-            {
-                case GameConfigHub.ControlMode.DumbBot:
-                    {
-                        setControlDumbBot(seat);
-                        break;
-                    }
-                case GameConfigHub.ControlMode.ML:
-                    {
-                        setControlMLBot(seat);
-                        break;
-                    }
-                case GameConfigHub.ControlMode.Human:
-                default:
-                    // Dont Need go do anything- could change this for multple players, and/or can seed some values here 
-                    break;
-            }
-        }
-    }
-    private void setControlMLBot(byte seat)
-    {
-        if (!GameBootstrapper.hub.enableMLAgents)
-        {
-            Debug.LogWarning($"Seat {seat}: ML requested but ML Agents disabled; seat left idle.");
-            return;
-        }
-        // Create/attach ML Agent in scene (self-driven via ML-Agents)
-        var go = new GameObject($"MLAgent_Player_{seat}");
-
-        // --- Auto inject Behavior Parameters based on config ---
-        var bp = go.AddComponent<Unity.MLAgents.Policies.BehaviorParameters>();
-        bp.BehaviorName = GameBootstrapper.hub.mlBehavior.name;
-        bp.UseChildSensors = GameBootstrapper.hub.mlBehavior.useChildSensors;
-        bp.BrainParameters.VectorObservationSize = GameBootstrapper.hub.mlBehavior.obsSize;
-        bp.BrainParameters.ActionSpec =
-            Unity.MLAgents.Actuators.ActionSpec.MakeDiscrete(GameBootstrapper.hub.mlBehavior.actionBranchSize);
-        bp.TeamId = (seat < GameBootstrapper.hub.player_team.Length)
-            ? GameBootstrapper.hub.player_team[seat]
-            : seat;
-
-        var behaviorOverride = (config != null && config.playerBehaviorOverrides != null && seat < config.playerBehaviorOverrides.Length)
-            ? config.playerBehaviorOverrides[seat]
-            : default;
-        bp.BehaviorType = behaviorOverride.behaviorType;
-        bp.DeterministicInference = behaviorOverride.deterministicInference;
-        if (behaviorOverride.modelAsset != null)
-        {
-            bp.Model = behaviorOverride.modelAsset;
-        }
-        // Now add the Agent so Awake() reads the configured BehaviorParameters
-        var ml = go.AddComponent<MLAgentController>();
-        mlControllers[seat] = ml;
-        // ml.SetEpisodeBeginCallback(OnAgentEpisodeBegin);
-
-        // Build a small PlayerAgent bridge for obs & offer building
-        var paBridge = new PlayerAgent();
-
-        paBridge.BindSeat(seat);
-
-        paBridge.Init(gameState, board, gameIndex);
-
-        // Wire everything into the ML controller
-        ml.Init(gameState, board, paBridge, seat, in config.mlRewards, gameIndex);
-    }
-    private void setControlDumbBot(byte seat)
-    {
-        var agent = new PlayerAgent();
-        // Select a policy per seat
-        IBotPolicy policy;
-        if (GameBootstrapper.hub.playerPolicy != null && seat < GameBootstrapper.hub.playerPolicy.Length)
-        {
-            switch (GameBootstrapper.hub.playerPolicy[seat])
-            {
-                case GameConfigHub.PolicyKind.DumbGreg:
-                    {
-                        var dg = (config != null) ? config.dumbGreg : default;
-                        int? seed = null;
-                        if (dg.seedBase != 0)
-                        {
-                            seed = dg.seedBySeat ? dg.seedBase + seat : dg.seedBase;
-                        }
-                        policy = new DumbGregBotPolicy(
-                            endTurnAfterFirstPct: dg.endTurnAfterFirstPct,
-                            shootInsteadPct: dg.shootInsteadPct,
-                            moveAnotherPct: dg.moveAnotherPct,
-                            moveBuildingPct: dg.moveBuildingPct,
-                            createInsteadPct: dg.createInsteadPct,
-                            seed: seed
-                        );
-                        break;
-                    }
-                case GameConfigHub.PolicyKind.Heuristic:
-                default: policy = new HeuristicPolicy(); break;
-            }
-        }
-        else { policy = new HeuristicPolicy(); }
-
-        agent.Init(gameState, board, gameIndex, policy);
-        agent.BindSeat(seat); // (see tiny method below)
-        heuristicControllers[seat] = agent;
-    }
+    
+    
     public void BuildTheBoard()
     {
         var geometry = GeometryBuilder.Build();
@@ -344,6 +212,13 @@ public class GameController : MonoBehaviour
     #endregion
 
     #region Fields
+
+    
+   
+    PlayerManager playerManager = new PlayerManager();
+
+
+
     public Config config;     // assign in Inspector
     public GameBootstrapper gameBootstrapper;
     public int gameIndex;
@@ -351,14 +226,14 @@ public class GameController : MonoBehaviour
     public EventManager eventManager;
     public bool inspectGame = false;
 
-    private int _completedGamesCount = 0;
+    public int _completedGamesCount = 0;
     private bool _restartInProgress = false;
     private bool _gameOverHandled = false;
     public BoardModel board;
 
     [Range(0, 3)] public byte startingPlayer = 0;
-    private PlayerAgent[] heuristicControllers;
-    private MLAgentController[] mlControllers;
+    
+    
     private bool _resetPendingFromML = false;
     private int _matchIndex = 0;
 
@@ -388,14 +263,14 @@ public class GameController : MonoBehaviour
     //     RestartMatch();
     // }
 
-    private bool HasAnyMLControllers()
-    {
-        for (int i = 0; i < mlControllers.Length; i++)
-        {
-            if (mlControllers[i] != null) return true;
-        }
-        return false;
-    }
+    // private bool HasAnyMLControllers()
+    // {
+    //     for (int i = 0; i < mlControllers.Length; i++)
+    //     {
+    //         if (mlControllers[i] != null) return true;
+    //     }
+    //     return false;
+    // }
 
     
 

@@ -46,6 +46,6 @@ public class MLLeague
             : seat;
         // Now add the Agent so Awake() reads the configured BehaviorParameters
         var ml = go.AddComponent<MLSam>();
-        mlControllers[seat] = ml;
+        // mlControllers[seat] = ml;
     }
 }
