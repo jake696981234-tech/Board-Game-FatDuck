@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public static class info
+public static class Info
 {
     // [Header("General Players Config")]
     public static readonly bool useMLAgents;
@@ -9,10 +9,10 @@ public static class info
     public static readonly int playerCount;
 
     // [Header("What Controls Player")]
-    public static readonly GameConfigHub.ControlMode[] playerControl;
+    public static readonly ControlMode[] playerControl;
 
     // [Header("If is, What Dumb Bot")]
-    public static readonly GameConfigHub.PolicyKind[] playerPolicy;
+    public static readonly PolicyKind[] playerPolicy;
 
     // [Header("Dumb Greg Policy Tuning")]
     public static readonly DumbGregAuthoring dumbGreg;
@@ -65,14 +65,14 @@ public static class info
     // [Header("DB Logging Tuning")]
     public static readonly DbLoggingAuthoring dbLogging;
 
-    static info()
+    static Info()
     {
         var config = Resources.Load<Config>("Config");
 
         useMLAgents = config.useMLAgents;
         playerCount = config.playerCount;
-        playerControl = (GameConfigHub.ControlMode[])config.playerControl.Clone();
-        playerPolicy = (GameConfigHub.PolicyKind[])config.playerPolicy.Clone();
+        playerControl = (ControlMode[])config.playerControl.Clone();
+        playerPolicy = (PolicyKind[])config.playerPolicy.Clone();
         dumbGreg = config.dumbGreg;
         behaviorParams = config.behaviorParams;
         caps = config.caps;
@@ -111,4 +111,7 @@ public static class info
         AdjecentWallContiguous = config.AdjecentWallContiguous;
         dbLogging = config.dbLogging;
     }
+
+    public enum ControlMode : byte { Human = 0, DumbBot = 1, ML = 2 }
+    public enum PolicyKind : byte { Heuristic = 0, DumbGreg = 1 }
 }

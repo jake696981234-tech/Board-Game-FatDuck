@@ -15,19 +15,19 @@ public sealed class Config : ScriptableObject
     [Range(1, 4)] public int playerCount = 4;
 
     [Header("What Controls Player")] 
-    public GameConfigHub.ControlMode[] playerControl = new GameConfigHub.ControlMode[4] {
-    GameConfigHub.ControlMode.DumbBot,
-    GameConfigHub.ControlMode.DumbBot,
-    GameConfigHub.ControlMode.DumbBot,
-    GameConfigHub.ControlMode.DumbBot
+    public Info.ControlMode[] playerControl = new Info.ControlMode[4] {
+    Info.ControlMode.DumbBot,
+    Info.ControlMode.DumbBot,
+    Info.ControlMode.DumbBot,
+    Info.ControlMode.DumbBot
     };
 
     [Header("If is, What Dumb Bot")]
-    public GameConfigHub.PolicyKind[] playerPolicy = new GameConfigHub.PolicyKind[4] {
-        GameConfigHub.PolicyKind.Heuristic,
-        GameConfigHub.PolicyKind.Heuristic,
-        GameConfigHub.PolicyKind.Heuristic,
-        GameConfigHub.PolicyKind.Heuristic
+    public Info.PolicyKind[] playerPolicy = new Info.PolicyKind[4] {
+        Info.PolicyKind.Heuristic,
+        Info.PolicyKind.Heuristic,
+        Info.PolicyKind.Heuristic,
+        Info.PolicyKind.Heuristic
     };
 
     [Header("Dumb Greg Policy Tuning")]
@@ -143,6 +143,10 @@ public sealed class Config : ScriptableObject
         maxRetries = 3,
         retryBackoffMs = 250
     };
+
+    
+
+
 
 
     // public GameConfigHub BuildHub()
