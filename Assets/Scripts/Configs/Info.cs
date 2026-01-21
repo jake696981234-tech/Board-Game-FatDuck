@@ -14,7 +14,7 @@ public static class Info
     public static readonly ControlMode[] playerControl;
 
     // [Header("If is, What Dumb Bot")]
-    public static readonly PolicyKind[] playerPolicy;
+    // public static readonly PolicyKind[] playerPolicy;
 
     // [Header("Dumb Greg Policy Tuning")]
     public static readonly DumbGregAuthoring dumbGreg;
@@ -119,7 +119,7 @@ public static class Info
         useMLAgents = config.useMLAgents;
         playerCount = config.playerCount;
         playerControl = (ControlMode[])config.playerControl.Clone();
-        playerPolicy = (PolicyKind[])config.playerPolicy.Clone();
+        // playerPolicy = (PolicyKind[])config.playerPolicy.Clone();
         dumbGreg = config.dumbGreg;
 
         behaviorName = config.behaviorParams.behaviorName;
@@ -197,6 +197,6 @@ public static class Info
         dbLogging = config.dbLogging;
     }
 
-    public enum ControlMode : byte { Human = 0, DumbBot = 1, ML = 2 }
-    public enum PolicyKind : byte { Heuristic = 0, DumbGreg = 1 }
+    public enum ControlMode : byte { Human = 0, DumbGreg = 1, MLLearning = 2, MLFrozenBrain }
+    // public enum PolicyKind : byte { Heuristic = 0, DumbGreg = 1 }
 }

@@ -25,11 +25,14 @@ public class MLSam : Agent
     public int MaxPlayers;
     public RewardsTuning rewards;
     public MLActions.MLState mlState = ChoosingKind;
+    
 
-    public void TickMe()
+    public void init() // to do
     {
-        RequestDecision();
+        
     }
+
+    
 
     public override void OnActionReceived(ActionBuffers actions)
     {
@@ -62,4 +65,7 @@ public class MLSam : Agent
         }
         EndEpisode();
     }     
+
+
+    
 }

@@ -12,6 +12,7 @@ namespace Game.Core
 
 
     //general to do list:
+    //-1. Re factor Actions DTO
     //0. Hook up Terminal end for the new ML agent
     //1. With ML agent training- If the ML agent being trained is eliminated, you can just skip to the next game. 
     //2. If a player has 0 budget, and their payout is zero, they should be eliminated.
@@ -23,6 +24,7 @@ namespace Game.Core
         private BoardModel bm;
         private GameController controller;
         private EventManager events;
+        private PlayerManager playerManager; // to do- hook this up
 
 
         #endregion
@@ -69,12 +71,13 @@ namespace Game.Core
         public void Initialize(
                        BoardModel board,
                        PlayerState[] players,
-                       byte startingPlayer, EventManager eventManager, GameController gameController, int theGameIndex)
+                       byte startingPlayer, EventManager eventManager, GameController gameController, PlayerManager thePlayerManager, int theGameIndex)
         {
             bm = board;
             events = eventManager;
             controller = gameController;
             gameIndex = theGameIndex;
+            playerManager = thePlayerManager;
 
             ps = players;
             currentPlayer = startingPlayer;
@@ -109,9 +112,9 @@ namespace Game.Core
             BeginTurn();
         }
 
-        public void TickPlayer()
+        public void TickPlayer() // to do
         {
-            
+            playerManager.tickPlayerIndex(currentPlayer);
         }
 
         #endregion

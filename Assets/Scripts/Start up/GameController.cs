@@ -11,7 +11,7 @@ public class GameController : MonoBehaviour
     #region Game Flow
     public void GameEnd()
     {
-        playerManager.BroadcastTerminalRewards(gameIndex);
+        playerManager.onGameEnd(gameIndex);
         _completedGamesCount++;
         if (_completedGamesCount >= config.autoSim.maxAutoGames) return;
         
@@ -31,7 +31,7 @@ public class GameController : MonoBehaviour
         var ps = playerManager.CreateAndSeedThePlayerStructs();
 
         // Reset GameState (reuse same instance so controllers keep references)
-        gameState.Initialize(board, ps, startingPlayer, eventManager, this, gameIndex);
+        gameState.Initialize(board, ps, startingPlayer, eventManager, this, playerManager, gameIndex);
         GameRegistry.Register(gameIndex, gameState, board, eventManager, this);
 
         if (!inspectGame) return;
@@ -138,7 +138,7 @@ public class GameController : MonoBehaviour
     private void setGameState(PlayerState[] players)
     {
         gameState = new GameState();
-        gameState.Initialize(board, players, startingPlayer, eventManager, this, gameIndex);
+        gameState.Initialize(board, players, startingPlayer, eventManager, this, playerManager, gameIndex);
         GameRegistry.Register(gameIndex, gameState, board, eventManager, this);
     }
     

@@ -15,19 +15,19 @@ public sealed class Config : ScriptableObject
 
     [Header("What Controls Player")] 
     public Info.ControlMode[] playerControl = new Info.ControlMode[4] {
-    Info.ControlMode.DumbBot,
-    Info.ControlMode.DumbBot,
-    Info.ControlMode.DumbBot,
-    Info.ControlMode.DumbBot
+    Info.ControlMode.DumbGreg,
+    Info.ControlMode.DumbGreg,
+    Info.ControlMode.DumbGreg,
+    Info.ControlMode.DumbGreg
     };
 
-    [Header("If is, What Dumb Bot")]
-    public Info.PolicyKind[] playerPolicy = new Info.PolicyKind[4] {
-        Info.PolicyKind.Heuristic,
-        Info.PolicyKind.Heuristic,
-        Info.PolicyKind.Heuristic,
-        Info.PolicyKind.Heuristic
-    };
+    // [Header("If is, What Dumb Bot")]
+    // public Info.PolicyKind[] playerPolicy = new Info.PolicyKind[4] {
+    //     Info.PolicyKind.Heuristic,
+    //     Info.PolicyKind.Heuristic,
+    //     Info.PolicyKind.Heuristic,
+    //     Info.PolicyKind.Heuristic
+    // };
 
     [Header("Dumb Greg Policy Tuning")]
     public DumbGregAuthoring dumbGreg = new DumbGregAuthoring

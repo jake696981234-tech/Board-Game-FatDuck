@@ -3,6 +3,10 @@ using Game.Core;
 
 public sealed class DumbGregBotPolicy : IBotPolicy
 {
+    public void DecideAndAct() //to do
+    {
+        
+    }
     private readonly Random _rng;
 
     private readonly double _pctEndTurnAfterFirst;
