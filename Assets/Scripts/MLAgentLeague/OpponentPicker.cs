@@ -5,7 +5,6 @@ using Unity.InferenceEngine;
 
 public static class OpponentPicker
 {
-    private static LeagueConfig LConfig;
     static readonly System.Random rng = new System.Random();
 
     public enum OpponentKind { DumbGreg, FrozenBrian }
@@ -40,8 +39,8 @@ public static class OpponentPicker
 
     public static OpponentChoice PickOne()
     {
-        int gCount = LConfig.DumbGregs?.Count ?? 0;
-        int bCount = LConfig.FrozenBrians?.Count ?? 0;
+        int gCount = Info.DumbGregs?.Count ?? 0;
+        int bCount = Info.FrozenBrains?.Count ?? 0;
         int total = gCount + bCount;
 
         if (total == 0)
@@ -53,13 +52,13 @@ public static class OpponentPicker
         if (roll < gCount)
         {
             // Choose a random Greg
-            var greg = LConfig.DumbGregs[rng.Next(gCount)];
+            var greg = Info.DumbGregs[rng.Next(gCount)];
             return OpponentChoice.FromGreg(greg);
         }
         else
         {
             // Choose a random Brain
-            var brain = LConfig.FrozenBrians[rng.Next(bCount)];
+            var brain = Info.FrozenBrains[rng.Next(bCount)];
             return OpponentChoice.FromBrain(brain);
         }
     }

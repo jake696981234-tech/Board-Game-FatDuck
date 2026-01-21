@@ -1,6 +1,7 @@
 using UnityEngine;
 using Unity.MLAgents.Policies;
 using Unity.InferenceEngine;
+using System.Collections.Generic;
 
 public static class Info
 {
@@ -112,9 +113,29 @@ public static class Info
     // [Header("DB Logging Tuning")]
     public static readonly DbLoggingAuthoring dbLogging;
 
+    #region League Config
+    public readonly static bool EnableMLLeague;
+    public readonly static GraduationRequirment graduationRequirment;
+    public readonly static int HowManyGamesPlayedToGraduate = 10000;
+    public readonly static int HowManyGamesWonToGraduate = 100;
+    public static string[] LearningPlayersBehaviorNames;
+    public static List<DumbGregAuthoring[]> DumbGregs;
+    public static List<ModelAsset> FrozenBrains = new(); 
+
+    #endregion 
+
     static Info()
     {
         var config = Resources.Load<Config>("Config");
+        // var lConfig = Resources.Load<LeagueConfig>("LeagueConfig");
+
+        // EnableMLLeague = lConfig.EnableMLLeague;
+        // graduationRequirment = lConfig.graduationRequirment;
+        // HowManyGamesPlayedToGraduate = lConfig.HowManyGamesPlayedToGraduate;
+        // HowManyGamesWonToGraduate = lConfig.HowManyGamesWonToGraduate;
+        // LearningPlayersBehaviorNames = lConfig.LearningPlayersBehaviorNames;
+        // DumbGregs = lConfig.DumbGregs;
+        // FrozenBrains = lConfig.FrozenBrains;
 
         useMLAgents = config.useMLAgents;
         playerCount = config.playerCount;
@@ -199,4 +220,10 @@ public static class Info
 
     public enum ControlMode : byte { Human = 0, DumbGreg = 1, MLLearning = 2, MLFrozenBrain }
     // public enum PolicyKind : byte { Heuristic = 0, DumbGreg = 1 }
+
+    public enum GraduationRequirment
+    {
+        WinANumberOfGames = 0,
+        PlayerANumberOfGames = 1,
+    }
 }

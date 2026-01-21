@@ -9,7 +9,6 @@ using Unity.InferenceEngine;
 
 public class PlayerManager
 {
-    LeagueConfig LConfig;
     private PlayerControl[] playerControl = new PlayerControl[4];
     public enum PlayerType
     {
@@ -44,7 +43,7 @@ public class PlayerManager
 
     private void SetWhoControlsPlayers()
     {
-        if (LConfig.EnableMLLeague)
+        if (Info.EnableMLLeague)
         {
             SetLeaguePlayers();
             return;
@@ -83,7 +82,7 @@ public class PlayerManager
 
     private void SetLeaguePlayers()
     {
-        playerControl[0].initAsMLLearning(LConfig.LearningPlayersBehaviorNames[0], 0);
+        playerControl[0].initAsMLLearning(Info.LearningPlayersBehaviorNames[0], 0);
         playerControl[0].subscribePlayer();
         setLeagueOpponents();
     }
@@ -126,12 +125,12 @@ public class PlayerManager
     private static int LeagueGamesPlayed = 0;
     public bool ShouldPlayerGradute() // to do
     {
-        switch (LConfig.graduationRequirment)
+        switch (Info.graduationRequirment)
         {
-            case LeagueConfig.GraduationRequirment.WinANumberOfGames:
-                return LeagueGamesWon < LConfig.HowManyGamesWonToGraduate;
-            case LeagueConfig.GraduationRequirment.PlayerANumberOfGames:
-                return LeagueGamesWon < LConfig.HowManyGamesPlayedToGraduate;
+            case Info.GraduationRequirment.WinANumberOfGames:
+                return LeagueGamesWon < Info.HowManyGamesWonToGraduate;
+            case Info.GraduationRequirment.PlayerANumberOfGames:
+                return LeagueGamesWon < Info.HowManyGamesPlayedToGraduate;
         }
         throw new ArgumentOutOfRangeException($"Graduation Requirment not set right");
     }
@@ -144,7 +143,7 @@ public class PlayerManager
 
         LeagueGamesPlayed++;
         byte winner = gameState.Winner;
-        if (LConfig.EnableMLLeague)
+        if (Info.EnableMLLeague)
         {
             if (gameState.Winner == 0) LeagueGamesWon++;
         }

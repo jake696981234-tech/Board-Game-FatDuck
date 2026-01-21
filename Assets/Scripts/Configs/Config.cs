@@ -8,7 +8,7 @@ using Unity.InferenceEngine;
 public sealed class Config : ScriptableObject
 {
     [Header("General Players Config")]
-    public bool useMLAgents = false; // to do- probs get rid of me
+    public bool useMLAgents = false; 
 
     [Header("Player Control")]
     [Range(1, 4)] public int playerCount = 4;

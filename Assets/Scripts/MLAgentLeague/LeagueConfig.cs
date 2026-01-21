@@ -10,12 +10,7 @@ public class LeagueConfig : ScriptableObject
 {
     public bool EnableMLLeague;
 
-    public enum GraduationRequirment
-    {
-        WinANumberOfGames = 0,
-        PlayerANumberOfGames = 1,
-    }
-    public GraduationRequirment graduationRequirment;
+    public Info.GraduationRequirment graduationRequirment;
     public int HowManyGamesPlayedToGraduate = 10000;
     public int HowManyGamesWonToGraduate = 100;
 
@@ -28,17 +23,7 @@ public class LeagueConfig : ScriptableObject
     [Header("Pool of Enemys")]
     public List<DumbGregAuthoring[]> DumbGregs;
      //add other bot policys here if wanted
-    public List<ModelAsset> FrozenBrians = new(); // need way to add the generated brains to here during runtime.
-   
-
-
-    
-    
-
-
-    // public struct LearningPlayers
-    
-
+    public List<ModelAsset> FrozenBrains = new(); // need way to add the generated brains to here during runtime. //when Adding to this to info versions, not this one. 
 }
 
 
