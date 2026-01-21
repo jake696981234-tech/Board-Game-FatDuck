@@ -116,9 +116,9 @@ public static class Piece
     public static int[] spawn_botSurcharge;
     #endregion
     #region multiCreate
-    public static bool[] multiCreate_enabledByType;
-    public static int[] multiCreate_amountByType;
-    public static bool[] multiCreate_isBoardering;
+    // public static bool[] multiCreate_enabledByType;
+    // public static int[] multiCreate_amountByType;
+    // public static bool[] multiCreate_isBoardering;
     #endregion
     #region factory
     public static bool[] factory_enabled;
@@ -221,13 +221,11 @@ public static class Piece
     public static int[] necroSpawn_range;
     public static int[] necroSpawn_botSurcharge;
     #endregion
-    public static bool ContiguousWalls;
-    public static bool AdjecentWallContiguous; 
     public static bool IsConnectorConfigAllowed(byte type, int configIndex)
     {
         if (configIndex < 0 || configIndex >= 64) return false;
         if (type >= connector_allowedMasks.Length) return false;
-        if (!PiecesSides.AreWallsContiguous(configIndex) && ContiguousWalls) return false;
+        if (!PiecesSides.AreWallsContiguous(configIndex) && Info.ContiguousWalls) return false;
         ulong mask = connector_allowedMasks[type];
         return (mask & (1UL << configIndex)) != 0;
     }

@@ -13,7 +13,6 @@ public sealed class GameBootstrapper : MonoBehaviour
     [SerializeField] private GameObject inspectGameController;
     // Live systems (optional to expose for debugging)
     // public BoardModel board;
-    public static GameConfigHub hub;
     void Awake()
     {
         uiRoot.SetActive(config.inspectGame);
@@ -27,11 +26,6 @@ public sealed class GameBootstrapper : MonoBehaviour
         if (config == null) { Debug.LogError("Config asset not assigned."); return; }
 
         // 1) Freeze authoring into an immutable hub
-        hub = config.BuildHub();
-        Piece.ContiguousWalls = hub.ContiguousWalls;
-        Piece.AdjecentWallContiguous = hub.AdjecentWallContiguous;
-        CostEngine.baseActionCost = hub.cost_baseActionCost;
-        CostEngine.actionGrowthFactor = hub.cost_actionGrowthFactor;
 
         // 3) GameRegistry
         GameRegistry.Init(config.gamesToRun);

@@ -135,7 +135,7 @@ public static class DbLoggingConfig
         subscribeToGameState();
     }
 
-    public static void ApplyConfig(in Config.DbLoggingAuthoring cfg)
+    public static void ApplyConfig(in DbLoggingAuthoring cfg)
     {
         enabled = cfg.enabled;
         inputSimID = cfg.simID;

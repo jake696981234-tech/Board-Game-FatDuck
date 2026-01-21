@@ -2,7 +2,6 @@
 using UnityEngine;
 using Unity.MLAgents.Policies;
 using Unity.InferenceEngine;
-using System.Collections.Generic;
 
 
 [CreateAssetMenu(fileName = "Config", menuName = "Game/Config", order = 0)]
@@ -64,7 +63,7 @@ public sealed class Config : ScriptableObject
     };
 
     [Header("Observations (Phase A schema)")]
-    public ObservationAuthoring observations = new ObservationAuthoring //to do- probs could get rid of this, or merge into different place. 
+    public ObservationAuthoring observations = new ObservationAuthoring //to do- need to could get rid of this, to make it dynamic
     {
         maxCells = 217,
         maxDistance = 16

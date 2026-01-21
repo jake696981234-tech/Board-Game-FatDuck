@@ -12,15 +12,14 @@ public static class GeometryBuilder
 
     public static BoardGeometry Build()
     {
-        byte radius = GameBootstrapper.hub.board_radius;
         // 1) Enumerate axial coords
-        var coords = new List<(short q, short r)>(EstimateCellCount(radius));
+        var coords = new List<(short q, short r)>(EstimateCellCount(Info.radius));
         var idByAxial = new Dictionary<(short, short), int>(coords.Capacity);
 
-        for (int q = -radius; q <= radius; q++)
+        for (int q = -Info.radius; q <= Info.radius; q++)
         {
-            int rmin = Math.Max(-radius, -q - radius);
-            int rmax = Math.Min(radius, -q + radius);
+            int rmin = Math.Max(-Info.radius, -q - Info.radius);
+            int rmax = Math.Min(Info.radius, -q + Info.radius);
             for (int r = rmin; r <= rmax; r++)
             {
                 int id = coords.Count;
@@ -56,15 +55,15 @@ public static class GeometryBuilder
         }
 
         // 4) Rings
-        var ringsLists = new List<int>[radius + 1];
-        for (int k = 0; k <= radius; k++) ringsLists[k] = new List<int>();
+        var ringsLists = new List<int>[Info.radius + 1];
+        for (int k = 0; k <= Info.radius; k++) ringsLists[k] = new List<int>();
         for (int id = 0; id < cellCount; id++)
         {
             int d = distFromCenter[id];
             ringsLists[d].Add(id);
         }
-        var ringsByRadius = new int[radius + 1][];
-        for (int k = 0; k <= radius; k++) ringsByRadius[k] = ringsLists[k].ToArray();
+        var ringsByRadius = new int[Info.radius + 1][];
+        for (int k = 0; k <= Info.radius; k++) ringsByRadius[k] = ringsLists[k].ToArray();
 
         // 5) Return geometry (now includes idByAxial)
         return new BoardGeometry(

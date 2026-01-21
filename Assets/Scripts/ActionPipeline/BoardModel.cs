@@ -66,17 +66,17 @@ public class BoardModel
     {
         // store snapshots
         geo = geometry;
-        _radius = GameBootstrapper.hub.board_radius;
-        _cellCount = GameBootstrapper.hub.board_totalCells;
-        _invalidId = GameBootstrapper.hub.board_invalidCellId;
-        _vpCellId = geo.idByAxial[GameBootstrapper.hub.board_vpAxial];
+        _radius = Info.radius;
+        _cellCount = Info.totalCells;
+        _invalidId = Info.invalidId;
+        _vpCellId = geo.idByAxial[Info.VpAxial];
         // _coreCellIdByPlayer = coreCellIdOverride != null
         //     ? (int[])coreCellIdOverride.Clone()
         //     : (int[])GameBootstrapper.hub.board_coreCellIdByPlayer.Clone();
-        _coreCellIdByPlayer[0] = geo.idByAxial[GameBootstrapper.hub.board_PlayerCoreAxialCord[0]];
-        _coreCellIdByPlayer[1] = geo.idByAxial[GameBootstrapper.hub.board_PlayerCoreAxialCord[1]];
-        _coreCellIdByPlayer[2] = geo.idByAxial[GameBootstrapper.hub.board_PlayerCoreAxialCord[2]];
-        _coreCellIdByPlayer[3] = geo.idByAxial[GameBootstrapper.hub.board_PlayerCoreAxialCord[3]];
+        _coreCellIdByPlayer[0] = geo.idByAxial[Info.PlayerCoreAxialCord[0]];
+        _coreCellIdByPlayer[1] = geo.idByAxial[Info.PlayerCoreAxialCord[1]];
+        _coreCellIdByPlayer[2] = geo.idByAxial[Info.PlayerCoreAxialCord[2]];
+        _coreCellIdByPlayer[3] = geo.idByAxial[Info.PlayerCoreAxialCord[3]];
         
         occupantPieceId = new int[_cellCount];
         for (int i = 0; i < _cellCount; i++) occupantPieceId[i] = _invalidId;

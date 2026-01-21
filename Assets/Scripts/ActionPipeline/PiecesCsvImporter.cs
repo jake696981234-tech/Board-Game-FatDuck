@@ -110,9 +110,9 @@ public static class PiecesCsvImporter
 
             #endregion
             #region multiCreate
-            Piece.multiCreate_enabledByType[typeId] = GetBool(cols, H, "multiCreate_enabledByType", defaultValue: false);
-            Piece.multiCreate_amountByType[typeId] = GetInt(cols, H, "multiCreate_amountByType", defaultValue: 0);
-            Piece.multiCreate_isBoardering[typeId] = GetBool(cols, H, "multiCreate_isBoardering", defaultValue: false);
+            // Piece.multiCreate_enabledByType[typeId] = GetBool(cols, H, "multiCreate_enabledByType", defaultValue: false);
+            // Piece.multiCreate_amountByType[typeId] = GetInt(cols, H, "multiCreate_amountByType", defaultValue: 0);
+            // Piece.multiCreate_isBoardering[typeId] = GetBool(cols, H, "multiCreate_isBoardering", defaultValue: false);
 
             #endregion
             #region factory
@@ -439,9 +439,9 @@ public static class PiecesCsvImporter
 
         #endregion
         #region multiCreate
-        Piece.multiCreate_enabledByType = new bool[count];
-        Piece.multiCreate_amountByType = new int[count];
-        Piece.multiCreate_isBoardering = new bool[count];
+        // Piece.multiCreate_enabledByType = new bool[count];
+        // Piece.multiCreate_amountByType = new int[count];
+        // Piece.multiCreate_isBoardering = new bool[count];
 
         #endregion
         #region factory

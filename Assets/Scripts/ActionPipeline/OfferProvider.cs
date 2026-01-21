@@ -55,7 +55,7 @@ public static class OfferProvider
         if (Piece.sacrificeFactory_enabled[actorType]) SacrificeFactoryAction.CreateActions(pieceId, actorType, cell, ref offerBuild);
         if (Piece.conversionFactory_enabled[actorType]) ConversionFactoryAction.CreateActions(pieceId, actorType, cell, ref offerBuild);
         if (Piece.explosive_enabled[actorType]) ExplosiveAction.CreateActions(pieceId, actorType, cell, ref offerBuild);
-        if (Piece.pieceBuild_enabled[actorType]) PieceBuildAction.CreateActions(pieceId, actorType, cell, ref offerBuild);
+        // if (Piece.pieceBuild_enabled[actorType]) PieceBuildAction.CreateActions(pieceId, actorType, cell, ref offerBuild);
         if (Piece.sniper_enabled[actorType]) SniperAction.CreateActions(pieceId, actorType, cell, ref offerBuild);
         if (Piece.necroSpawn_enabled[actorType]) NecroSpawnAction.CreateActions(pieceId, actorType, cell, ref offerBuild);
         

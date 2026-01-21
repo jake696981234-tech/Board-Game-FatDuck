@@ -64,7 +64,7 @@ public static class PiecesSides
 
             // Illegal if exactly one side is a connector (connector facing wall)
             if (ourConn != nbConn && (ourConn || nbConn)) return false;
-            if (Piece.AdjecentWallContiguous && !isAdjecentWallContiguousLegal(nbConfig, configIndex, i)) return false;
+            if (Info.AdjecentWallContiguous && !isAdjecentWallContiguousLegal(nbConfig, configIndex, i)) return false;
         }
 
         if (!Piece.connector_needsCapital[type])

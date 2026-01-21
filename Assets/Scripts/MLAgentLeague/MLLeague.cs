@@ -22,7 +22,7 @@ public class MLLeague
 
     public void SetWhoControlsPlayers(byte seat)
     {
-        setLearningPlayer(seat);
+        // setLearningPlayer(seat);
         setThreeOtherPlayers();
     }
 
@@ -31,21 +31,21 @@ public class MLLeague
         
     }
 
-    private void setLearningPlayer(byte seat)
-    {
-        var go = new GameObject($"MLAgent_Player_{seat}");
+    // private void setLearningPlayer(byte seat)
+    // {
+    //     var go = new GameObject($"MLAgent_Player_{seat}");
 
-        // --- Auto inject Behavior Parameters based on config ---
-        var bp = go.AddComponent<Unity.MLAgents.Policies.BehaviorParameters>();
-        bp.BehaviorName = GameBootstrapper.hub.mlBehavior.name;
-        bp.UseChildSensors = GameBootstrapper.hub.mlBehavior.useChildSensors;
-        bp.BrainParameters.VectorObservationSize = GameBootstrapper.hub.mlBehavior.obsSize;
-        bp.BrainParameters.ActionSpec = Unity.MLAgents.Actuators.ActionSpec.MakeDiscrete(GameBootstrapper.hub.mlBehavior.actionBranchSize);
-        bp.TeamId = (seat < GameBootstrapper.hub.player_team.Length)
-            ? GameBootstrapper.hub.player_team[seat]
-            : seat;
-        // Now add the Agent so Awake() reads the configured BehaviorParameters
-        var ml = go.AddComponent<MLSam>();
-        // mlControllers[seat] = ml;
-    }
+    //     // --- Auto inject Behavior Parameters based on config ---
+    //     var bp = go.AddComponent<Unity.MLAgents.Policies.BehaviorParameters>();
+    //     bp.BehaviorName = GameBootstrapper.hub.mlBehavior.name;
+    //     bp.UseChildSensors = GameBootstrapper.hub.mlBehavior.useChildSensors;
+    //     bp.BrainParameters.VectorObservationSize = GameBootstrapper.hub.mlBehavior.obsSize;
+    //     bp.BrainParameters.ActionSpec = Unity.MLAgents.Actuators.ActionSpec.MakeDiscrete(GameBootstrapper.hub.mlBehavior.actionBranchSize);
+    //     bp.TeamId = (seat < GameBootstrapper.hub.player_team.Length)
+    //         ? GameBootstrapper.hub.player_team[seat]
+    //         : seat;
+    //     // Now add the Agent so Awake() reads the configured BehaviorParameters
+    //     var ml = go.AddComponent<MLSam>();
+    //     // mlControllers[seat] = ml;
+    // }
 }

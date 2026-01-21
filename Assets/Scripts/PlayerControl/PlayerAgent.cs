@@ -15,10 +15,7 @@ using System.Runtime.CompilerServices;
 using Game.Core; // Action, OfferQuery, GameState, PlayerState
 
 public sealed class PlayerAgent
-{
-    // ----- Immutable match config (snapshot) -----
-    private GameConfigHub _hub;                    // includes obs_maxCells, obs_maxDistance, caps, etc.
-    private GameConfigHub.AgentConfig _cfg;        // maxOffersToConsider, rolloutDepth, thinkBudgetMs
+{                
 
     // ----- Live systems (read-only handles) -----
     private GameState _gs;               // reducers live here; single mutator authority
@@ -40,8 +37,6 @@ public sealed class PlayerAgent
                      BoardModel bm,
                      int theGameIndex)
     {
-        _hub = GameBootstrapper.hub;
-        _cfg = GameBootstrapper.hub.agent;
         _gs = gs;
         _bm = bm;
         gameIndex = theGameIndex;
@@ -50,7 +45,7 @@ public sealed class PlayerAgent
         // default policy
         _policy = new HeuristicPolicy();
 
-        int cap = Math.Max(1, _cfg.maxOffersToConsider);   // allocate once, no mid-episode growth
+        int cap = Math.Max(1, Info.maxOffersToConsider);   // allocate once, no mid-episode growth
         _offers = new Game.Core.Action[cap];
         _quotedCosts = new float[cap];
         _mask = new byte[cap];
@@ -103,7 +98,7 @@ public sealed class PlayerAgent
         int total = OfferProvider.BuildActionList(ref offerBuild);
         if (total <= 0) return false;
 
-        int n = Math.Min(total, _cfg.maxOffersToConsider);
+        int n = Math.Min(total, Info.maxOffersToConsider);
         var actsN = acts.Slice(0, n);
         var costsN = costs.Slice(0, Math.Min(n, costs.Length));
         var maskN = mask.Slice(0, Math.Min(n, mask.Length));
@@ -126,8 +121,8 @@ public sealed class PlayerAgent
         const int C_GLOBAL = 21;
         const int C_CELL = 12;
 
-        int MAX_CELLS = _hub.obs_maxCells;
-        int MAX_DISTANCE = _hub.obs_maxDistance; // e.g., 2 * board_radius (or training-time constant)
+        int MAX_CELLS = Info.maxCells;
+        int MAX_DISTANCE = Info.maxDistance; // e.g., 2 * board_radius (or training-time constant)
 
         int expectedLen = C_GLOBAL + C_CELL * MAX_CELLS;
         if (obs.Length < expectedLen) return 0;
@@ -142,7 +137,7 @@ public sealed class PlayerAgent
         for (int p = 0; p < 4; p++)
         {
             float b = _gs.GetBudget((byte)p);
-            obs[w++] = Safe01(b, _hub.cap_maxBudget);
+            obs[w++] = Safe01(b, Info.capMaxBudget);
         }
 
 
@@ -150,17 +145,17 @@ public sealed class PlayerAgent
         for (byte p = 0; p < MAX_PLAYERS; p++)
         {
             int hp = _gs.GetCoreHealth(p);
-            obs[w++] = Safe01(hp, _hub.cap_maxCoreHealth);
+            obs[w++] = Safe01(hp, Info.capMaxCoreHealth);
         }
 
         // 13 rounds remaining / TOTAL_ROUNDS
-        obs[w++] = Safe01(_gs.RoundsLeft, _hub.match_numberOfRounds);
+        obs[w++] = Safe01(_gs.RoundsLeft, Info.numberOfRounds);
 
         // 14 center VP remaining / VP_PER_ROUND
-        obs[w++] = Safe01(_gs.GetCenterVP(), _hub.match_startCenterVP);
+        obs[w++] = Safe01(_gs.GetCenterVP(), Info.startCenterVP);
 
         // 15 action index (current player) / cap_maxActionsPerTurn
-        obs[w++] = Safe01(_gs.CurrentActionIndex, _hub.cap_maxActionsPerTurn);
+        obs[w++] = Safe01(_gs.CurrentActionIndex, Info.capMaxActionsPerTurn);
 
         // 16 didCaptureVP flag (current player)
         obs[w++] = _gs.CurrentDidCaptureVP ? 1f : 0f;
@@ -169,7 +164,7 @@ public sealed class PlayerAgent
         obs[w++] = _gs.CurrentDidCoreDamage ? 1f : 0f;
 
         // 18..21 VP totals per player / MAX_VP_TOTAL
-        int MAX_VP_TOTAL = _hub.match_numberOfRounds * _hub.match_startCenterVP;
+        int MAX_VP_TOTAL = Info.numberOfRounds * Info.startCenterVP;
         for (byte p = 0; p < MAX_PLAYERS; p++) obs[w++] = Safe01(_gs.GetVP(p), MAX_VP_TOTAL);
 
         // --- Per-cell channels (12), channel-major, zero-padded to MAX_CELLS ---

@@ -51,10 +51,10 @@ public class GameController : MonoBehaviour
         int[] baseIds = new int[4];
         // (int[])GameBootstrapper.hub.board_coreCellIdByPlayer.Clone();
 
-        baseIds[0] = geos.idByAxial[GameBootstrapper.hub.board_PlayerCoreAxialCord[0]];
-        baseIds[1] = geos.idByAxial[GameBootstrapper.hub.board_PlayerCoreAxialCord[1]];
-        baseIds[2] = geos.idByAxial[GameBootstrapper.hub.board_PlayerCoreAxialCord[2]];
-        baseIds[3] = geos.idByAxial[GameBootstrapper.hub.board_PlayerCoreAxialCord[3]];
+        baseIds[0] = geos.idByAxial[Info.PlayerCoreAxialCord[0]];
+        baseIds[1] = geos.idByAxial[Info.PlayerCoreAxialCord[1]];
+        baseIds[2] = geos.idByAxial[Info.PlayerCoreAxialCord[2]];
+        baseIds[3] = geos.idByAxial[Info.PlayerCoreAxialCord[3]];
         if (config == null || !config.board.shuffleCoreCellsPerGame)
         {
             _matchIndex++;
@@ -158,7 +158,7 @@ public class GameController : MonoBehaviour
         {
             DbLoggingConfig.InitializeLoggingValues(eventManager);
             // Apply runtime logging tuning from Config
-            DbLoggingConfig.ApplyConfig(in config.dbLogging);
+            DbLoggingConfig.ApplyConfig(in Info.dbLogging);
             DbLoggingConfig.DeleteConflictingSimIdRows();
             DbLoggingConfig.logDimSim();
             DbLoggingConfig.logDimActionType();
@@ -180,9 +180,9 @@ public class GameController : MonoBehaviour
         
         // pick the first seat marked Human
         byte humanSeat = 0;
-        for (byte s = 0; s < GameBootstrapper.hub.player_count; s++)
+        for (byte s = 0; s < Info.playerCount; s++)
         {
-            if (GameBootstrapper.hub.playerControl[s] == GameConfigHub.ControlMode.Human) { humanSeat = s; break; }
+            if (Info.playerControl[s] == Info.ControlMode.Human) { humanSeat = s; break; }
         }
 
         UIBridge.Init(hic, gameIndex, humanSeat);

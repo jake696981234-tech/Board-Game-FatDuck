@@ -278,28 +278,28 @@ public static class CreateAction
         if (Piece.factory_isInstantPayOut[theAction.pieceType]) gameState.ps[player].budget += Piece.factory_instantPayOutAmount[pid];
 
 
-        MultiCreateExecute(theAction, gameIndex);
+        // MultiCreateExecute(theAction, gameIndex);
 
         GameActions.RefreshConnectorState(gameIndex);
     }
 
-    public static void MultiCreateExecute(Action theAction, int gameIndex)
-    {
-        if (!Piece.multiCreate_enabledByType[theAction.pieceType]) return;
-        var gameState = GameRegistry.game[gameIndex].gameState;
+    // public static void MultiCreateExecute(Action theAction, int gameIndex)
+    // {
+    //     // if (!Piece.multiCreate_enabledByType[theAction.pieceType]) return;
+    //     var gameState = GameRegistry.game[gameIndex].gameState;
         
-        int total = Math.Max(1, Piece.multiCreate_amountByType[theAction.pieceType]);
-        if (total > 1)
-        {
-            gameState.multiCreateActive = true;
-            gameState.multiCreateType = (byte)theAction.pieceType;
-            gameState.multiCreateBorder = Piece.multiCreate_isBoardering[theAction.pieceType];
-            gameState.multiCreateRemaining = total - 1;
-            gameState.multiCreateCells.Clear();
-            gameState.multiCreateCells.Add(theAction.TargetCellId);
-        }
+    //     // int total = Math.Max(1, Piece.multiCreate_amountByType[theAction.pieceType]);
+    //     // if (total > 1)
+    //     // {
+    //     //     gameState.multiCreateActive = true;
+    //     //     gameState.multiCreateType = (byte)theAction.pieceType;
+    //     //     gameState.multiCreateBorder = Piece.multiCreate_isBoardering[theAction.pieceType];
+    //     //     gameState.multiCreateRemaining = total - 1;
+    //     //     gameState.multiCreateCells.Clear();
+    //     //     gameState.multiCreateCells.Add(theAction.TargetCellId);
+    //     // }
         
-    }
+    // }
     public static void PaySacCost(Action theAction, byte player, int gameIndex)
     {
         var bm = GameRegistry.game[gameIndex].boardModel;

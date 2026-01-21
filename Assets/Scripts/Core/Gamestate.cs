@@ -20,8 +20,6 @@ namespace Game.Core
         #region Class's Refrences
         public event System.Action OnActionExecuted;
 
-        private GameConfigHub hub;
-
         private BoardModel bm;
         private GameController controller;
         private EventManager events;
@@ -73,7 +71,6 @@ namespace Game.Core
                        PlayerState[] players,
                        byte startingPlayer, EventManager eventManager, GameController gameController, int theGameIndex)
         {
-            this.hub = GameBootstrapper.hub;
             bm = board;
             events = eventManager;
             controller = gameController;
@@ -82,7 +79,7 @@ namespace Game.Core
             ps = players;
             currentPlayer = startingPlayer;
 
-            roundsLeft = hub.match_numberOfRounds;     // from config (not a raw int param)
+            roundsLeft = Info.numberOfRounds;     // from config (not a raw int param)
 
             isGameOver = false;
             winner = 255;
@@ -98,7 +95,7 @@ namespace Game.Core
                 ps[i].ClearRoundCounters();
                 ps[i].BeginTurnReset();
                 ps[i].endedWithoutActionThisCycle = false;
-                ps[i].budget = hub.match_startingBudgetPerRound[currentRoundNumber - 1];
+                ps[i].budget = Info.startingBudgetPerRound[currentRoundNumber - 1];
             }
 
 
@@ -343,7 +340,7 @@ namespace Game.Core
             tStart[currentPlayer].piecesStart = CountPiecesOnBoard(currentPlayer);
 
             if (ps[currentPlayer].applyStartOfTurnBudgetDecrease)
-                ps[currentPlayer].AddBudget(-(float)hub.match_startOfTurnBudgetDecrease);
+                ps[currentPlayer].AddBudget(-(float)Info.startOfTurnBudgetDecrease);
 
             // Refresh connector capital HP/state at start of turn
             PiecesSides.RecomputeConnectorComponents(gameIndex);
@@ -468,7 +465,7 @@ namespace Game.Core
             float payout =
                     ComputePlayerVPReward(playerId) +
                     ComputePlayeroreDamageReward(playerId) +
-                    hub.match_startingBudgetPerRound[currentRoundNumber - 1] +
+                    Info.startingBudgetPerRound[currentRoundNumber - 1] +
                     perPlayerFactoryIncome[playerId] +
                     cachedPieceDrivenPenalties[playerId];
 
@@ -477,12 +474,12 @@ namespace Game.Core
 
         public float ComputePlayerVPReward(int playerId)
         {
-            return ps[playerId].vpGainedThisRound * hub.reward_budgetBonusForVP;
+            return ps[playerId].vpGainedThisRound * Info.budgetBonusForVP;
         }
 
         public float ComputePlayeroreDamageReward(int playerId)
         {
-            return ps[playerId].coreHitsThisRound * hub.reward_budgetBonusForCoreDamage;
+            return ps[playerId].coreHitsThisRound * Info.budgetBonusForCoreDamage;
         }
 
         private byte NextAlivePlayerAfter(byte p)
@@ -617,7 +614,7 @@ namespace Game.Core
         public void SetCoreHealth(byte player, int hp) // clamps by hub caps
         {
             if (hp < 0) hp = 0;
-            if (hp > hub.cap_maxCoreHealth) hp = hub.cap_maxCoreHealth;
+            if (hp > Info.capMaxCoreHealth) hp = Info.capMaxCoreHealth;
             currentCoreHealthByPlayer[player] = hp;
         }
 
@@ -625,16 +622,16 @@ namespace Game.Core
         {
             int v = currentCenterVP + delta;
             if (v < 0) v = 0;
-            if (v > hub.cap_maxVPPool) v = hub.cap_maxVPPool;
+            if (v > Info.capMaxVPPool) v = Info.capMaxVPPool;
             currentCenterVP = v;
         }
 
-        public void ResetCenterVictoryPointsToStart() => currentCenterVP = hub.match_startCenterVP;
+        public void ResetCenterVictoryPointsToStart() => currentCenterVP = Info.startCenterVP;
 
         public void ResetAllCoreHealthToStart()
         {
             for (byte p = 0; p < currentCoreHealthByPlayer.Length; p++)
-                currentCoreHealthByPlayer[p] = hub.match_startCoreHp;
+                currentCoreHealthByPlayer[p] = Info.startCoreHp;
         }
 
         // --- Minimal read-only surface for agents/UI ---

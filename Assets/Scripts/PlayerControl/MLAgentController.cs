@@ -20,7 +20,6 @@ public class MLAgentController : Agent
     [SerializeField] private byte playerId = 0; // 0..3
 
     // Immutable config / shared systems (assigned by bootstrapper)
-    private GameConfigHub _hub;
     public GameState _gs;
     private BoardModel _bm;
     private PlayerAgent _pa;        // reused for obs + offer build bridge
@@ -57,35 +56,19 @@ public class MLAgentController : Agent
                      BoardModel bm,
                      PlayerAgent pa,
                      byte myPlayerId,
-                     in Config.MLRewardsAuthoring rewards,
                      int theGameIndex)
     {
         gameIndex = theGameIndex;
-        _hub = GameBootstrapper.hub;
         _gs = gs;
         _bm = bm;
         _pa = pa;
         playerId = myPlayerId;
 
-        _rt = new RewardsTuning
-        {
-            rewardWin = rewards.rewardWin,
-            rewardLoss = rewards.rewardLoss,
-            rewardDraw = rewards.rewardDraw,
-            rewardCaptureVP = rewards.rewardCaptureVP,
-            rewardCoreDamage = rewards.rewardCoreDamage,
-            moveTowardVpScale = rewards.moveTowardVpScale,
-            costPenaltyScale = rewards.costPenaltyScale,
-            stepPenalty = rewards.stepPenalty,
-            endTurnPenalty = rewards.endTurnPenalty
-        };
+        _offers = new Game.Core.Action[Info.maxOffersToConsider];
+        _quoted = new float[Info.maxOffersToConsider];
+        _mask = new byte[Info.maxOffersToConsider];
 
-        int cap = Math.Max(1, _hub.agent.maxOffersToConsider);
-        _offers = new Game.Core.Action[cap];
-        _quoted = new float[cap];
-        _mask = new byte[cap];
-
-        _obs = new float[21 + 12 * _hub.obs_maxCells];
+        _obs = new float[21 + 12 * Info.maxCells];
     }
 
     public void SetEpisodeBeginCallback(Action<byte> callback) => _onEpisodeBegin = callback;
@@ -161,7 +144,7 @@ public class MLAgentController : Agent
         int distAfterPlanned = DistanceAfter(ref aChosen);
         float normalizedCost = 0f;
         if (idx < _quoted.Length)
-            normalizedCost = Mathf.Clamp01(_quoted[idx] / Mathf.Max(1f, _hub.cap_maxBudget));
+            normalizedCost = Mathf.Clamp01(_quoted[idx] / Mathf.Max(1f, Info.capMaxBudget));
 
         // Step the game
         bool ok = _gs.Perform(in aChosen, _offers);
@@ -196,7 +179,7 @@ public class MLAgentController : Agent
     {
         if (_episodeTerminated) return;
 
-        if (winner == 255 || winner >= _hub.player_count)
+        if (winner == 255 || winner >= Info.playerCount)
         {
             AddReward(_rt.rewardDraw);
         }

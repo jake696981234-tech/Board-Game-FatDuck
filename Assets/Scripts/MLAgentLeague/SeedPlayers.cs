@@ -46,12 +46,12 @@ public class PlayerManager
         for (byte i = 0; i < 4; i++)
         {
             ps[i] = new PlayerState();
-            bool active = i < GameBootstrapper.hub.player_count;
-            ps[i].applyBotSurcharges = active && GameBootstrapper.hub.player_applyBotSurcharges[i];
-            ps[i].applyStartOfTurnBudgetDecrease = active && GameBootstrapper.hub.player_applyStartOfTurnBudgetDecrease[i];
-            ps[i].isAI = active && GameBootstrapper.hub.player_isAI[i];
-            ps[i].team = active ? GameBootstrapper.hub.player_team[i] : i;
-            ps[i].name = active ? GameBootstrapper.hub.player_name[i] : $"P{i}";
+            bool active = i < Info.playerCount;
+            ps[i].applyBotSurcharges = active && Info.Players[i].applyBotSurcharges;
+            ps[i].applyStartOfTurnBudgetDecrease = active && Info.Players[i].applyStartOfTurnBudgetDecrease;
+            ps[i].isAI = active && Info.Players[i].isAI;
+            ps[i].team = active ? Info.Players[i].team : i;
+            ps[i].name = active ? Info.Players[i].name : $"P{i}";
         }
         return ps;
     }
@@ -76,22 +76,22 @@ public class PlayerManager
     }
     private void SetManualPlayers(int gameIndex, Config config)
     {
-        for (byte seat = 0; seat < GameBootstrapper.hub.player_count; seat++)
+        for (byte seat = 0; seat < Info.playerCount; seat++)
         {
-            switch (GameBootstrapper.hub.playerControl[seat])
+            switch (Info.playerControl[seat])
             {
-                case GameConfigHub.ControlMode.DumbBot:
+                case Info.ControlMode.DumbBot:
                     {
                         setControlDumbBot(seat, gameIndex, config);
                         break;
                     }
-                case GameConfigHub.ControlMode.ML:
+                case Info.ControlMode.ML:
                     {
                         setControlMLBot(seat, gameIndex, config);
                         // setbehaviorName()
                         break;
                     }
-                case GameConfigHub.ControlMode.Human:
+                case Info.ControlMode.Human:
                 default:
                     // Dont Need go do anything- could change this for multple players, and/or can seed some values here 
                     break;
@@ -100,7 +100,7 @@ public class PlayerManager
     }
     private void setControlMLBot(byte seat, int gameIndex, Config config)
     {
-        if (!GameBootstrapper.hub.enableMLAgents)
+        if (!Info.useMLAgents)
         {
             Debug.LogWarning($"Seat {seat}: ML requested but ML Agents disabled; seat left idle.");
             return;
@@ -138,10 +138,10 @@ public class PlayerManager
     {
         BehaviorParameters BehaviorParam = MLObjectRoot.AddComponent<BehaviorParameters>();
         // BehaviorParam.BehaviorName = GameBootstrapper.hub.mlBehavior.name;
-        BehaviorParam.UseChildSensors = GameBootstrapper.hub.mlBehavior.useChildSensors;
-        BehaviorParam.BrainParameters.VectorObservationSize = GameBootstrapper.hub.mlBehavior.obsSize;
-        BehaviorParam.BrainParameters.ActionSpec = Unity.MLAgents.Actuators.ActionSpec.MakeDiscrete(GameBootstrapper.hub.mlBehavior.actionBranchSize);
-        BehaviorParam.TeamId = (seat < GameBootstrapper.hub.player_team.Length) ? GameBootstrapper.hub.player_team[seat]: seat;
+        BehaviorParam.UseChildSensors = Info.useChildSensors;
+        BehaviorParam.BrainParameters.VectorObservationSize = Info.vectorObservationSize;
+        BehaviorParam.BrainParameters.ActionSpec = Unity.MLAgents.Actuators.ActionSpec.MakeDiscrete(Info.actionBranchSize);
+        BehaviorParam.TeamId = Info.Players[seat].team;
 
         var behaviorOverride = (config != null && config.playerBehaviorOverrides != null && seat < config.playerBehaviorOverrides.Length) ? config.playerBehaviorOverrides[seat] : default;
         BehaviorParam.DeterministicInference = behaviorOverride.deterministicInference;
@@ -157,11 +157,11 @@ public class PlayerManager
         var agent = new PlayerAgent();
         // Select a policy per seat
         IBotPolicy policy;
-        if (GameBootstrapper.hub.playerPolicy != null && seat < GameBootstrapper.hub.playerPolicy.Length)
+        if (Info.playerPolicy != null && seat < Info.playerPolicy.Length)
         {
-            switch (GameBootstrapper.hub.playerPolicy[seat])
+            switch (Info.playerPolicy[seat])
             {
-                case GameConfigHub.PolicyKind.DumbGreg:
+                case Info.PolicyKind.DumbGreg:
                     {
                         DumbGregAuthoring DumbGregWeights = config.dumbGreg;
                         int? seed = null;
@@ -179,7 +179,7 @@ public class PlayerManager
                         );
                         break;
                     }
-                case GameConfigHub.PolicyKind.Heuristic:
+                case Info.PolicyKind.Heuristic:
                 default: policy = new HeuristicPolicy(); break;
             }
         }
