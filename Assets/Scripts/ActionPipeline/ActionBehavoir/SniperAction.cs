@@ -77,13 +77,15 @@ public static class SniperAction
     {
         var bm = GameRegistry.game[gameIndex].boardModel;
 
-        var victimsCells = BmCac.OccupiedCellsInLine(theAction.ActorsCellId, Piece.sniper_maxRange[theAction.pieceType], Piece.sniper_minRange[theAction.pieceType], theAction.aux, Piece.sniper_isLineOfSight[theAction.pieceType], Piece.sniper_isFriendlyFire[theAction.pieceType], Piece.sniper_isonlySoldiers[theAction.pieceType], player, gameIndex);
+        var direction = BmCac.GetDirectionIndex(theAction.ActorsCell, theAction.TargetCell, gameIndex);
+        
+        var victimsCells = BmCac.OccupiedCellsInLine(theAction.ActorsCell, Piece.sniper_maxRange[bm.GetPieceTypeFromCell(theAction.ActorsCell)], Piece.sniper_minRange[bm.GetPieceTypeFromCell(theAction.ActorsCell)], direction, Piece.sniper_isLineOfSight[bm.GetPieceTypeFromCell(theAction.ActorsCell)], Piece.sniper_isFriendlyFire[bm.GetPieceTypeFromCell(theAction.ActorsCell)], Piece.sniper_isonlySoldiers[bm.GetPieceTypeFromCell(theAction.ActorsCell)], player, gameIndex);
         if (victimsCells.Length <= 0) { Debug.Log("sniper Action Encoding is broken, this should not be possible"); return; }
-        int dmg = Piece.sniper_damage[theAction.pieceType];
+        int dmg = Piece.sniper_damage[bm.GetPieceTypeFromCell(theAction.ActorsCell)];
 
         for (int i = 0; i < victimsCells.Length; i++)
         {
-            bool killed = GameActions.ApplyDamageWithCapital(theAction.ActorsCellId, bm.occupantPieceId[victimsCells[i]], dmg, gameIndex);
+            bool killed = GameActions.ApplyDamageWithCapital(theAction.ActorsCell, bm.occupantPieceId[victimsCells[i]], dmg, gameIndex);
             if (killed) GameActions.pieceKilled(bm.occupantPieceId[victimsCells[i]], gameIndex, theAction);
             GameActions.RefreshConnectorState(gameIndex);
         }
