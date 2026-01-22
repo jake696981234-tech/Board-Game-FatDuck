@@ -19,7 +19,7 @@ public static class OfferProviderCopy
 
     public static int[] ActionKinds = new int[16 + 1];
     public static int[] ActorsCelID = new int[cellCount + 1];
-    public static int[] TargetCellID = new int[cellCount+ 1];
+    public static int[] TargetCell = new int[cellCount+ 1];
     public static int[] PieceType = new int[Piece.name.Length+ 1];
     public static int[] WallConfig = new int[32+ 1];
     public static int[] IntakeCellID = new int[Piece.name.Length+ 1];

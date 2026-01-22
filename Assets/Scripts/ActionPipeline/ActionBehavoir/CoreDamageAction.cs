@@ -19,10 +19,7 @@ public static class CoreDamageAction
         var theAction = new Action
         {
             kind = CoreDamage,
-            pieceType = actorType,
-            ActorsCellId = (ushort)cell,
-            TargetCellId = (ushort)cell,
-            aux = 0
+            ActorsCell = cell,
         };
         OfferProvider.Emit(theAction, ref offerBuild);
     }
@@ -35,13 +32,13 @@ public static class CoreDamageAction
 
         gameState.ps[player].OnCoreDamage();
 
-        int actorPid = bm.GetCellOccupant(theAction.ActorsCellId);
+        int actorPid = bm.GetCellOccupant(theAction.ActorsCell);
         if (actorPid < 0) { Debug.Log("Action Fail"); return; }
 
-        byte enemy = bm.OwnerOfCoreCell(theAction.TargetCellId);
+        byte enemy = bm.OwnerOfCoreCell(theAction.ActorsCell);
         if (enemy >= 4) { Debug.Log("Action Fail"); return; }
 
-        int dmg = Piece.coreDamage_damage[theAction.pieceType];
+        int dmg = Piece.coreDamage_damage[bm.GetPieceTypeFromCell(theAction.ActorsCell)];
 
         int hp = gameState.GetCoreHealth(enemy);
         gameState.SetCoreHealth(enemy, hp - dmg);

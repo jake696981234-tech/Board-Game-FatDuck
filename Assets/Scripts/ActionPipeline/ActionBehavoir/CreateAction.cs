@@ -27,14 +27,13 @@ public static class CreateAction
          Action theAction = new Game.Core.Action
         {
             kind = Create,
-            pieceType = (byte)type,
-            ActorsCellId = (ushort)0xFFFF,
-            TargetCellId = (ushort)cell,
-            aux = 0
+            ActorsCell = -1,
+            TargetCell = cell,
+            TargetType = type,
         };
         List<Action> CreateActions = new List<Action> {theAction};
-        if (Piece.connectors_enabled[theAction.pieceType] && !CreateConnectorOptions(CreateActions, ref offerBuild)) return;
-        if (Piece.sacrificeCost_enabled[theAction.pieceType] && !GenerateSacrificeCosts(CreateActions, ref offerBuild)) return;
+        if (Piece.connectors_enabled[theAction.TargetType] && !CreateConnectorOptions(CreateActions, ref offerBuild)) return;
+        if (Piece.sacrificeCost_enabled[theAction.TargetType] && !GenerateSacrificeCosts(CreateActions, ref offerBuild)) return;
         for (int i = 0; i < CreateActions.Count; i++) { OfferProvider.Emit(CreateActions[i], ref offerBuild); }
     } 
 
@@ -56,16 +55,16 @@ public static class CreateAction
             for (int cfg = 0; cfg < 64; cfg++)
             {
                 // if ((allowedMask & (1UL << cfg)) == 0) continue;
-                if (!PiecesSides.IsConnectorPlacementLegal(actions[i].TargetCellId, actions[i].pieceType, cfg, offerBuild.query.playerId, offerBuild.gameIndex)) continue;
+                if (!PiecesSides.IsConnectorPlacementLegal(actions[i].TargetCell, (byte)actions[i].TargetType, cfg, offerBuild.query.playerId, offerBuild.gameIndex)) continue;
 
                 legal = true;
                 Action theAction = new Game.Core.Action
                 {
                     kind = actions[i].kind,
-                    pieceType = actions[i].pieceType,
-                    ActorsCellId = actions[i].ActorsCellId,
-                    TargetCellId = actions[i].TargetCellId,
-                    aux = (ushort)cfg // carry config index
+                    ActorsCell = actions[i].ActorsCell,
+                    TargetCell = actions[i].TargetCell,
+                    TargetType = actions[i].TargetType,
+                    WallConfig = (ushort)cfg,
                 };
                 ConnectorActions.Add(theAction);
             }
@@ -162,7 +161,7 @@ public static class CreateAction
 
         // All actions share the same pieceType
         var firstAction = sourceActions[0];
-        int pieceType = firstAction.pieceType;
+        int pieceType = firstAction.TargetType;
 
         int needPerAction = Piece.sacrificeCost_howManyItNeeds[pieceType];
         bool requiresSpecific = Piece.sacrificeCost_isNeedsSpecificPiece[pieceType];
@@ -187,7 +186,7 @@ public static class CreateAction
             int pid = owned[i];
             if (firstAction.kind == Upgrade)
             {
-              if (bm.pieceCellId[pid] == firstAction.ActorsCellId) continue;  
+              if (bm.pieceCellId[pid] == firstAction.ActorsCell) continue;  
             }  
             if (!bm.IsValidPieceId(pid)) continue;
             if (requiresSpecific && bm.pieceType[pid] != requiredType) continue;
@@ -220,10 +219,10 @@ public static class CreateAction
                 actions.Add(new Game.Core.Action
                 {
                     kind = baseAction.kind,
-                    pieceType = baseAction.pieceType,
-                    ActorsCellId = baseAction.ActorsCellId,
-                    TargetCellId = baseAction.TargetCellId,
-                    aux = baseAction.aux,
+                    ActorsCell = baseAction.ActorsCell,
+                    TargetCell = baseAction.TargetCell,
+                    TargetType = baseAction.TargetType,
+                    WallConfig = baseAction.WallConfig,
                     addCost = addCost
                 });
 
@@ -263,19 +262,19 @@ public static class CreateAction
         var gameState = GameRegistry.game[gameIndex].gameState;
         var bm = GameRegistry.game[gameIndex].boardModel;
 
-         var TargetCell = theAction.TargetCellId;
-         if (theAction.kind == GroupBuild) TargetCell = theAction.ActorsCellId;
+         var TargetCell = theAction.TargetCell;
+         if (theAction.kind == GroupBuild) TargetCell = theAction.TargetCell;
 
         PaySacCost(theAction, player, gameIndex);
 
         int pid = bm.AllocateRow();
-        bm.PlacePieceRow(pid, player, (byte)theAction.pieceType, TargetCell, Piece.maxHP[theAction.pieceType]);
-        bm.pieceConnectorConfig[pid] = (byte)theAction.aux;
-        int g = Piece.digitItGives[(byte)theAction.pieceType];
+        bm.PlacePieceRow(pid, player, (byte)theAction.TargetType, TargetCell, Piece.maxHP[theAction.TargetType]);
+        bm.pieceConnectorConfig[pid] = (byte)theAction.WallConfig;
+        int g = Piece.digitItGives[(byte)theAction.TargetType];
         if (g >= 0) gameState.ps[player].GrantDigit(g);
 
-        if (Piece.factory_isKillPenalty[theAction.pieceType]) bm.pieceFactoryKillGoalAux[pid] = Piece.factory_killsNeeded[pid];
-        if (Piece.factory_isInstantPayOut[theAction.pieceType]) gameState.ps[player].budget += Piece.factory_instantPayOutAmount[pid];
+        if (Piece.factory_isKillPenalty[theAction.TargetType]) bm.pieceFactoryKillGoalAux[pid] = Piece.factory_killsNeeded[pid];
+        if (Piece.factory_isInstantPayOut[theAction.TargetType]) gameState.ps[player].budget += Piece.factory_instantPayOutAmount[pid];
 
 
         // MultiCreateExecute(theAction, gameIndex);
@@ -303,9 +302,9 @@ public static class CreateAction
     public static void PaySacCost(Action theAction, byte player, int gameIndex)
     {
         var bm = GameRegistry.game[gameIndex].boardModel;
-        if (Piece.sacrificeCost_enabled[theAction.pieceType])
+        if (Piece.sacrificeCost_enabled[theAction.TargetType])
         {
-            int need = Piece.sacrificeCost_howManyItNeeds[theAction.pieceType];
+            int need = Piece.sacrificeCost_howManyItNeeds[theAction.TargetType];
             if (need > 0 && theAction.addCost != null)
             {
                 int killed = 0;
@@ -337,7 +336,7 @@ public static class CreateAction
 
         // All actions share the same pieceType
         var firstAction = sourceActions[0];
-        int pieceType = firstAction.pieceType;
+        int pieceType = firstAction.TargetType;
 
         int needPerAction = Piece.sacrificeCost_howManyItNeeds[pieceType];
         bool requiresSpecific = Piece.sacrificeCost_isNeedsSpecificPiece[pieceType];
@@ -362,7 +361,7 @@ public static class CreateAction
             int pid = owned[i];
             if (firstAction.kind == Upgrade)
             {
-              if (bm.pieceCellId[pid] == firstAction.ActorsCellId) continue;  
+              if (bm.pieceCellId[pid] == bm.GetCellOccupant(firstAction.ActorsCell)) continue;  
             }  
             if (!bm.IsValidPieceId(pid)) continue;
             if (requiresSpecific && bm.pieceType[pid] != requiredType) continue;
@@ -403,10 +402,10 @@ public static class CreateAction
                 actions.Add(new Game.Core.Action
                 {
                     kind = baseAction.kind,
-                    pieceType = baseAction.pieceType,
-                    ActorsCellId = baseAction.ActorsCellId,
-                    TargetCellId = baseAction.TargetCellId,
-                    aux = baseAction.aux,
+                    ActorsCell = baseAction.ActorsCell,
+                    TargetCell = baseAction.TargetCell,
+                    TargetType = baseAction.TargetType,
+                    WallConfig = baseAction.WallConfig,
                     addCost = addCost
                 });
 

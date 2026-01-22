@@ -16,49 +16,51 @@ namespace Game.Core
     public struct Action
     {
         /// <summary>Action family. See <see cref=""/> for stable codes.</summary>
-        public byte kind;        // 0..6
+        public int kind;        // 0..6
 
         /// <summary>
         /// For Create: the type to build (casted to byte by OfferProvider).
         /// Otherwise 0.
         /// </summary>
-        public byte pieceType;
+        public int ActorsCell;
 
         /// <summary>
         /// Actor’s cell id.
         /// For EndTurn, use 0xFFFF sentinel.
         /// used to src
         /// </summary>
-        public ushort ActorsCellId;
+        public int TargetCell;
 
         /// <summary>
         /// Target cell id:
         /// Move/Create/Shoot → destination; CaptureVP → VP cell; CoreDamage/EndTurn → 0 (or core later).
         /// </summary>
         /// used to dst
-        public ushort TargetCellId;
+        public int TargetType;
 
         /// <summary>
         /// Auxiliary ID when needed.
         /// For Shoot: targetPieceId; otherwise 0.
         /// </summary>
-        public ushort aux;
+        public ushort WallConfig;
+        public int intakeCell;
 
         public int[] addCost;
 
         /// <summary>Convenience constructor (optional).</summary>
-        public Action(byte kind, byte pieceType, ushort actorsCellId, ushort targetCellId, ushort aux = 0, int[] addCost = null)
+        public Action(int kind, int ActorsCell, int TargetCell = -1, int TargetType = -1, ushort WallConfig = 0, int intakeCell = -1, int[] addCost = null)
         {
             this.kind = kind;
-            this.pieceType = pieceType;
-            this.ActorsCellId = actorsCellId;
-            this.TargetCellId = targetCellId;
-            this.aux = aux; //wall of 6 options
+            this.ActorsCell = ActorsCell;
+            this.TargetCell = TargetCell;
+            this.TargetType = TargetType;
+            this.WallConfig = WallConfig; //wall of 6 options
+            this.intakeCell = intakeCell; 
             this.addCost = addCost ?? Array.Empty<int>();
         }
 
-        public override string ToString()
-            => $"Action(kind={kind}, type={pieceType}, src={ActorsCellId}, dst={TargetCellId}, aux={aux})";
+        // public override string ToString()
+            // => $"Action(kind={kind}, type={pieceType}, src={ActorsCellId}, dst={TargetCellId}, aux={aux})";
     }
 
     /// <summary>

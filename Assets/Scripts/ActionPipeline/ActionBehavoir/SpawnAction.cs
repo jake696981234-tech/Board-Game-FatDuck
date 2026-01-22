@@ -55,10 +55,8 @@ public static class SpawnAction
                 var theAction = new Action
                 {
                     kind = Spawner,
-                    pieceType = (byte)actorType, // pieceType carries the actor type for spawners
-                    ActorsCellId = (ushort)actorCell,
-                    TargetCellId = (ushort)empties[i],
-                    aux = (ushort)targetType // carry target type for UI/debug readability
+                    ActorsCell = actorCell,
+                    TargetCell = empties[i],
                 };
                 OfferProvider.Emit(theAction, ref offerBuild);
             }
@@ -142,13 +140,13 @@ public static class SpawnAction
         var controller = GameRegistry.game[gameIndex].gameController;
         var bm = GameRegistry.game[gameIndex].boardModel;
 
-        int actorPid = bm.GetCellOccupant(theAction.ActorsCellId);
+        int actorPid = bm.GetCellOccupant(theAction.ActorsCell);
         if (actorPid < 0) return;
 
 
-        int targetType = Piece.spawn_targetType[theAction.pieceType];
-        int amount = Piece.spawn_pieceAmount[theAction.pieceType];
-        int range = Piece.spawn_range[theAction.pieceType];
+        int targetType = Piece.spawn_targetType[bm.GetPieceTypeFromCell(theAction.ActorsCell)];
+        int amount = Piece.spawn_pieceAmount[bm.GetPieceTypeFromCell(theAction.ActorsCell)];
+        int range = Piece.spawn_range[bm.GetPieceTypeFromCell(theAction.ActorsCell)];
 
         int origin = bm.GetPieceCell(actorPid);
         int[] empties = Scratch.GetScratchCellBuffer(gameIndex);
@@ -177,7 +175,7 @@ public static class SpawnAction
         bool ChosenCellIsLegal = false;
         for (int i = 0; i < eCount; i++)
         {
-            if (empties[i] == theAction.TargetCellId)
+            if (empties[i] == theAction.TargetCell)
             {
                 ChosenCellIsLegal = true;
                 break;
@@ -187,7 +185,7 @@ public static class SpawnAction
         if (ChosenCellIsLegal && spawned < canCreate)
         {
             int pid = bm.AllocateRow();
-            bm.PlacePieceRow(pid, currentPlayer, (byte)targetType, theAction.TargetCellId, Piece.maxHP[targetType]);
+            bm.PlacePieceRow(pid, currentPlayer, (byte)targetType, theAction.TargetCell, Piece.maxHP[targetType]);
             int g = Piece.digitItGives[(byte)targetType];
             if (g >= 0) gameState.ps[currentPlayer].GrantDigit(g);
             spawned++;
@@ -196,7 +194,7 @@ public static class SpawnAction
         for (int i = 0; i < eCount && spawned < canCreate; i++)
         {
             int cell = empties[i];
-            if (cell == theAction.TargetCellId) continue; // already used chosen cell
+            if (cell == theAction.TargetCell) continue; // already used chosen cell
             int pid = bm.AllocateRow();
             bm.PlacePieceRow(pid, currentPlayer, (byte)targetType, cell, Piece.maxHP[targetType]);
             int g = Piece.digitItGives[(byte)targetType];
@@ -205,7 +203,7 @@ public static class SpawnAction
         }
 
         // Mark once-per-turn flag
-        if (Piece.spawn_isOnlyOncePerTurn[theAction.pieceType])
+        if (Piece.spawn_isOnlyOncePerTurn[bm.GetPieceTypeFromCell(theAction.ActorsCell)])
             bm.spawnerUsedThisTurn.Add(actorPid);
 
         GameActions.RefreshConnectorState(gameIndex);

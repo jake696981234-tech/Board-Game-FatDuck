@@ -17,45 +17,43 @@ public static class PushAction
             var theAction = new Action
             {
                 kind = Push,
-                pieceType = actorType,
-                ActorsCellId = (ushort)cell,
-                TargetCellId = targetCellId,
-                aux = (ushort)tgtPid
+                ActorsCell = cell,
+                TargetCell = targetCellId,
             };
             OfferProvider.Emit(theAction, ref offerBuild);
         }
     }
 
-    public static bool IsLegal(int actorPid, int actorType, in Game.Core.Action a, int gameIndex)
-    {
-        var bm = GameRegistry.game[gameIndex].boardModel;
+    // public static bool IsLegal(int actorPid, int actorType, in Game.Core.Action a, int gameIndex)
+    // {
+    //     var bm = GameRegistry.game[gameIndex].boardModel;
 
 
-        int actorOwner = bm.GetPieceOwner(actorPid);
-        int targetPid = a.aux;
-        if (targetPid < 0 || !bm.IsValidPieceId(targetPid)) return false;
-        if (bm.GetPieceCell(targetPid) != a.TargetCellId) return false;
+    //     int actorOwner = bm.GetPieceOwner(actorPid);
+    //     int targetPid = a.aux;
+    //     if (targetPid < 0 || !bm.IsValidPieceId(targetPid)) return false;
+    //     if (bm.GetPieceCell(targetPid) != a.TargetCellId) return false;
 
-        bool allowFriendly = Piece.push_isFriendlyFire[actorType];
-        if (!allowFriendly && bm.GetPieceOwner(targetPid) == actorOwner) return false;
+    //     bool allowFriendly = Piece.push_isFriendlyFire[actorType];
+    //     if (!allowFriendly && bm.GetPieceOwner(targetPid) == actorOwner) return false;
 
-        bool allowBuildings = Piece.push_IsTargetsBuildings[actorType];
-        bool allowSoldiers = Piece.push_isTargetsSoldiers[actorType];
-        byte tgtType = bm.GetPieceType(targetPid);
-        bool targetIsBuilding = Piece.isBuilding[tgtType];
-        if (targetIsBuilding && !allowBuildings) return false;
-        if (!targetIsBuilding && !allowSoldiers) return false;
+    //     bool allowBuildings = Piece.push_IsTargetsBuildings[actorType];
+    //     bool allowSoldiers = Piece.push_isTargetsSoldiers[actorType];
+    //     byte tgtType = bm.GetPieceType(targetPid);
+    //     bool targetIsBuilding = Piece.isBuilding[tgtType];
+    //     if (targetIsBuilding && !allowBuildings) return false;
+    //     if (!targetIsBuilding && !allowSoldiers) return false;
 
-        int rangeMax = Piece.push_rangeMax[actorType];
-        int originCell = bm.GetPieceCell(actorPid);
-        int targetCell = bm.GetPieceCell(targetPid);
-        int dist = bm.Distance(originCell, targetCell);
-        if (dist < 1 || dist > rangeMax) return false;
-        if (!BmCac.LineOfSightClear(originCell, targetCell, gameIndex)) return false;
+    //     int rangeMax = Piece.push_rangeMax[actorType];
+    //     int originCell = bm.GetPieceCell(actorPid);
+    //     int targetCell = bm.GetPieceCell(targetPid);
+    //     int dist = bm.Distance(originCell, targetCell);
+    //     if (dist < 1 || dist > rangeMax) return false;
+    //     if (!BmCac.LineOfSightClear(originCell, targetCell, gameIndex)) return false;
 
-        int pushDest = BmCac.ComputePushDestination(actorPid, actorType, targetPid, gameIndex);
-        return pushDest >= 0 && bm.IsValidCellId(pushDest);
-    }
+    //     int pushDest = BmCac.ComputePushDestination(actorPid, actorType, targetPid, gameIndex);
+    //     return pushDest >= 0 && bm.IsValidCellId(pushDest);
+    // }
 
     public static int GetLegalTargets(int actorPieceId, int actorType, int[] outPieceIds, int gameIndex)
     {
@@ -108,25 +106,25 @@ public static class PushAction
         var bm = GameRegistry.game[gameIndex].boardModel;
         var events = GameRegistry.game[gameIndex].eventManager;
 
-        int victimID = theAction.aux;
-        if (victimID < 0) return;
+        // int victimID = theAction.TargetCell;
+        // if (victimID < 0) return;
 
-        int actorPid = bm.GetCellOccupant(theAction.ActorsCellId);
-        if (actorPid < 0) return;
+        // int actorPid = bm.GetCellOccupant(theAction.ActorsCell);
+        // if (actorPid < 0) return;
 
-        byte actorType = bm.GetPieceType(actorPid);
+        // byte actorType = bm.GetPieceType(actorPid);
 
-        int dmg = Piece.push_damage[theAction.pieceType];
-        bool killed = GameActions.ApplyDamageWithCapital(theAction.ActorsCellId, victimID, dmg, gameIndex);
+        int dmg = Piece.push_damage[bm.GetPieceTypeFromCell(theAction.ActorsCell)];
+        bool killed = GameActions.ApplyDamageWithCapital(theAction.ActorsCell, bm.GetCellOccupant(theAction.TargetCell), dmg, gameIndex);
         if (killed)
         {
             // Revoke digit from the defender's owner if this type granted one
-            GameActions.pieceKilled(victimID, gameIndex, theAction);
+            GameActions.pieceKilled(bm.GetCellOccupant(theAction.TargetCell), gameIndex, theAction);
         }
         else
         {
-            int pushedCellID = BmCac.ComputePushDestination(actorPid, actorType, victimID, gameIndex);
-            bm.MovePieceRow(victimID, pushedCellID);
+            int pushedCellID = BmCac.ComputePushDestination(bm.GetCellOccupant(theAction.TargetCell), bm.GetPieceTypeFromCell(theAction.ActorsCell), bm.GetCellOccupant(theAction.TargetCell), gameIndex);
+            bm.MovePieceRow(bm.GetCellOccupant(theAction.TargetCell), pushedCellID);
         }
         GameActions.RefreshConnectorState(gameIndex);
     }

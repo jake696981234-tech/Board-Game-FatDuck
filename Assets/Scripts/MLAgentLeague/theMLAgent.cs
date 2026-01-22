@@ -32,7 +32,10 @@ public class MLSam : Agent
         
     }
 
-    
+    public void TickMe()
+    {
+        MLsam.RequestDecision();
+    }
 
     public override void OnActionReceived(ActionBuffers actions)
     {

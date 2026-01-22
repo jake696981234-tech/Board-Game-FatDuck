@@ -17,10 +17,7 @@ public static class CaptureVPAction
         var theAction = new Action
         {
             kind = CaptureVP,
-            pieceType = actorType,
-            ActorsCellId = (ushort)cell,
-            TargetCellId = vpCell,
-            aux = 0
+            ActorsCell = cell,
         };
         OfferProvider.Emit(theAction, ref offerBuild);
     }
@@ -30,15 +27,15 @@ public static class CaptureVPAction
     /// <summary>
     /// CAPTURE VP (targetless): legal if actor stands on VP cell.
     /// </summary>
-    public static bool IsLegal(int actorPieceId, ref OfferBuild offerBuild)
-    {
-        var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
+    // public static bool IsLegal(int actorPieceId, ref OfferBuild offerBuild)
+    // {
+    //     var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
 
         
-        int originCell = bm.GetPieceCell(actorPieceId);
-        if (originCell < 0) return false;
-        return originCell == bm.GetVictoryPointCellId();
-    }
+    //     int originCell = bm.GetPieceCell(actorPieceId);
+    //     if (originCell < 0) return false;
+    //     return originCell == bm.GetVictoryPointCellId();
+    // }
 
     public static void Apply(in Action theAction, byte player, int gameIndex)
     {

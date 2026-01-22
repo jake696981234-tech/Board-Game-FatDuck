@@ -13,10 +13,7 @@ public static class ConversionFactoryAction
             var theAction = new Action
             {
                 kind = ConversionFactory,
-                pieceType = actorType,
-                ActorsCellId = (ushort)cell,
-                TargetCellId = (ushort)cell,
-                aux = 0
+                ActorsCell = cell,
             };
             OfferProvider.Emit(theAction, ref offerBuild);
         }
@@ -33,9 +30,9 @@ public static class ConversionFactoryAction
         var bm = GameRegistry.game[gameIndex].boardModel;
         var gameState = GameRegistry.game[gameIndex].gameState;
 
-        int Pieceid = bm.GetCellOccupant(theAction.ActorsCellId);
+        int Pieceid = bm.GetCellOccupant(theAction.ActorsCell);
 
         gameState.ps[player].vpTotal--;
-        bm.pieceFactoryAux[Pieceid] += Piece.conversionFactory_amount[theAction.pieceType];
+        bm.pieceFactoryAux[Pieceid] += Piece.conversionFactory_amount[bm.GetPieceTypeFromCell(theAction.ActorsCell)];
     }
 }

@@ -17,10 +17,9 @@ public static class GroupBuildAction
         var theAction = new Action
             {
                 kind = GroupBuild,
-                pieceType = (byte)Piece.groupBuild_target[actorType],
-                ActorsCellId = (ushort)cell,
-                TargetCellId = (ushort)actorType,
-                aux = 0
+                ActorsCell = cell,
+                TargetCell = -1,
+                TargetType = Piece.groupBuild_target[actorType],
             };
 
         var actions = new List<Action> {theAction};
@@ -51,11 +50,9 @@ public static class GroupBuildAction
                 Action theAction = new Action
                 {
                     kind = theActions[i].kind,
-                    pieceType = theActions[i].pieceType,
-                    ActorsCellId = theActions[i].ActorsCellId,
-                    TargetCellId = theActions[i].TargetCellId,
-                    aux = (ushort)cell, 
-                    addCost = theActions[i].addCost,
+                    ActorsCell = theActions[i].ActorsCell,
+                    TargetCell = cell,
+                    TargetType = theActions[i].TargetType,
                 };
                 OfferProvider.Emit(theAction, ref offerBuild);
             }
@@ -64,6 +61,7 @@ public static class GroupBuildAction
 
     private static bool generateGroupBuildClusters(List<Action> actions, ref OfferBuild offerBuild)
     {
+        var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
         if (actions == null || actions.Count == 0) return false;
 
         var sourceActions = new List<Action>(actions);
@@ -73,10 +71,10 @@ public static class GroupBuildAction
         for (int i = 0; i < sourceActions.Count; i++)
         {
             var baseAction = sourceActions[i];
-            byte actorType = (byte)baseAction.TargetCellId;
-            int startCell = baseAction.ActorsCellId;
+            int actorType = bm.GetPieceTypeFromCell(sourceActions[i].ActorsCell);
+            int startCell = baseAction.ActorsCell;
 
-            var clusterCells = CollectClusterCells(actorType, startCell, offerBuild.gameIndex);
+            var clusterCells = CollectClusterCells((byte)actorType, startCell, offerBuild.gameIndex);
             if (clusterCells.Count == 0) continue;
 
             // Deterministic ordering for addCost
@@ -86,10 +84,9 @@ public static class GroupBuildAction
             actions.Add(new Action
             {
                 kind = baseAction.kind,
-                pieceType = baseAction.pieceType,
-                ActorsCellId = baseAction.ActorsCellId,
-                TargetCellId = baseAction.TargetCellId,
-                aux = baseAction.aux,
+                ActorsCell = baseAction.ActorsCell,
+                TargetCell = baseAction.TargetCell,
+                TargetType = baseAction.TargetType,
                 addCost = clusterCells.ToArray()
             });
             foundAny = true;
@@ -140,7 +137,9 @@ public static class GroupBuildAction
 
     public static void Apply(in Action theAction, byte player, int gameIndex)
     {
-        if (Piece.groupBuild_deletion[theAction.TargetCellId]) groupBuildDeletion(theAction, gameIndex);
+        var bm = GameRegistry.game[gameIndex].boardModel;
+        
+        if (Piece.groupBuild_deletion[bm.GetPieceTypeFromCell(theAction.ActorsCell)]) groupBuildDeletion(theAction, gameIndex);
         CreateAction.placePiece(theAction, player, gameIndex);
     }
 

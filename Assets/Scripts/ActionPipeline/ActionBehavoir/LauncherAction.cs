@@ -15,11 +15,10 @@ public static class LauncherAction
             int dst = scratch[i + 1];
             var theAction = new Action
             {
-                kind = Launcher,
-                pieceType = actorType,
-                ActorsCellId = (ushort)cell,
-                TargetCellId = (ushort)dst,
-                aux = (ushort)tgtPid
+                kind = Move,
+                ActorsCell = cell,
+                TargetCell = dst,
+                intakeCell = tgtPid, //to do, probs needs fix this, this encoding seems weird
             };
             OfferProvider.Emit(theAction, ref offerBuild);
         }
@@ -115,9 +114,9 @@ public static class LauncherAction
     {
         var bm = GameRegistry.game[gameIndex].boardModel;
 
-        int targetPid = a.aux;
+        int targetPid = a.intakeCell;
         if (targetPid < 0) return;
-        bm.MovePieceRow(targetPid, a.TargetCellId);
+        bm.MovePieceRow(targetPid, a.TargetCell);
         GameActions.RefreshConnectorState(gameIndex);
     }
 }

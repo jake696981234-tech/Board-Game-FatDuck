@@ -23,10 +23,9 @@ public static class UpgradeAction
             var theAction = new Action
             {
                 kind = Upgrade,
-                pieceType = (byte)upgradedToPieceType, // destination type
-                ActorsCellId = (ushort)cell, // to do need to change the rest of the method - I switched this around. PieceType = used to be upgradedToPieceType- and TargetCellId used to be cell.
-                TargetCellId = actorType,
-                aux = 0
+                ActorsCell = cell,
+                TargetCell = -1,
+                TargetType = upgradedToPieceType,
             };
 
             List<Action> CreateActions = new List<Action> {theAction};
@@ -45,14 +44,14 @@ public static class UpgradeAction
 
         CreateAction.PaySacCost(theAction, player, gameIndex);
 
-        var UpgradedFromPieceId = bm.GetCellOccupant(theAction.ActorsCellId);
+        var UpgradedFromPieceId = bm.GetCellOccupant(theAction.ActorsCell);
         var sourceConnector = bm.pieceConnectorConfig[UpgradedFromPieceId];
         bm.FreeRowSwapBack(UpgradedFromPieceId);
 
         int PieceId = bm.AllocateRow();
-        bm.PlacePieceRow(PieceId, player, (byte)theAction.pieceType, theAction.ActorsCellId, Piece.maxHP[theAction.pieceType]);
-        if (Piece.connectors_enabled[theAction.pieceType]) { bm.pieceConnectorConfig[PieceId] = sourceConnector; } else { bm.pieceConnectorConfig[PieceId] = (byte)theAction.aux; }
-        int g = Piece.digitItGives[(byte)theAction.pieceType];
+        bm.PlacePieceRow(PieceId, player, (byte)theAction.TargetType, theAction.ActorsCell, Piece.maxHP[theAction.TargetType]);
+        if (Piece.connectors_enabled[theAction.TargetType]) { bm.pieceConnectorConfig[PieceId] = sourceConnector; } else { bm.pieceConnectorConfig[PieceId] = (byte)theAction.WallConfig; }
+        int g = Piece.digitItGives[(byte)theAction.TargetType];
         if (g >= 0) gameState.ps[player].GrantDigit(g);
 
         GameActions.RefreshConnectorState(gameIndex);

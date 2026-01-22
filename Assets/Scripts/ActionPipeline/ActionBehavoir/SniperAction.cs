@@ -30,10 +30,15 @@ public static class SniperAction
             var theAction = new Action
             {
                 kind = Sniper,
-                pieceType = actorType,
-                ActorsCellId = (ushort)cell,
-                TargetCellId = (ushort)victimsCells[victimsCells.Length - 1],
-                aux = (ushort)directions[i],
+                ActorsCell = cell,
+                TargetCell = victimsCells[victimsCells.Length - 1], //to do- fix this action. Need to figure out away of ecndoding direction, without having it within Action DTO.
+
+                //this is what it used to be:
+                // kind = Sniper,
+                // pieceType = actorType,
+                // ActorsCellId = (ushort)cell,
+                // TargetCellId = (ushort)victimsCells[victimsCells.Length - 1],
+                // aux = (ushort)directions[i], ------See this one. 
             };
             OfferProvider.Emit(theAction, ref offerBuild);
         }

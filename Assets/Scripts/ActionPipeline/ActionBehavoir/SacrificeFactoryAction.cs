@@ -17,10 +17,8 @@ public static class SacrificeFactoryAction
             var theAction = new Action
             {
                 kind = SacrificeFactory,
-                pieceType = actorType,
-                ActorsCellId = (ushort)cell,
-                TargetCellId = targetCellId,
-                aux = (ushort)tgtPid
+                ActorsCell = cell,
+                TargetCell = targetCellId,
             };
             OfferProvider.Emit(theAction, ref offerBuild);
         }
@@ -64,10 +62,10 @@ public static class SacrificeFactoryAction
         var bm = GameRegistry.game[gameIndex].boardModel;
         var events = GameRegistry.game[gameIndex].eventManager;
 
-        int victimID = theAction.aux;
+        int victimID = bm.GetCellOccupant(theAction.TargetCell);
         if (victimID < 0) return;
-        int Pieceid = bm.GetCellOccupant(theAction.ActorsCellId);
-        bm.pieceFactoryAux[Pieceid] += Piece.sacrificeFactory_amount[theAction.pieceType];
+        int Pieceid = bm.GetCellOccupant(theAction.ActorsCell);
+        bm.pieceFactoryAux[Pieceid] += Piece.sacrificeFactory_amount[bm.GetPieceTypeFromCell(theAction.ActorsCell)];
 
         GameActions.pieceKilled(victimID, gameIndex, theAction);
         GameActions.RefreshConnectorState(gameIndex);

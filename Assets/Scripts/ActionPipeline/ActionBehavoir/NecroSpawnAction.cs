@@ -27,10 +27,8 @@ public static class NecroSpawnAction
                 Action theAction = new Action
                 {
                     kind = NecroSpawn,
-                    pieceType = (byte)actorType,
-                    ActorsCellId = (ushort)actorCell,
-                    TargetCellId = (ushort)emptyCells[i],
-                    aux = (ushort)type,
+                    ActorsCell = actorCell,
+                    TargetCell = emptyCells[i],
                 };
                 OfferProvider.Emit(theAction, ref offerBuild);
             }
@@ -58,8 +56,8 @@ public static class NecroSpawnAction
         var bm = GameRegistry.game[gameIndex].boardModel;
 
         int pid = bm.AllocateRow();
-        bm.PlacePieceRow(pid, player, (byte)theAction.aux, theAction.TargetCellId, Piece.maxHP[theAction.pieceType]);
-        int g = Piece.digitItGives[(byte)theAction.aux];
+        bm.PlacePieceRow(pid, player, (byte)bm.necroSpawnStore[pid], theAction.TargetCell, Piece.maxHP[bm.necroSpawnStore[pid]]);
+        int g = Piece.digitItGives[bm.necroSpawnStore[pid]];
         if (g >= 0) gameState.ps[player].GrantDigit(g);
 
         GameActions.RefreshConnectorState(gameIndex);

@@ -18,10 +18,8 @@ public static class ShootAction
             var theAction = new Action
             {
                 kind = Shoot,
-                pieceType = actorType,
-                ActorsCellId = (ushort)cell,
-                TargetCellId = targetCellId,
-                aux = (ushort)tgtPid
+                ActorsCell = cell,
+                TargetCell = targetCellId,
             };
             OfferProvider.Emit(theAction, ref offerBuild);
         }
@@ -64,14 +62,14 @@ public static class ShootAction
         var bm = GameRegistry.game[gameIndex].boardModel;
         var events = GameRegistry.game[gameIndex].eventManager;
 
-        int victimID = theAction.aux;
-        if (victimID < 0) { Debug.Log("Shoot Action Encoding is broken, this should not be possible"); return; }
-        int dmg = Piece.shoot_damage[theAction.pieceType];
-        bool killed = GameActions.ApplyDamageWithCapital(theAction.ActorsCellId, victimID, dmg, gameIndex);
+        // int victimID = theAction.aux;
+        // if (victimID < 0) { Debug.Log("Shoot Action Encoding is broken, this should not be possible"); return; }
+        int dmg = Piece.shoot_damage[bm.GetPieceTypeFromCell(theAction.ActorsCell)];
+        bool killed = GameActions.ApplyDamageWithCapital(theAction.ActorsCell, bm.GetCellOccupant(theAction.TargetCell), dmg, gameIndex);
         if (killed)
         {
             // Revoke digit from the defender's owner if this type granted one
-            GameActions.pieceKilled(victimID, gameIndex, theAction);
+            GameActions.pieceKilled(bm.GetCellOccupant(theAction.TargetCell), gameIndex, theAction);
         }
         GameActions.RefreshConnectorState(gameIndex);
     }

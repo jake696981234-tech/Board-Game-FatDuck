@@ -105,32 +105,32 @@ public static class MLActions
     {
         for (int theAction = 0; theAction < MLSam.NumberOfOffers; theAction++) 
         { 
-            if (ActionOriginal.Add(MLSam.Offers[theAction].ActorsCellId) && MLSam.ActionMask[theAction] != 0 && MLSam.Offers[theAction].kind == MLSam.ChosenAction[0]) continue;
-            actionMask.SetActionEnabled((int)ChoosingActorsCell, MLSam.Offers[theAction + 1].ActorsCellId, false); 
+            if (ActionOriginal.Add(MLSam.Offers[theAction].ActorsCell) && MLSam.ActionMask[theAction] != 0 && MLSam.Offers[theAction].kind == MLSam.ChosenAction[0]) continue;
+            actionMask.SetActionEnabled((int)ChoosingActorsCell, MLSam.Offers[theAction + 1].ActorsCell, false); 
         }
     }
     private static void MaskTargetCell(ref IDiscreteActionMask actionMask, MLSam MLSam)
     {
         for (int theAction = 0; theAction < MLSam.NumberOfOffers; theAction++) 
         { 
-            if (ActionOriginal.Add(MLSam.Offers[theAction].TargetCellId) && MLSam.ActionMask[theAction] != 0 && MLSam.Offers[theAction].kind == MLSam.ChosenAction[0] && MLSam.Offers[theAction].ActorsCellId == MLSam.ChosenAction[1]) continue;
-            actionMask.SetActionEnabled((int)ChoosingTargetCell, MLSam.Offers[theAction + 1].TargetCellId, false); 
+            if (ActionOriginal.Add(MLSam.Offers[theAction].TargetCell) && MLSam.ActionMask[theAction] != 0 && MLSam.Offers[theAction].kind == MLSam.ChosenAction[0] && MLSam.Offers[theAction].ActorsCell == MLSam.ChosenAction[1]) continue;
+            actionMask.SetActionEnabled((int)ChoosingTargetCell, MLSam.Offers[theAction + 1].TargetCell, false); 
         }
     }
     private static void MaskPieceType(ref IDiscreteActionMask actionMask, MLSam MLSam)
     {
         for (int theAction = 0; theAction < MLSam.NumberOfOffers; theAction++) 
         { 
-            if (ActionOriginal.Add(MLSam.Offers[theAction].pieceType) && MLSam.ActionMask[theAction] != 0 && MLSam.Offers[theAction].kind == MLSam.ChosenAction[0] && MLSam.Offers[theAction].ActorsCellId == MLSam.ChosenAction[1] && MLSam.Offers[theAction].TargetCellId == MLSam.ChosenAction[2]) continue;
-            actionMask.SetActionEnabled((int)ChoosingPieceType, MLSam.Offers[theAction + 1].pieceType, false); 
+            if (ActionOriginal.Add(MLSam.Offers[theAction].TargetType) && MLSam.ActionMask[theAction] != 0 && MLSam.Offers[theAction].kind == MLSam.ChosenAction[0] && MLSam.Offers[theAction].ActorsCell == MLSam.ChosenAction[1] && MLSam.Offers[theAction].TargetCell == MLSam.ChosenAction[2]) continue;
+            actionMask.SetActionEnabled((int)ChoosingPieceType, MLSam.Offers[theAction + 1].TargetType, false); 
         }
     }
     private static void MaskWallConfig(ref IDiscreteActionMask actionMask, MLSam MLSam)
     {
         for (int theAction = 0; theAction < MLSam.NumberOfOffers; theAction++) 
         { 
-            if (ActionOriginal.Add(MLSam.Offers[theAction].pieceType) && MLSam.ActionMask[theAction] != 0 && MLSam.Offers[theAction].kind == MLSam.ChosenAction[0] && MLSam.Offers[theAction].ActorsCellId == MLSam.ChosenAction[1] && MLSam.Offers[theAction].TargetCellId == MLSam.ChosenAction[2] && MLSam.Offers[theAction].pieceType == MLSam.ChosenAction[3]) continue;
-            actionMask.SetActionEnabled((int)ChoosingWallConfig, MLSam.Offers[theAction + 1].aux, false); 
+            if (ActionOriginal.Add(MLSam.Offers[theAction].TargetType) && MLSam.ActionMask[theAction] != 0 && MLSam.Offers[theAction].kind == MLSam.ChosenAction[0] && MLSam.Offers[theAction].ActorsCell == MLSam.ChosenAction[1] && MLSam.Offers[theAction].TargetCell == MLSam.ChosenAction[2] && MLSam.Offers[theAction].TargetType == MLSam.ChosenAction[3]) continue;
+            actionMask.SetActionEnabled((int)ChoosingWallConfig, MLSam.Offers[theAction + 1].WallConfig, false); 
         }
     }
     private static void MaskInstakeCellID(ref IDiscreteActionMask actionMask, MLSam MLSam)
@@ -142,7 +142,7 @@ public static class MLActions
         {
             if (MLSam.mlState != ChoosingKind) for (int i = 1; i < OfferProviderCopy.ActionKinds.Length - 1; i++) actionMask.SetActionEnabled(0, i, false);
             if (MLSam.mlState != ChoosingTargetCell) for (int i = 1; i < OfferProviderCopy.ActorsCelID.Length - 1; i++) actionMask.SetActionEnabled(0, i, false);
-            if (MLSam.mlState != ChoosingPieceType) for (int i = 1; i < OfferProviderCopy.TargetCellID.Length - 1; i++) actionMask.SetActionEnabled(0, i, false);
+            if (MLSam.mlState != ChoosingPieceType) for (int i = 1; i < OfferProviderCopy.TargetCell.Length - 1; i++) actionMask.SetActionEnabled(0, i, false);
             if (MLSam.mlState != ChoosingWallConfig) for (int i = 1; i < OfferProviderCopy.PieceType.Length - 1; i++) actionMask.SetActionEnabled(0, i, false);
             if (MLSam.mlState != ChoosingInstakeCellID) for (int i = 1; i < OfferProviderCopy.WallConfig.Length - 1; i++) actionMask.SetActionEnabled(0, i, false);
         }    
@@ -182,7 +182,7 @@ public static class MLActions
                         for (int theAction = 0; theAction < MLSam.NumberOfOffers; theAction++)
                         {
                             if (MLSam.Offers[theAction].kind != MLSam.ChosenAction[(int)ChoosingKind]) continue;
-                            if (MLSam.Offers[theAction].ActorsCellId != MLSam.ChosenAction[(int)ChoosingActorsCell]) continue;
+                            if (MLSam.Offers[theAction].ActorsCell != MLSam.ChosenAction[(int)ChoosingActorsCell]) continue;
                             peformAction(MLSam.Offers[theAction], MLSam);
                         }
                     }
@@ -215,8 +215,8 @@ public static class MLActions
                         for (int theAction = 0; theAction < MLSam.NumberOfOffers; theAction++)
                         {
                             if (MLSam.Offers[theAction].kind != MLSam.ChosenAction[(int)ChoosingKind]) continue;
-                            if (MLSam.Offers[theAction].ActorsCellId != MLSam.ChosenAction[(int)ChoosingActorsCell]) continue;
-                            if (MLSam.Offers[theAction].TargetCellId != MLSam.ChosenAction[(int)ChoosingTargetCell]) continue;
+                            if (MLSam.Offers[theAction].ActorsCell != MLSam.ChosenAction[(int)ChoosingActorsCell]) continue;
+                            if (MLSam.Offers[theAction].TargetCell != MLSam.ChosenAction[(int)ChoosingTargetCell]) continue;
                             peformAction(MLSam.Offers[theAction], MLSam);
                         }
                         break;
@@ -251,8 +251,8 @@ public static class MLActions
                             for (int theAction = 0; theAction < MLSam.NumberOfOffers; theAction++)
                             {
                                 if (MLSam.Offers[theAction].kind != MLSam.ChosenAction[(int)ChoosingKind]) continue;
-                                if (MLSam.Offers[theAction].pieceType != MLSam.ChosenAction[(int)ChoosingPieceType]) continue;
-                                if (MLSam.Offers[theAction].TargetCellId != MLSam.ChosenAction[(int)ChoosingTargetCell]) continue;
+                                if (MLSam.Offers[theAction].TargetType != MLSam.ChosenAction[(int)ChoosingPieceType]) continue;
+                                if (MLSam.Offers[theAction].TargetCell != MLSam.ChosenAction[(int)ChoosingTargetCell]) continue;
                                 peformAction(MLSam.Offers[theAction], MLSam);
                             }
                             break;
@@ -265,9 +265,9 @@ public static class MLActions
                         for (int theAction = 0; theAction < MLSam.NumberOfOffers; theAction++)
                             {
                                 if (MLSam.Offers[theAction].kind != MLSam.ChosenAction[(int)ChoosingKind]) continue;
-                                if (MLSam.Offers[theAction].pieceType != MLSam.ChosenAction[(int)ChoosingPieceType]) continue;
-                                if (MLSam.Offers[theAction].TargetCellId != MLSam.ChosenAction[(int)ChoosingTargetCell]) continue;
-                                if (MLSam.Offers[theAction].aux != MLSam.ChosenAction[(int)ChoosingWallConfig]) continue;
+                                if (MLSam.Offers[theAction].TargetType != MLSam.ChosenAction[(int)ChoosingPieceType]) continue;
+                                if (MLSam.Offers[theAction].TargetCell != MLSam.ChosenAction[(int)ChoosingTargetCell]) continue;
+                                if (MLSam.Offers[theAction].WallConfig != MLSam.ChosenAction[(int)ChoosingWallConfig]) continue;
                                 peformAction(MLSam.Offers[theAction], MLSam);
                             }
                     }
@@ -295,8 +295,8 @@ public static class MLActions
                         for (int theAction = 0; theAction < MLSam.NumberOfOffers; theAction++)
                             {
                                 if (MLSam.Offers[theAction].kind != MLSam.ChosenAction[(int)ChoosingKind]) continue;
-                                if (MLSam.Offers[theAction].ActorsCellId != MLSam.ChosenAction[(int)ChoosingActorsCell]) continue;
-                                if (MLSam.Offers[theAction].pieceType != MLSam.ChosenAction[(int)ChoosingPieceType]) continue;
+                                if (MLSam.Offers[theAction].ActorsCell != MLSam.ChosenAction[(int)ChoosingActorsCell]) continue;
+                                if (MLSam.Offers[theAction].TargetType != MLSam.ChosenAction[(int)ChoosingPieceType]) continue;
                                 peformAction(MLSam.Offers[theAction], MLSam);
                             }
                         break;
@@ -330,9 +330,9 @@ public static class MLActions
                             for (int theAction = 0; theAction < MLSam.NumberOfOffers; theAction++)
                             {
                                 if (MLSam.Offers[theAction].kind != MLSam.ChosenAction[(int)ChoosingKind]) continue;
-                                if (MLSam.Offers[theAction].ActorsCellId != MLSam.ChosenAction[(int)ChoosingActorsCell]) continue;
-                                if (MLSam.Offers[theAction].TargetCellId != MLSam.ChosenAction[(int)ChoosingTargetCell]) continue;
-                                if (MLSam.Offers[theAction].pieceType != MLSam.ChosenAction[(int)ChoosingPieceType]) continue;
+                                if (MLSam.Offers[theAction].ActorsCell != MLSam.ChosenAction[(int)ChoosingActorsCell]) continue;
+                                if (MLSam.Offers[theAction].TargetCell != MLSam.ChosenAction[(int)ChoosingTargetCell]) continue;
+                                if (MLSam.Offers[theAction].TargetType != MLSam.ChosenAction[(int)ChoosingPieceType]) continue;
                                 peformAction(MLSam.Offers[theAction], MLSam);
                             }
                             break;
@@ -345,7 +345,7 @@ public static class MLActions
                 }
             break;
         }
-        MLSam.TickMe();
+            MLSam.TickMe();
     }
 
     private static void peformAction(Action theAction, MLSam MLSam)

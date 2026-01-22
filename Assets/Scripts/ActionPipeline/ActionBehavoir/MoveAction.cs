@@ -15,10 +15,8 @@ public static class MoveAction
             var theAction = new Action
             {
                 kind = Move,
-                pieceType = actorType,
-                ActorsCellId = (ushort)cell,
-                TargetCellId = (ushort)targetCellId,
-                aux = 0
+                ActorsCell = cell,
+                TargetCell = targetCellId,
             };
             OfferProvider.Emit(theAction, ref offerBuild);
         }
@@ -113,16 +111,16 @@ public static class MoveAction
     {
         var bm = GameRegistry.game[gameIndex].boardModel;
 
-        int actorPid = bm.GetCellOccupant(theAction.ActorsCellId);
+        int actorPid = bm.GetCellOccupant(theAction.ActorsCell);
         if (actorPid < 0) return;
-        int dstOcc = bm.GetCellOccupant(theAction.TargetCellId);
+        int dstOcc = bm.GetCellOccupant(theAction.TargetCell);
         if (dstOcc >= 0)
         {
             GameActions.ResolveMelee(actorPid, dstOcc, in theAction, gameIndex);
         }
         else
         {
-            bm.MovePieceRow(actorPid, theAction.TargetCellId);
+            bm.MovePieceRow(actorPid, theAction.TargetCell);
         }
         GameActions.RefreshConnectorState(gameIndex);
     }
