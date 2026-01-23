@@ -24,40 +24,6 @@ public static class LauncherAction
         }
     }
 
-    // public static bool IsLegal(int actorPid, int actorType, in Game.Core.Action a, int gameIndex)
-    // {
-    //     var bm = GameRegistry.game[gameIndex].boardModel;
-
-
-    //     int inputRange = PieceDefinition.launcher_inputRange[actorType];
-    //     int outputRange = PieceDefinition.launcher_outputRange[actorType];
-    //     bool allowFriendly = PieceDefinition.launcher_isfriendlyFire[actorType];
-    //     bool allowEnemy = PieceDefinition.launcher_isEnemyFire[actorType];
-
-    //     int targetPid = a.aux;
-    //     if (targetPid < 0 || !bm.IsValidPieceId(targetPid)) return false;
-    //     int originCell = bm.GetPieceCell(actorPid);
-    //     int targetCell = bm.GetPieceCell(targetPid);
-    //     if (originCell < 0 || targetCell < 0) return false;
-
-    //     int actorOwner = bm.GetPieceOwner(actorPid);
-    //     int tgtOwner = bm.GetPieceOwner(targetPid);
-    //     if (tgtOwner == actorOwner && !allowFriendly) return false;
-    //     if (tgtOwner != actorOwner && !allowEnemy) return false;
-
-    //     int distIn = bm.Distance(originCell, targetCell);
-    //     if (distIn < 1 || distIn > inputRange) return false;
-    //     if (!BmAbilityCac.LineOfSightClear(originCell, targetCell, gameIndex)) return false;
-
-    //     int dst = a.TargetCellId;
-    //     if (bm.GetCellOccupant(dst) >= 0) return false;
-    //     int distOut = bm.Distance(originCell, dst);
-    //     if (distOut < 1 || distOut > outputRange) return false;
-    //     if (!BmAbilityCac.LineOfSightClear(originCell, dst, gameIndex)) return false;
-
-    //     return true;
-    // }
-
      public static int GetLegalTargets(int actorPid, int actorType, int[] outPairs, int gameIndex)
     {
         var bm = GameRegistry.game[gameIndex].boardModel;

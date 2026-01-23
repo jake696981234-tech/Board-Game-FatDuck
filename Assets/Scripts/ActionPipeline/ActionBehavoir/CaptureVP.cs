@@ -21,22 +21,6 @@ public static class CaptureVPAction
         };
         OfferProvider.Emit(theAction, ref offerBuild);
     }
-
-
-
-    /// <summary>
-    /// CAPTURE VP (targetless): legal if actor stands on VP cell.
-    /// </summary>
-    // public static bool IsLegal(int actorPieceId, ref OfferBuild offerBuild)
-    // {
-    //     var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
-
-        
-    //     int originCell = bm.GetPieceCell(actorPieceId);
-    //     if (originCell < 0) return false;
-    //     return originCell == bm.GetVictoryPointCellId();
-    // }
-
     public static void Apply(in Action theAction, byte player, int gameIndex)
     {
         var gameState = GameRegistry.game[gameIndex].gameState;

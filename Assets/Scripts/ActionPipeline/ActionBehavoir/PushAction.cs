@@ -24,37 +24,6 @@ public static class PushAction
         }
     }
 
-    // public static bool IsLegal(int actorPid, int actorType, in Game.Core.Action a, int gameIndex)
-    // {
-    //     var bm = GameRegistry.game[gameIndex].boardModel;
-
-
-    //     int actorOwner = bm.GetPieceOwner(actorPid);
-    //     int targetPid = a.aux;
-    //     if (targetPid < 0 || !bm.IsValidPieceId(targetPid)) return false;
-    //     if (bm.GetPieceCell(targetPid) != a.TargetCellId) return false;
-
-    //     bool allowFriendly = Piece.push_isFriendlyFire[actorType];
-    //     if (!allowFriendly && bm.GetPieceOwner(targetPid) == actorOwner) return false;
-
-    //     bool allowBuildings = Piece.push_IsTargetsBuildings[actorType];
-    //     bool allowSoldiers = Piece.push_isTargetsSoldiers[actorType];
-    //     byte tgtType = bm.GetPieceType(targetPid);
-    //     bool targetIsBuilding = Piece.isBuilding[tgtType];
-    //     if (targetIsBuilding && !allowBuildings) return false;
-    //     if (!targetIsBuilding && !allowSoldiers) return false;
-
-    //     int rangeMax = Piece.push_rangeMax[actorType];
-    //     int originCell = bm.GetPieceCell(actorPid);
-    //     int targetCell = bm.GetPieceCell(targetPid);
-    //     int dist = bm.Distance(originCell, targetCell);
-    //     if (dist < 1 || dist > rangeMax) return false;
-    //     if (!BmCac.LineOfSightClear(originCell, targetCell, gameIndex)) return false;
-
-    //     int pushDest = BmCac.ComputePushDestination(actorPid, actorType, targetPid, gameIndex);
-    //     return pushDest >= 0 && bm.IsValidCellId(pushDest);
-    // }
-
     public static int GetLegalTargets(int actorPieceId, int actorType, int[] outPieceIds, int gameIndex)
     {
         var bm = GameRegistry.game[gameIndex].boardModel;
