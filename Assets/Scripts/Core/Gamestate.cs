@@ -167,11 +167,11 @@ namespace Game.Core
 
             if (theAction.kind == Create)
             {
-                pieceTypeForLog = theAction.pieceType;           // which piece we're creating
+                pieceTypeForLog = theAction.TargetType;           // which piece we're creating
             }
             else if (theAction.kind != EndTurn)
             {
-                int actorPid = bm.GetCellOccupant(theAction.ActorsCellId);
+                int actorPid = bm.GetCellOccupant(theAction.ActorsCell);
                 if (actorPid >= 0)
                     pieceTypeForLog = bm.GetPieceType(actorPid);
             }
@@ -298,11 +298,11 @@ namespace Game.Core
             for (int i = 0; i < offers.Length; i++)
             {
                 if (theAction.kind != offers[i].kind) continue;
-                if (theAction.pieceType != offers[i].pieceType) continue;
-                if (theAction.ActorsCellId != offers[i].ActorsCellId) continue;
-                if (theAction.TargetCellId != offers[i].TargetCellId) continue;
-                if (theAction.aux != offers[i].aux) continue;
-                if ((theAction.kind == Create || theAction.kind == Upgrade) && Piece.sacrificeCost_enabled[theAction.pieceType])
+                if (theAction.ActorsCell != offers[i].ActorsCell) continue;
+                if (theAction.TargetCell != offers[i].TargetCell) continue;
+                if (theAction.TargetType != offers[i].TargetType) continue;
+                if (theAction.WallConfig != offers[i].WallConfig) continue;
+                if ((theAction.kind == Create || theAction.kind == Upgrade) && Piece.sacrificeCost_enabled[theAction.TargetType])
                 {
                     if (!SacCostEquals(theAction.addCost, offers[i].addCost)) continue;
                 }

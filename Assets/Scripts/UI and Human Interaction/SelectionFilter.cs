@@ -3,8 +3,8 @@ using UnityEngine;
 
 public static class UIFilter
 {
-    public static byte clickedBuildPieceType;
-    public static byte clickedActionKind;
+    public static int clickedBuildPieceType;
+    public static int clickedActionKind;
     public static ushort clickedCellId;
     public static ushort clickedWallConfig;
     public static int clickedWallNumber;
@@ -106,7 +106,7 @@ public static class UIFilter
     private static void OnBuildItemClicked(Game.Core.Action item, UIInfo uiInfo)
     {
         uIType = UIType.BuildItem;
-        clickedBuildPieceType = item.pieceType;
+        clickedBuildPieceType = item.TargetType;
         topFilter();
     }
 

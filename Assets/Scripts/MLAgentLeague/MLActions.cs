@@ -139,13 +139,13 @@ public static class MLActions
     }
 
     private static void MaskUnusedActions(ref IDiscreteActionMask actionMask, MLSam MLSam)
-        {
-            if (MLSam.mlState != ChoosingKind) for (int i = 1; i < OfferProviderCopy.ActionKinds.Length - 1; i++) actionMask.SetActionEnabled(0, i, false);
-            if (MLSam.mlState != ChoosingTargetCell) for (int i = 1; i < OfferProviderCopy.ActorsCelID.Length - 1; i++) actionMask.SetActionEnabled(0, i, false);
-            if (MLSam.mlState != ChoosingPieceType) for (int i = 1; i < OfferProviderCopy.TargetCell.Length - 1; i++) actionMask.SetActionEnabled(0, i, false);
-            if (MLSam.mlState != ChoosingWallConfig) for (int i = 1; i < OfferProviderCopy.PieceType.Length - 1; i++) actionMask.SetActionEnabled(0, i, false);
-            if (MLSam.mlState != ChoosingInstakeCellID) for (int i = 1; i < OfferProviderCopy.WallConfig.Length - 1; i++) actionMask.SetActionEnabled(0, i, false);
-        }    
+    {
+        if (MLSam.mlState != ChoosingKind) for (int i = 1; i < OfferProviderCopy.ActionKinds.Length - 1; i++) actionMask.SetActionEnabled(0, i, false);
+        if (MLSam.mlState != ChoosingTargetCell) for (int i = 1; i < OfferProviderCopy.ActorsCelID.Length - 1; i++) actionMask.SetActionEnabled(0, i, false);
+        if (MLSam.mlState != ChoosingPieceType) for (int i = 1; i < OfferProviderCopy.TargetCell.Length - 1; i++) actionMask.SetActionEnabled(0, i, false);
+        if (MLSam.mlState != ChoosingWallConfig) for (int i = 1; i < OfferProviderCopy.PieceType.Length - 1; i++) actionMask.SetActionEnabled(0, i, false);
+        if (MLSam.mlState != ChoosingInstakeCellID) for (int i = 1; i < OfferProviderCopy.WallConfig.Length - 1; i++) actionMask.SetActionEnabled(0, i, false);
+    }    
 
     public static void ReceiveAction(ActionBuffers actions, MLSam MLSam)
     {
@@ -254,6 +254,7 @@ public static class MLActions
                                 if (MLSam.Offers[theAction].TargetType != MLSam.ChosenAction[(int)ChoosingPieceType]) continue;
                                 if (MLSam.Offers[theAction].TargetCell != MLSam.ChosenAction[(int)ChoosingTargetCell]) continue;
                                 peformAction(MLSam.Offers[theAction], MLSam);
+                                return;
                             }
                             break;
                         }
@@ -269,6 +270,7 @@ public static class MLActions
                                 if (MLSam.Offers[theAction].TargetCell != MLSam.ChosenAction[(int)ChoosingTargetCell]) continue;
                                 if (MLSam.Offers[theAction].WallConfig != MLSam.ChosenAction[(int)ChoosingWallConfig]) continue;
                                 peformAction(MLSam.Offers[theAction], MLSam);
+                                return;
                             }
                     }
                     break;
@@ -298,6 +300,7 @@ public static class MLActions
                                 if (MLSam.Offers[theAction].ActorsCell != MLSam.ChosenAction[(int)ChoosingActorsCell]) continue;
                                 if (MLSam.Offers[theAction].TargetType != MLSam.ChosenAction[(int)ChoosingPieceType]) continue;
                                 peformAction(MLSam.Offers[theAction], MLSam);
+                                return;
                             }
                         break;
                     }  
@@ -334,6 +337,7 @@ public static class MLActions
                                 if (MLSam.Offers[theAction].TargetCell != MLSam.ChosenAction[(int)ChoosingTargetCell]) continue;
                                 if (MLSam.Offers[theAction].TargetType != MLSam.ChosenAction[(int)ChoosingPieceType]) continue;
                                 peformAction(MLSam.Offers[theAction], MLSam);
+                                return;
                             }
                             break;
                         }

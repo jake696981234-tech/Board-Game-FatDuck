@@ -165,8 +165,8 @@ public static class PieceActionFilter
             {
                 var action = UIBridge._offers[i];
                 if (action.kind != kind) continue;
-                if (action.ActorsCellId != ActorsCellId) continue;
-                if (action.pieceType != pieceType) continue;
+                if (action.ActorsCell != ActorsCellId) continue;
+                if (action.TargetType != pieceType) continue;
                 if (action.TargetCellId != TargetCellId) continue;
                 if (UIBridge._mask[i] == 0) continue; // masked out = illegal
                 aux = action.aux;

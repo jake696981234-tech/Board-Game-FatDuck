@@ -19,11 +19,11 @@ public class MLSam : Agent
     public float[] Quoted;
     public byte[] ActionMask;
     public int gameIndex;
-    public int[] ChosenAction = new int[6];
     public float[] Observations;
     public int Count;
     public int MaxPlayers;
     public RewardsTuning rewards;
+    public int[] ChosenAction = new int[6];
     public MLActions.MLState mlState = ChoosingKind;
     
 
@@ -34,7 +34,7 @@ public class MLSam : Agent
 
     public void TickMe()
     {
-        MLsam.RequestDecision();
+        RequestDecision();
     }
 
     public override void OnActionReceived(ActionBuffers actions)

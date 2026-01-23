@@ -1,16 +1,16 @@
-using UnityEngine;
+// using static MLActions.MLState;
 
-public class BlueAction : MonoBehaviour
-{
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
-}
+// public class CAH // Choose Action Helpers
+// {
+//     public enum MLState
+//     {
+//         ChoosingKind = 0,
+//         ChoosingActorsCell = 2,
+//         ChoosingTargetCell = 3,
+//         ChoosingPieceType = 4,
+//         ChoosingWallConfig = 5,
+//         ChoosingInstakeCellID = 6,
+//     }
+//     public int[] ChosenAction = new int[6];
+//     public MLActions.MLState mlState = ChoosingKind;
+// }
