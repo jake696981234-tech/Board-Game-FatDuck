@@ -197,7 +197,7 @@ public static class MLActions
                         break;                   
                     case ChoosingTargetType:                    
                         MLSam.ChosenAction[(int)ChoosingTargetType] = actions.DiscreteActions[(int)ChoosingTargetType];
-                        if (Piece.connectors_enabled[MLSam.ChosenAction[(int)ChoosingWallConfig]])
+                        if (Piece.connectors_enabled[MLSam.ChosenAction[(int)ChoosingTargetType]])
                         {
                             MLSam.mlState = ChoosingWallConfig;
                             break; 

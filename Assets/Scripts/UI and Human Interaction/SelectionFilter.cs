@@ -177,13 +177,13 @@ public static class UIFilter
    
     public enum UIType
     {
-        BuildItem = 2,
-        NumberOfWalls = 3,
-        WallConfig = 4,
-        Cell = 6,
-        PieceActionKind = 8,
-        Cancel = 9,
-        EndTurnButton = 10,
+        BuildItem = 0,
+        NumberOfWalls = 1,
+        WallConfig = 2,
+        Cell = 3,
+        PieceActionKind = 4,
+        Cancel = 5,
+        EndTurnButton = 6,
     }
     public static UIType uIType;
     #endregion

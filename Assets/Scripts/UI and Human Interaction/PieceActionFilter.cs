@@ -1,9 +1,10 @@
 using static Game.Core.ActionKind;
+using static UIFilter.UIType;
 using System.Collections.Generic;
 using System;
 using UnityEngine;
 using System.Linq;
-
+using static PieceActionFilter.UICState;
 
 public static class PieceActionFilter
 {
@@ -669,147 +670,200 @@ public static class PieceActionFilter
 
 
 
+    // public static int[] ChosenAction = new int[6];
+    // public static int[] UInput = new int[7];
+    // public static UICState mlState = ChoosingActorsCell;
+
+    // private static void ShowNextAction()
+    // {
+        
+    // }
+
+    // private static bool IsCorrectInput()
+    // {
+    //     switch (mlState)
+    //     {
+    //         case ChoosingActorsCell:
+    //             if (UIFilter.uIType != Cell)
+    //             {
+    //                 UIFilter.ResetClickedData();
+    //                 return false;
+    //             }
+    //             return true;
+    //         case ChoosingKind:
+    //             if (UIFilter.uIType != PieceActionKind)
+    //             {
+    //                 UIFilter.ResetClickedData();
+    //                 return false;
+    //             }
+    //             return true;
+    //         case ChoosingTargetCell:
+    //             if (UIFilter.uIType != Cell || !cachedLegalTargetCellId.Contains(UIFilter.clickedCellId))
+    //             {
+    //                 UIFilter.ResetClickedData();
+    //                 return false;
+    //             }
+    //             return true;
+    //         case ChoosingTargetType:
+    //             if (UIFilter.uIType != BuildItem)
+    //             {
+    //                 UIFilter.ResetClickedData();
+    //                 return false;
+    //             }
+    //             return true;
+    //         case ChoosingNumberOfWalls:
+    //             if (UIFilter.uIType != NumberOfWalls)
+    //             {
+    //                 UIFilter.ResetClickedData();
+    //                 return false;
+    //             }
+    //             return true;
+    //         case ChoosingWallConfig:
+    //             if (UIFilter.uIType != WallConfig)
+    //             {
+    //                 UIFilter.ResetClickedData();
+    //                 return false;
+    //             }
+    //             return true;
+    //     }
+            
+
+    // }
+
+    // public static void ReceiveAction()
+    // {
+        
+    //     if (mlState == ChoosingActorsCell) 
+    //     {
+    //         ChosenAction[(int)ChoosingActorsCell] = UInput[(int)Cell];
+    //         mlState = ChoosingKind;
+    //         ShowNextAction();
+    //         return;
+    //     }
+    //     if (mlState == ChoosingKind) 
+    //     {
+    //         ChosenAction[(int)ChoosingKind] = UInput[(int)PieceActionKind];
+    //         mlState = ChoosingKind;
+    //     }
+    //     switch (ChosenAction[(int)ChoosingKind])
+    //     {
+    //         case CaptureVP:
+    //             PerformAction(iNeedKind: true, iNeedActorsCell: false, iNeedTargetCell: false, TargetType: false, iNeedWallConfig: false, iNeedintakeCell: false);
+    //             return;
+    //         case CoreDamage:
+    //         case Explosive:
+    //         case ConversionFactory:
+    //             PerformAction(iNeedKind: true, iNeedActorsCell: true, iNeedTargetCell: false, TargetType: false, iNeedWallConfig: false, iNeedintakeCell: false);
+    //             return;
+    //         case Move:
+    //         case Shoot:
+    //         case Push:
+    //         case Sniper:
+    //         case SacrificeFactory:
+    //         case NecroSpawn:
+    //             switch (mlState)
+    //             {
+    //                 //I Need ActorsCellID and TargetCell
+    //                 case ChoosingKind:                    
+    //                     mlState = ChoosingTargetCell;
+    //                     break;                   
+    //                 case ChoosingTargetCell:
+    //                     ChosenAction[(int)ChoosingTargetCell] = UInput[(int)Cell];
+    //                     PerformAction(iNeedKind: true, iNeedActorsCell: true, iNeedTargetCell: true, TargetType: false, iNeedWallConfig: false, iNeedintakeCell: false);
+    //                     return;
+    //             }
+    //             break;
+    //         case Create:
+    //             //I need TargetCell, PieceType, maybe WallConfig.
+    //             switch (mlState)
+    //             {
+    //                 case ChoosingKind:                   
+    //                     mlState = ChoosingTargetCell;
+    //                     break;                   
+    //                 case ChoosingTargetCell:                    
+    //                     ChosenAction[(int)ChoosingTargetCell] = UInput[(int)Cell];
+    //                     mlState = ChoosingTargetType;
+    //                     break;                   
+    //                 case ChoosingTargetType:                    
+    //                     ChosenAction[(int)ChoosingTargetType] = UInput[(int)BuildItem];
+    //                     if (Piece.connectors_enabled[ChosenAction[(int)ChoosingTargetType]])
+    //                     {
+    //                         mlState = ChoosingWallConfig;
+    //                         break; 
+    //                     }
+    //                     ChosenAction[(int)ChoosingTargetCell] = UInput[(int)Cell];
+    //                     PerformAction(iNeedKind: true, iNeedActorsCell: false, iNeedTargetCell: true, TargetType: false, iNeedWallConfig: false, iNeedintakeCell: false);
+    //                     return;                   
+    //                 case ChoosingWallConfig:                    
+    //                     ChosenAction[(int)ChoosingWallConfig] = UInput[(int)WallConfig];
+    //                     mlState = ChoosingNumberOfWalls;
+    //                     return;
+    //             }
+    //             break;
+    //         case Upgrade:
+    //             //I need ActorsCellID, PieceType, maybe WallConfig.
+    //             switch (mlState)
+    //             {
+    //                 case ChoosingKind:                    
+    //                     mlState = ChoosingTargetType;
+    //                     break;                                       
+    //                 case ChoosingTargetType:                   
+    //                     ChosenAction[(int)ChoosingTargetType] = UInput[(int)Cell];
+    //                     PerformAction(iNeedKind: true, iNeedActorsCell: true, iNeedTargetCell: false, TargetType: true, iNeedWallConfig: false, iNeedintakeCell: false);
+    //                     return;                 
+    //             }
+    //             break;
+    //         case Spawner:
+    //          //I need ActorsCellID, TargetCell, PieceType, maybe WallConfig.
+    //             switch (mlState)
+    //             {
+    //                 case ChoosingKind:                       
+    //                     mlState = ChoosingTargetCell;
+    //                     break;                                            
+    //                 case ChoosingTargetCell:                        
+    //                     ChosenAction[(int)ChoosingTargetCell] = UInput[(int)Cell];
+    //                     mlState = ChoosingTargetType;
+    //                     break;                        
+    //                 case ChoosingTargetType:                        
+    //                     ChosenAction[(int)ChoosingTargetType] = UInput[(int)BuildItem];
+    //                     PerformAction(iNeedKind: true, iNeedActorsCell: true, iNeedTargetCell: true, TargetType: true, iNeedWallConfig: false, iNeedintakeCell: false);
+    //                     return;                                       
+    //                 default:                        
+    //                     Debug.LogWarning($"Unhandled ActionKind");
+    //                     break;                        
+    //             }
+    //         break;
+    //     }
+    //     ShowNextAction();
+    // }
+
+    // private static void PerformAction(bool iNeedKind, bool iNeedActorsCell, bool iNeedTargetCell, bool TargetType, bool iNeedWallConfig, bool iNeedintakeCell)
+    // {
+    //     for (int theAction = 0; theAction < UIBridge._count; theAction++)
+    //     {
+    //         if (UIBridge._offers[theAction].kind != ChosenAction[(int)ChoosingKind] && iNeedKind) continue;
+    //         if (UIBridge._offers[theAction].ActorsCell != ChosenAction[(int)ChoosingActorsCell] && iNeedActorsCell) continue;
+    //         if (UIBridge._offers[theAction].TargetCell != ChosenAction[(int)ChoosingTargetCell] && iNeedTargetCell) continue;
+    //         if (UIBridge._offers[theAction].TargetType != ChosenAction[(int)ChoosingTargetType] && TargetType) continue;
+    //         if (UIBridge._offers[theAction].WallConfig != ChosenAction[(int)ChoosingWallConfig] && iNeedWallConfig) continue;
+    //         if (UIBridge._offers[theAction].intakeCell != ChosenAction[(int)ChoosingInstakeCellID] && iNeedintakeCell) continue;
+    //         peformAction(UIBridge._offers[theAction]);
+    //     }
+    // }
 
 
-    public static void ReceiveAction(ActionBuffers actions, MLSam MLSam)
+
+
+    public enum UICState
     {
-        if (MLSam.mlState == ChoosingKind) 
-        {
-            MLSam.ChosenAction[(int)ChoosingKind] = actions.DiscreteActions[(int)ChoosingKind];
-        }
-        switch (MLSam.ChosenAction[(int)ChoosingKind])
-        {
-            case CaptureVP:
-            case EndTurn:
-                PerformAction(MLSam, iNeedKind: true, iNeedActorsCell: false, iNeedTargetCell: false, TargetType: false, iNeedWallConfig: false, iNeedintakeCell: false);
-                return;
-            case CoreDamage:
-            case Explosive:
-            case ConversionFactory:
-                switch (MLSam.mlState)
-                {
-                    //I Need Just ActorsCell
-                    case ChoosingKind:                    
-                        MLSam.mlState = ChoosingActorsCell;
-                        break;    
-                    case ChoosingActorsCell:
-                        MLSam.ChosenAction[(int)ChoosingActorsCell] = actions.DiscreteActions[(int)ChoosingActorsCell];
-                        PerformAction(MLSam, iNeedKind: true, iNeedActorsCell: true, iNeedTargetCell: false, TargetType: false, iNeedWallConfig: false, iNeedintakeCell: false);
-                        return;
-                }
-                break;
-            case Move:
-            case Shoot:
-            case Push:
-            case Sniper:
-            case SacrificeFactory:
-            case NecroSpawn:
-                switch (MLSam.mlState)
-                {
-                    //I Need ActorsCellID and TargetCell
-                    case ChoosingKind:                    
-                        MLSam.mlState = ChoosingActorsCell;
-                        break;                   
-                    case ChoosingActorsCell:
-                        MLSam.ChosenAction[(int)ChoosingActorsCell] = actions.DiscreteActions[(int)ChoosingActorsCell];
-                        MLSam.mlState = ChoosingTargetCell;
-                        break;
-                    case ChoosingTargetCell:
-                        MLSam.ChosenAction[(int)ChoosingTargetCell] = actions.DiscreteActions[(int)ChoosingTargetCell];
-                        PerformAction(MLSam, iNeedKind: true, iNeedActorsCell: true, iNeedTargetCell: true, TargetType: false, iNeedWallConfig: false, iNeedintakeCell: false);
-                        return;
-                }
-                break;
-            case Create:
-                //I need TargetCell, PieceType, maybe WallConfig.
-                switch (MLSam.mlState)
-                {
-                    case ChoosingKind:                   
-                        MLSam.mlState = ChoosingTargetCell;
-                        break;                   
-                    case ChoosingTargetCell:                    
-                        MLSam.ChosenAction[(int)ChoosingTargetCell] = actions.DiscreteActions[(int)ChoosingTargetCell];
-                        MLSam.mlState = ChoosingTargetType;
-                        break;                   
-                    case ChoosingTargetType:                    
-                        MLSam.ChosenAction[(int)ChoosingTargetType] = actions.DiscreteActions[(int)ChoosingTargetType];
-                        if (Piece.connectors_enabled[MLSam.ChosenAction[(int)ChoosingWallConfig]])
-                        {
-                            MLSam.mlState = ChoosingWallConfig;
-                            break; 
-                        }
-                        MLSam.ChosenAction[(int)ChoosingTargetCell] = actions.DiscreteActions[(int)ChoosingTargetCell];
-                        PerformAction(MLSam, iNeedKind: true, iNeedActorsCell: false, iNeedTargetCell: true, TargetType: false, iNeedWallConfig: false, iNeedintakeCell: false);
-                        return;                   
-                    case ChoosingWallConfig:                    
-                        MLSam.ChosenAction[(int)ChoosingWallConfig] = actions.DiscreteActions[(int)ChoosingWallConfig];
-                        PerformAction(MLSam, iNeedKind: true, iNeedActorsCell: false, iNeedTargetCell: true, TargetType: true, iNeedWallConfig: true, iNeedintakeCell: false);
-                        return;
-                }
-                break;
-            case Upgrade:
-                //I need ActorsCellID, PieceType, maybe WallConfig.
-                switch (MLSam.mlState)
-                {
-                    case ChoosingKind:                    
-                        MLSam.mlState = ChoosingActorsCell;
-                        break;                    
-                    case ChoosingActorsCell:                    
-                        MLSam.ChosenAction[(int)ChoosingActorsCell] = actions.DiscreteActions[(int)ChoosingActorsCell];
-                        MLSam.mlState = ChoosingTargetType;
-                        break;                    
-                    case ChoosingTargetType:                   
-                        MLSam.ChosenAction[(int)ChoosingTargetType] = actions.DiscreteActions[(int)ChoosingTargetType];
-                        PerformAction(MLSam, iNeedKind: true, iNeedActorsCell: true, iNeedTargetCell: false, TargetType: true, iNeedWallConfig: false, iNeedintakeCell: false);
-                        return;                 
-                }
-                break;
-            case Spawner:
-             //I need ActorsCellID, TargetCell, PieceType, maybe WallConfig.
-                switch (MLSam.mlState)
-                {
-                    case ChoosingKind:                       
-                        MLSam.mlState = ChoosingActorsCell;
-                        break;                       
-                    case ChoosingActorsCell:                       
-                        MLSam.ChosenAction[(int)ChoosingActorsCell] = actions.DiscreteActions[(int)ChoosingActorsCell];
-                        MLSam.mlState = ChoosingTargetCell;
-                        break;                        
-                    case ChoosingTargetCell:                        
-                        MLSam.ChosenAction[(int)ChoosingTargetCell] = actions.DiscreteActions[(int)ChoosingTargetCell];
-                        MLSam.mlState = ChoosingTargetType;
-                        break;                        
-                    case ChoosingTargetType:                        
-                        MLSam.ChosenAction[(int)ChoosingTargetType] = actions.DiscreteActions[(int)ChoosingTargetType];
-                        PerformAction(MLSam, iNeedKind: true, iNeedActorsCell: true, iNeedTargetCell: true, TargetType: true, iNeedWallConfig: false, iNeedintakeCell: false);
-                        return;                                       
-                    default:                        
-                        Debug.LogWarning($"Unhandled ActionKind");
-                        break;                        
-                }
-            break;
-        }
-        MLSam.TickMe();
+        ChoosingKind = 0,
+        ChoosingActorsCell = 2,
+        ChoosingTargetCell = 3,
+        ChoosingTargetType = 4,
+        ChoosingNumberOfWalls = 5,
+        ChoosingWallConfig = 6,
+        ChoosingInstakeCellID = 7,
     }
-
-    private static void PerformAction(MLSam MLSam, bool iNeedKind, bool iNeedActorsCell, bool iNeedTargetCell, bool TargetType, bool iNeedWallConfig, bool iNeedintakeCell)
-    {
-        for (int theAction = 0; theAction < MLSam.NumberOfOffers; theAction++)
-        {
-            if (MLSam.Offers[theAction].kind != MLSam.ChosenAction[(int)ChoosingKind] && iNeedKind) continue;
-            if (MLSam.Offers[theAction].ActorsCell != MLSam.ChosenAction[(int)ChoosingActorsCell] && iNeedActorsCell) continue;
-            if (MLSam.Offers[theAction].TargetCell != MLSam.ChosenAction[(int)ChoosingTargetCell] && iNeedTargetCell) continue;
-            if (MLSam.Offers[theAction].TargetType != MLSam.ChosenAction[(int)ChoosingTargetType] && TargetType) continue;
-            if (MLSam.Offers[theAction].WallConfig != MLSam.ChosenAction[(int)ChoosingWallConfig] && iNeedWallConfig) continue;
-            if (MLSam.Offers[theAction].intakeCell != MLSam.ChosenAction[(int)ChoosingInstakeCellID] && iNeedintakeCell) continue;
-            peformAction(MLSam.Offers[theAction], MLSam);
-        }
-    }
-
-
-
-
-
 
 
 }
