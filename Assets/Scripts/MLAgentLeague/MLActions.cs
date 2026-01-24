@@ -22,11 +22,6 @@ public static class MLActions
         ChoosingInstakeCellID = 6,
     }
 
-    
-
-    
-
-
 
     private static int BuildOffersForCurrentPlayer(MLSam MLSam)
     {

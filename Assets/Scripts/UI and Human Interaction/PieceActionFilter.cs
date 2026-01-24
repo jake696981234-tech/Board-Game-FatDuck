@@ -546,25 +546,7 @@ public static class PieceActionFilter
 
 
 
-    private static IEnumerable<int> ComputeTargetCellsForAction()
-    {
-        if (kind == GroupBuild) return ComputeGroupBuildTargetCells();
-
-        List<int> targetCells = new List<int>(128);
-
-        for (int i = 0; i < UIBridge._count; i++)
-        {
-            var action = UIBridge._offers[i];
-            if (action.kind != kind) continue;
-            if (action.ActorsCellId != ActorsCellId) continue;
-            if (action.pieceType != pieceType) continue;
-            if (UIBridge._mask[i] == 0) continue; // masked out = illegal
-
-            targetCells.Add(action.TargetCellId);
-        }
-        cachedLegalTargetCellId = targetCells;
-        return targetCells;
-    }
+    
 
     private static IEnumerable<int> ComputeGroupBuildTargetCells()
     {
@@ -857,12 +839,11 @@ public static class PieceActionFilter
     public enum UICState
     {
         ChoosingKind = 0,
-        ChoosingActorsCell = 2,
-        ChoosingTargetCell = 3,
-        ChoosingTargetType = 4,
-        ChoosingNumberOfWalls = 5,
-        ChoosingWallConfig = 6,
-        ChoosingInstakeCellID = 7,
+        ChoosingActorsCell = 1,
+        ChoosingTargetCell = 2,
+        ChoosingTargetType = 3,
+        ChoosingWallConfig = 4,
+        ChoosingInstakeCellID = 5,
     }
 
 

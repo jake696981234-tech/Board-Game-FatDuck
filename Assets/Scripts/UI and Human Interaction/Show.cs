@@ -19,10 +19,10 @@ public static class Show
     public static void ShowTargetCellOptions()
     {
         SetGeneralUI(backDropColor: UI.hic.config.actionExecuteBackground, panelColor: UI.hic.config.actionExecutePanelBackground, cellColor: UI.hic.config.defaultCellColor, build: false, create: false, action: false, pieceFull: false, execute: true, walls: false, secondWalls: false);
-        showBoard.HighlightCells(ComputeTargetCellsForAction(), UI.hic.config.actionLegalTargetHighlight);
         if (UI.hic.actionTitleText) UI.hic.actionTitleText.text = $"Action: {AFilter.ChosenAction[(int)ChoosingKind]}"; // to do, probs need fix it to enum to string
         if (UI.hic.actionPieceText) UI.hic.actionPieceText.text = $"Piece #{UIBridge.bm.occupantPieceId[AFilter.ChosenAction[(int)ChoosingActorsCell]]}";
         // if (UI.hic.actionCostText) UI.hic.actionCostText.text = $"Cost: {action.cost}"; to do, add cost
+        showBoard.HighlightCells(GiveMeOffersContaining(Legal: true, Kind: true, ActorsCell: true, TargetCell: false, Type: true, WallConfig: true, intakeCell: false), UI.hic.config.actionLegalTargetHighlight);
     }
 
     public static void ShowUpgradeOptions()
@@ -43,26 +43,10 @@ public static class Show
         UI.hic.buildMenu.Show(items, UI.hic.config);
     }
 
-    private static void NumberOfWallOptions()
-    {
-        SetGeneralUI(backDropColor: UI.hic.config.ConnectorModeBackground, panelColor: UI.hic.config.buildModePanelBackground, cellColor: UI.hic.config.defaultCellColor, build: false, create: true, action: false, pieceFull: false, execute: false, walls: true, secondWalls: false);
-        UI.hic.wallOptionPanel.showNumberOfWallS(ComputeWallOptions());
-        if (UI.hic.config.skipNumberWallSelect)
-        {
-            if (UI.hic.wallOptionPanel.FirstWallOptionPanel)
-            {
-                UI.hic.wallOptionPanel.FirstWallOptionPanel.SetActive(false);
-            }
-            WallConfigOptions();
-            return;
-        }
-        PieceInfo.SetPieceInfo(AFilter.ChosenAction[(int)ChoosingTargetType]);
-    }
-
-    private static void WallConfigOptions()
+    public static void WallConfigOptions()
     {
         SetGeneralUI(backDropColor: UI.hic.config.ConnectorModeBackground, panelColor: UI.hic.config.buildModePanelBackground, cellColor: UI.hic.config.defaultCellColor, build: false, create: true, action: false, pieceFull: false, execute: false, walls: false, secondWalls: true);
-        if (UI.hic.config.skipNumberWallSelect) { UI.hic.wallOptionPanel.showWallConfigOptions(); } else { UI.hic.wallOptionPanel.showWallConfigOptions(WallNumber); }
+        UI.hic.wallOptionPanel.showWallConfigOptions();
         PieceInfo.SetPieceInfo(AFilter.ChosenAction[(int)ChoosingTargetType]);
     }
 
@@ -114,5 +98,28 @@ public static class Show
         }
         
         UI.hic.pieceActionListFull.Show(items);
+    }
+
+    private static IEnumerable<int> GiveMeOffersContaining(bool Legal, bool Kind, bool ActorsCell, bool TargetCell, bool Type, bool WallConfig, bool intakeCell)
+    {
+        List<int> targetCells = new List<int>(UIBridge.bm._cellCount);
+        for (int i = 0; i < UIBridge._count; i++)
+        {
+            if (UIBridge._offers[i].kind != AFilter.ChosenAction[(int)ChoosingKind] && Kind) continue;
+            if (UIBridge._offers[i].ActorsCell != AFilter.ChosenAction[(int)ChoosingActorsCell] && ActorsCell) continue;
+            if (UIBridge._offers[i].TargetCell != AFilter.ChosenAction[(int)ChoosingTargetCell] && TargetCell) continue;
+            if (UIBridge._offers[i].TargetType != AFilter.ChosenAction[(int)ChoosingTargetType] && Type) continue;
+            if (UIBridge._offers[i].WallConfig != AFilter.ChosenAction[(int)ChoosingWallConfig] && WallConfig) continue;
+            if (UIBridge._offers[i].intakeCell != AFilter.ChosenAction[(int)ChoosingInstakeCellID] && intakeCell) continue;
+            if (UIBridge._mask[i] == 0 && Legal) continue;
+            
+            // if (action.addCost == null || action.addCost.Length == 0) continue;
+            // if (!action.addCost.Contains(actorCell)) continue;
+            // if (!targetCells.Contains(action.ActorsCellId))
+            targetCells.Add(UIBridge._offers[i].TargetCell);
+            AFilter.cachedLegalTargetCellId[i] = UIBridge._offers[i].ActorsCell;
+        }
+        AFilter.cachedLegalTargetCellId = targetCells;
+        return targetCells;
     }
 }

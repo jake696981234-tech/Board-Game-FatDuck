@@ -13,9 +13,10 @@ public static class AFilter
         if (!IsCorrectInput()) { ShowNextAction(); return; }
         if (!advaPathAndTryPerformAction()) ShowNextAction();
     }
-    
+
+    public static List<int> cachedLegalTargetCellId = new List<int>(UIBridge.bm._cellCount);
     public static int[] ChosenAction = new int[6];
-    public static int[] UInput = new int[7];
+    public static int[] UInput = new int[6];
     public static PieceActionFilter.UICState State = ChoosingActorsCell;
 
     private static void ShowNextAction()
@@ -32,12 +33,9 @@ public static class AFilter
             case ChoosingTargetType:
                 Show.ShowUpgradeOptions();
                 break;
-            case ChoosingNumberOfWalls:
-                Show.NumberOfWallOptions();
+            case ChoosingWallConfig:
+                Show.WallConfigOptions();
                 break;
-            // case ChoosingWallConfig:
-            //     WallConfigOptions();
-            //     break;
         }
     }
 
@@ -45,16 +43,22 @@ public static class AFilter
 
     public static bool advaPathAndTryPerformAction()
     {
-        if (State == ChoosingActorsCell) 
+        switch (State)
         {
-            ChosenAction[(int)ChoosingActorsCell] = UInput[(int)Cell];
-            State = ChoosingKind;
-            return false;
-        }
-        if (State == ChoosingKind) 
-        {
-            ChosenAction[(int)ChoosingKind] = UInput[(int)PieceActionKind];
-            State = ChoosingKind;
+            case ChoosingActorsCell:
+                if (UIFilter.uIType == BuildItem)
+                {
+                    ChosenAction[(int)ChoosingTargetType] = UInput[(int)BuildItem];
+                    ChosenAction[(int)ChoosingKind] = (int)Create;
+                    State = ChoosingTargetCell;
+                    return false;
+                }
+                ChosenAction[(int)ChoosingActorsCell] = UInput[(int)Cell];
+                State = ChoosingKind;
+                return false;
+            case ChoosingKind:
+                ChosenAction[(int)ChoosingKind] = UInput[(int)PieceActionKind];
+                break;
         }
         switch (ChosenAction[(int)ChoosingKind])
         {
@@ -87,33 +91,20 @@ public static class AFilter
             case Create:
                 //I need TargetCell, PieceType, maybe WallConfig.
                 switch (State)
-                {
-                    case ChoosingKind:                   
-                        State = ChoosingTargetCell;
-                        return false;                  
+                {                 
                     case ChoosingTargetCell:                    
                         ChosenAction[(int)ChoosingTargetCell] = UInput[(int)Cell];
-                        State = ChoosingTargetType;
-                        return false;                  
-                    case ChoosingTargetType:                    
-                        ChosenAction[(int)ChoosingTargetType] = UInput[(int)BuildItem];
                         if (Piece.connectors_enabled[ChosenAction[(int)ChoosingTargetType]])
                         {
                             State = ChoosingWallConfig;
                             return false;
                         }
-                        ChosenAction[(int)ChoosingTargetCell] = UInput[(int)Cell];
                         PerformAction(iNeedKind: true, iNeedActorsCell: false, iNeedTargetCell: true, TargetType: false, iNeedWallConfig: false, iNeedintakeCell: false);
                         return true;                   
                     case ChoosingWallConfig:                
                         ChosenAction[(int)ChoosingWallConfig] = UInput[(int)WallConfig];
-                        State = ChoosingNumberOfWalls;
-                        if (UI.hic.config.skipNumberWallSelect) goto case ChoosingNumberOfWalls; // to do- fix me
-                        return false;
-                    case ChoosingNumberOfWalls:                    
-                        ChosenAction[(int)ChoosingWallConfig] = UInput[(int)WallConfig];
                         PerformAction(iNeedKind: true, iNeedActorsCell: false, iNeedTargetCell: true, TargetType: false, iNeedWallConfig: true, iNeedintakeCell: false);
-                        return true;
+                        return false;
                 }
                 break;
             case Upgrade:
@@ -173,6 +164,7 @@ public static class AFilter
         switch (State)
         {
             case ChoosingActorsCell:
+                if (UIFilter.uIType != BuildItem) return false;
                 if (UIFilter.uIType != Cell) return false;
                 return true;
             case ChoosingKind:
@@ -183,9 +175,6 @@ public static class AFilter
                 return true;
             case ChoosingTargetType:
                 if (UIFilter.uIType != BuildItem) return false;
-                return true;
-            case ChoosingNumberOfWalls:
-                if (UIFilter.uIType != NumberOfWalls) return false;
                 return true;
             case ChoosingWallConfig:
                 if (UIFilter.uIType != WallConfig) return false;

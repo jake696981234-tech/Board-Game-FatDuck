@@ -160,11 +160,6 @@ public static class showBoard
 
     public static void HighlightCells(IEnumerable<int> ids, Color color)
     {
-        if (_cellById == null)
-        {
-            Debug.Log("_cellById == null");
-            return;
-        }
         foreach (var id in ids)
         {
             if (_cellById.TryGetValue(id, out var cv))
