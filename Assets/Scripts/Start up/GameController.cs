@@ -18,8 +18,8 @@ public class GameController : MonoBehaviour
         curriculumCheck();
         if (inspectGame && config.dbLogging.enabled)
         {
-            DbLoggingConfig.prepDimGame();
-            DbLoggingConfig.logRoundVersion();
+            DbLog.prepDimGame();
+            DbLog.logRoundVersion();
         }
         
         // Clear the board
@@ -156,19 +156,19 @@ public class GameController : MonoBehaviour
     {
         if (inspectGame && config.dbLogging.enabled)
         {
-            DbLoggingConfig.InitializeLoggingValues(eventManager);
+            DbLog.InitializeLoggingValues(eventManager);
             // Apply runtime logging tuning from Config
-            DbLoggingConfig.ApplyConfig(in Info.dbLogging);
-            DbLoggingConfig.DeleteConflictingSimIdRows();
-            DbLoggingConfig.logDimSim();
-            DbLoggingConfig.logDimActionType();
-            DbLoggingConfig.logDimPiece();
-            DbLoggingConfig.logPlayerVersion();
-            DbLoggingConfig.logWinTypeVersion();
-            DbLoggingConfig.prepDimGame();
-            DbLoggingConfig.logRoundVersion();
+            DbLog.ApplyConfig(in Info.dbLogging);
+            DbLog.DeleteConflictingSimIdRows();
+            DbLog.logDimSim();
+            DbLog.logDimActionType();
+            DbLog.logDimPiece();
+            DbLog.logPlayerVersion();
+            DbLog.logWinTypeVersion();
+            DbLog.prepDimGame();
+            DbLog.logRoundVersion();
             if (config.dbLogging.useSharedSession)
-                DbLoggingConfig.StartLoggingSession(transactional: config.dbLogging.transactionalSession);
+                DbLog.StartLoggingSession(transactional: config.dbLogging.transactionalSession);
         }
     }
 
@@ -206,7 +206,7 @@ public class GameController : MonoBehaviour
      private void OnDestroy()
     {
         if (config != null && config.dbLogging.enabled && config.dbLogging.useSharedSession)
-            DbLoggingConfig.EndLoggingSession(commit: true);
+            DbLog.EndLoggingSession(commit: true);
     }
 
     #endregion

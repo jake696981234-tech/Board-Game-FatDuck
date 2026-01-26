@@ -25,6 +25,6 @@ public sealed class CellButtonClickForwarder : MonoBehaviour
 
     void OnClicked()
     {
-        if (cell) UIFilter.OnCellClicked((ushort)cell.cellId);
+        if (cell) UIInput.OnCellClicked((ushort)cell.cellId);
     }
 }

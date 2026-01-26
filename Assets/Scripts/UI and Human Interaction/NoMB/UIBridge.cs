@@ -66,13 +66,7 @@ public static class UIBridge
         var query = new OfferQuery(
             gameState.CurrentPlayerId,
             gameState.PieceLimitEnabled,
-            gameState.pieceLimitPerPlayer,
-            gameState.multiCreateActive,
-            gameState.multiCreateType,
-            gameState.multiCreateBorder,
-            gameState.multiCreateRemaining,
-            gameState.multiCreateCells.ToArray(),
-            gameState.MultiCreateCellCount
+            gameState.pieceLimitPerPlayer
         );
 
         OfferBuild offerBuild;

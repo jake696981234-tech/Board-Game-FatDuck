@@ -97,25 +97,25 @@
 //             if (!isTargetCellId)
 //             {
 //                 CreateCellOptions();
-//                 UIFilter.ResetClickedData();
+//                 UIInput.ResetClickedData();
 //                 return;
 //             }
 //             if (!isNumberOfWalls)
 //             {
 //                 NumberOfWallOptions();
-//                 UIFilter.ResetClickedData();
+//                 UIInput.ResetClickedData();
 //                 return;
 //             }
 //             if (!isAux)
 //             {
 //                 WallConfigOptions();
-//                 UIFilter.ResetClickedData();
+//                 UIInput.ResetClickedData();
 //                 return;
 //             }
 //             if (!isAddCost)
 //             {
 //                 SacrificeCostOptions(computeSacrficeTargets(kind, pieceType, ref cachedLegalAddCost), pieceType);
-//                 UIFilter.ResetClickedData();
+//                 UIInput.ResetClickedData();
 //                 return;
 //             }   
 //         }
@@ -124,25 +124,25 @@
 //             if (!isNumberOfWalls)
 //             {
 //                 NumberOfWallOptions();
-//                 UIFilter.ResetClickedData();
+//                 UIInput.ResetClickedData();
 //                 return;
 //             }
 //             if (!isAux)
 //             {
 //                 WallConfigOptions();
-//                 UIFilter.ResetClickedData();
+//                 UIInput.ResetClickedData();
 //                 return;
 //             }
 //             if (!isAddCost)
 //             {
 //                 SacrificeCostOptions(computeSacrficeTargets(kind, pieceType, ref cachedLegalAddCost), pieceType);
-//                 UIFilter.ResetClickedData();
+//                 UIInput.ResetClickedData();
 //                 return;
 //             }
 //             if (!isTargetCellId)
 //             {
 //                 CreateCellOptions();
-//                 UIFilter.ResetClickedData();
+//                 UIInput.ResetClickedData();
 //                 return;
 //             }
 //         }
@@ -151,28 +151,28 @@
 //         {
 //             Game.Core.Action theAction = new Game.Core.Action(kind, (byte)pieceType, ActorCellId, TargetCellId, 0, addCost.ToArray());
 //             UIBridge.PerformActionIndex(theAction);
-//             UIFilter.reset();
+//             UIInput.reset();
 //             return;
 //         }
 //         if (ActionCostRequiresAddCost && ActionRequiresAux)
 //         {
 //             Game.Core.Action theAction = new Game.Core.Action(kind, (byte)pieceType, ActorCellId, TargetCellId, aux, addCost.ToArray());
 //             UIBridge.PerformActionIndex(theAction);
-//             UIFilter.reset();
+//             UIInput.reset();
 //             return;
 //         }
 //         if (!ActionCostRequiresAddCost && ActionRequiresAux)
 //         {
 //             Game.Core.Action theAction = new Game.Core.Action(kind, (byte)pieceType, ActorCellId, TargetCellId, aux);
 //             UIBridge.PerformActionIndex(theAction);
-//             UIFilter.reset();
+//             UIInput.reset();
 //             return;
 //         }
 //         if (!ActionCostRequiresAddCost && !ActionRequiresAux)
 //         {
 //             Game.Core.Action theAction = new Game.Core.Action(kind, (byte)pieceType, ActorCellId, TargetCellId);
 //             UIBridge.PerformActionIndex(theAction);
-//             UIFilter.reset();
+//             UIInput.reset();
 //             return;
 //         }
 //         Debug.Log($"showNextOption failed this is very unexpected");
@@ -180,12 +180,12 @@
 
 //     private static void SetFilter()
 //     {
-//         UIFilter.state = UIFilter.State.Create;
+//         UIInput.state = UIInput.State.Create;
 
-//         pieceType = UIFilter.clickedBuildPieceType;
+//         pieceType = UIInput.clickedBuildPieceType;
 //         isPieceType = true;
         
-//         if (!Piece.connectors_enabled[UIFilter.clickedBuildPieceType])
+//         if (!Piece.connectors_enabled[UIInput.clickedBuildPieceType])
 //         {
 //             isAux = true;
 //             isNumberOfWalls = true;
@@ -197,24 +197,24 @@
 
 //     private static void setNumberOfWalls()
 //     {
-//         if (UIFilter.uIType != UIFilter.UIType.NumberOfWalls)
+//         if (UIInput.uIType != UIInput.UIType.NumberOfWalls)
 //         {
-//             UIFilter.ResetClickedData();
+//             UIInput.ResetClickedData();
 //             return;
 //         }
-//         WallNumber = UIFilter.clickedWallNumber;
+//         WallNumber = UIInput.clickedWallNumber;
 //         isNumberOfWalls = true;
 //         cleanUpSet();
 //     }
 
 //     private static void setWallConfig()
 //     {
-//         if (UIFilter.uIType != UIFilter.UIType.WallConfig)
+//         if (UIInput.uIType != UIInput.UIType.WallConfig)
 //         {
-//             UIFilter.ResetClickedData();
+//             UIInput.ResetClickedData();
 //             return;
 //         }
-//         aux = UIFilter.clickedWallConfig;
+//         aux = UIInput.clickedWallConfig;
 //         ActionRequiresAux = true;
         
 //         isAux = true;
@@ -223,12 +223,12 @@
 
 //     private static void setSacCost()
 //     {
-//         if (UIFilter.uIType != UIFilter.UIType.Cell || !cachedLegalAddCost.Contains(UIFilter.clickedCellId))
+//         if (UIInput.uIType != UIInput.UIType.Cell || !cachedLegalAddCost.Contains(UIInput.clickedCellId))
 //         {
-//             UIFilter.ResetClickedData();
+//             UIInput.ResetClickedData();
 //             return;
 //         } 
-//         addCost.Add(UIBridge.bm.occupantPieceId[UIFilter.clickedCellId]);
+//         addCost.Add(UIBridge.bm.occupantPieceId[UIInput.clickedCellId]);
 //         ActionCostRequiresAddCost = true;
 //         if (addCost.Count == Piece.sacrificeCost_howManyItNeeds[pieceType])
 //         {
@@ -241,19 +241,19 @@
     
 //     private static void setTargetCell()
 //     {
-//         if (UIFilter.uIType != UIFilter.UIType.Cell || !cachedLegalTargetCellId.Contains(UIFilter.clickedCellId))
+//         if (UIInput.uIType != UIInput.UIType.Cell || !cachedLegalTargetCellId.Contains(UIInput.clickedCellId))
 //         {
-//             UIFilter.ResetClickedData();
+//             UIInput.ResetClickedData();
 //             return;
 //         }
-//         TargetCellId = UIFilter.clickedCellId;
+//         TargetCellId = UIInput.clickedCellId;
 //         isTargetCellId = true;
 //         cleanUpSet();
 //     }
 
 //     private static void cleanUpSet()
 //     {
-//         UIFilter.ResetClickedData();
+//         UIInput.ResetClickedData();
 //         showNextOption();
 //     }
     

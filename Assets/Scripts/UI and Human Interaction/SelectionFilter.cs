@@ -2,7 +2,7 @@
 // using UnityEngine;
 // using static AFilter.UIType;
 
-// public static class UIFilter
+// public static class UIInput
 // {
 //     // public static int clickedBuildPieceType;
 //     // public static int clickedActionKind;

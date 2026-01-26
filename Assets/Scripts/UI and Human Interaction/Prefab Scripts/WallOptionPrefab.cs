@@ -15,7 +15,7 @@ public sealed class WallOptionPrefab : MonoBehaviour
     public void WhenButtonPressed()
     {
 
-        UIFilter.OnWallConfigClicked(CachedWall);
+        UIInput.OnWallConfigClicked(CachedWall);
     }
 
     public void SeedData(ushort wall)

@@ -8,11 +8,234 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
 using UnityEngine;
+using static Game.Core.ActionKind;
+using Game.Core;
 
 
 
-public static class DbLoggingConfig
+public static class DbLog
 {
+    #region game state methods
+
+    public static int _loggedType;
+    public static int _loggedPlayer;
+    public static int? pieceTypeForLog;
+    public static Dictionary<(int owner, int type), int> beforeCounts;
+    public static int[] coreBefore;
+    public static void PreLogPerform(int playerIndex, Game.Core.Action theAction, int gameIndex)
+    {
+        var bm = GameRegistry.game[gameIndex].boardModel;
+        var gameState = GameRegistry.game[gameIndex].gameState;
+
+        _loggedPlayer = playerIndex;
+        _loggedType = theAction.kind;
+        pieceTypeForLog = null;
+
+            if (theAction.kind == Create)
+            {
+                pieceTypeForLog = theAction.TargetType;           // which piece we're creating
+            }
+            else if (theAction.kind != EndTurn)
+            {
+                int actorPid = bm.GetCellOccupant(theAction.ActorsCell);
+                if (actorPid >= 0)
+                    pieceTypeForLog = bm.GetPieceType(actorPid);
+            }
+
+            // Special-case EndTurn: log it against the current turn before handoff
+            if (theAction.kind == EndTurn)
+            {
+                events.RaiseActionLog(new EventManager.ActionLogEvent(
+                    _loggedType,
+                    null,               // no piece for EndTurn
+                    null,               // no target for EndTurn
+                    _loggedPlayer,
+                    0m,                 // actionCost
+                    null,               // buildCost
+                    null                // surchargeCost
+                ));
+            }
+
+            // Geometry-free "before" snapshot     
+            beforeCounts = SnapshotOwnerTypeCounts(bm);
+            coreBefore = SnapshotCoreHP(gameState);
+    }
+
+    public static void PostLogPerform(CostEngine.CostBreakdown quote, int gameIndex)
+    {
+        var bm = GameRegistry.game[gameIndex].boardModel;
+        var gameState = GameRegistry.game[gameIndex].gameState;
+
+        // Map DB fields so that actionCost == growth-based turn fee (from actionGrowthFactor)
+            decimal actionCost = (decimal)quote.TurnFee;
+            decimal? buildCost = (decimal)quote.BuildCost;
+            decimal? surchargeCost = (decimal)quote.AbilityCost;
+            // Geometry-free "after" snapshot and deltas
+            var afterCounts = SnapshotOwnerTypeCounts(bm);
+            var coreAfter = SnapshotCoreHP(gameState);
+            var losses = new Dictionary<(int owner, int type), int>(afterCounts.Count);
+            foreach (var kv in beforeCounts)
+            {
+                int after = afterCounts.TryGetValue(kv.Key, out var c) ? c : 0;
+                int lost = kv.Value - after;
+                if (lost > 0) losses[kv.Key] = lost;
+            }
+            int? targetPlayerForLog = PickTargetPlayer(losses, coreBefore, coreAfter);
+
+
+
+            events.RaiseActionLog(new EventManager.ActionLogEvent(
+                _loggedType,
+                pieceTypeForLog,
+                targetPlayerForLog,
+                _loggedPlayer,
+                actionCost,
+                buildCost,
+                surchargeCost
+            )); 
+    }
+
+
+    public static void logEndGame(byte playerWhoEnded, int gameIndex)
+    {
+        var gameState = GameRegistry.game[gameIndex].gameState;
+
+
+        bool isPassOnly = gameState.ps[playerWhoEnded].endedWithoutActionThisCycle;
+        int coreEnd = gameState.GetCoreHealth(playerWhoEnded);
+        int vpEnd = gameState.ps[playerWhoEnded].vpTotal;
+        decimal budgetEnd = (decimal)gameState.ps[playerWhoEnded].budget;
+
+
+        int digitsStart = tStart[playerWhoEnded].digitsStart;
+            int piecesStart = tStart[playerWhoEnded].piecesStart;
+
+            int digitsEnd = CountDigits(playerWhoEnded, gameIndex);
+            int piecesEnd = CountPiecesOnBoard(playerWhoEnded, gameIndex);
+
+
+            incrementPlayerTurnOrdinal(playerWhoEnded);
+            events.RaiseTurnLog(new EventManager.TurnLogEvent(
+                playerWhoEnded,
+                turnOrdinal,
+                isPassOnly,
+                coreEnd,
+                vpEnd,
+                budgetEnd,
+                digitsStart,
+                digitsEnd,
+                piecesStart,
+                piecesEnd,
+                getPlayerTurnOrdinal(playerWhoEnded)));
+    }
+
+    public static void logEndRound()
+    {
+        turnOrdinal = 0;
+        Array.Clear(playerTurnOrdinals, 0, playerTurnOrdinals.Length);
+    }
+    
+
+
+     // ------------------------ Counters for SQL logging ------------------------
+        //These counters are for SQL logging- remove this line if you want to use them gamelogic.
+        public static int turnOrdinal = 0;
+
+        // Store all player ordinals in one array
+        private static int[] playerTurnOrdinals = new int[4];  // automatically initialized to 0
+
+        private static int getPlayerTurnOrdinal(int playerIndex)
+        {
+            if (playerIndex >= 0 && playerIndex < playerTurnOrdinals.Length)
+                return playerTurnOrdinals[playerIndex];
+
+            UnityEngine.Debug.LogError("PlayerTurnOrdinal out of range");
+            return -1;
+        }
+
+        private static void incrementPlayerTurnOrdinal(int PlayerIndex)
+        {
+            if (PlayerIndex >= 0 && PlayerIndex < playerTurnOrdinals.Length)
+                playerTurnOrdinals[PlayerIndex]++;
+            else
+                UnityEngine.Debug.LogError("PlayerTurnOrdinal increment out of range");
+        }
+
+
+        private struct TurnStartSnap
+        {
+            public int digitsStart;
+            public int piecesStart;
+        }
+        private static TurnStartSnap[] tStart = new TurnStartSnap[4];
+        private static  int CountDigits(byte p, int gameIndex)
+        {
+            var gameState = GameRegistry.game[gameIndex].gameState;
+
+            var drc = gameState.ps[p].digitRefCount;
+            if (drc == null) return 0;
+            int total = 0;
+            for (int i = 0; i < PlayerState.MAX_DIGITS; i++)
+                if (drc[i] > 0) total++;
+            return total;
+        }
+
+        private static int CountPiecesOnBoard(byte p, int gameIndex)
+        {
+            var bm = GameRegistry.game[gameIndex].boardModel;
+
+            int count = 0;
+            for (int pid = 0; pid < bm.pieceCount; pid++)
+                if (bm.pieceOwner[pid] == p)
+                    count++;
+            return count;
+        }
+
+
+        // ---- Geometry-free snapshots for analytics/logging ----
+        public static Dictionary<(int owner, int type), int> SnapshotOwnerTypeCounts(BoardModel bm)
+        {
+            var map = new Dictionary<(int, int), int>(32);
+            for (int pid = 0; pid < bm.pieceCount; pid++)
+            {
+                int owner = bm.pieceOwner[pid];
+                int type = bm.pieceType[pid];
+                var key = (owner, type);
+                map.TryGetValue(key, out var c);
+                map[key] = c + 1;
+            }
+            return map;
+        }
+
+
+
+        private static int[] SnapshotCoreHP(GameState gs)
+        {
+            var hp = new int[4];
+            for (byte p = 0; p < 4; p++) hp[p] = gs.GetCoreHealth(p);
+            return hp;
+        }
+
+        private static int? PickTargetPlayer(Dictionary<(int owner, int type), int> losses, int[] coreBefore, int[] coreAfter)
+        {
+            // Prefer any player whose core HP dropped
+            if (coreBefore != null && coreAfter != null)
+            {
+                int n = System.Math.Min(coreBefore.Length, coreAfter.Length);
+                for (int p = 0; p < n; p++) if (coreAfter[p] < coreBefore[p]) return p;
+            }
+            // Else owner with max piece losses
+            int bestOwner = -1, bestLoss = 0;
+            if (losses != null)
+            {
+                foreach (var kv in losses)
+                    if (kv.Value > bestLoss) { bestLoss = kv.Value; bestOwner = kv.Key.owner; }
+            }
+            return (bestLoss > 0) ? bestOwner : (int?)null;
+        }
+    
+
+    #endregion
 
     //Values you must change for each simulation (can be overridden via Config)
     public static int inputSimID = 4;
@@ -115,8 +338,6 @@ public static class DbLoggingConfig
 
     //Local Values being seeded
 
-    private static GameConfigHub Hub;
-
     private static int inputMaxRounds;
 
     private static float startingBudget;
@@ -128,10 +349,9 @@ public static class DbLoggingConfig
     public static void InitializeLoggingValues(EventManager eventManager)
     {
         events = eventManager;
-        Hub = GameBootstrapper.hub;
-        TurnBudgetDecrease = Hub.match_startOfTurnBudgetDecrease;
-        startingBudget = Hub.match_startingBudgetPerRound[0];
-        inputMaxRounds = Hub.match_numberOfRounds;
+        // TurnBudgetDecrease = Hub.match_startOfTurnBudgetDecrease;
+        // startingBudget = Hub.match_startingBudgetPerRound[0];
+        // inputMaxRounds = Hub.match_numberOfRounds;
         subscribeToGameState();
     }
 
@@ -772,8 +992,13 @@ public static class DbLoggingConfig
     }
 
 
-    public static void prepTurn()
+    public static void onTurnBegin(byte playerIndex, int gameIndex)
     {
+        turnOrdinal++;
+
+        tStart[playerIndex].digitsStart = CountDigits(playerIndex, gameIndex);
+        tStart[playerIndex].piecesStart = CountPiecesOnBoard(playerIndex, gameIndex);
+
         latestTurnSK = prepTurnVersion(latestRoundSK);
     }
 
@@ -904,7 +1129,7 @@ public static class DbLoggingConfig
             return;
 
         events.ActionLogRequested += OnActionLogRequested;
-        events.TurnBegin += OnTurnPrepRequested;
+        // events.TurnBegin += OnTurnPrepRequested;
         events.TurnLogRequested += OnTurnLogRequested;
         events.RoundLogRequested += OnRoundLogRequested;
         events.GameResultLogged += OnGameResultLogged;
@@ -917,7 +1142,7 @@ public static class DbLoggingConfig
             return;
 
         events.ActionLogRequested -= OnActionLogRequested;
-        events.TurnBegin -= OnTurnPrepRequested;
+        // events.TurnBegin -= OnTurnPrepRequested;
         events.TurnLogRequested -= OnTurnLogRequested;
         events.RoundLogRequested -= OnRoundLogRequested;
         events.GameResultLogged -= OnGameResultLogged;
@@ -936,10 +1161,10 @@ public static class DbLoggingConfig
             payload.SurchargeCost);
     }
 
-    private static void OnTurnPrepRequested(TurnContext _K)
-    {
-        prepTurn();
-    }
+    // private static void OnTurnPrepRequested(TurnContext _K)
+    // {
+    //     prepTurn();
+    // }
 
     private static void OnTurnLogRequested(EventManager.TurnLogEvent payload)
     {

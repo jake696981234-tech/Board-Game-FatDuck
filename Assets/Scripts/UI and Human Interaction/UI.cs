@@ -35,8 +35,8 @@ public static class UI
         // UIModes.EnterBuildMode(); // will push menus from offers
         // UIInput.HookPresenters();
         // ShowLeftPanel.HudRefresh();
-        UIFilter.HookPresenters();
-        UIFilter.reset();
+        UIInput.HookPresenters();
+        UIInput.reset();
     }
 
 
@@ -101,7 +101,7 @@ public static class UI
 
     private static void whenTurnBegins(TurnContext turnContext)
     {
-        UIFilter.reset();
+        UIInput.reset();
         playerTurn[turnContext.ThePlayer]++;
         playerAction[turnContext.ThePlayer] = 0;
         turnNumber++;

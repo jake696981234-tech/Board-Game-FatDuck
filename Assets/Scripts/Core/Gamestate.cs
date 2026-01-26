@@ -19,96 +19,14 @@ namespace Game.Core
     //2. If a player has 0 budget, and their payout is zero, they should be eliminated.
     public class GameState
     {
-        #region Class's Refrences
-        public event System.Action OnActionExecuted;
-
-        private BoardModel bm;
-        private GameController controller;
-        private EventManager events;
-        private PlayerManager playerManager; // to do- hook this up
-
-
-        #endregion
-
-
-        #region Match state values
-        public PlayerState[] ps;      // length 4
-        public byte currentPlayer;    // 0..3
-        private int roundsLeft;
-        private bool isGameOver;
-        private byte winner; // 0..3; 255 = none/draw
-        public int currentRoundNumber = 1;
-
-
-        private int currentCenterVP;             // was BM.currentCenterCellVictoryPointAmount
-        private int[] currentCoreHealthByPlayer;   // was BM.currentCoreHealthByPlayer
-
-        public readonly HashSet<int> dublicateFilter = new HashSet<int>();
-
-        // public void ResetMultiCreate()
-        // {
-        //     multiCreateActive = false;
-        //     multiCreateType = 0;
-        //     multiCreateBorder = false;
-        //     multiCreateRemaining = 0;
-        //     multiCreateCells.Clear();
-        // }
-
-
-        #endregion
-        #region Initialize Method
-
-        private int gameIndex;
-        public void Initialize(
-                       BoardModel board,
-                       PlayerState[] players,
-                       byte startingPlayer, EventManager eventManager, GameController gameController, PlayerManager thePlayerManager, int theGameIndex)
-        {
-            bm = board;
-            events = eventManager;
-            controller = gameController;
-            gameIndex = theGameIndex;
-            playerManager = thePlayerManager;
-
-            ps = players;
-            currentPlayer = startingPlayer;
-
-            roundsLeft = Info.numberOfRounds;     // from config (not a raw int param)
-
-            isGameOver = false;
-            winner = 255;
-
-            // --- NEW: seed live counters here (BM no longer owns these) ---
-            currentCoreHealthByPlayer = new int[4];
-            ResetAllCoreHealthToStart();
-            ResetCenterVictoryPointsToStart();
-
-            // Freshen per-player state (round + turn)
-            for (int i = 0; i < 4; i++)
-            {
-                ps[i].ClearRoundCounters();
-                ps[i].BeginTurnReset();
-                ps[i].endedWithoutActionThisCycle = false;
-                ps[i].budget = Info.startingBudgetPerRound[currentRoundNumber - 1];
-            }
-
-
-            if (controller.twoPlayerHurdle)
-            {
-                currentCoreHealthByPlayer[3] = 0;
-                currentCoreHealthByPlayer[2] = 0;
-            }
-
-            // Start first player's turn
-            BeginTurn();
-        }
+        
 
         public void TickPlayer() // to do
         {
             playerManager.tickPlayerIndex(currentPlayer);
         }
 
-        #endregion
+        
         #region The Action method
         public bool Perform(in Action theAction, Action[] offers)
         {
@@ -124,91 +42,38 @@ namespace Game.Core
             //     Debug.Log("Is Still Legal returned false");
             //     return false;
             // }
-
             if (!IsStillLegal(offers, theAction))
             {
                 Debug.Log("Is Still Legal returned false");
                 return false;
             }
-
             events.actionBegin(new ActionContext { ThePlayer = currentPlayer });
-
             CostEngine.CostBreakdown quote = default;
             // bool isMultiPlacement = multiCreateActive && theAction.kind == Create && theAction.pieceType == multiCreateType;
 
-            if (theAction.kind != EndTurn /*&& !isMultiPlacement*/)
+            if (!CostEngine.IsAffordable(in cur, in theAction, out quote, gameIndex) && theAction.kind != EndTurn)
             {
-                if (!CostEngine.IsAffordable(in cur, in theAction, out quote, gameIndex))
-                {
-                    Debug.Log("CostEngine Is Affordable Returned False");
-                    return false;
-                }
+                Debug.Log("CostEngine Is Affordable Returned False");
+                return false;
             }
             else
             {
                 quote = default;
             }
 
-
-            // logging stuff
-            int loggedplayer = currentPlayer;
-            int loggedType = theAction.kind;
-            int? pieceTypeForLog = null;
-
-            if (theAction.kind == Create)
-            {
-                pieceTypeForLog = theAction.TargetType;           // which piece we're creating
-            }
-            else if (theAction.kind != EndTurn)
-            {
-                int actorPid = bm.GetCellOccupant(theAction.ActorsCell);
-                if (actorPid >= 0)
-                    pieceTypeForLog = bm.GetPieceType(actorPid);
-            }
-
-            // Special-case EndTurn: log it against the current turn before handoff
-            if (theAction.kind == EndTurn)
-            {
-                events.RaiseActionLog(new EventManager.ActionLogEvent(
-                    loggedType,
-                    null,               // no piece for EndTurn
-                    null,               // no target for EndTurn
-                    loggedplayer,
-                    0m,                 // actionCost
-                    null,               // buildCost
-                    null                // surchargeCost
-                ));
-
-                ApplyEndTurn();
-                OnActionExecuted?.Invoke();
-                return true;
-            }
-
-            // Geometry-free "before" snapshot     
-            var beforeCounts = SnapshotOwnerTypeCounts(bm);
-            var coreBefore = SnapshotCoreHP(this);
-
+            if (LogEnabled) DbLog.PreLogPerform(currentPlayer, theAction, gameIndex);
 
             switch (theAction.kind)
             {
                 case Move: MoveAction.Apply(in theAction, currentPlayer, gameIndex); break;
                 case Shoot: ShootAction.Apply(in theAction, currentPlayer, gameIndex); break;
                 case Create:
-                    // if (multiCreateActive && theAction.pieceType == multiCreateType)
-                    // {
-                    //     GameActions.ApplyMultiCreatePlacement(in theAction, currentPlayer, gameIndex);
-                    // }
-                    // else
-                    // {
-                        if (controller.PieceLimitEnabled && controller.PieceLimitPerPlayer > 0 &&
-                            bm.GetPieceCountForPlayer(currentPlayer) >= controller.PieceLimitPerPlayer)
-                        {
-                            Debug.Log("Piece Limit returned false");
-                            return false;
-                        }
-
-                        CreateAction.Apply(in theAction, currentPlayer, gameIndex);
-                    // }
+                    if (controller.PieceLimitEnabled && controller.PieceLimitPerPlayer > 0 && bm.GetPieceCountForPlayer(currentPlayer) >= controller.PieceLimitPerPlayer)
+                    {
+                        Debug.Log("Piece Limit returned false");
+                        return false;
+                    }
+                    CreateAction.Apply(in theAction, currentPlayer, gameIndex);
                     break;
                 case Push: PushAction.Apply(in theAction, currentPlayer, gameIndex); break;
                 case Upgrade: UpgradeAction.Apply(in theAction, currentPlayer, gameIndex); break;
@@ -228,53 +93,17 @@ namespace Game.Core
                     Debug.Log("Find Action Match returned false");
                     return false;
             }
-
-            // For non-EndTurn actions, apply costs and advance index
-            // bool skipCost = multiCreateActive && theAction.kind == Create && theAction.pieceType == multiCreateType;
-            // if (!skipCost)
-            // {
-            //     cur.AddBudget(-(float)quote.Total);
-            //     cur.AdvanceActionIndex();
-            // }
-
-
-            // Map DB fields so that actionCost == growth-based turn fee (from actionGrowthFactor)
-            decimal actionCost = (decimal)quote.TurnFee;
-            decimal? buildCost = (decimal)quote.BuildCost;
-            decimal? surchargeCost = (decimal)quote.AbilityCost;
-
-
-
-            // Geometry-free "after" snapshot and deltas
-            var afterCounts = SnapshotOwnerTypeCounts(bm);
-            var coreAfter = SnapshotCoreHP(this);
-            var losses = new Dictionary<(int owner, int type), int>(afterCounts.Count);
-            foreach (var kv in beforeCounts)
-            {
-                int after = afterCounts.TryGetValue(kv.Key, out var c) ? c : 0;
-                int lost = kv.Value - after;
-                if (lost > 0) losses[kv.Key] = lost;
-            }
-            int? targetPlayerForLog = PickTargetPlayer(losses, coreBefore, coreAfter);
-
-
-
-            events.RaiseActionLog(new EventManager.ActionLogEvent(
-                loggedType,
-                pieceTypeForLog,
-                targetPlayerForLog,
-                loggedplayer,
-                actionCost,
-                buildCost,
-                surchargeCost
-            ));
-
-
+            cur.AddBudget(-(float)quote.Total);
+            cur.AdvanceActionIndex();
+            if (LogEnabled) DbLog.PostLogPerform(quote, gameIndex);
+        
             // Tell listeners (Bootstrapper/View) to refresh visuals
             OnActionExecuted?.Invoke();
             return true;
 
         }
+
+        
 
         // private bool FastCheck(in Action a)
         // {
@@ -319,78 +148,23 @@ namespace Game.Core
         private void BeginTurn()
         {
             events.turnBegin(new TurnContext { ThePlayer = currentPlayer });
-            // ResetMultiCreate();
             ps[currentPlayer].BeginTurnReset();
-
-
-            turnOrdinal++;
-
-            if (turnOrdinal == 1 && currentRoundNumber != 1)
-            {
-                currentRoundNumber++;
-            }
-
-            tStart[currentPlayer].digitsStart = CountDigits(currentPlayer);
-            tStart[currentPlayer].piecesStart = CountPiecesOnBoard(currentPlayer);
-
-            if (ps[currentPlayer].applyStartOfTurnBudgetDecrease)
-                ps[currentPlayer].AddBudget(-(float)Info.startOfTurnBudgetDecrease);
-
-            // Refresh connector capital HP/state at start of turn
+            if (LogEnabled) DbLog.onTurnBegin(currentPlayer, gameIndex);
+            if (ps[currentPlayer].applyStartOfTurnBudgetDecrease) ps[currentPlayer].AddBudget(-(float)Info.startOfTurnBudgetDecrease);
             PiecesSides.RecomputeConnectorComponents(gameIndex);
-
         }
 
         private void ApplyEndTurn()
         {
             // Player who just ended
-            byte ended = currentPlayer;
-            // ResetMultiCreate();
-
-
+            byte playerWhoEnded = currentPlayer;
             // Mark whether they ended without acting this turn
-            ps[ended].endedWithoutActionThisCycle = ps[ended].actionIndexThisTurn == 0;
-            bool isPassOnly = ps[ended].endedWithoutActionThisCycle;
-
-            int coreEnd = GetCoreHealth(ended);
-            int vpEnd = ps[ended].vpTotal;
-            decimal budgetEnd = (decimal)ps[ended].budget;
-
-            int digitsStart = tStart[ended].digitsStart;
-            int piecesStart = tStart[ended].piecesStart;
-
-            int digitsEnd = CountDigits(ended);
-            int piecesEnd = CountPiecesOnBoard(ended);
-
-
-            incrementPlayerTurnOrdinal();
-            events.RaiseTurnLog(new EventManager.TurnLogEvent(
-                ended,
-                turnOrdinal,
-                isPassOnly,
-                coreEnd,
-                vpEnd,
-                budgetEnd,
-                digitsStart,
-                digitsEnd,
-                piecesStart,
-                piecesEnd,
-                getPlayerTurnOrdinal()));
-
-
+            ps[playerWhoEnded].endedWithoutActionThisCycle = ps[playerWhoEnded].actionIndexThisTurn == 0;
+            if (LogEnabled) DbLog.logEndGame(playerWhoEnded, gameIndex);
             // Advance to next alive player and/or player that has not passed there turn
-            currentPlayer = NextAlivePlayerAfter(ended);
-
+            currentPlayer = NextAlivePlayerAfter(playerWhoEnded);
             // Evaluate round-end rules AFTER the handoff
-            bool endRound = ShouldEndRoundAfterEndTurn(ended);
-            if (endRound)
-            {
-                EndRound();
-            }
-            else
-            {
-                BeginTurn();
-            }
+            if (ShouldEndRoundAfterEndTurn(playerWhoEnded)) { EndRound(); } else { BeginTurn(); }
         }
 
         public int[] cachedPieceDrivenPenalties = new int[4];
@@ -414,8 +188,7 @@ namespace Game.Core
                 cachedPieceDrivenPenalties[i] = playerPieceDrivenPenalties(i);
             }
             events.roundBegin();
-            turnOrdinal = 0;
-            Array.Clear(playerTurnOrdinals, 0, playerTurnOrdinals.Length);
+            if (LogEnabled) DbLog.logEndRound();
             currentRoundNumber = Math.Max(1, currentRoundNumber); // ensure non-zero for next cycle
 
             // 1) Purge temporary units (soldiers), keep buildings
@@ -440,10 +213,11 @@ namespace Game.Core
             }
 
             // 4) Victory check
-            FinalWinCheckByVP();
+            GameEndCheck();
             if (isGameOver) controller.GameEnd();
 
             // 5) If game continues, begin next round on the already-selected currentPlayer
+            currentRoundNumber++;
             if (!isGameOver) BeginTurn();
         }
 
@@ -492,6 +266,9 @@ namespace Game.Core
             if (p >= 4) return;
             if (GetCoreHealth(p) <= 0 /* && !bm.PlayerHasAnyBuilding(p) */)
                 ps[p].isEliminated = true;
+
+            if (DidLeaguePlayerDie(p)) controller.GameEnd();
+
         }
 
 
@@ -536,7 +313,26 @@ namespace Game.Core
             return allBudgetsZero || allEndedWithoutAction || othersRoundComplete;
         }
 
-        private void FinalWinCheckByVP()
+        private bool DidLeaguePlayerDie(int EliminatedPlayer)
+        {
+            if (!Info.EnableMLLeague) return false;
+            if (EliminatedPlayer != 0) return false;
+
+            int best = int.MinValue;
+            byte win = 255;
+            bool tie = false;
+            for (byte p = 1; p < 3; p++)
+            {
+                if (ps[p].isEliminated) continue;
+                int v = ps[p].vpTotal;
+                if (v > best) { best = v; win = p; tie = false; }
+                else if (v == best) { tie = true; }
+            }
+            if (tie) { winner = 255; } else { winner = win; }
+            return true;
+        }
+
+        private void GameEndCheck()
         {
             // Last-standing shortcut
             int aliveCount = 0;
@@ -550,8 +346,7 @@ namespace Game.Core
                 isGameOver = true;
                 events.gameEnd();
                 winner = lastAlive;
-                // Winner by elimination
-                events.RaiseGameResult(new EventManager.GameResultEvent(EventManager.GameResultType.Elimination, winner));
+                // events.RaiseGameResult(new EventManager.GameResultEvent(EventManager.GameResultType.Elimination, winner));
                 return;
             }
 
@@ -575,20 +370,22 @@ namespace Game.Core
             events.gameEnd();
             winner = tie ? (byte)255 : win; // 255 = draw/no single winner
             Debug.Log($"Game over by VP. Winner: {winner} (tie={tie})");
-            events.RaiseGameResult(new EventManager.GameResultEvent(EventManager.GameResultType.Elimination, winner));
+            // events.RaiseGameResult(new EventManager.GameResultEvent(EventManager.GameResultType.Elimination, winner));
             if (tie)
             {
                 winner = 255; // draw/no single winner
                 Debug.Log("Game over by VP. Result: TIE");
-                events.RaiseGameResult(new EventManager.GameResultEvent(EventManager.GameResultType.Tie, null));
+                // events.RaiseGameResult(new EventManager.GameResultEvent(EventManager.GameResultType.Tie, null));
             }
             else
             {
                 winner = win;
                 Debug.Log($"Game over by VP. Winner: {winner}");
-                events.RaiseGameResult(new EventManager.GameResultEvent(EventManager.GameResultType.EndOfTurnVictoryPoints, winner));
+                // events.RaiseGameResult(new EventManager.GameResultEvent(EventManager.GameResultType.EndOfTurnVictoryPoints, winner));
             }
         }
+
+
 
         #endregion
         #region Accessors
@@ -649,102 +446,83 @@ namespace Game.Core
 
         #endregion
 
-        #region SQL Logging and UI
+        #region Class's Refrences
+        public event System.Action OnActionExecuted;
 
-        // ------------------------ Counters for SQL logging ------------------------
-        //These counters are for SQL logging- remove this line if you want to use them gamelogic.
-        private int turnOrdinal = 0;
+        private BoardModel bm;
+        private GameController controller;
+        private EventManager events;
+        private PlayerManager playerManager; // to do- hook this up
 
-        // Store all player ordinals in one array
-        private int[] playerTurnOrdinals = new int[4];  // automatically initialized to 0
 
-        private int getPlayerTurnOrdinal()
+        #endregion
+
+
+        #region Match state values
+        public PlayerState[] ps;      // length 4
+        public byte currentPlayer;    // 0..3
+        private int roundsLeft;
+        private bool isGameOver;
+        private byte winner; // 0..3; 255 = none/draw
+        public int currentRoundNumber = 1;
+
+
+        private int currentCenterVP;             // was BM.currentCenterCellVictoryPointAmount
+        private int[] currentCoreHealthByPlayer;   // was BM.currentCoreHealthByPlayer
+
+        public readonly HashSet<int> dublicateFilter = new HashSet<int>();
+
+        #endregion
+        #region Initialize Method
+
+        private int gameIndex;
+        public void Initialize(
+                       BoardModel board,
+                       PlayerState[] players,
+                       byte startingPlayer, EventManager eventManager, GameController gameController, PlayerManager thePlayerManager, int theGameIndex)
         {
-            if (currentPlayer >= 0 && currentPlayer < playerTurnOrdinals.Length)
-                return playerTurnOrdinals[currentPlayer];
+            bm = board;
+            events = eventManager;
+            controller = gameController;
+            gameIndex = theGameIndex;
+            playerManager = thePlayerManager;
 
-            Debug.LogError("PlayerTurnOrdinal out of range");
-            return -1;
-        }
+            ps = players;
+            currentPlayer = startingPlayer;
 
-        private void incrementPlayerTurnOrdinal()
-        {
-            if (currentPlayer >= 0 && currentPlayer < playerTurnOrdinals.Length)
-                playerTurnOrdinals[currentPlayer]++;
-            else
-                Debug.LogError("PlayerTurnOrdinal increment out of range");
-        }
+            roundsLeft = Info.numberOfRounds;     // from config (not a raw int param)
 
+            isGameOver = false;
+            winner = 255;
 
-        private struct TurnStartSnap
-        {
-            public int digitsStart;
-            public int piecesStart;
-        }
-        private TurnStartSnap[] tStart = new TurnStartSnap[4];
-        private int CountDigits(byte p)
-        {
-            var drc = ps[p].digitRefCount;
-            if (drc == null) return 0;
-            int total = 0;
-            for (int i = 0; i < PlayerState.MAX_DIGITS; i++)
-                if (drc[i] > 0) total++;
-            return total;
-        }
+            // --- NEW: seed live counters here (BM no longer owns these) ---
+            currentCoreHealthByPlayer = new int[4];
+            ResetAllCoreHealthToStart();
+            ResetCenterVictoryPointsToStart();
 
-        private int CountPiecesOnBoard(byte p)
-        {
-            int count = 0;
-            for (int pid = 0; pid < bm.pieceCount; pid++)
-                if (bm.pieceOwner[pid] == p)
-                    count++;
-            return count;
-        }
-
-
-        // ---- Geometry-free snapshots for analytics/logging ----
-        public static Dictionary<(int owner, int type), int> SnapshotOwnerTypeCounts(BoardModel bm)
-        {
-            var map = new Dictionary<(int, int), int>(32);
-            for (int pid = 0; pid < bm.pieceCount; pid++)
+            // Freshen per-player state (round + turn)
+            for (int i = 0; i < 4; i++)
             {
-                int owner = bm.pieceOwner[pid];
-                int type = bm.pieceType[pid];
-                var key = (owner, type);
-                map.TryGetValue(key, out var c);
-                map[key] = c + 1;
+                ps[i].ClearRoundCounters();
+                ps[i].BeginTurnReset();
+                ps[i].endedWithoutActionThisCycle = false;
+                ps[i].budget = Info.startingBudgetPerRound[currentRoundNumber - 1];
             }
-            return map;
-        }
 
 
-
-        private static int[] SnapshotCoreHP(GameState gs)
-        {
-            var hp = new int[4];
-            for (byte p = 0; p < 4; p++) hp[p] = gs.GetCoreHealth(p);
-            return hp;
-        }
-
-        private static int? PickTargetPlayer(Dictionary<(int owner, int type), int> losses, int[] coreBefore, int[] coreAfter)
-        {
-            // Prefer any player whose core HP dropped
-            if (coreBefore != null && coreAfter != null)
+            if (controller.twoPlayerHurdle)
             {
-                int n = System.Math.Min(coreBefore.Length, coreAfter.Length);
-                for (int p = 0; p < n; p++) if (coreAfter[p] < coreBefore[p]) return p;
+                currentCoreHealthByPlayer[3] = 0;
+                currentCoreHealthByPlayer[2] = 0;
             }
-            // Else owner with max piece losses
-            int bestOwner = -1, bestLoss = 0;
-            if (losses != null)
-            {
-                foreach (var kv in losses)
-                    if (kv.Value > bestLoss) { bestLoss = kv.Value; bestOwner = kv.Key.owner; }
-            }
-            return (bestLoss > 0) ? bestOwner : (int?)null;
+
+            LogEnabled = Info.dbLogging.enabled && gameIndex == 0;
+
+            // Start first player's turn
+            BeginTurn();
         }
 
-
+        private bool LogEnabled;
         #endregion
     }
 }
