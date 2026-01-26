@@ -114,27 +114,27 @@ public sealed class WallOptionPanel : MonoBehaviour
     
     public void whenButtonOneIsClicked()
     {
-        UIFilter.OnWallNumberClicked(1);
+        UIInput.OnWallNumberClicked(1);
         FirstWallOptionPanel.SetActive(false);
     }
     public void whenButtonTwoIsClicked()
     {
-        UIFilter.OnWallNumberClicked(2);
+        UIInput.OnWallNumberClicked(2);
         FirstWallOptionPanel.SetActive(false);
     }
     public void whenButtonThreeIsClicked()
     {
-        UIFilter.OnWallNumberClicked(3);
+        UIInput.OnWallNumberClicked(3);
         FirstWallOptionPanel.SetActive(false);
     }
     public void whenButtonFourIsClicked()
     {
-        UIFilter.OnWallNumberClicked(4);
+        UIInput.OnWallNumberClicked(4);
         FirstWallOptionPanel.SetActive(false);
     }
     public void whenButtonFiveIsClicked()
     {
-        UIFilter.OnWallNumberClicked(5);
+        UIInput.OnWallNumberClicked(5);
         FirstWallOptionPanel.SetActive(false);
     }
 
