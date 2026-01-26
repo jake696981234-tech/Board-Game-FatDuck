@@ -43,16 +43,6 @@ namespace Game.Core
         private int currentCenterVP;             // was BM.currentCenterCellVictoryPointAmount
         private int[] currentCoreHealthByPlayer;   // was BM.currentCoreHealthByPlayer
 
-        //Apply Methods Values- taken from game Actions
-
-        // public bool multiCreateActive;
-        // public byte multiCreateType;
-        // public bool multiCreateBorder;
-        // public int multiCreateRemaining;
-        // public List<int> multiCreateCells = new List<int>(8);
-
-        // public int MultiCreateCellCount => multiCreateCells.Count;
-
         public readonly HashSet<int> dublicateFilter = new HashSet<int>();
 
         // public void ResetMultiCreate()

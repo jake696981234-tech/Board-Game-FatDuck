@@ -25,15 +25,15 @@ namespace Game.Core
             var bm = GameRegistry.game[gameIndex].boardModel;
             var gameState = GameRegistry.game[gameIndex].gameState;
 
-            int pieceId = bm.GetCellOccupant(theAction.ActorsCellId);
+            int pieceId = bm.GetCellOccupant(theAction.ActorsCell);
 
             bm.pieceKillCount[pieceId]++;
-            bm.pieceFactoryAux[pieceId] += Piece.eat_amount[theAction.pieceType];
+            bm.pieceFactoryAux[pieceId] += Piece.eat_amount[theAction.TargetType];
             gameState.ps[bm.pieceOwner[pieceId]].perRoundPieceKillCount++;
 
             PassiveActions.FeedingGround(gameIndex, victim);
 
-            if (Piece.zombie_enabled[theAction.pieceType]) //move this above the above the other benefifts if you dont want the others to trigger
+            if (Piece.zombie_enabled[theAction.TargetType]) //move this above the above the other benefifts if you dont want the others to trigger
             {
                 Zombie(victim, gameIndex, theAction);
                 return;
@@ -47,10 +47,10 @@ namespace Game.Core
             var bm = GameRegistry.game[gameIndex].boardModel;
             var gameState = GameRegistry.game[gameIndex].gameState;
 
-            bm.pieceOwner[victim] = bm.pieceOwner[bm.occupantPieceId[theAction.ActorsCellId]];
+            bm.pieceOwner[victim] = bm.pieceOwner[bm.occupantPieceId[theAction.ActorsCell]];
             bm.pieceHP[victim] = Piece.maxHP[bm.pieceType[victim]];
 
-            int g = Piece.digitItGives[(byte)theAction.pieceType];
+            int g = Piece.digitItGives[(byte)theAction.TargetType];
             if (g >= 0) gameState.ps[bm.pieceOwner[victim]].GrantDigit(g);
             RefreshConnectorState(gameIndex);
         }
@@ -112,8 +112,8 @@ namespace Game.Core
         {
             var bm = GameRegistry.game[gameIndex].boardModel;
 
-            int dmg = Piece.move_damage[theAction.pieceType];
-            int attackerCell = theAction.ActorsCellId;
+            int dmg = Piece.move_damage[theAction.TargetType];
+            int attackerCell = theAction.ActorsCell;
             int victimCell = bm.GetPieceCell(victimID);
             bool killed = ApplyDamageWithCapital(attackerCell, victimID, dmg, gameIndex);
             if (killed)

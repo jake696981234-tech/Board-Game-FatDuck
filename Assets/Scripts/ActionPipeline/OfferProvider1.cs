@@ -95,10 +95,10 @@ public static class OfferProviderCopy
         var endTurn = new Action
         {
             kind = EndTurn,
-            pieceType = 0,
-            ActorsCellId = (ushort)0xFFFF,
-            TargetCellId = 0,
-            aux = 0
+            // pieceType = 0,
+            // ActorsCellId = (ushort)0xFFFF,
+            // TargetCellId = 0,
+            // aux = 0
         };
         if (offerBuild.write < offerBuild.cap)
         {

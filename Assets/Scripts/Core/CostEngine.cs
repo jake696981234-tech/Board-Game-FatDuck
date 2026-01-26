@@ -15,14 +15,14 @@ public static class CostEngine
 
 
     /// <summary>
-    /// Pure read: return the deterministic price of taking <paramref name="a"/> in the given context.
+    /// Pure read: return the deterministic price of taking <paramref name="theAction"/> in the given context.
     /// Quote = TurnFee(k) + AbilityCost + BuildCost, where k = cur.actionIndexThisTurn.
     /// No side effects. No allocations.
     /// </summary>
-    public static int Quote(in Action a, int gameIndex, int player)
+    public static int Quote(in Action theAction, int gameIndex, int player)
     {
         var gameState = GameRegistry.game[gameIndex].gameState;
-
+        var bm = GameRegistry.game[gameIndex].boardModel;
 
         // Turn fee: 0 for the first action; then geometric progression from config.
         int k = gameState.ps[player].actionIndexThisTurn; // before taking this action
@@ -32,41 +32,22 @@ public static class CostEngine
         // Ability surcharge: none for EndTurn/invalid.
         int botSurcharge = 0;
 
-        if (gameState.ps[player].applyBotSurcharges)
-        {
-            botSurcharge = a.kind switch
-            {
-                (byte)Piece.AbilityKind.Move => Piece.move_botSurcharge[a.pieceType],
-                (byte)Piece.AbilityKind.Shoot => Piece.shoot_botSurcharge[a.pieceType],
-                (byte)Piece.AbilityKind.CaptureVP => Piece.captureVP_botSurcharge[a.pieceType],
-                (byte)Piece.AbilityKind.CoreDamage => Piece.coreDamage_botSurcharge[a.pieceType],
-                (byte)Piece.AbilityKind.GroupBuild => Piece.groupBuild_botSurcharge[a.pieceType],
-                (byte)Piece.AbilityKind.Upgrade => Piece.upgrade_botSurcharge[a.pieceType],
-                (byte)Piece.AbilityKind.Launcher => Piece.launcher_botSurcharge[a.pieceType],
-                (byte)Piece.AbilityKind.Spawner => Piece.spawn_botSurcharge[a.pieceType],
-                (byte)Piece.AbilityKind.SacrificeFactory => Piece.sacrificeFactory_botSurcharge[a.pieceType],
-                (byte)Piece.AbilityKind.ConversionFactory => Piece.conversionFactory_botSurcharge[a.pieceType],
-                _ => 0
-            };
-        }
-
-
-
+        if (gameState.ps[player].applyBotSurcharges) botSurcharge = whatIsbotSurcharge(gameState.ps[player], theAction, gameIndex);
         // Build cost: Create or Spawner actions.
         int buildCost = 0;
-        if (a.kind == ActionKind.Create)
+        if (theAction.kind == ActionKind.Create)
         {
-            buildCost = Piece.BuildCost[a.pieceType]; // new accessor on PieceDefinition
+            buildCost = Piece.BuildCost[bm.GetPieceTypeFromCell(theAction.ActorsCell)]; // new accessor on PieceDefinition
         }
-        else if (a.kind == ActionKind.Spawner)
+        else if (theAction.kind == ActionKind.Spawner)
         {
-            int targetType = Piece.spawn_targetType[a.pieceType];
-            int amount = Piece.spawn_pieceAmount[a.pieceType];
+            int targetType = Piece.spawn_targetType[bm.GetPieceTypeFromCell(theAction.ActorsCell)];
+            int amount = Piece.spawn_pieceAmount[bm.GetPieceTypeFromCell(theAction.ActorsCell)];
             if (targetType >= 0 && amount > 0) buildCost = Piece.BuildCost[targetType] * amount;
         }
-        else if (a.kind == ActionKind.Upgrade)
+        else if (theAction.kind == ActionKind.Upgrade)
         {
-            buildCost = Piece.BuildCost[a.pieceType];
+            buildCost = Piece.BuildCost[bm.GetPieceTypeFromCell(theAction.ActorsCell)];
         }
 
         return turnFee + botSurcharge + buildCost;
@@ -120,27 +101,28 @@ public static class CostEngine
         { TurnFee = tf; AbilityCost = ac; BuildCost = bc; Total = tf + ac + bc; }
     }
 
-    public static CostBreakdown QuoteBreakdown(in PlayerState cur, in Action theAction)
+    public static CostBreakdown QuoteBreakdown(in PlayerState cur, in Action theAction, int gameIndex)
     {
-        return new CostBreakdown(turnFee(in cur), botSurcharge(cur, theAction), buildCost(theAction));
+        return new CostBreakdown(turnFee(in cur), whatIsbotSurcharge(cur, theAction, gameIndex), buildCost(theAction, gameIndex));
     }
 
-    public static int botSurcharge(in PlayerState cur, in Action theAction)
+    public static int whatIsbotSurcharge(in PlayerState cur, in Action theAction, int gameIndex)
     {
+        var bm = GameRegistry.game[gameIndex].boardModel;
         if (!cur.applyBotSurcharges) return 0;
 
         return theAction.kind switch
         {
-            Move => Piece.move_botSurcharge[theAction.pieceType],
-            Shoot => Piece.shoot_botSurcharge[theAction.pieceType],
-            CaptureVP => Piece.captureVP_botSurcharge[theAction.pieceType],
-            CoreDamage => Piece.coreDamage_botSurcharge[theAction.pieceType],
-            GroupBuild => Piece.groupBuild_botSurcharge[theAction.pieceType],
-            Upgrade => Piece.upgrade_botSurcharge[theAction.pieceType],
-            Launcher => Piece.launcher_botSurcharge[theAction.pieceType],
-            Spawner => Piece.spawn_botSurcharge[theAction.pieceType],
-            SacrificeFactory => Piece.sacrificeFactory_botSurcharge[theAction.pieceType],
-            ConversionFactory => Piece.conversionFactory_botSurcharge[theAction.pieceType],
+            Move => Piece.move_botSurcharge[bm.GetPieceTypeFromCell(theAction.ActorsCell)],
+            Shoot => Piece.shoot_botSurcharge[bm.GetPieceTypeFromCell(theAction.ActorsCell)],
+            CaptureVP => Piece.captureVP_botSurcharge[bm.GetPieceTypeFromCell(theAction.ActorsCell)],
+            CoreDamage => Piece.coreDamage_botSurcharge[bm.GetPieceTypeFromCell(theAction.ActorsCell)],
+            GroupBuild => Piece.groupBuild_botSurcharge[bm.GetPieceTypeFromCell(theAction.ActorsCell)],
+            Upgrade => Piece.upgrade_botSurcharge[bm.GetPieceTypeFromCell(theAction.ActorsCell)],
+            Launcher => Piece.launcher_botSurcharge[bm.GetPieceTypeFromCell(theAction.ActorsCell)],
+            Spawner => Piece.spawn_botSurcharge[bm.GetPieceTypeFromCell(theAction.ActorsCell)],
+            SacrificeFactory => Piece.sacrificeFactory_botSurcharge[bm.GetPieceTypeFromCell(theAction.ActorsCell)],
+            ConversionFactory => Piece.conversionFactory_botSurcharge[bm.GetPieceTypeFromCell(theAction.ActorsCell)],
             _ => 0
         };
     }
@@ -157,21 +139,23 @@ public static class CostEngine
         return turnFee(in gameState.ps[PlayerIndex]);
     }
 
-    public static int buildCost(Action theAction)
+    public static int buildCost(Action theAction, int gameIndex)
     {
+        var bm = GameRegistry.game[gameIndex].boardModel;
         return theAction.kind switch
             {
-                Create => Piece.BuildCost[theAction.pieceType],
-                Upgrade => Piece.BuildCost[theAction.pieceType],
-                Spawner => spawnerBuildCost(theAction),
+                Create => Piece.BuildCost[bm.GetPieceTypeFromCell(theAction.ActorsCell)],
+                Upgrade => Piece.BuildCost[bm.GetPieceTypeFromCell(theAction.ActorsCell)],
+                Spawner => spawnerBuildCost(theAction, gameIndex),
                 _ => 0
             };
     }
 
-    private static int spawnerBuildCost(Action theAction)
+    private static int spawnerBuildCost(Action theAction, int gameIndex)
     {
-        int targetType = Piece.spawn_targetType[theAction.pieceType];
-        int amount = Piece.spawn_pieceAmount[theAction.pieceType];
+        var bm = GameRegistry.game[gameIndex].boardModel;
+        int targetType = Piece.spawn_targetType[bm.GetPieceTypeFromCell(theAction.ActorsCell)];
+        int amount = Piece.spawn_pieceAmount[bm.GetPieceTypeFromCell(theAction.ActorsCell)];
         if (targetType >= 0 && amount > 0) return Piece.BuildCost[targetType] * amount;
         return 0;
     }
@@ -185,7 +169,7 @@ public static class CostEngine
             breakdown = new CostBreakdown(0, 0, 0);
             return true;
         }
-        breakdown = QuoteBreakdown(cur, a);
+        breakdown = QuoteBreakdown(cur, a, gameIndex);
         if (cur.budget < breakdown.Total) return false;
         if (a.kind == ActionKind.CaptureVP && cur.didCaptureVP) return false;
         if (a.kind == ActionKind.CoreDamage && cur.didCoreDamage) return false;

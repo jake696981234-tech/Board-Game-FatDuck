@@ -92,26 +92,25 @@ public static class MLObservation
     {
         for (int theAction = 0; theAction < MLSam.Offers.Length; theAction++)
         {
-            if (MLSam.Offers[theAction].kind == EndTurn) continue;
-            if (MLSam.Offers[theAction].kind == CaptureVP) continue;
-            if (MLSam.Offers[theAction].kind == CoreDamage) continue;
-            if (MLSam.Offers[theAction].kind == GroupBuild) continue;
-            if (MLSam.Offers[theAction].kind == Spawner) continue;
-            if (MLSam.Offers[theAction].kind == SacrificeFactory) continue;
-            if (MLSam.Offers[theAction].kind == ConversionFactory) continue;
-            
-            if (MLSam.Offers[theAction].kind == Explosive)
+            if (MLSam.ActionMask[theAction] != 0) continue;
+            switch (MLSam.Offers[theAction].kind)
             {
-                if (isExplosiveVictimAction(MLSam.Offers[theAction], MLSam, cell)) {return true; } else {continue;}
+                case EndTurn:
+                case CaptureVP:
+                case CoreDamage:
+                case GroupBuild:
+                case Spawner:
+                case SacrificeFactory:
+                case ConversionFactory:
+                    continue;
+                case Explosive:
+                    if (isExplosiveVictimAction(MLSam.Offers[theAction], MLSam, cell)) {return true; } else {continue;}
+                case Move:
+                case Shoot:
+                case Push:
+                //need to add aniper here to- to do
+                     if (MLSam.Offers[theAction].TargetCell == cell) {return true;} else {continue;}
             }
-            // to do add sniper
-
-            if (MLSam.Offers[theAction].kind == Move)
-            {
-                if (MLSam.Offers[theAction].TargetCellId == cell && MLSam.ActionMask[theAction] != 0) {return true; } else {continue;}
-            }
-
-            if (MLSam.Offers[theAction].TargetCellId == cell && MLSam.ActionMask[theAction] != 0) return true;
         }
         return false;
     }
@@ -120,14 +119,14 @@ public static class MLObservation
     {
         var bm = GameRegistry.game[MLSam.gameIndex].boardModel;
 
-        int maxRange = Piece.explosive_range[theAction.pieceType];
-        bool friendlyFire = Piece.explosive_isFriendlyFire[theAction.pieceType];
-        var occCells = BmCac.CellIdsRingAndLessthanRing(theAction.ActorsCellId, maxRange, false, true, MLSam.gameIndex);
+        int maxRange = Piece.explosive_range[bm.GetPieceTypeFromCell(theAction.ActorsCell)];
+        bool friendlyFire = Piece.explosive_isFriendlyFire[bm.GetPieceTypeFromCell(theAction.ActorsCell)];
+        var occCells = BmCac.CellIdsRingAndLessthanRing(theAction.ActorsCell, maxRange, false, true, MLSam.gameIndex);
 
         for (int i = 0; i < occCells.Count; i++)
         {
             if (occCells[i] == cell) continue;
-            if (occCells[i] == theAction.ActorsCellId) continue;
+            if (occCells[i] == theAction.ActorsCell) continue;
             int victim = bm.GetCellOccupant(occCells[i]);
             if (!friendlyFire && bm.pieceOwner[victim] == MLSam.playerId) continue;
             return true;
@@ -143,7 +142,7 @@ public static class MLObservation
         {
             if (MLSam.Offers[theAction].kind == EndTurn) continue;
             if (MLSam.Offers[theAction].kind == Create) continue;
-            if (MLSam.Offers[theAction].ActorsCellId == cell && MLSam.ActionMask[theAction] != 0) return true;
+            if (MLSam.Offers[theAction].ActorsCell == cell && MLSam.ActionMask[theAction] != 0) return true;
         }
         return false;
     }
