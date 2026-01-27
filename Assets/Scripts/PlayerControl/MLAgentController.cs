@@ -202,16 +202,16 @@ public class MLAgentController : Agent
         switch (a.kind)
         {
             case ActionKind.Move:
-                return _bm.DistToVictoryPoint(a.ActorsCellId);
+                return _bm.DistToVictoryPoint(a.ActorsCell);
             case ActionKind.CaptureVP:
             case ActionKind.Create:
             case ActionKind.GroupBuild:
             case ActionKind.Upgrade:
-                return _bm.DistToVictoryPoint(a.TargetCellId);
+                return _bm.DistToVictoryPoint(a.TargetCell);
             case ActionKind.Shoot:
             case ActionKind.CoreDamage:
             case ActionKind.Push:
-                return _bm.DistToVictoryPoint(a.ActorsCellId);
+                return _bm.DistToVictoryPoint(a.ActorsCell);
             default:
                 return int.MaxValue / 4;
         }
@@ -228,12 +228,12 @@ public class MLAgentController : Agent
             case ActionKind.GroupBuild:
             case ActionKind.Upgrade:
             case ActionKind.Spawner:
-                return _bm.DistToVictoryPoint(a.TargetCellId);
+                return _bm.DistToVictoryPoint(a.TargetCell);
             case ActionKind.Shoot:
             case ActionKind.CoreDamage:
             case ActionKind.Push:
             case ActionKind.Launcher:
-                return _bm.DistToVictoryPoint(a.ActorsCellId);
+                return _bm.DistToVictoryPoint(a.ActorsCell);
             default:
                 return int.MaxValue / 4;
         }
@@ -329,11 +329,11 @@ public class MLAgentController : Agent
             case ActionKind.Create:
             case ActionKind.GroupBuild:
             case ActionKind.Upgrade:
-                return _bm.DistToVictoryPoint(a.TargetCellId);
+                return _bm.DistToVictoryPoint(a.TargetCell);
             case ActionKind.Shoot:
             case ActionKind.CoreDamage:
             case ActionKind.Push:
-                return _bm.DistToVictoryPoint(a.ActorsCellId);
+                return _bm.DistToVictoryPoint(a.ActorsCell);
             default:
                 return int.MaxValue / 4;
         }

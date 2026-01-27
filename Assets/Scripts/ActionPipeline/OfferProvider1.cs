@@ -6,7 +6,7 @@ using Action = Game.Core.Action;
 using static Game.Core.ActionKind; // import enum values
 using UnityEngine;
 
-public static class OfferProviderCopy
+public static class OfferProvider
 {
     //branches:
     // Action kind
@@ -96,8 +96,8 @@ public static class OfferProviderCopy
         {
             kind = EndTurn,
             // pieceType = 0,
-            // ActorsCellId = (ushort)0xFFFF,
-            // TargetCellId = 0,
+            // ActorsCell = (ushort)0xFFFF,
+            // TargetCell = 0,
             // aux = 0
         };
         if (offerBuild.write < offerBuild.cap)

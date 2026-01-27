@@ -36,8 +36,8 @@ public static class SniperAction
                 //this is what it used to be:
                 // kind = Sniper,
                 // pieceType = actorType,
-                // ActorsCellId = (ushort)cell,
-                // TargetCellId = (ushort)victimsCells[victimsCells.Length - 1],
+                // ActorsCell = (ushort)cell,
+                // TargetCell = (ushort)victimsCells[victimsCells.Length - 1],
                 // aux = (ushort)directions[i], ------See this one. 
             };
             OfferProvider.Emit(theAction, ref offerBuild);

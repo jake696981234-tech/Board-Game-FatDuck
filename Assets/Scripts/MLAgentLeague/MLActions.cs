@@ -123,11 +123,11 @@ public static class MLActions
 
     private static void MaskUnusedActions(ref IDiscreteActionMask actionMask, MLSam MLSam)
     {
-        if (MLSam.mlState != ChoosingKind) for (int i = 1; i < OfferProviderCopy.ActionKinds.Length - 1; i++) actionMask.SetActionEnabled(0, i, false);
-        if (MLSam.mlState != ChoosingTargetCell) for (int i = 1; i < OfferProviderCopy.ActorsCelID.Length - 1; i++) actionMask.SetActionEnabled(0, i, false);
-        if (MLSam.mlState != ChoosingTargetType) for (int i = 1; i < OfferProviderCopy.TargetCell.Length - 1; i++) actionMask.SetActionEnabled(0, i, false);
-        if (MLSam.mlState != ChoosingWallConfig) for (int i = 1; i < OfferProviderCopy.PieceType.Length - 1; i++) actionMask.SetActionEnabled(0, i, false);
-        if (MLSam.mlState != ChoosingInstakeCellID) for (int i = 1; i < OfferProviderCopy.WallConfig.Length - 1; i++) actionMask.SetActionEnabled(0, i, false);
+        if (MLSam.mlState != ChoosingKind) for (int i = 1; i < OfferProvider.ActionKinds.Length - 1; i++) actionMask.SetActionEnabled(0, i, false);
+        if (MLSam.mlState != ChoosingTargetCell) for (int i = 1; i < OfferProvider.ActorsCelID.Length - 1; i++) actionMask.SetActionEnabled(0, i, false);
+        if (MLSam.mlState != ChoosingTargetType) for (int i = 1; i < OfferProvider.TargetCell.Length - 1; i++) actionMask.SetActionEnabled(0, i, false);
+        if (MLSam.mlState != ChoosingWallConfig) for (int i = 1; i < OfferProvider.PieceType.Length - 1; i++) actionMask.SetActionEnabled(0, i, false);
+        if (MLSam.mlState != ChoosingInstakeCellID) for (int i = 1; i < OfferProvider.WallConfig.Length - 1; i++) actionMask.SetActionEnabled(0, i, false);
     }    
 
     public static void ReceiveAction(ActionBuffers actions, MLSam MLSam)

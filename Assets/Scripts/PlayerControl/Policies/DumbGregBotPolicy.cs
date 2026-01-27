@@ -1,12 +1,12 @@
 using System;
 using Game.Core;
+using static MLActions.MLState;
+using Action = Game.Core.Action;
 
-public sealed class DumbGregBotPolicy : IBotPolicy
+
+
+public class DumbGregBotPolicy : IBotPolicy
 {
-    public void DecideAndAct() //to do
-    {
-        
-    }
     private readonly Random _rng;
 
     private readonly double _pctEndTurnAfterFirst;
@@ -30,6 +30,8 @@ public sealed class DumbGregBotPolicy : IBotPolicy
         _pctCreateInstead = Clamp01(createInsteadPct);
         _rng = seed.HasValue ? new Random(seed.Value) : new Random();
     }
+
+
 
     public int PickAction(in OfferQuery q,
                           ReadOnlySpan<Game.Core.Action> acts,
@@ -175,7 +177,7 @@ public sealed class DumbGregBotPolicy : IBotPolicy
 
             if (a.kind != ActionKind.Move) continue;
 
-            int src = a.ActorsCellId; int dst = a.TargetCellId;
+            int src = a.ActorsCell; int dst = a.TargetCell;
             int before = bm.DistToVictoryPoint(src);
             int after = bm.DistToVictoryPoint(dst);
             int delta = before - after;
@@ -245,7 +247,7 @@ public sealed class DumbGregBotPolicy : IBotPolicy
             if (IsMasked(i, mask)) continue;
             ref readonly var a = ref acts[i];
             if (a.kind != ActionKind.Create) continue;
-            bool isB = Piece.isBuilding[a.pieceType];
+            bool isB = Piece.isBuilding[a.TargetType];
             if (mustBeBuilding != isB) continue;
             float c = Cost(costs, i);
             double w = 1.0 / (1.0 + Math.Max(0.0, c));
@@ -258,7 +260,7 @@ public sealed class DumbGregBotPolicy : IBotPolicy
             if (IsMasked(i, mask)) continue;
             ref readonly var a = ref acts[i];
             if (a.kind != ActionKind.Create) continue;
-            bool isB = Piece.isBuilding[a.pieceType];
+            bool isB = Piece.isBuilding[a.TargetType];
             if (mustBeBuilding != isB) continue;
             float c = Cost(costs, i);
             double w = 1.0 / (1.0 + Math.Max(0.0, c));

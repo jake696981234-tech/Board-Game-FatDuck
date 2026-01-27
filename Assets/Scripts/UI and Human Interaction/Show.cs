@@ -123,7 +123,7 @@ public static class Show
             
             // if (action.addCost == null || action.addCost.Length == 0) continue;
             // if (!action.addCost.Contains(actorCell)) continue;
-            // if (!targetCells.Contains(action.ActorsCellId))
+            // if (!targetCells.Contains(action.ActorsCell))
             switch (GiveMe)
             {
                 case (int)ChoosingTargetCell:

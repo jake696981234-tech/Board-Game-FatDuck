@@ -129,7 +129,7 @@ public static class PieceInfo
             case SacrificeFactory: return "Sacrifice Factory";
             case ConversionFactory: return "Conversion Factory";
             case Explosive: return "Explosive";
-            case PieceBuild: return "Piece Build";
+            // case PieceBuild: return "Piece Build";
             case Sniper: return "Sniper";
             case NecroSpawn: return "Necro Spawn";
             case Factory: return "Factory";
@@ -248,10 +248,10 @@ public static class PieceInfo
                 AddField($"Friendly fire: {BoolText(Piece.explosive_isFriendlyFire[pieceType])}");
                 AddField($"Self destruct: {BoolText(Piece.explosive_isKillItself[pieceType])}");
                 break;
-            case PieceBuild:
-                AddField($"Range: {Piece.pieceBuild_range[pieceType]}");
-                AddField($"Targets: {GetTargetList(Piece.pieceBuild_targetIds[pieceType])}");
-                break;
+            // case PieceBuild:
+            //     AddField($"Range: {Piece.pieceBuild_range[pieceType]}");
+            //     AddField($"Targets: {GetTargetList(Piece.pieceBuild_targetIds[pieceType])}");
+            //     break;
             case Sniper:
                 AddField($"Range: {FormatRange(Piece.sniper_minRange[pieceType], Piece.sniper_maxRange[pieceType])}");
                 AddField($"Damage: {Piece.sniper_damage[pieceType]}");

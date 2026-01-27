@@ -7,6 +7,21 @@ public static class BmCac
 {
     //The Aim of this script is to contain board Model related Methods, that are needed for abilitys
 
+    // ---- Geometry-free snapshots for analytics/logging ----
+    public static Dictionary<(int owner, int type), int> SnapshotOwnerTypeCounts(BoardModel bm)
+    {
+        var map = new Dictionary<(int, int), int>(32);
+        for (int pid = 0; pid < bm.pieceCount; pid++)
+        {
+            int owner = bm.pieceOwner[pid];
+            int type = bm.pieceType[pid];
+            var key = (owner, type);
+            map.TryGetValue(key, out var c);
+            map[key] = c + 1;
+        }
+        return map;
+    }
+
     public static bool isConnectorSideFromCell(int cell, int Direction, int gameIndex)
     {
         var bm = GameRegistry.game[gameIndex].boardModel;

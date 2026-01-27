@@ -6,43 +6,30 @@ using static PlayerManager.PlayerType;
 
 public class GameController : MonoBehaviour
 {
-    
-
     #region Game Flow
     public void GameEnd()
     {
         playerManager.onGameEnd(gameIndex);
         _completedGamesCount++;
-        if (_completedGamesCount >= config.autoSim.maxAutoGames) return;
+        if (_completedGamesCount >= Info.maxAutoGames) return;
         
         curriculumCheck();
-        if (inspectGame && config.dbLogging.enabled)
+        if (inspectGame && Info.dbLogging.enabled)
         {
             DbLog.prepDimGame();
             DbLog.logRoundVersion();
         }
-        
         // Clear the board
-        var coreCells = BuildCoreCellsForNextMatch();
-        board.SetPlayerCoreCells(coreCells);
+        board.SetPlayerCoreCells(BuildCoreCellsForNextMatch());
         board.RemoveAllPieces();
-        
         // Re-seed player state from hub
-        var ps = playerManager.CreateAndSeedThePlayerStructs();
-
         // Reset GameState (reuse same instance so controllers keep references)
-        gameState.Initialize(board, ps, startingPlayer, eventManager, this, playerManager, gameIndex);
+        gameState.Initialize(board, playerManager.CreateAndSeedThePlayerStructs(), startingPlayer, eventManager, this, playerManager, gameIndex);
         GameRegistry.Register(gameIndex, gameState, board, eventManager, this);
-
         if (!inspectGame) return;
         currentSnapshot = snapshotComposer.GetSnapshot();
         UIBridge.ApplySnapshot(currentSnapshot);  
     }
-
-
-
-   
-
     #endregion
 
     #region Set Per Game
@@ -50,27 +37,23 @@ public class GameController : MonoBehaviour
     {
         int[] baseIds = new int[4];
         // (int[])GameBootstrapper.hub.board_coreCellIdByPlayer.Clone();
-
         baseIds[0] = geos.idByAxial[Info.PlayerCoreAxialCord[0]];
         baseIds[1] = geos.idByAxial[Info.PlayerCoreAxialCord[1]];
         baseIds[2] = geos.idByAxial[Info.PlayerCoreAxialCord[2]];
         baseIds[3] = geos.idByAxial[Info.PlayerCoreAxialCord[3]];
-        if (config == null || !config.board.shuffleCoreCellsPerGame)
+        if (!Info.shuffleCoreCellsPerGame)
         {
             _matchIndex++;
             return baseIds;
         }
-
-        int seed = config.board.coreShuffleSeed;
+        int seed = Info.coreShuffleSeed;
         int effectiveSeed = (seed != 0) ? seed + _matchIndex : Environment.TickCount ^ (_matchIndex * 397);
         var rng = new System.Random(effectiveSeed);
-
         for (int i = baseIds.Length - 1; i > 0; i--)
         {
             int j = rng.Next(i + 1);
             (baseIds[i], baseIds[j]) = (baseIds[j], baseIds[i]);
         }
-
         _matchIndex++;
         return baseIds;
     }
@@ -122,8 +105,7 @@ public class GameController : MonoBehaviour
         eventManager = new EventManager();
         setGameConfigValues();
         BuildTheBoard();
-
-        var players = playerManager.SetPlayers(gameIndex, config);
+        var players = playerManager.SetPlayers();
         setGameState(players);
         SetDataBaseLogging();
         setInspectGame();
@@ -131,7 +113,6 @@ public class GameController : MonoBehaviour
     private void setGameConfigValues()
     {
         PieceLimitEnabled = perGameConfig.pieceLimitEnabled;
-
         PieceLimitPerPlayer = perGameConfig.pieceLimit;
     }
 
@@ -154,7 +135,7 @@ public class GameController : MonoBehaviour
 
     public void SetDataBaseLogging()
     {
-        if (inspectGame && config.dbLogging.enabled)
+        if (inspectGame && Info.dbLogging.enabled)
         {
             DbLog.InitializeLoggingValues(eventManager);
             // Apply runtime logging tuning from Config
@@ -167,8 +148,8 @@ public class GameController : MonoBehaviour
             DbLog.logWinTypeVersion();
             DbLog.prepDimGame();
             DbLog.logRoundVersion();
-            if (config.dbLogging.useSharedSession)
-                DbLog.StartLoggingSession(transactional: config.dbLogging.transactionalSession);
+            if (Info.dbLogging.useSharedSession)
+                DbLog.StartLoggingSession(transactional: Info.dbLogging.transactionalSession);
         }
     }
 
@@ -205,21 +186,13 @@ public class GameController : MonoBehaviour
 
      private void OnDestroy()
     {
-        if (config != null && config.dbLogging.enabled && config.dbLogging.useSharedSession)
-            DbLog.EndLoggingSession(commit: true);
+        if (Info.dbLogging.enabled && Info.dbLogging.useSharedSession) DbLog.EndLoggingSession(commit: true);
     }
 
     #endregion
 
     #region Fields
-
-    
-   
     PlayerManager playerManager = new PlayerManager();
-
-
-
-    public Config config;     // assign in Inspector
     public GameBootstrapper gameBootstrapper;
     public int gameIndex;
     public PerGameConfig perGameConfig;
@@ -227,26 +200,17 @@ public class GameController : MonoBehaviour
     public bool inspectGame = false;
 
     public int _completedGamesCount = 0;
-    private bool _restartInProgress = false;
-    private bool _gameOverHandled = false;
+    // private bool _restartInProgress = false;
+    // private bool _gameOverHandled = false;
+    // private bool _resetPendingFromML = false;
     public BoardModel board;
-
     [Range(0, 3)] public byte startingPlayer = 0;
-    
-    
-    private bool _resetPendingFromML = false;
     private int _matchIndex = 0;
-
-
     public bool PieceLimitEnabled;
     public int PieceLimitPerPlayer;
     public bool twoPlayerHurdle;
     public int learningAim = 50; //to do- set up this functionality
-
-   
-
     public GameState gameState;
-
     public GameSnapshot currentSnapshot;   // latest snapshot (read-only for views)
     public GameSnapshotComposer snapshotComposer;   // snapshot builder
     private BoardGeometry geos;

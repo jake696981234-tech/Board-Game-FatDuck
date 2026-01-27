@@ -9,13 +9,11 @@ using Unity.InferenceEngine;
 public class PlayerControl
 {
     private bool isLearning = false;
-
-
     private PlayerManager.PlayerType playerType;
-    private MLSam MLsam = new MLSam();
+    private MLSam MLsam;
     private BehaviorParameters MyMLParamters;
     GameObject MLObjectRoot;
-    private DumbGregBotPolicy dumbGreg = new DumbGregBotPolicy();
+    private DumbGregBotPolicy dumbGreg;
     public PlayerManager playerManager;
     public int playerIndex;
     public void tickPlayer(int playerId)
@@ -60,14 +58,14 @@ public class PlayerControl
 
     public void initAsDumbGreg(int PlayerIndex)
     {
+        dumbGreg = new DumbGregBotPolicy();
         playerIndex = PlayerIndex;
         playerType = DumbGreg; //to do- finish this method
     }
 
-
-
     public void initAsMLFrozenBrain(ModelAsset MyBrain, int PlayerIndex)
     {
+        MLsam = new MLSam();
         playerIndex = PlayerIndex;
         isLearning = false;
 
@@ -77,12 +75,13 @@ public class PlayerControl
         MyMLParamters.Model = MyBrain;   
         MLsam.init();
     }
-    public void initAsMLLearning(string BehaviorName, int PlayerIndex)
+    public void initAsMLLearning(string behaviorName, int PlayerIndex)
     {
+        MLsam = new MLSam();
         playerIndex = PlayerIndex;
         isLearning = true;
 
-        MyMLParamters.BehaviorName = Info.behaviorName;
+        MyMLParamters.BehaviorName = behaviorName;
         MyMLParamters.DeterministicInference = false;
         MLsam.init();
     }
@@ -103,6 +102,8 @@ public class PlayerControl
         MyMLParamters.TeamId = Info.Players[seat].team;
 
     }
+
+    
 
 
 

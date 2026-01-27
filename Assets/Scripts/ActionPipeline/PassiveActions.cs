@@ -38,7 +38,7 @@ public static class PassiveActions
 
         // Ensure round number is at least 1
         int roundNum = Math.Max(1, gameState.currentRoundNumber);
-        var counts = Game.Core.GameState.SnapshotOwnerTypeCounts(bm); // map of (owner,type) -> count
+        var counts = BmCac.SnapshotOwnerTypeCounts(bm); // map of (owner,type) -> count
 
         foreach (var kv in counts)
         {

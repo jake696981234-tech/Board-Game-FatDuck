@@ -7,41 +7,33 @@ public static class Info
 {
     // [Header("General Players Config")]
     public static readonly bool useMLAgents;
-
     // [Header("Player Control")]
     public static readonly int playerCount;
-
     // [Header("What Controls Player")]
     public static readonly ControlMode[] playerControl;
-
     // [Header("If is, What Dumb Bot")]
     // public static readonly PolicyKind[] playerPolicy;
-
     // [Header("Dumb Greg Policy Tuning")]
     public static readonly DumbGregAuthoring dumbGreg;
-
     // [Header("ML Settings")]
     // [Header("ML Behavior Parameters (auto-injected)")]
     public static readonly string behaviorName;
     public static readonly bool useChildSensors;
     public static readonly int vectorObservationSize;
     public static readonly int actionBranchSize;
-
     // [Header("Caps")]
-        public static readonly int capMaxActionsPerTurn;
-        public static readonly int capMaxVP;
-        public static readonly float capMaxBudget;
-        public static readonly int capMaxVPPool;
-        public static readonly int capMaxCoreHealth;
+    public static readonly int capMaxActionsPerTurn;
+    public static readonly int capMaxVP;
+    public static readonly float capMaxBudget;
+    public static readonly int capMaxVPPool;
+    public static readonly int capMaxCoreHealth;
     // [Header("Agent (global)")]
     public static readonly int maxOffersToConsider;  // e.g. 64
     public static readonly int rolloutDepth;         // e.g. 2
     public static readonly int thinkBudgetMs;        // e.g. 5
-
     // [Header("Observations (Phase A schema)")]
     public static readonly int maxCells;     // e.g., 217 (set below)
     public static readonly int maxDistance;  // e.g., 16  (set below)
-
     // [Header("ML Rewards Tuning")]
     public static readonly float rewardWin;
     public static readonly float rewardLoss;
@@ -54,21 +46,14 @@ public static class Info
     public static readonly float endTurnPenalty;      // additional penalty if EndTurn
     // [Header("ML Uses Frozen Brain? (per player)")]
     public static readonly PlayerBehaviorConfig[] playerBehaviorOverrides;
-
-
     // [Header("Auto Simulation")]
     public static readonly bool autoRestartOnGameOver;
     public static readonly int maxAutoGames;
-
     public static readonly int gamesToRun;
     public static readonly bool inspectGame;
-
     // [Header("Game Play")]
     // [Header("Players")]
     public static readonly PlayerConfig[] Players;
-
-
-
     // [Header("Match Defaults")]
     public static readonly float[] startingBudgetPerRound;
     public static readonly int numberOfRounds;
@@ -79,13 +64,9 @@ public static class Info
     // [Header("Cost Tuning")]
     public static readonly int baseActionCost;
     public static readonly float actionGrowthFactor;
-
-
     // [Header("Rewards / Economy")]
     public static readonly int budgetBonusForVP;
     public static readonly int budgetBonusForCoreDamage;
-
-
     // [Header("Board")]
     public static readonly byte radius;
     public static readonly short totalCells;

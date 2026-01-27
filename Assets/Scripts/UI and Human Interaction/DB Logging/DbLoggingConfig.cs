@@ -57,7 +57,7 @@ public static class DbLog
             }
 
             // Geometry-free "before" snapshot     
-            beforeCounts = SnapshotOwnerTypeCounts(bm);
+            beforeCounts = BmCac.SnapshotOwnerTypeCounts(bm);
             coreBefore = SnapshotCoreHP(gameState);
     }
 
@@ -71,7 +71,7 @@ public static class DbLog
             decimal? buildCost = (decimal)quote.BuildCost;
             decimal? surchargeCost = (decimal)quote.AbilityCost;
             // Geometry-free "after" snapshot and deltas
-            var afterCounts = SnapshotOwnerTypeCounts(bm);
+            var afterCounts = BmCac.SnapshotOwnerTypeCounts(bm);
             var coreAfter = SnapshotCoreHP(gameState);
             var losses = new Dictionary<(int owner, int type), int>(afterCounts.Count);
             foreach (var kv in beforeCounts)
@@ -192,20 +192,7 @@ public static class DbLog
         }
 
 
-        // ---- Geometry-free snapshots for analytics/logging ----
-        public static Dictionary<(int owner, int type), int> SnapshotOwnerTypeCounts(BoardModel bm)
-        {
-            var map = new Dictionary<(int, int), int>(32);
-            for (int pid = 0; pid < bm.pieceCount; pid++)
-            {
-                int owner = bm.pieceOwner[pid];
-                int type = bm.pieceType[pid];
-                var key = (owner, type);
-                map.TryGetValue(key, out var c);
-                map[key] = c + 1;
-            }
-            return map;
-        }
+        
 
 
 

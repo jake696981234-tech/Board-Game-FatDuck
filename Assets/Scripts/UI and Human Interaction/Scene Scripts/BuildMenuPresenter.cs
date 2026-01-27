@@ -42,7 +42,7 @@ public sealed class BuildMenuPresenter : MonoBehaviour
         int i = 0;
         foreach (var item in items)
         {
-            UIInfo uiinfo = new(UIBridge.gameState.ps[UIBridge._humanPlayer].budget > Piece.BuildCost[item.pieceType], Piece.BuildCost[item.pieceType]);
+            UIInfo uiinfo = new(UIBridge.gameState.ps[UIBridge._humanPlayer].budget > Piece.BuildCost[item.TargetType], Piece.BuildCost[item.TargetType]);
             UiInfo.Add(uiinfo);
             
             var view = Ensure(i++);
@@ -56,12 +56,12 @@ public sealed class BuildMenuPresenter : MonoBehaviour
     private IEnumerable<Game.Core.Action> filteredBuildOptions(IEnumerable<Game.Core.Action> items)
     {
         var filteredItems = new List<Game.Core.Action>();
-        var iHaveAlreadySeenYou = new HashSet<byte>();
+        var iHaveAlreadySeenYou = new HashSet<int>();
 
         int i = 0;
         foreach (var item in items)
         {
-            if (iHaveAlreadySeenYou.Add(item.pieceType))
+            if (iHaveAlreadySeenYou.Add(item.TargetType))
             {
                 filteredItems.Add(item);
                 i++;

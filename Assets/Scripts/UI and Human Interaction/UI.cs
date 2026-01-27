@@ -36,7 +36,7 @@ public static class UI
         // UIInput.HookPresenters();
         // ShowLeftPanel.HudRefresh();
         UIInput.HookPresenters();
-        UIInput.reset();
+        AFilter.reset();
     }
 
 
@@ -101,7 +101,7 @@ public static class UI
 
     private static void whenTurnBegins(TurnContext turnContext)
     {
-        UIInput.reset();
+        AFilter.reset();
         playerTurn[turnContext.ThePlayer]++;
         playerAction[turnContext.ThePlayer] = 0;
         turnNumber++;

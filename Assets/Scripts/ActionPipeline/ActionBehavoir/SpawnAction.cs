@@ -169,7 +169,7 @@ public static class SpawnAction
         int canCreate = Math.Min(amount, Math.Min(eCount, Math.Max(0, availableLimit)));
         if (canCreate <= 0) return;
 
-        // Prefer the chosen cell (a.TargetCellId) if still legal; then fill remaining
+        // Prefer the chosen cell (a.TargetCell) if still legal; then fill remaining
         int spawned = 0;
 
         bool ChosenCellIsLegal = false;

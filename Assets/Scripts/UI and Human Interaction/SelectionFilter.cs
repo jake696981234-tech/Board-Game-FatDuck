@@ -144,7 +144,7 @@
 
 //     //     PieceActionFilter.kind = 15;
 //     //     PieceActionFilter.pieceType = -1;
-//     //     PieceActionFilter.TargetCellId = 300;
+//     //     PieceActionFilter.TargetCell = 300;
 //     //     PieceActionFilter.aux = 300;
 //     //     PieceActionFilter.addCost.Clear();
 //     //     PieceActionFilter.cachedLegalTargetCellId.Clear();
@@ -161,7 +161,7 @@
 //     //     CreateActionFilter.ActionCostRequiresAddCost = false;
 
 //     //     CreateActionFilter.pieceType = -1;
-//     //     CreateActionFilter.TargetCellId = 300;
+//     //     CreateActionFilter.TargetCell = 300;
 //     //     CreateActionFilter.cachedLegalTargetCellId.Clear();
 //     //     CreateActionFilter.cachedLegalAddCost.Clear();
 //     //     CreateActionFilter.aux = 300;

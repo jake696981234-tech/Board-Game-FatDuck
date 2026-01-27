@@ -18,7 +18,7 @@ public class PlayerManager
     }
     
 
-    public PlayerState[] SetPlayers(int gameIndex, Config config)
+    public PlayerState[] SetPlayers()
     {
         PlayerState[] playerStructs = CreateAndSeedThePlayerStructs();
         SetWhoControlsPlayers();

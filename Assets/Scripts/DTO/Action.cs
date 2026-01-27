@@ -60,7 +60,7 @@ namespace Game.Core
         }
 
         // public override string ToString()
-            // => $"Action(kind={kind}, type={pieceType}, src={ActorsCellId}, dst={TargetCellId}, aux={aux})";
+            // => $"Action(kind={kind}, type={pieceType}, src={ActorsCell}, dst={TargetCell}, aux={aux})";
     }
 
     /// <summary>

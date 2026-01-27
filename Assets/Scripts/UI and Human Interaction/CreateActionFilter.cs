@@ -14,7 +14,7 @@
 //     public const ushort ActorCellId = 0xFFFF;
 
 //     public static bool isTargetCellId;
-//     public static ushort TargetCellId;
+//     public static ushort TargetCell;
 //     public static List<int> cachedLegalTargetCellId = new List<int>(256);
 
     
@@ -149,28 +149,28 @@
 //         //Perform Actions
 //         if (ActionCostRequiresAddCost && !ActionRequiresAux) // to do- probs need to resort the addcost array order.
 //         {
-//             Game.Core.Action theAction = new Game.Core.Action(kind, (byte)pieceType, ActorCellId, TargetCellId, 0, addCost.ToArray());
+//             Game.Core.Action theAction = new Game.Core.Action(kind, (byte)pieceType, ActorCellId, TargetCell, 0, addCost.ToArray());
 //             UIBridge.PerformActionIndex(theAction);
 //             UIInput.reset();
 //             return;
 //         }
 //         if (ActionCostRequiresAddCost && ActionRequiresAux)
 //         {
-//             Game.Core.Action theAction = new Game.Core.Action(kind, (byte)pieceType, ActorCellId, TargetCellId, aux, addCost.ToArray());
+//             Game.Core.Action theAction = new Game.Core.Action(kind, (byte)pieceType, ActorCellId, TargetCell, aux, addCost.ToArray());
 //             UIBridge.PerformActionIndex(theAction);
 //             UIInput.reset();
 //             return;
 //         }
 //         if (!ActionCostRequiresAddCost && ActionRequiresAux)
 //         {
-//             Game.Core.Action theAction = new Game.Core.Action(kind, (byte)pieceType, ActorCellId, TargetCellId, aux);
+//             Game.Core.Action theAction = new Game.Core.Action(kind, (byte)pieceType, ActorCellId, TargetCell, aux);
 //             UIBridge.PerformActionIndex(theAction);
 //             UIInput.reset();
 //             return;
 //         }
 //         if (!ActionCostRequiresAddCost && !ActionRequiresAux)
 //         {
-//             Game.Core.Action theAction = new Game.Core.Action(kind, (byte)pieceType, ActorCellId, TargetCellId);
+//             Game.Core.Action theAction = new Game.Core.Action(kind, (byte)pieceType, ActorCellId, TargetCell);
 //             UIBridge.PerformActionIndex(theAction);
 //             UIInput.reset();
 //             return;
@@ -246,7 +246,7 @@
 //             UIInput.ResetClickedData();
 //             return;
 //         }
-//         TargetCellId = UIInput.clickedCellId;
+//         TargetCell = UIInput.clickedCellId;
 //         isTargetCellId = true;
 //         cleanUpSet();
 //     }
@@ -336,7 +336,7 @@
 //             if (UIBridge._mask[i] == 0) continue; // masked out = illegal/unaffordable
 //             if (UI.hic.config.altWallSelect)
 //             {
-//                 if (actions.TargetCellId != TargetCellId) continue;   // byte code
+//                 if (actions.TargetCell != TargetCell) continue;   // byte code
 //             }
 //             wallConfigs.Add(actions.aux);
 //         }
@@ -397,7 +397,7 @@
 
 //             if (theAction.pieceType != pieceType) continue;
 //             if (UIBridge._mask[i] == 0) continue; // masked out = illegal/unaffordable
-//             CreateCellOptions.Add(theAction.TargetCellId);
+//             CreateCellOptions.Add(theAction.TargetCell);
 //         }
 //         cachedLegalTargetCellId = CreateCellOptions;
 //         return CreateCellOptions;

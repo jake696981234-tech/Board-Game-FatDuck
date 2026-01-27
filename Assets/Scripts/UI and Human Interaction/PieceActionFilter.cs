@@ -15,10 +15,10 @@
 //     public static int pieceType;
 
 //     public static bool isActorCellId;
-//     public static ushort ActorsCellId;
+//     public static ushort ActorsCell;
 
 //     public static bool isTargetCellId;
-//     public static ushort TargetCellId;
+//     public static ushort TargetCell;
 //     public static List<int> cachedLegalTargetCellId = new List<int>(256);
 
 
@@ -97,7 +97,7 @@
 //         {
 //             if (kind == CaptureVP || kind == CoreDamage || kind == ConversionFactory || kind == Explosive)
 //             {
-//                 TargetCellId = ActorsCellId;
+//                 TargetCell = ActorsCell;
 //                 isTargetCellId = true;
 //                 aux = 0;
 //                 isAux = true;
@@ -121,7 +121,7 @@
 //             }
 //             if (kind == Explosive)
 //             {
-//                 TargetCellId = ActorsCellId;
+//                 TargetCell = ActorsCell;
 //                 isTargetCellId = true;
 //                 UIInput.ResetClickedData();
 //                 showNextActionOption();
@@ -152,13 +152,13 @@
 //             return;
 //         }
 
-//         if (kind == Upgrade) (pieceType, TargetCellId) = (TargetCellId, (ushort)pieceType);
+//         if (kind == Upgrade) (pieceType, TargetCell) = (TargetCell, (ushort)pieceType);
 
 //         if (kind == GroupBuild)
 //         {
 //             var store = pieceType;
 //             pieceType = Piece.groupBuild_target[store];
-//             TargetCellId = (ushort)store;
+//             TargetCell = (ushort)store;
 //         }
 
 //         if (kind == Sniper)
@@ -167,9 +167,9 @@
 //             {
 //                 var action = UIBridge._offers[i];
 //                 if (action.kind != kind) continue;
-//                 if (action.ActorsCell != ActorsCellId) continue;
+//                 if (action.ActorsCell != ActorsCell) continue;
 //                 if (action.TargetType != pieceType) continue;
-//                 if (action.TargetCellId != TargetCellId) continue;
+//                 if (action.TargetCell != TargetCell) continue;
 //                 if (UIBridge._mask[i] == 0) continue; // masked out = illegal
 //                 aux = action.aux;
 //             }
@@ -180,28 +180,28 @@
 
 //         if (ActionCostRequiresAddCost && !isActionRequiresAux) // to do- probs need to resort the addcost array order. Look at -case PanelToggles.Mode.SacrificeSelect:- Inside old UIInput, Could be use full code that does this, and few ther essetentials.   
 //         {
-//             Game.Core.Action theAction = new Game.Core.Action(kind, (byte)pieceType, ActorsCellId, TargetCellId, 0, addCost.ToArray());
+//             Game.Core.Action theAction = new Game.Core.Action(kind, (byte)pieceType, ActorsCell, TargetCell, 0, addCost.ToArray());
 //             UIBridge.PerformActionIndex(theAction);
 //             UIInput.reset();
 //             return;
 //         }
 //         if (ActionCostRequiresAddCost && isActionRequiresAux)
 //         {
-//             Game.Core.Action theAction = new Game.Core.Action(kind, (byte)pieceType, ActorsCellId, TargetCellId, aux, addCost.ToArray());
+//             Game.Core.Action theAction = new Game.Core.Action(kind, (byte)pieceType, ActorsCell, TargetCell, aux, addCost.ToArray());
 //             UIBridge.PerformActionIndex(theAction);
 //             UIInput.reset();
 //             return;
 //         }
 //         if (!ActionCostRequiresAddCost && isActionRequiresAux)
 //         {
-//             Game.Core.Action theAction = new Game.Core.Action(kind, (byte)pieceType, ActorsCellId, TargetCellId, aux);
+//             Game.Core.Action theAction = new Game.Core.Action(kind, (byte)pieceType, ActorsCell, TargetCell, aux);
 //             UIBridge.PerformActionIndex(theAction);
 //             UIInput.reset();
 //             return;
 //         }
 //         if (!ActionCostRequiresAddCost && !isActionRequiresAux)
 //         {
-//             Game.Core.Action theAction = new Game.Core.Action(kind, (byte)pieceType, ActorsCellId, TargetCellId);
+//             Game.Core.Action theAction = new Game.Core.Action(kind, (byte)pieceType, ActorsCell, TargetCell);
 //             UIBridge.PerformActionIndex(theAction);
 //             UIInput.reset();
 //             return;
@@ -213,7 +213,7 @@
 //     {
 //         UIInput.state = UIInput.State.PieceAction;
 
-//         ActorsCellId = UIInput.clickedCellId;
+//         ActorsCell = UIInput.clickedCellId;
 //         isActorCellId = true;
 
 //         pieceType = UIBridge.bm.GetPieceTypeFromCell(UIInput.clickedCellId);
@@ -268,7 +268,7 @@
 //             UIInput.ResetClickedData();
 //             return;
 //         }
-//         TargetCellId = UIInput.clickedCellId;
+//         TargetCell = UIInput.clickedCellId;
 //         isTargetCellId = true;
 
 //         UIInput.ResetClickedData();
@@ -302,7 +302,7 @@
 //                 UIInput.ResetClickedData();
 //                 return;
 //             }
-//             TargetCellId = UIInput.clickedCellId;
+//             TargetCell = UIInput.clickedCellId;
 //             isTargetCellId = true;
 
 //             UIInput.ResetClickedData();
@@ -323,7 +323,7 @@
 //                 UIInput.ResetClickedData();
 //                 return;
 //             }
-//             TargetCellId = UIInput.clickedCellId;
+//             TargetCell = UIInput.clickedCellId;
 //             aux = (ushort)Piece.spawn_targetType[pieceType];
 //             isActionRequiresAux = true;
 
@@ -344,8 +344,8 @@
 //                 UIInput.ResetClickedData();
 //                 return;
 //             }
-//             TargetCellId = UIInput.clickedCellId;
-//             aux = (ushort)UIBridge.bm.occupantPieceId[TargetCellId];
+//             TargetCell = UIInput.clickedCellId;
+//             aux = (ushort)UIBridge.bm.occupantPieceId[TargetCell];
 //             isActionRequiresAux = true;
 //             isTargetCellId = true;
 //         }
@@ -356,7 +356,7 @@
 
 //     private static void UpgradeFilter()
 //     {
-//         // TargetCellId = (ushort)PieceDefinition.upgrade_target[UIInput.clickedCellId];
+//         // TargetCell = (ushort)PieceDefinition.upgrade_target[UIInput.clickedCellId];
 //         // isTargetCellId = true;
 //         isAux = true;
         
@@ -368,7 +368,7 @@
 //                 UIInput.ResetClickedData();
 //                 return;
 //             }
-//             TargetCellId = UIInput.clickedBuildPieceType;
+//             TargetCell = UIInput.clickedBuildPieceType;
 //             isTargetCellId = true;
 
 //             UIInput.ResetClickedData();
@@ -376,7 +376,7 @@
 //             return;
 //         }
 
-//         if (!Piece.sacrificeCost_enabled[TargetCellId]) isAddCost = true;
+//         if (!Piece.sacrificeCost_enabled[TargetCell]) isAddCost = true;
 //         if (!isAddCost)
 //         {
 //             if (UIInput.uIType != UIInput.UIType.Cell  || !cachedLegalAddCost.Contains(UIInput.clickedCellId))
@@ -386,7 +386,7 @@
 //             } 
 //             addCost.Add(UIBridge.bm.occupantPieceId[UIInput.clickedCellId]);
 //             ActionCostRequiresAddCost = true;
-//             if (addCost.Count == Piece.sacrificeCost_howManyItNeeds[TargetCellId])
+//             if (addCost.Count == Piece.sacrificeCost_howManyItNeeds[TargetCell])
 //             {
 //                 addCost.Sort();
 //                 addCost.Reverse();
@@ -447,8 +447,8 @@
 //         {
 //             var actions = UIBridge._offers[i];
 //             if (actions.kind != kind) continue;
-//             if (pieceType != actions.TargetCellId) continue;
-//             if (ActorsCellId != actions.ActorsCellId) continue;
+//             if (pieceType != actions.TargetCell) continue;
+//             if (ActorsCell != actions.ActorsCell) continue;
 //             if (addCost.Count > 0)
 //             {
 //                 for (int c = 0; c < addCost.Count; c++)
@@ -512,8 +512,8 @@
 //         {
 //             var theAction = UIBridge._offers[i];
 //             if (theAction.kind != Upgrade) continue;
-//             if (theAction.TargetCellId != pieceType) continue;
-//             if (theAction.ActorsCellId != ActorsCellId) continue;
+//             if (theAction.TargetCell != pieceType) continue;
+//             if (theAction.ActorsCell != ActorsCell) continue;
 
 //             int fullCost = Mathf.RoundToInt(UIBridge._quoted[i]);
 //             bool legal = UIBridge._mask[i] != 0;           // 1 = affordable+legal; 0 = masked out by cost, etc. :contentReference[oaicite:8]{index=8}
@@ -538,7 +538,7 @@
 //         showBoard.HighlightCells(ComputeTargetCellsForAction(), UI.hic.config.actionLegalTargetHighlight);
 
 //         if (UI.hic.actionTitleText) UI.hic.actionTitleText.text = $"Action: {kind}"; // to do, probs need fix it to enum to string
-//         if (UI.hic.actionPieceText) UI.hic.actionPieceText.text = $"Piece #{UIBridge.bm.occupantPieceId[ActorsCellId]}";
+//         if (UI.hic.actionPieceText) UI.hic.actionPieceText.text = $"Piece #{UIBridge.bm.occupantPieceId[ActorsCell]}";
 //         // if (UI.hic.actionCostText) UI.hic.actionCostText.text = $"Cost: {action.cost}"; to do, add cost
 
 //         ShowLeftPanel.HudRefresh();
@@ -551,7 +551,7 @@
 //     private static IEnumerable<int> ComputeGroupBuildTargetCells()
 //     {
 //         List<int> targetCells = new List<int>(128);
-//         int actorCell = ActorsCellId;
+//         int actorCell = ActorsCell;
 //         byte actorType = (byte)pieceType;
 
 //         for (int i = 0; i < UIBridge._count; i++)
@@ -559,11 +559,11 @@
 //             var action = UIBridge._offers[i];
 //             if (action.kind != GroupBuild) continue;
 //             if (UIBridge._mask[i] == 0) continue;
-//             if (action.TargetCellId != actorType) continue;
+//             if (action.TargetCell != actorType) continue;
 //             if (action.addCost == null || action.addCost.Length == 0) continue;
 //             if (!action.addCost.Contains(actorCell)) continue;
-//             if (!targetCells.Contains(action.ActorsCellId))
-//                 targetCells.Add(action.ActorsCellId);
+//             if (!targetCells.Contains(action.ActorsCell))
+//                 targetCells.Add(action.ActorsCell);
 //         }
 //         cachedLegalTargetCellId = targetCells;
 //         return targetCells;
@@ -579,9 +579,9 @@
 //         {
 //             var action = UIBridge._offers[i];
 //             if (action.kind != kind) continue;
-//             if (action.ActorsCellId != ActorsCellId) continue;
+//             if (action.ActorsCell != ActorsCell) continue;
 //             if (action.pieceType != pieceType) continue;
-//             if (action.TargetCellId != TargetCellId) continue;
+//             if (action.TargetCell != TargetCell) continue;
 //             if (UIBridge._mask[i] == 0) continue; // masked out = illegal
 
 //             targetAuxCells.Add(UIBridge.bm.pieceCellId[action.aux]);
@@ -610,7 +610,7 @@
 //             }
 //             else
 //             {
-//                 if (action.ActorsCellId != (ushort)ActorsCellId) continue;               // only actions from this piece
+//                 if (action.ActorsCell != (ushort)ActorsCell) continue;               // only actions from this piece
 //                 // Upgrade actions carry destination type in pieceType; bypass strict type check for upgrades
 //                 if (action.kind != Upgrade && action.pieceType != pieceType) continue;
 //             }
@@ -643,9 +643,9 @@
 //     private static bool IsGroupBuildForSelection(Game.Core.Action action, byte mask)
 //     {
 //         if (mask == 0) return false;
-//         int actorCell = ActorsCellId;
+//         int actorCell = ActorsCell;
 //         byte actorType = (byte)pieceType;
-//         if (action.TargetCellId != actorType) return false;
+//         if (action.TargetCell != actorType) return false;
 //         if (action.addCost == null || action.addCost.Length == 0) return false;
 //         return action.addCost.Contains(actorCell);
 //     }

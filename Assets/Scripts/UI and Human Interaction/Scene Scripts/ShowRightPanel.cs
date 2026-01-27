@@ -42,11 +42,11 @@ public static class ShowRightPanel
                 bool legal = UIBridge._mask[i] != 0;           // 1 = affordable+legal; 0 = masked out by cost, etc. :contentReference[oaicite:8]{index=8}
 
                 if (BuildMeanuFilter[0] && !legal) continue;
-                if (BuildMeanuFilter[1] && !Piece.isBuilding[theAction.pieceType]) continue;
-                if (BuildMeanuFilter[2] && Piece.isBuilding[theAction.pieceType]) continue;
-                if (BuildMeanuFilter[3] && Piece.factionName[theAction.pieceType] != "Bear") continue;
-                if (BuildMeanuFilter[4] && Piece.factionName[theAction.pieceType] != "Penguin") continue;
-                if (BuildMeanuFilter[5] && Piece.factionName[theAction.pieceType] != "Frog") continue;
+                if (BuildMeanuFilter[1] && !Piece.isBuilding[theAction.TargetType]) continue;
+                if (BuildMeanuFilter[2] && Piece.isBuilding[theAction.TargetType]) continue;
+                if (BuildMeanuFilter[3] && Piece.factionName[theAction.TargetType] != "Bear") continue;
+                if (BuildMeanuFilter[4] && Piece.factionName[theAction.TargetType] != "Penguin") continue;
+                if (BuildMeanuFilter[5] && Piece.factionName[theAction.TargetType] != "Frog") continue;
 
                 items.Add(theAction);
                 uiInfo.Add(new UIInfo(legal, fullCost));
