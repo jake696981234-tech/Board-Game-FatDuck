@@ -15,32 +15,32 @@ public sealed class ActionListPresenter : MonoBehaviour
     public readonly List<ActionListItemView> _pool = new();
     public ActionItem[] theItems;
 
-    // public void Show(IEnumerable<ActionItem> items)
-    // {
-    //     theItems = items.ToArray();
-    //     gameObject.SetActive(true);
-    //     int i = 0;
-    //     foreach (var it in items)
-    //     {
-    //         var v = Ensure(i++);
-    //         v.Bind(it, OnItemClicked);
-    //         v.gameObject.SetActive(true);
-    //     }
-    //     for (; i < _pool.Count; i++) _pool[i].gameObject.SetActive(false);
-    // }
-
-    public void Show(IEnumerable<int> TargetTypes)
+    public void Show(IEnumerable<ActionItem> items)
     {
-        // gameObject.SetActive(true);
+        theItems = items.ToArray();
+        gameObject.SetActive(true);
         int i = 0;
-        foreach (var Type in TargetTypes)
+        foreach (var it in items)
         {
-            var ItemView = Ensure(i++);
-            ItemView.Bind(Type, OnItemClicked);
-            ItemView.gameObject.SetActive(true);
+            var v = Ensure(i++);
+            v.Bind(it, OnItemClicked);
+            v.gameObject.SetActive(true);
         }
         for (; i < _pool.Count; i++) _pool[i].gameObject.SetActive(false);
     }
+
+    // public void Show(IEnumerable<int> TargetTypes)
+    // {
+    //     // gameObject.SetActive(true);
+    //     int i = 0;
+    //     foreach (var Type in TargetTypes)
+    //     {
+    //         var ItemView = Ensure(i++);
+    //         ItemView.Bind(Type, OnItemClicked);
+    //         ItemView.gameObject.SetActive(true);
+    //     }
+    //     for (; i < _pool.Count; i++) _pool[i].gameObject.SetActive(false);
+    // }
 
     public void Hide() => gameObject.SetActive(false);
 

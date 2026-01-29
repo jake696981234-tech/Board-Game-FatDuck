@@ -202,7 +202,7 @@ public static class AFilter
         for (int i = 0; i < Chosen.Length; i++) Chosen[i] = -1;
 
         UIBridge.RebuildOffersForCurrentPlayer();
-        ShowRightPanel.ShowBuildMenu();
+        ShowRightPanel.PushNonPieceActionList();
         ShowRightPanel.PushCreateActionMenu();
 
         showBoard.ClearHighlights();

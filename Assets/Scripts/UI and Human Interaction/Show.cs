@@ -109,7 +109,7 @@ public static class Show
         UI.hic.pieceActionListFull.Show(items);
     }
 
-    private static IEnumerable<int> GiveMeOffersContaining(byte GiveMe, bool Legal, bool Kind, bool ActorsCell, bool TargetCell, bool Type, bool WallConfig, bool intakeCell)
+    public static IEnumerable<int> GiveMeOffersContaining(byte GiveMe, bool Legal, bool Kind, bool ActorsCell, bool TargetCell, bool Type, bool WallConfig, bool intakeCell)
     {
         List<int> ReturningList = new List<int>(UIBridge.bm._cellCount);
         for (int i = 0; i < UIBridge._count; i++)
@@ -143,24 +143,22 @@ public static class Show
         return ReturningList;
     }
 
-        private static IEnumerable<ushort> GiveMeOffersContaining(bool Legal, bool Kind, bool ActorsCell, bool TargetCell, bool Type, bool WallConfig, bool intakeCell)
+        public static IEnumerable<int> GiveMeOffersContaining(byte GiveMe, bool Legal, byte Kind, bool ActorsCell, bool TargetCell, bool Type, bool WallConfig, bool intakeCell)
+        {
+            int cachedKind = AFilter.Chosen[(int)ChoosingKind];
+            AFilter.Chosen[(int)ChoosingKind] = Kind;
+            IEnumerable<int> returningList = GiveMeOffersContaining(GiveMe: GiveMe, Legal: Legal, Kind: true, ActorsCell: ActorsCell, TargetCell: TargetCell, Type: Type, WallConfig: WallConfig, intakeCell: intakeCell);
+            AFilter.Chosen[(int)ChoosingKind] = cachedKind;
+            return returningList;
+        }
+
+
+        public static IEnumerable<ushort> GiveMeOffersContaining(bool Legal, bool Kind, bool ActorsCell, bool TargetCell, bool Type, bool WallConfig, bool intakeCell)
         {
             return GiveMeOffersContaining(GiveMe: (int)ChoosingWallConfig, Legal: Legal, Kind: Kind, ActorsCell: ActorsCell, TargetCell: TargetCell, Type: Type, WallConfig: WallConfig, intakeCell: intakeCell).Select(i => unchecked((ushort)i));
         }
 
-    public static void ShowBuildMenu(IEnumerable<int> TargetTypes)
-    {
-        for (int i = 0; i < TargetTypes.Count(); i++)
-        {
-            var theAction = UIBridge._offers[i];
-            if (theAction.kind != Game.Core.ActionKind.EndTurn) continue; // future: add more non-piece kinds here
-            int cost = Mathf.RoundToInt(UIBridge._quoted[i]);
-            bool legal = UIBridge._mask[i] != 0;
-            int kind = theAction.kind;
-            items.Add(new ActionItem(i.ToString(), UIHelpers.PrettyAction(theAction), cost, legal, Array.Empty<int>(), kind));
-        }
-        UI.hic.nonPieceActionList.Show(items);
-    }
+    
 
 
     public static void displayPieceInfo()
