@@ -23,11 +23,13 @@ namespace Game.Core
 
         public void TickPlayer() // to do
         {
-            playerManager.tickPlayerIndex(currentPlayer);
+            playerManager.tickPlayerIndex(currentPlayer, this);
         }
 
         
         #region The Action method
+
+        
         public bool Perform(in Action theAction, Action[] offers)
         {
             ref var cur = ref ps[currentPlayer];
@@ -145,13 +147,14 @@ namespace Game.Core
         #endregion
         #region Game Loop
 
-        private void BeginTurn()
+        public void BeginTurn()
         {
             events.turnBegin(new TurnContext { ThePlayer = currentPlayer });
             ps[currentPlayer].BeginTurnReset();
             if (LogEnabled) DbLog.onTurnBegin(currentPlayer, gameIndex);
             if (ps[currentPlayer].applyStartOfTurnBudgetDecrease) ps[currentPlayer].AddBudget(-(float)Info.startOfTurnBudgetDecrease);
             PiecesSides.RecomputeConnectorComponents(gameIndex);
+            TickPlayer();
         }
 
         private void ApplyEndTurn()
@@ -473,7 +476,7 @@ namespace Game.Core
         public readonly HashSet<int> dublicateFilter = new HashSet<int>();
 
         #endregion
-        #region Initialize Method
+        #region init Method
 
         private int gameIndex;
         public void Initialize(
@@ -519,7 +522,7 @@ namespace Game.Core
             LogEnabled = Info.dbLogging.enabled && gameIndex == 0;
 
             // Start first player's turn
-            BeginTurn();
+            // BeginTurn();
         }
 
         private bool LogEnabled;

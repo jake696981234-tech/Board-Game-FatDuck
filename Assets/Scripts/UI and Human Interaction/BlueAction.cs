@@ -17,8 +17,13 @@ public static class AFilter
         // }
         if (uIType == Cell) UI.hic.BackgroundExit.gameObject.SetActive(true);
         
-        advaPathAndTryPerformAction();
-        if (!IsCorrectInput()) { ShowNextAction(); return; }
+        bool correctInput = IsCorrectInput();
+        if (!correctInput) 
+        { 
+            Debug.Log($"Correct Input ={correctInput}"); 
+            ResetClickedData();
+            return; 
+        }
         Show.displayPieceInfo();
         if (!advaPathAndTryPerformAction()) ShowNextAction();
     }
@@ -138,30 +143,31 @@ public static class AFilter
             if (UIBridge._offers[theAction].intakeCell != Chosen[(int)ChoosingInstakeCellID] && iNeedintakeCell) continue;
             UIBridge.PerformActionIndex(UIBridge._offers[theAction]);
             State = ChoosingActorsCell;
+            reset();
+            return;
         }
     }
 
     private static bool IsCorrectInput()
     {
-        if (uIType == Cancel) { reset(); return false; }
+        if (uIType == Cancel) { Debug.Log($"Clicked Cancel"); reset();  return false; }
         switch (State)
         {
             case ChoosingActorsCell:
-                if (uIType != BuildItem) return false;
-                if (uIType != Cell) return false;
+                if ((uIType == BuildItem && Chosen[(int)ChoosingKind] == -1) || uIType == Cell) return true;
                 return true;
             case ChoosingKind:
-                if (uIType != PieceActionKind) return false;
-                return true;
+                if (uIType == PieceActionKind) return true;
+                return false;
             case ChoosingTargetCell:
-                if (uIType != Cell || !cachedLegalTargetCellId.Contains(UInput[(int)Cell])) return false;
-                return true;
+                if (uIType == Cell && cachedLegalTargetCellId.Contains(UInput[(int)Cell])) return true;
+                return false;
             case ChoosingTargetType:
-                if (uIType != BuildItem) return false;
-                return true;
+                if (uIType == BuildItem) return true;
+                return false;
             case ChoosingWallConfig:
-                if (uIType != WallConfig) return false;
-                return true;
+                if (uIType == WallConfig) return true;
+                return false;
         }
          Debug.LogWarning($"Unhandled ActionKind");
          return false;
@@ -174,17 +180,17 @@ public static class AFilter
         {
             case ChoosingKind:
                 Show.ShowActionsForAPiece();
-                break;
+                return;
             case ChoosingTargetCell:
-                if (Chosen[(int)ChoosingKind] == Create) { Show.ShowCreateCellOptions(); break; }
+                if (Chosen[(int)ChoosingKind] == Create) { Show.ShowCreateCellOptions(); return; }
                 Show.ShowTargetCellOptions();
-                break;
+                return;
             case ChoosingTargetType:
                 Show.ShowUpgradeOptions();
-                break;
+                return;
             case ChoosingWallConfig:
                 Show.WallConfigOptions();
-                break;
+                return;
         }
     }
 
@@ -192,8 +198,11 @@ public static class AFilter
 
     public static void reset()
     {
+        ResetClickedData();
+        for (int i = 0; i < Chosen.Length; i++) Chosen[i] = -1;
+
         UIBridge.RebuildOffersForCurrentPlayer();
-        ShowRightPanel.PushNonPieceActionList();
+        ShowRightPanel.ShowBuildMenu();
         ShowRightPanel.PushCreateActionMenu();
 
         showBoard.ClearHighlights();
@@ -202,10 +211,6 @@ public static class AFilter
         UIHelpers.SetPanelBackdropColor(UI.hic.config ? UI.hic.config.buildModePanelBackground : new Color(0, 0, 0, 0.8f));
         PanelToggles.TogglePanels(build: true, create: false, action: true, pieceFull: false, execute: false, walls: false, secondWalls: false);
         ShowLeftPanel.HudRefresh();
-
-        ResetClickedData();
-        for (int i = 0; i < Chosen.Length; i++) Chosen[i] = -1;
-
         EndRoundTotals.updateEndRoundTotals();
     }
 

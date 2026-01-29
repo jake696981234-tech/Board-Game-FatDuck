@@ -27,6 +27,7 @@ public static class Info
     public static readonly float capMaxBudget;
     public static readonly int capMaxVPPool;
     public static readonly int capMaxCoreHealth;
+    public static readonly int capMaxPieceHP;
     // [Header("Agent (global)")]
     public static readonly int maxOffersToConsider;  // e.g. 64
     public static readonly int rolloutDepth;         // e.g. 2
@@ -133,6 +134,7 @@ public static class Info
         capMaxVP = config.caps.capMaxVP;
         capMaxBudget = config.caps.capMaxBudget;
         capMaxVPPool = config.caps.capMaxVPPool;
+        capMaxPieceHP = config.caps.capMaxPieceHP;
         capMaxCoreHealth = config.caps.capMaxCoreHealth;
 
         maxOffersToConsider = config.agent.maxOffersToConsider;
@@ -199,7 +201,7 @@ public static class Info
         dbLogging = config.dbLogging;
     }
 
-    public enum ControlMode : byte { Human = 0, DumbGreg = 1, MLLearning = 2, MLFrozenBrain }
+    public enum ControlMode : byte { Human = 0, DumbGreg = 1, LearningML = 2, FrozenML }
     // public enum PolicyKind : byte { Heuristic = 0, DumbGreg = 1 }
 
     public enum GraduationRequirment

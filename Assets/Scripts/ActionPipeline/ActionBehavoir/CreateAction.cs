@@ -263,7 +263,6 @@ public static class CreateAction
         var bm = GameRegistry.game[gameIndex].boardModel;
 
          var TargetCell = theAction.TargetCell;
-         if (theAction.kind == GroupBuild) TargetCell = theAction.TargetCell;
 
         PaySacCost(theAction, player, gameIndex);
 

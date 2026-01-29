@@ -15,16 +15,29 @@ public sealed class ActionListPresenter : MonoBehaviour
     public readonly List<ActionListItemView> _pool = new();
     public ActionItem[] theItems;
 
-    public void Show(IEnumerable<ActionItem> items)
+    // public void Show(IEnumerable<ActionItem> items)
+    // {
+    //     theItems = items.ToArray();
+    //     gameObject.SetActive(true);
+    //     int i = 0;
+    //     foreach (var it in items)
+    //     {
+    //         var v = Ensure(i++);
+    //         v.Bind(it, OnItemClicked);
+    //         v.gameObject.SetActive(true);
+    //     }
+    //     for (; i < _pool.Count; i++) _pool[i].gameObject.SetActive(false);
+    // }
+
+    public void Show(IEnumerable<int> TargetTypes)
     {
-        theItems = items.ToArray();
-        gameObject.SetActive(true);
+        // gameObject.SetActive(true);
         int i = 0;
-        foreach (var it in items)
+        foreach (var Type in TargetTypes)
         {
-            var v = Ensure(i++);
-            v.Bind(it, OnItemClicked);
-            v.gameObject.SetActive(true);
+            var ItemView = Ensure(i++);
+            ItemView.Bind(Type, OnItemClicked);
+            ItemView.gameObject.SetActive(true);
         }
         for (; i < _pool.Count; i++) _pool[i].gameObject.SetActive(false);
     }

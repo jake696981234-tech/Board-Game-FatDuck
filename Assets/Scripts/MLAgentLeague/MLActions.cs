@@ -10,51 +10,18 @@ using System.Collections.Generic;
 using Action = Game.Core.Action;
 using static Game.Core.ActionKind; // import enum values
 
-public static class MLActions
+public static class MLActions 
 {
-    public enum MLState
-    {
-        ChoosingKind = 0,
-        ChoosingActorsCell = 2,
-        ChoosingTargetCell = 3,
-        ChoosingTargetType = 4,
-        ChoosingWallConfig = 5,
-        ChoosingInstakeCellID = 6,
-    }
+    
 
 
-    private static int BuildOffersForCurrentPlayer(MLSam MLSam)
-    {
-        var gameState = GameRegistry.game[MLSam.gameIndex].gameState;
-        // Build OfferQuery: (bm, pcs, ps, playerId, cost)
-        // GameActions.GetMultiCreateState(out bool mcActive, out byte mcType, out bool mcBorder, out int mcRemaining, out int[] mcCells, out int mcCellCount, gameIndex);
-        var query = new OfferQuery(MLSam.playerId, gameState.PieceLimitEnabled, gameState.pieceLimitPerPlayer
-            /*mcActive, mcType, mcBorder, mcRemaining, mcCells, mcCellCount */);
-
-        var acts = MLSam.Offers.AsSpan();
-        var costs = MLSam.Quoted.AsSpan();
-        var mask = MLSam.ActionMask.AsSpan();
-
-        OfferBuild offerBuild;
-        offerBuild.query = query;
-        offerBuild.outActions = acts;
-        offerBuild.outCosts = costs;
-        offerBuild.outMask = mask;
-        offerBuild.gameIndex = MLSam.gameIndex;
-        offerBuild.write = 0;
-        offerBuild.total = 0;
-        offerBuild.cap = 0;
-
-        int total = OfferProvider.BuildActionList(ref offerBuild);
-        // We only allow the emitted prefix to be selectable by the policy
-        return Math.Min(total, acts.Length);
-    }
+    
 
     public static readonly HashSet<int> ActionOriginal = new HashSet<int>();
     public static void GiveMeDescreteMask(ref IDiscreteActionMask actionMask, MLSam MLSam)
     {
         ActionOriginal.Clear();
-        MLSam.NumberOfOffers = BuildOffersForCurrentPlayer(MLSam);
+        MLSam.bot.BuildOffersForCurrentPlayer();
 
         switch (MLSam.mlState) 
         {
@@ -82,38 +49,38 @@ public static class MLActions
 
     private static void MaskKinds(ref IDiscreteActionMask actionMask, MLSam MLSam)
     {
-        for (int theAction = 0; theAction < MLSam.NumberOfOffers; theAction++) { if (!ActionOriginal.Add(MLSam.Offers[theAction].kind) || MLSam.ActionMask[theAction] == 0) actionMask.SetActionEnabled((int)ChoosingKind, MLSam.Offers[theAction + 1].kind, false); }
+        for (int theAction = 0; theAction < MLSam.bot.NumberOfOffers; theAction++) { if (!ActionOriginal.Add(MLSam.bot.Offers[theAction].kind) || MLSam.bot.ActionMask[theAction] == 0) actionMask.SetActionEnabled((int)ChoosingKind, MLSam.bot.Offers[theAction + 1].kind, false); }
     }
     private static void MaskActorsCell(ref IDiscreteActionMask actionMask, MLSam MLSam)
     {
-        for (int theAction = 0; theAction < MLSam.NumberOfOffers; theAction++) 
+        for (int theAction = 0; theAction < MLSam.bot.NumberOfOffers; theAction++) 
         { 
-            if (ActionOriginal.Add(MLSam.Offers[theAction].ActorsCell) && MLSam.ActionMask[theAction] != 0 && MLSam.Offers[theAction].kind == MLSam.ChosenAction[0]) continue;
-            actionMask.SetActionEnabled((int)ChoosingActorsCell, MLSam.Offers[theAction + 1].ActorsCell, false); 
+            if (ActionOriginal.Add(MLSam.bot.Offers[theAction].ActorsCell) && MLSam.bot.ActionMask[theAction] != 0 && MLSam.bot.Offers[theAction].kind == MLSam.ChosenAction[0]) continue;
+            actionMask.SetActionEnabled((int)ChoosingActorsCell, MLSam.bot.Offers[theAction + 1].ActorsCell, false); 
         }
     }
     private static void MaskTargetCell(ref IDiscreteActionMask actionMask, MLSam MLSam)
     {
-        for (int theAction = 0; theAction < MLSam.NumberOfOffers; theAction++) 
+        for (int theAction = 0; theAction < MLSam.bot.NumberOfOffers; theAction++) 
         { 
-            if (ActionOriginal.Add(MLSam.Offers[theAction].TargetCell) && MLSam.ActionMask[theAction] != 0 && MLSam.Offers[theAction].kind == MLSam.ChosenAction[0] && MLSam.Offers[theAction].ActorsCell == MLSam.ChosenAction[1]) continue;
-            actionMask.SetActionEnabled((int)ChoosingTargetCell, MLSam.Offers[theAction + 1].TargetCell, false); 
+            if (ActionOriginal.Add(MLSam.bot.Offers[theAction].TargetCell) && MLSam.bot.ActionMask[theAction] != 0 && MLSam.bot.Offers[theAction].kind == MLSam.ChosenAction[0] && MLSam.bot.Offers[theAction].ActorsCell == MLSam.ChosenAction[1]) continue;
+            actionMask.SetActionEnabled((int)ChoosingTargetCell, MLSam.bot.Offers[theAction + 1].TargetCell, false); 
         }
     }
     private static void MaskPieceType(ref IDiscreteActionMask actionMask, MLSam MLSam)
     {
-        for (int theAction = 0; theAction < MLSam.NumberOfOffers; theAction++) 
+        for (int theAction = 0; theAction < MLSam.bot.NumberOfOffers; theAction++) 
         { 
-            if (ActionOriginal.Add(MLSam.Offers[theAction].TargetType) && MLSam.ActionMask[theAction] != 0 && MLSam.Offers[theAction].kind == MLSam.ChosenAction[0] && MLSam.Offers[theAction].ActorsCell == MLSam.ChosenAction[1] && MLSam.Offers[theAction].TargetCell == MLSam.ChosenAction[2]) continue;
-            actionMask.SetActionEnabled((int)ChoosingTargetType, MLSam.Offers[theAction + 1].TargetType, false); 
+            if (ActionOriginal.Add(MLSam.bot.Offers[theAction].TargetType) && MLSam.bot.ActionMask[theAction] != 0 && MLSam.bot.Offers[theAction].kind == MLSam.ChosenAction[0] && MLSam.bot.Offers[theAction].ActorsCell == MLSam.ChosenAction[1] && MLSam.bot.Offers[theAction].TargetCell == MLSam.ChosenAction[2]) continue;
+            actionMask.SetActionEnabled((int)ChoosingTargetType, MLSam.bot.Offers[theAction + 1].TargetType, false); 
         }
     }
     private static void MaskWallConfig(ref IDiscreteActionMask actionMask, MLSam MLSam)
     {
-        for (int theAction = 0; theAction < MLSam.NumberOfOffers; theAction++) 
+        for (int theAction = 0; theAction < MLSam.bot.NumberOfOffers; theAction++) 
         { 
-            if (ActionOriginal.Add(MLSam.Offers[theAction].TargetType) && MLSam.ActionMask[theAction] != 0 && MLSam.Offers[theAction].kind == MLSam.ChosenAction[0] && MLSam.Offers[theAction].ActorsCell == MLSam.ChosenAction[1] && MLSam.Offers[theAction].TargetCell == MLSam.ChosenAction[2] && MLSam.Offers[theAction].TargetType == MLSam.ChosenAction[3]) continue;
-            actionMask.SetActionEnabled((int)ChoosingWallConfig, MLSam.Offers[theAction + 1].WallConfig, false); 
+            if (ActionOriginal.Add(MLSam.bot.Offers[theAction].TargetType) && MLSam.bot.ActionMask[theAction] != 0 && MLSam.bot.Offers[theAction].kind == MLSam.ChosenAction[0] && MLSam.bot.Offers[theAction].ActorsCell == MLSam.ChosenAction[1] && MLSam.bot.Offers[theAction].TargetCell == MLSam.ChosenAction[2] && MLSam.bot.Offers[theAction].TargetType == MLSam.ChosenAction[3]) continue;
+            actionMask.SetActionEnabled((int)ChoosingWallConfig, MLSam.bot.Offers[theAction + 1].WallConfig, false); 
         }
     }
     private static void MaskInstakeCellID(ref IDiscreteActionMask actionMask, MLSam MLSam)
@@ -253,25 +220,25 @@ public static class MLActions
 
     private static void peformAction(Action theAction, MLSam MLSam)
     {
-        var gameState = GameRegistry.game[MLSam.gameIndex].gameState;
+        var gameState = GameRegistry.game[MLSam.bot.gameIndex].gameState;
 
         MLSam.mlState = ChoosingKind;
         Array.Clear(MLSam.ChosenAction, 0, MLSam.ChosenAction.Length);
-        gameState.Perform(theAction, MLSam.Offers);
+        gameState.Perform(theAction, MLSam.bot.Offers);
     }
 
 
     private static void PerformAction(MLSam MLSam, bool iNeedKind, bool iNeedActorsCell, bool iNeedTargetCell, bool TargetType, bool iNeedWallConfig, bool iNeedintakeCell)
     {
-        for (int theAction = 0; theAction < MLSam.NumberOfOffers; theAction++)
+        for (int theAction = 0; theAction < MLSam.bot.NumberOfOffers; theAction++)
         {
-            if (MLSam.Offers[theAction].kind != MLSam.ChosenAction[(int)ChoosingKind] && iNeedKind) continue;
-            if (MLSam.Offers[theAction].ActorsCell != MLSam.ChosenAction[(int)ChoosingActorsCell] && iNeedActorsCell) continue;
-            if (MLSam.Offers[theAction].TargetCell != MLSam.ChosenAction[(int)ChoosingTargetCell] && iNeedTargetCell) continue;
-            if (MLSam.Offers[theAction].TargetType != MLSam.ChosenAction[(int)ChoosingTargetType] && TargetType) continue;
-            if (MLSam.Offers[theAction].WallConfig != MLSam.ChosenAction[(int)ChoosingWallConfig] && iNeedWallConfig) continue;
-            if (MLSam.Offers[theAction].intakeCell != MLSam.ChosenAction[(int)ChoosingInstakeCellID] && iNeedintakeCell) continue;
-            peformAction(MLSam.Offers[theAction], MLSam);
+            if (MLSam.bot.Offers[theAction].kind != MLSam.ChosenAction[(int)ChoosingKind] && iNeedKind) continue;
+            if (MLSam.bot.Offers[theAction].ActorsCell != MLSam.ChosenAction[(int)ChoosingActorsCell] && iNeedActorsCell) continue;
+            if (MLSam.bot.Offers[theAction].TargetCell != MLSam.ChosenAction[(int)ChoosingTargetCell] && iNeedTargetCell) continue;
+            if (MLSam.bot.Offers[theAction].TargetType != MLSam.ChosenAction[(int)ChoosingTargetType] && TargetType) continue;
+            if (MLSam.bot.Offers[theAction].WallConfig != MLSam.ChosenAction[(int)ChoosingWallConfig] && iNeedWallConfig) continue;
+            if (MLSam.bot.Offers[theAction].intakeCell != MLSam.ChosenAction[(int)ChoosingInstakeCellID] && iNeedintakeCell) continue;
+            peformAction(MLSam.bot.Offers[theAction], MLSam);
         }
     }
 
@@ -284,6 +251,16 @@ public static class MLActions
         WallConfig = 4,
         intakeCell = 5,
         addCost = 6,
+    }
+
+    public enum MLState
+    {
+        ChoosingKind = 0,
+        ChoosingActorsCell = 2,
+        ChoosingTargetCell = 3,
+        ChoosingTargetType = 4,
+        ChoosingWallConfig = 5,
+        ChoosingInstakeCellID = 6,
     }
 
     

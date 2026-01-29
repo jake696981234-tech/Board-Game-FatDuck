@@ -37,7 +37,7 @@ public static class CostEngine
         int buildCost = 0;
         if (theAction.kind == ActionKind.Create)
         {
-            buildCost = Piece.BuildCost[bm.GetPieceTypeFromCell(theAction.ActorsCell)]; // new accessor on PieceDefinition
+            buildCost = Piece.BuildCost[theAction.TargetType]; // new accessor on PieceDefinition
         }
         else if (theAction.kind == ActionKind.Spawner)
         {
@@ -144,7 +144,7 @@ public static class CostEngine
         var bm = GameRegistry.game[gameIndex].boardModel;
         return theAction.kind switch
             {
-                Create => Piece.BuildCost[bm.GetPieceTypeFromCell(theAction.ActorsCell)],
+                Create => Piece.BuildCost[theAction.TargetType],
                 Upgrade => Piece.BuildCost[bm.GetPieceTypeFromCell(theAction.ActorsCell)],
                 Spawner => spawnerBuildCost(theAction, gameIndex),
                 _ => 0

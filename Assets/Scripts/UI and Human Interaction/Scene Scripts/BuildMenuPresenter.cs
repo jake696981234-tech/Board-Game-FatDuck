@@ -35,8 +35,6 @@ public sealed class BuildMenuPresenter : MonoBehaviour
             items = filteredBuildOptions(rawItems);
         }
 
-        
-
         gameObject.SetActive(true);
         List<UIInfo> UiInfo = new();
         int i = 0;

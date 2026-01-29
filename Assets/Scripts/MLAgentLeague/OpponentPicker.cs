@@ -2,20 +2,19 @@ using System;
 using System.Collections.Generic;
 using Unity.MLAgents.Policies;
 using Unity.InferenceEngine;
+using static Info.ControlMode;
 
 public static class OpponentPicker
 {
     static readonly System.Random rng = new System.Random();
 
-    public enum OpponentKind { DumbGreg, FrozenBrian }
-
     public readonly struct OpponentChoice
     {
-        public readonly OpponentKind kind;
+        public readonly Info.ControlMode kind;
         public readonly DumbGregAuthoring[] greg; // only set when kind == DumbGreg
         public readonly ModelAsset brain;         // only set when kind == FrozenBrian
 
-        OpponentChoice(OpponentKind kind, DumbGregAuthoring[] greg, ModelAsset brain)
+        OpponentChoice(Info.ControlMode kind, DumbGregAuthoring[] greg, ModelAsset brain)
         {
             this.kind = kind;
             this.greg = greg;
@@ -23,10 +22,10 @@ public static class OpponentPicker
         }
 
         public static OpponentChoice FromGreg(DumbGregAuthoring[] greg) =>
-            new OpponentChoice(OpponentKind.DumbGreg, greg, null);
+            new OpponentChoice(DumbGreg, greg, null);
 
         public static OpponentChoice FromBrain(ModelAsset brain) =>
-            new OpponentChoice(OpponentKind.FrozenBrian, null, brain);
+            new OpponentChoice(FrozenML, null, brain);
     }
 
     public static void Pick3(

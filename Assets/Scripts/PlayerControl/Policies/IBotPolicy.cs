@@ -4,7 +4,7 @@ using Action = Game.Core.Action;
 
 
 
-public class IBotPolicy
+public class Bot
 {
     // Returns chosen action index in acts, or -1 to indicate no-op.
     // int PickAction(in OfferQuery q,
@@ -13,20 +13,26 @@ public class IBotPolicy
     //                ReadOnlySpan<byte> mask,
     //                int gameIndex,
     //                 byte playerId);
-    public byte playerId = 0; // 0..3
-    public Action[] Offers;
+    public readonly byte playerId = 0; // 0..3
+    public readonly int gameIndex;
+    public Action[] Offers = new Action[Info.maxOffersToConsider];
     public int NumberOfOffers;
-    public float[] Quoted;
-    public byte[] ActionMask;
-    public int gameIndex;
+    public float[] Quoted = new float[Info.maxOffersToConsider];
+    public byte[] ActionMask = new byte[Info.maxOffersToConsider];
+    
 
-    public int BuildOffersForCurrentPlayer() 
+    public Bot(byte thePlayerId, int theGameIndex)
+    {
+        playerId = thePlayerId;
+        gameIndex = theGameIndex;
+    }
+
+    public void BuildOffersForCurrentPlayer() 
     {
         var gameState = GameRegistry.game[gameIndex].gameState;
         // Build OfferQuery: (bm, pcs, ps, playerId, cost)
         // GameActions.GetMultiCreateState(out bool mcActive, out byte mcType, out bool mcBorder, out int mcRemaining, out int[] mcCells, out int mcCellCount, gameIndex);
-        var query = new OfferQuery(playerId, gameState.PieceLimitEnabled, gameState.pieceLimitPerPlayer
-            /*mcActive, mcType, mcBorder, mcRemaining, mcCells, mcCellCount */);
+        var query = new OfferQuery(playerId, gameState.PieceLimitEnabled, gameState.pieceLimitPerPlayer);
 
         var acts = Offers.AsSpan();
         var costs = Quoted.AsSpan();
@@ -44,7 +50,7 @@ public class IBotPolicy
 
         int total = OfferProvider.BuildActionList(ref offerBuild);
         // We only allow the emitted prefix to be selectable by the policy
-        return Math.Min(total, acts.Length);
+        NumberOfOffers = Math.Min(total, acts.Length);
     }
 }
 

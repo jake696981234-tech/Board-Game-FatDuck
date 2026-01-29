@@ -52,7 +52,7 @@ public sealed class Config : ScriptableObject
     };
 
     [Header("Caps")]
-    public CapsAuthoring caps = new CapsAuthoring { capMaxActionsPerTurn = 30, capMaxVP = 30, capMaxBudget = 150f, capMaxVPPool = 5, capMaxCoreHealth = 3 };
+    public CapsAuthoring caps = new CapsAuthoring { capMaxActionsPerTurn = 30, capMaxVP = 30, capMaxBudget = 150f, capMaxVPPool = 5, capMaxPieceHP = 8, capMaxCoreHealth = 3 };
 
     [Header("Agent (global)")]
     public AgentAuthoring agent = new AgentAuthoring
@@ -354,6 +354,7 @@ public sealed class Config : ScriptableObject
         public int capMaxVP;
         public float capMaxBudget;
         public int capMaxVPPool;
+        public int capMaxPieceHP;
         public int capMaxCoreHealth;
     }
 

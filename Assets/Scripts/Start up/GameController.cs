@@ -2,7 +2,6 @@ using UnityEngine;
 using Game.Core;
 using System;
 using Unity.MLAgents.Policies;
-using static PlayerManager.PlayerType;
 
 public class GameController : MonoBehaviour
 {
@@ -105,10 +104,11 @@ public class GameController : MonoBehaviour
         eventManager = new EventManager();
         setGameConfigValues();
         BuildTheBoard();
-        var players = playerManager.SetPlayers();
+        var players = playerManager.SetPlayers(gameIndex);
         setGameState(players);
         SetDataBaseLogging();
         setInspectGame();
+        gameState.BeginTurn();
     }
     private void setGameConfigValues()
     {

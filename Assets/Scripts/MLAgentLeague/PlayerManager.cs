@@ -2,7 +2,7 @@ using UnityEngine;
 using Game.Core;
 using System;
 using Unity.MLAgents.Policies;
-using static PlayerManager.PlayerType;
+using static Info.ControlMode;
 using Unity.InferenceEngine;
 
 
@@ -10,18 +10,11 @@ using Unity.InferenceEngine;
 public class PlayerManager
 {
     private PlayerControl[] playerControl = new PlayerControl[4];
-    public enum PlayerType
-    {
-        ML = 0,
-        DumbGreg = 1,
-        Human = 2,
-    }
     
-
-    public PlayerState[] SetPlayers()
+    public PlayerState[] SetPlayers(int gameIndex)
     {
         PlayerState[] playerStructs = CreateAndSeedThePlayerStructs();
-        SetWhoControlsPlayers();
+        SetWhoControlsPlayers(gameIndex);
         return playerStructs;
     }
 
@@ -41,35 +34,31 @@ public class PlayerManager
         return ps;
     }
 
-    private void SetWhoControlsPlayers()
+    private void SetWhoControlsPlayers(int gameIndex)
     {
-        if (Info.EnableMLLeague)
-        {
-            SetLeaguePlayers();
-            return;
-        }
-        SetPlayersManually();
+        if (Info.EnableMLLeague) { SetLeaguePlayers(gameIndex); return; }
+        SetPlayersManually(gameIndex);
     }
     
-    private void SetPlayersManually()
+    private void SetPlayersManually(int gameIndex)
     {
         for (byte seat = 0; seat < Info.playerCount; seat++)
         {
             switch (Info.playerControl[seat])
             {
-                case Info.ControlMode.DumbGreg:
-                        playerControl[seat].initAsDumbGreg(seat);
-                        playerControl[seat].subscribePlayer();
-                        break;
-                case Info.ControlMode.MLFrozenBrain:
-                        playerControl[seat].initAsMLFrozenBrain(Info.playerBehaviorOverrides[seat].modelAsset, seat);
-                        playerControl[seat].subscribePlayer();
-                        break;
-                case Info.ControlMode.MLLearning:
-                        playerControl[seat].initAsMLLearning(Info.behaviorName, seat);
-                        playerControl[seat].subscribePlayer();
-                        break;
-                case Info.ControlMode.Human:
+                case DumbGreg:
+                    playerControl[seat] = new PlayerControl();
+                    playerControl[seat].init(DumbGreg, seat, gameIndex, this);
+                    break;
+                case FrozenML:
+                    playerControl[seat] = new PlayerControl();
+                    playerControl[seat].init(FrozenML, seat, gameIndex, this, Info.playerBehaviorOverrides[seat].modelAsset);
+                    break;
+                case LearningML:
+                    playerControl[seat] = new PlayerControl();
+                    playerControl[seat].init(LearningML, seat, gameIndex, this, null, Info.behaviorName);
+                    break;
+                case Human:
                 default:
                     // Dont Need go do anything- could change this for multple players, and/or can seed some values here 
                     break;
@@ -80,41 +69,40 @@ public class PlayerManager
 
     #region League SetUp
 
-    private void SetLeaguePlayers()
+    private void SetLeaguePlayers(int gameIndex)
     {
-        playerControl[0].initAsMLLearning(Info.LearningPlayersBehaviorNames[0], 0);
-        playerControl[0].subscribePlayer();
-        setLeagueOpponents();
+        playerControl[0] = new PlayerControl();
+        playerControl[0].init(LearningML, 0, gameIndex, this, null, Info.LearningPlayersBehaviorNames[0]);
+        setLeagueOpponents(gameIndex);
     }
 
 
     #endregion
     #region Run Time
 
-    public event Action<int> TickPlayerIndex;
-    public void tickPlayerIndex(int PlayerIndex)
+    public event Action<int, GameState> TickPlayerIndex;
+    public void tickPlayerIndex(int PlayerIndex, GameState gameState)
     {
-        TickPlayerIndex?.Invoke(PlayerIndex);
+        TickPlayerIndex?.Invoke(PlayerIndex, gameState);
     }
 
 
     private OpponentPicker.OpponentChoice[] LeagueOpponents = new OpponentPicker.OpponentChoice[3];
-    private void setLeagueOpponents()
+    private void setLeagueOpponents(int gameIndex)
     {
         OpponentPicker.Pick3(out LeagueOpponents[0], out LeagueOpponents[1], out LeagueOpponents[2]);
 
-        for (int i = 0; i < 3; i++)
+        for (byte i = 1; i < 3; i++)
         {
             switch (LeagueOpponents[i].kind)
             {
-                case OpponentPicker.OpponentKind.DumbGreg:
-                    playerControl[i + 1].initAsDumbGreg(i + 1);
-                    playerControl[i + 1].subscribePlayer();
+                case DumbGreg:
+                    playerControl[i] = new PlayerControl();
+                    playerControl[i].init(DumbGreg, i, gameIndex, this);
                     break;
-
-                case OpponentPicker.OpponentKind.FrozenBrian:
-                    playerControl[i + 1].initAsMLFrozenBrain(LeagueOpponents[i].brain, i + 1);
-                    playerControl[i + 1].subscribePlayer();
+                case FrozenML:
+                    playerControl[i] = new PlayerControl();
+                    playerControl[i].init(FrozenML, i, gameIndex, this, LeagueOpponents[i].brain);
                     break;
             }
         }
@@ -141,12 +129,9 @@ public class PlayerManager
         var gameState = GameRegistry.game[gameIndex].gameState;
         BroadcastTerminalRewards(gameIndex);
 
+        if (!Info.EnableMLLeague) return;
         LeagueGamesPlayed++;
-        byte winner = gameState.Winner;
-        if (Info.EnableMLLeague)
-        {
-            if (gameState.Winner == 0) LeagueGamesWon++;
-        }
+        if (gameState.Winner == 0) LeagueGamesWon++;
     }
 
     public void BroadcastTerminalRewards(int gameIndex)

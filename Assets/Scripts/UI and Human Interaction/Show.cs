@@ -18,8 +18,9 @@ public static class Show
 
     public static void ShowCreateCellOptions()
     {
-        showBoard.HighlightCells(GiveMeOffersContaining(GiveMe: (int)ChoosingTargetCell, Legal: true, Kind: true, ActorsCell: false, TargetCell: false, Type: true, WallConfig: true, intakeCell: false), UI.hic.config.actionLegalTargetHighlight);
+        Debug.LogWarning($"Reached Show Create Cell Options");
         SetGeneralUI(backDropColor: UI.hic.config.createModeBackground, panelColor: UI.hic.config.createModePanelBackground, cellColor: UI.hic.config.defaultCellColor, build: false, create: false, action: false, pieceFull: false, execute: true, walls: false, secondWalls: false);
+        showBoard.HighlightCells(GiveMeOffersContaining(GiveMe: (int)ChoosingTargetCell, Legal: true, Kind: true, ActorsCell: false, TargetCell: false, Type: true, WallConfig: false, intakeCell: false), UI.hic.config.createModeCellHighlight);
         PieceInfo.SetPieceInfo(AFilter.Chosen[(int)ChoosingTargetType]);
     }
 
@@ -51,10 +52,10 @@ public static class Show
 
     public static void WallConfigOptions()
     {
-        UI.hic.wallOptionPanel.showNumberOfWallS(GiveMeOffersContaining(Legal: true, Kind: true, ActorsCell: false, TargetCell: true, Type: true, WallConfig: false, intakeCell: false));
-        UI.hic.wallOptionPanel.FirstWallOptionPanel.SetActive(false);
-        SetGeneralUI(backDropColor: UI.hic.config.ConnectorModeBackground, panelColor: UI.hic.config.buildModePanelBackground, cellColor: UI.hic.config.defaultCellColor, build: false, create: true, action: false, pieceFull: false, execute: false, walls: true, secondWalls: false);
-        UI.hic.wallOptionPanel.showWallConfigOptions();
+        // UI.hic.wallOptionPanel.showNumberOfWallS(GiveMeOffersContaining(Legal: true, Kind: true, ActorsCell: false, TargetCell: true, Type: true, WallConfig: false, intakeCell: false));
+        // UI.hic.wallOptionPanel.FirstWallOptionPanel.SetActive(false);
+        SetGeneralUI(backDropColor: UI.hic.config.ConnectorModeBackground, panelColor: UI.hic.config.buildModePanelBackground, cellColor: UI.hic.config.defaultCellColor, build: false, create: true, action: false, pieceFull: false, execute: false, walls: false, secondWalls: true);
+        UI.hic.wallOptionPanel.showWallConfigOptions(GiveMeOffersContaining(Legal: true, Kind: true, ActorsCell: false, TargetCell: true, Type: true, WallConfig: false, intakeCell: false));
         PieceInfo.SetPieceInfo(AFilter.Chosen[(int)ChoosingTargetType]);
     }
 
@@ -134,32 +135,31 @@ public static class Show
                     break;
             }
         }
-        switch (GiveMe)
-            {
-                case (int)ChoosingTargetCell:
-                    AFilter.cachedLegalTargetCellId = ReturningList;
-                    break;
-                case (int)ChoosingWallConfig:
-                    break;
-            }
+        if (GiveMe == (int)ChoosingWallConfig)
+        {
+            return ReturningList;
+        }
+        AFilter.cachedLegalTargetCellId = ReturningList;
         return ReturningList;
     }
 
-    private static IEnumerable<ushort> GiveMeOffersContaining(bool Legal, bool Kind, bool ActorsCell, bool TargetCell, bool Type, bool WallConfig, bool intakeCell)
-    {
-        List<ushort> ReturningList = new List<ushort>(UIBridge.bm._cellCount);
-        for (int i = 0; i < UIBridge._count; i++)
+        private static IEnumerable<ushort> GiveMeOffersContaining(bool Legal, bool Kind, bool ActorsCell, bool TargetCell, bool Type, bool WallConfig, bool intakeCell)
         {
-            if (UIBridge._offers[i].kind != AFilter.Chosen[(int)ChoosingKind] && Kind) continue;
-            if (UIBridge._offers[i].ActorsCell != AFilter.Chosen[(int)ChoosingActorsCell] && ActorsCell) continue;
-            if (UIBridge._offers[i].TargetCell != AFilter.Chosen[(int)ChoosingTargetCell] && TargetCell) continue;
-            if (UIBridge._offers[i].TargetType != AFilter.Chosen[(int)ChoosingTargetType] && Type) continue;
-            if (UIBridge._offers[i].WallConfig != AFilter.Chosen[(int)ChoosingWallConfig] && WallConfig) continue;
-            if (UIBridge._offers[i].intakeCell != AFilter.Chosen[(int)ChoosingInstakeCellID] && intakeCell) continue;
-            if (UIBridge._mask[i] == 0 && Legal) continue;
-            ReturningList.Add(UIBridge._offers[i].WallConfig);
+            return GiveMeOffersContaining(GiveMe: (int)ChoosingWallConfig, Legal: Legal, Kind: Kind, ActorsCell: ActorsCell, TargetCell: TargetCell, Type: Type, WallConfig: WallConfig, intakeCell: intakeCell).Select(i => unchecked((ushort)i));
         }
-        return ReturningList;
+
+    public static void ShowBuildMenu(IEnumerable<int> TargetTypes)
+    {
+        for (int i = 0; i < TargetTypes.Count(); i++)
+        {
+            var theAction = UIBridge._offers[i];
+            if (theAction.kind != Game.Core.ActionKind.EndTurn) continue; // future: add more non-piece kinds here
+            int cost = Mathf.RoundToInt(UIBridge._quoted[i]);
+            bool legal = UIBridge._mask[i] != 0;
+            int kind = theAction.kind;
+            items.Add(new ActionItem(i.ToString(), UIHelpers.PrettyAction(theAction), cost, legal, Array.Empty<int>(), kind));
+        }
+        UI.hic.nonPieceActionList.Show(items);
     }
 
 

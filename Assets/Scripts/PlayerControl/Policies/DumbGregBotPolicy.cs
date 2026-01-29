@@ -5,8 +5,9 @@ using Action = Game.Core.Action;
 
 
 
-public class DumbGregBotPolicy : IBotPolicy
+public class DumbGregBotPolicy
 {
+    public Bot bot;
     private readonly Random _rng;
 
     private readonly double _pctEndTurnAfterFirst;
@@ -15,48 +16,41 @@ public class DumbGregBotPolicy : IBotPolicy
     private readonly double _pctMoveBuilding;
     private readonly double _pctCreateInstead;
 
-    public DumbGregBotPolicy(
-        double endTurnAfterFirstPct = 0.08,
-        double shootInsteadPct = 0.12,
-        double moveAnotherPct = 0.10,
-        double moveBuildingPct = 0.05,
-        double createInsteadPct = 0.10,
-        int? seed = null)
+    public DumbGregBotPolicy(Bot theBot)
     {
-        _pctEndTurnAfterFirst = Clamp01(endTurnAfterFirstPct);
-        _pctShootInstead = Clamp01(shootInsteadPct);
-        _pctMoveAnother = Clamp01(moveAnotherPct);
-        _pctMoveBuilding = Clamp01(moveBuildingPct);
-        _pctCreateInstead = Clamp01(createInsteadPct);
-        _rng = seed.HasValue ? new Random(seed.Value) : new Random();
+        bot = theBot;
+        _pctEndTurnAfterFirst = Clamp01(Info.dumbGreg.endTurnAfterFirstPct);
+        _pctShootInstead = Clamp01(Info.dumbGreg.shootInsteadPct);
+        _pctMoveAnother = Clamp01(Info.dumbGreg.moveAnotherPct);
+        _pctMoveBuilding = Clamp01(Info.dumbGreg.moveBuildingPct);
+        _pctCreateInstead = Clamp01(Info.dumbGreg.createInsteadPct);
+        _rng = new Random();
     }
 
 
 
-    public int PickAction(in OfferQuery q,
-                          ReadOnlySpan<Game.Core.Action> acts,
-                          ReadOnlySpan<float> costs,
-                          ReadOnlySpan<byte> mask,
-                          int gameIndex,
-                          byte playerId)
-    {
-        var gameState = GameRegistry.game[gameIndex].gameState;
 
-        bool firstAction = gameState.ps[playerId].actionIndexThisTurn == 0;
-        int endIdx = FindEndTurn(acts);
+
+    public int PickAction()
+    {
+        bot.BuildOffersForCurrentPlayer();
+        var gameState = GameRegistry.game[bot.gameIndex].gameState;
+
+        bool firstAction = gameState.ps[bot.playerId].actionIndexThisTurn == 0;
+        int endIdx = FindEndTurn(bot.Offers);
 
         // ===== Tier 1: CaptureVP (gated) =====
-        int capIdx = FindBestByCost(acts, costs, mask, ActionKind.CaptureVP);
+        int capIdx = FindBestByCost(bot.Offers, bot.Quoted, bot.ActionMask, ActionKind.CaptureVP);
         if (capIdx >= 0)
         {
             if (!firstAction && Chance(_pctEndTurnAfterFirst) && endIdx >= 0) return endIdx;
-            int bestShoot = FindBestByCost(acts, costs, mask, ActionKind.Shoot);
+            int bestShoot = FindBestByCost(bot.Offers, bot.Quoted, bot.ActionMask, ActionKind.Shoot);
             if (Chance(_pctShootInstead) && bestShoot >= 0) return bestShoot;
             return capIdx;
         }
 
         // ===== Tier 2: CoreDamage (gated) =====
-        int coreIdx = FindBestByCost(acts, costs, mask, ActionKind.CoreDamage);
+        int coreIdx = FindBestByCost(bot.Offers, bot.Quoted, bot.ActionMask, ActionKind.CoreDamage);
         if (coreIdx >= 0)
         {
             if (!firstAction && Chance(_pctEndTurnAfterFirst) && endIdx >= 0) return endIdx;
@@ -67,9 +61,9 @@ public class DumbGregBotPolicy : IBotPolicy
         int bestMoveNB = -1, secondMoveNB = -1, bestMoveNBDelta = 0, bestMoveNBAfter = int.MaxValue;
         int bestMoveBld = -1, bestMoveBldDelta = 0;
         int bestShootIdx = -1;
-        ScanMovesAndShoot(q, acts, costs, mask,
+        ScanMovesAndShoot(bot.Offers, bot.Quoted, bot.ActionMask,
             out bestMoveNB, out secondMoveNB, out bestMoveNBDelta, out bestMoveNBAfter,
-            out bestMoveBld, out bestMoveBldDelta, out bestShootIdx, gameIndex);
+            out bestMoveBld, out bestMoveBldDelta, out bestShootIdx, bot.gameIndex);
 
         if (bestMoveNB >= 0)
         {
@@ -82,14 +76,14 @@ public class DumbGregBotPolicy : IBotPolicy
             // small chance to create instead (only if any create exists)
             if (Chance(_pctCreateInstead))
             {
-                int createIdx = PickCreateBiased(q, acts, costs, mask, preferNonBuilding: true);
+                int createIdx = PickCreateBiased(bot.Offers, bot.Quoted, bot.ActionMask, preferNonBuilding: true);
                 if (createIdx >= 0) return createIdx;
             }
             return bestMoveNB;
         }
 
         // ===== Tier 4: Shoot (gated) =====
-        bestShootIdx = FindBestByCost(acts, costs, mask, ActionKind.Shoot);
+        bestShootIdx = FindBestByCost(bot.Offers, bot.Quoted, bot.ActionMask, ActionKind.Shoot);
         if (bestShootIdx >= 0)
         {
             if (!firstAction && Chance(_pctEndTurnAfterFirst) && endIdx >= 0) return endIdx;
@@ -97,7 +91,7 @@ public class DumbGregBotPolicy : IBotPolicy
         }
 
         // ===== Tier 5: Push (gated) =====
-        int pushIdx = FindBestByCost(acts, costs, mask, ActionKind.Push);
+        int pushIdx = FindBestByCost(bot.Offers, bot.Quoted, bot.ActionMask, ActionKind.Push);
         if (pushIdx >= 0)
         {
             if (!firstAction && Chance(_pctEndTurnAfterFirst) && endIdx >= 0) return endIdx;
@@ -105,7 +99,7 @@ public class DumbGregBotPolicy : IBotPolicy
         }
 
         // ===== Tier 5: Create (gated) =====
-        int createPick = PickCreateBiased(q, acts, costs, mask, preferNonBuilding: true);
+        int createPick = PickCreateBiased(bot.Offers, bot.Quoted, bot.ActionMask, preferNonBuilding: true);
         if (createPick >= 0)
         {
             if (!firstAction && Chance(_pctEndTurnAfterFirst) && endIdx >= 0) return endIdx;
@@ -146,7 +140,7 @@ public class DumbGregBotPolicy : IBotPolicy
         return bestIdx;
     }
 
-    private static void ScanMovesAndShoot(in OfferQuery q,
+    private static void ScanMovesAndShoot(
                                           ReadOnlySpan<Game.Core.Action> acts,
                                           ReadOnlySpan<float> costs,
                                           ReadOnlySpan<byte> mask,
@@ -210,31 +204,31 @@ public class DumbGregBotPolicy : IBotPolicy
 
     private static float Cost(ReadOnlySpan<float> costs, int i) => (i >= 0 && i < costs.Length) ? costs[i] : 0f;
 
-    private int PickCreateBiased(in OfferQuery q,
+    private int PickCreateBiased(
                                  ReadOnlySpan<Game.Core.Action> acts,
                                  ReadOnlySpan<float> costs,
                                  ReadOnlySpan<byte> mask,
                                  bool preferNonBuilding)
     {
         // First try non-building creates
-        int pick = PickCreateWeighted(q, acts, costs, mask, mustBeBuilding: false);
+        int pick = PickCreateWeighted(acts, costs, mask, mustBeBuilding: false);
         if (pick >= 0) return pick;
         if (!preferNonBuilding)
         {
             // Allow building creates next
-            pick = PickCreateWeighted(q, acts, costs, mask, mustBeBuilding: true);
+            pick = PickCreateWeighted(acts, costs, mask, mustBeBuilding: true);
             if (pick >= 0) return pick;
         }
         else
         {
             // If we prefer non-building but none exist, then consider buildings as a last resort
-            pick = PickCreateWeighted(q, acts, costs, mask, mustBeBuilding: true);
+            pick = PickCreateWeighted(acts, costs, mask, mustBeBuilding: true);
             if (pick >= 0) return pick;
         }
         return -1;
     }
 
-    private int PickCreateWeighted(in OfferQuery q,
+    private int PickCreateWeighted(
                                    ReadOnlySpan<Game.Core.Action> acts,
                                    ReadOnlySpan<float> costs,
                                    ReadOnlySpan<byte> mask,

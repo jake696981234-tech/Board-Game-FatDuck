@@ -69,4 +69,6 @@ public static class ShowRightPanel
         }
         UI.hic.nonPieceActionList.Show(items);
     }
+
+    
 }

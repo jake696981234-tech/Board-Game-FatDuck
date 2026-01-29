@@ -12,25 +12,12 @@ using static Game.Core.ActionKind; // import enum values
 
 public class MLSam : Agent
 {
-    [Header("Identity")]
-    [SerializeField] public byte playerId = 0; // 0..3
-    public Action[] Offers;
-    public int NumberOfOffers;
-    public float[] Quoted;
-    public byte[] ActionMask;
-    public int gameIndex;
+    public Bot bot;
     public float[] Observations;
     public int Count;
-    public int MaxPlayers;
     public RewardsTuning rewards;
     public int[] ChosenAction = new int[6];
     public MLActions.MLState mlState = ChoosingKind;
-    
-
-    public void init() // to do
-    {
-        
-    }
 
     public void TickMe()
     {
@@ -54,11 +41,11 @@ public class MLSam : Agent
 
     public void ApplyTerminal(byte winner)
     {
-        if (winner == 255 || winner >= MaxPlayers)
+        if (winner == 255 || winner >= Info.playerCount)
         {
             AddReward(rewards.rewardDraw);
         }
-        else if (winner == playerId)
+        else if (winner == bot.playerId)
         {
             AddReward(rewards.rewardWin);
         }

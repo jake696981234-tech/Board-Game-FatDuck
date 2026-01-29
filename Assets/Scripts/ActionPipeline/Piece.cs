@@ -34,6 +34,7 @@ public static class Piece
 
     public static void SetActiveAbilitesEnabledFromType()
     {
+        ActiveAbilitesEnabledFromType = new bool[typeCount , ActiveAbilityCount]; 
         for (int type = 0; type < typeCount; type++)
         {
             ActiveAbilitesEnabledFromType[type, (int)Move] = move_enabled[type];

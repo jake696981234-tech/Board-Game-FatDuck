@@ -2,36 +2,39 @@ using UnityEngine;
 using Game.Core;
 using System;
 using Unity.MLAgents.Policies;
-using static PlayerManager.PlayerType;
 using Unity.InferenceEngine;
+using static Info.ControlMode;
+
 
 
 public class PlayerControl
 {
+    public PlayerManager playerManager;
+    private int gameIndex;
+    private GameState gameState;
     private bool isLearning = false;
-    private PlayerManager.PlayerType playerType;
+    private Info.ControlMode playerType;
     private MLSam MLsam;
     private BehaviorParameters MyMLParamters;
     GameObject MLObjectRoot;
     private DumbGregBotPolicy dumbGreg;
-    public PlayerManager playerManager;
-    public int playerIndex;
-    public void tickPlayer(int playerId)
+    
+    public byte playerIndex;
+    public void tickPlayer(int playerId, GameState gameState)
     {
         if (playerIndex != playerId) return;
         switch (playerType)
         {
             case DumbGreg:
-                dumbGreg.DecideAndAct();
+                gameState.Perform(dumbGreg.bot.Offers[dumbGreg.PickAction()], dumbGreg.bot.Offers);
                 break;
-            case ML:
+            case FrozenML:
+            case LearningML:
                 MLsam.RequestDecision();
                 break;
             default:
-                {
-                    Debug.LogWarning($"This is Broken!");
-                    break;
-                }
+                Debug.LogWarning($"This is Broken!");
+                break;
         }
     }
 
@@ -49,42 +52,62 @@ public class PlayerControl
         if (isLearning) MLsam.ApplyTerminal(winner);
     }
 
+    
+
  
-
-    public void start()
+    public void init(Info.ControlMode thePlayerType, byte thePlayerIndex, int theGameIndex, PlayerManager thePlayerManager, ModelAsset MyBrain = null, string behaviorName = null)
     {
+        gameIndex = theGameIndex;
+        playerManager = thePlayerManager;
+        gameState = GameRegistry.game[gameIndex].gameState;
+        playerIndex = thePlayerIndex;
+        playerType = thePlayerType; 
+
+        subscribePlayer();
+
+        switch(playerType)
+        {
+            case FrozenML:
+                initAsMLFrozenBrain(MyBrain);
+                break;
+            case LearningML:
+                initAsMLLearning(behaviorName);
+                break;
+            case DumbGreg:
+                initAsDumbGreg();
+                break;
+        }
+    }
+   
+
+    private void initAsDumbGreg()
+    {
+        var bot = new Bot(playerIndex, gameIndex);
+        dumbGreg = new DumbGregBotPolicy(bot);
+    }
+
+    private void initAsMLFrozenBrain(ModelAsset MyBrain)
+    {
+        MLsam.bot = new Bot(playerIndex, gameIndex);
         prepMLBot();
-    }
-
-    public void initAsDumbGreg(int PlayerIndex)
-    {
-        dumbGreg = new DumbGregBotPolicy();
-        playerIndex = PlayerIndex;
-        playerType = DumbGreg; //to do- finish this method
-    }
-
-    public void initAsMLFrozenBrain(ModelAsset MyBrain, int PlayerIndex)
-    {
         MLsam = new MLSam();
-        playerIndex = PlayerIndex;
         isLearning = false;
 
         MyMLParamters.BehaviorName = Info.behaviorName; // this might not need this
         MyMLParamters.DeterministicInference = true;
         MyMLParamters.BehaviorType = BehaviorType.InferenceOnly;
-        MyMLParamters.Model = MyBrain;   
-        MLsam.init();
+        MyMLParamters.Model = MyBrain;
     }
-    public void initAsMLLearning(string behaviorName, int PlayerIndex)
+    private void initAsMLLearning(string behaviorName)
     {
         MLsam = new MLSam();
-        playerIndex = PlayerIndex;
         isLearning = true;
 
         MyMLParamters.BehaviorName = behaviorName;
         MyMLParamters.DeterministicInference = false;
-        MLsam.init();
+        MLsam.bot = new Bot(playerIndex, gameIndex); 
     }
+
 
     private void prepMLBot()
     {
@@ -105,6 +128,10 @@ public class PlayerControl
 
     
 
-
+    public struct BootSpecficPlayerInfo
+    {
+        public ModelAsset MyBrain;
+        public string behaviorName;
+    }
 
 }

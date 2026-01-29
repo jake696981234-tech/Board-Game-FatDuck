@@ -45,12 +45,10 @@ public sealed class WallOptionPanel : MonoBehaviour
         }
     }
 
-    public void showWallConfigOptions()
+    public void showWallConfigOptions(IEnumerable<ushort> wallsToShow)
     {
         DestoryAllWallOptions();
         wallConfigOption.Clear();
-
-        IEnumerable<ushort> wallsToShow;
 
         var seen = new HashSet<ushort>();
             wallsToShow = cachedwallOptions

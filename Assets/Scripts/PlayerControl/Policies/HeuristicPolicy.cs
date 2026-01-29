@@ -1,52 +1,52 @@
-using System;
-using Game.Core;
+// using System;
+// using Game.Core;
 
-public sealed class HeuristicPolicy : IBotPolicy
-{
-    public int PickAction(in OfferQuery q,
-                          ReadOnlySpan<Game.Core.Action> acts,
-                          ReadOnlySpan<float> costs,
-                          ReadOnlySpan<byte> mask,
-                          int gameIndex,
-                          byte playerId)
-    {
-        const float EPS = 1e-4f;
-        float bestCost = float.PositiveInfinity;
-        int bestIdx = -1;
-        int bestDist = int.MaxValue;
+// public sealed class HeuristicPolicy : Bot
+// {
+//     public int PickAction(in OfferQuery q,
+//                           ReadOnlySpan<Game.Core.Action> acts,
+//                           ReadOnlySpan<float> costs,
+//                           ReadOnlySpan<byte> mask,
+//                           int gameIndex,
+//                           byte playerId)
+//     {
+//         const float EPS = 1e-4f;
+//         float bestCost = float.PositiveInfinity;
+//         int bestIdx = -1;
+//         int bestDist = int.MaxValue;
 
-        var bm = GameRegistry.game[gameIndex].boardModel;
+//         var bm = GameRegistry.game[gameIndex].boardModel;
 
-        for (int i = 0; i < acts.Length; i++)
-        {
-            if (i >= mask.Length || mask[i] == 0) continue;
-            if (acts[i].kind == ActionKind.EndTurn) continue;
-            float c = (i < costs.Length) ? costs[i] : 0f;
+//         for (int i = 0; i < acts.Length; i++)
+//         {
+//             if (i >= mask.Length || mask[i] == 0) continue;
+//             if (acts[i].kind == ActionKind.EndTurn) continue;
+//             float c = (i < costs.Length) ? costs[i] : 0f;
 
-            int dist = DistanceToVpForAction(bm, in acts[i]);
-            bool better = (c < bestCost - EPS) || (Math.Abs(c - bestCost) <= EPS && dist < bestDist);
-            if (better) { bestCost = c; bestIdx = i; bestDist = dist; }
-        }
-        return bestIdx;
-    }
+//             int dist = DistanceToVpForAction(bm, in acts[i]);
+//             bool better = (c < bestCost - EPS) || (Math.Abs(c - bestCost) <= EPS && dist < bestDist);
+//             if (better) { bestCost = c; bestIdx = i; bestDist = dist; }
+//         }
+//         return bestIdx;
+//     }
 
-    private static int DistanceToVpForAction(BoardModel bm, in Game.Core.Action a)
-    {
-        switch (a.kind)
-        {
-            case ActionKind.Move:
-            case ActionKind.CaptureVP:
-            case ActionKind.Create:
-            case ActionKind.Spawner:
-                return bm.DistToVictoryPoint(a.TargetCell);
-            case ActionKind.Shoot:
-            case ActionKind.CoreDamage:
-            case ActionKind.Push:
-            case ActionKind.Launcher:
-                return bm.DistToVictoryPoint(a.ActorsCell);
-            default:
-                return int.MaxValue / 4;
-        }
-    }
-}
+//     private static int DistanceToVpForAction(BoardModel bm, in Game.Core.Action a)
+//     {
+//         switch (a.kind)
+//         {
+//             case ActionKind.Move:
+//             case ActionKind.CaptureVP:
+//             case ActionKind.Create:
+//             case ActionKind.Spawner:
+//                 return bm.DistToVictoryPoint(a.TargetCell);
+//             case ActionKind.Shoot:
+//             case ActionKind.CoreDamage:
+//             case ActionKind.Push:
+//             case ActionKind.Launcher:
+//                 return bm.DistToVictoryPoint(a.ActorsCell);
+//             default:
+//                 return int.MaxValue / 4;
+//         }
+//     }
+// }
 
