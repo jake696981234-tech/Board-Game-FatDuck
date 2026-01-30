@@ -4,23 +4,24 @@ using System.Text;
 
 public static class EndRoundTotals
 {
-    public static bool EndRoundTotalsVisible = false;
+    
 
     public static void SubscribeEndRoundTotals()
     {
-        UI.hic.ShowMeEndRoundTotals.onClick.AddListener(() => flipBool());
-        UI.hic.ShowMeEndRoundTotals.onClick.AddListener(() => updateEndRoundTotals());
+        UI.hic.ShowMeEndRoundTotals.onClick.AddListener(() => DisplaySelect.ToggleLeftPanels(ordinals: false, payout: true, actionSelect: false));
+        UI.hic.ShowOrdinals.onClick.AddListener(() => DisplaySelect.ToggleLeftPanels(ordinals: true, payout: false, actionSelect: false));
+        UI.hic.ShowActionSelectionButton.onClick.AddListener(() => DisplaySelect.ToggleLeftPanels(ordinals: false, payout: false, actionSelect: true));
     }
 
-    public static void flipBool()
-    {
-        if (!EndRoundTotalsVisible) { EndRoundTotalsVisible = true; } else {EndRoundTotalsVisible = false; }
-        UI.hic.SubscribedUIRoot.SetActive(!EndRoundTotalsVisible);
-        UI.hic.EndRoundTotalsRoot.SetActive(EndRoundTotalsVisible);
-    }
+    // public static void flipBool()
+    // {
+    //     if (!EndRoundTotalsVisible) { EndRoundTotalsVisible = true; } else {EndRoundTotalsVisible = false; }
+    //     UI.hic.SubscribedUIRoot.SetActive(!EndRoundTotalsVisible);
+    //     UI.hic.EndRoundTotalsRoot.SetActive(EndRoundTotalsVisible);
+    // }
     public static void updateEndRoundTotals()
     {
-        if (!EndRoundTotalsVisible) return;
+        if (!DisplaySelect.EndRoundTotalsVisible) return;
 
         PerPiecePayout perPiecePayout = PassiveActions.ComputeDetailedPlayerFactoryIncome(UIBridge._humanPlayer, UIBridge.gameIndex);
         float totalFactory = PassiveActions.ComputeFactoryIncome(UIBridge._humanPlayer, UIBridge.gameIndex);

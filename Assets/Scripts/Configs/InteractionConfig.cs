@@ -60,6 +60,13 @@ public class InteractionConfig : ScriptableObject
     public bool altWallSelect = false;
     public bool skipNumberWallSelect = false;
 
+    [Header("Board UI Toggles")]
+    public bool showCellIds = false;
+    public bool showPieceHP = true;
+    [Tooltip("When enabled, logs connector masks for each piece as snapshots are applied.")]
+    public bool logConnectorMasks = false;
+
+
     [System.Serializable]
     public struct FactionColor
     {

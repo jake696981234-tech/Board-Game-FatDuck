@@ -15,7 +15,7 @@ public static class showBoard
     private static readonly Dictionary<int, Sprite> _spriteCache = new();
 
 
-    private static void OnEnable() { ApplyCellIdVisibility(UI.hic.showCellIds); }
+    private static void OnEnable() { ApplyCellIdVisibility(UI.hic.config.showCellIds); }
 
     public static void IndexCellViews()
     {
@@ -62,13 +62,13 @@ public static class showBoard
 
     public static void SetShowCellIds(bool on)
     {
-        UI.hic.showCellIds = on;
+        UI.hic.config.showCellIds = on;
         ApplyCellIdVisibility(on);
     }
 
     public static void SetShowPieceHP(bool on)
     {
-        UI.hic.showPieceHP = on;
+        UI.hic.config.showPieceHP = on;
         if (UIBridge._snapshot == null) return;
         for (int i = 0; i < _piecePool.Count; i++)
         {
@@ -202,7 +202,7 @@ public static class showBoard
 
 
         // IDs
-        showBoard.ApplyCellIdVisibility(UI.hic.showCellIds);
+        showBoard.ApplyCellIdVisibility(UI.hic.config.showCellIds);
 
         // --- Clear all cell status labels up front ---
         foreach (var kv in _cellById)
@@ -257,10 +257,10 @@ public static class showBoard
 
             v.setWalls();
 
-            v.SetHP(UIBridge._snapshot.pieceHP[i], UI.hic.showPieceHP);
+            v.SetHP(UIBridge._snapshot.pieceHP[i], UI.hic.config.showPieceHP);
             v.SetVisible(true);
 
-            if (UI.hic.logConnectorMasks)
+            if (UI.hic.config.logConnectorMasks)
             {
                 string mask = v.wallConfig.HasValue
                     ? Convert.ToString(v.wallConfig.Value, 2).PadLeft(6, '0')

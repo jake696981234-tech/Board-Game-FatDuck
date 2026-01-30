@@ -92,7 +92,7 @@ public static class PushAction
         }
         else
         {
-            int pushedCellID = BmCac.ComputePushDestination(bm.GetCellOccupant(theAction.TargetCell), bm.GetPieceTypeFromCell(theAction.ActorsCell), bm.GetCellOccupant(theAction.TargetCell), gameIndex);
+            int pushedCellID = BmCac.ComputePushDestination(actorPieceId: bm.GetCellOccupant(theAction.ActorsCell), actorType: bm.GetPieceTypeFromCell(theAction.ActorsCell), targetPieceId: bm.GetCellOccupant(theAction.TargetCell), gameIndex: gameIndex);
             bm.MovePieceRow(bm.GetCellOccupant(theAction.TargetCell), pushedCellID);
         }
         GameActions.RefreshConnectorState(gameIndex);

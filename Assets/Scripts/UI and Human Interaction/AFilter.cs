@@ -17,17 +17,17 @@ public static class AFilter
         // }
         // if (uIType == Cell) UI.hic.BackgroundExit.gameObject.SetActive(true);
         
-        bool correctInput = IsCorrectInput();
-        if (!correctInput) 
+        if (!IsCorrectInput()) 
         { 
-            Debug.Log($"Correct Input ={correctInput}"); 
             ResetClickedData();
+            DisplaySelect.updateDisplaySelect();
             return; 
         }
         // Show.displayPieceInfo();
         if (advaPathAndTryPerformAction()) return;
         UI.hic.Personal_ChoosingState.text = State.ToString();
-        ShowNextAction();
+        DisplaySelect.updateDisplaySelect();
+        Show.NextAction();
     }
 
     public static bool advaPathAndTryPerformAction()
@@ -104,7 +104,7 @@ public static class AFilter
                         State = ChoosingTargetType;
                         return false;                                       
                     case ChoosingTargetType:                   
-                        Chosen[(int)ChoosingTargetType] = UInput[(int)Cell];
+                        Chosen[(int)ChoosingTargetType] = UInput[(int)BuildItem];
                         PerformAction(iNeedKind: true, iNeedActorsCell: true, iNeedTargetCell: false, TargetType: true, iNeedWallConfig: false, iNeedintakeCell: false);
                         return true;                 
                 }
@@ -163,6 +163,7 @@ public static class AFilter
             reset();
             return;
         }
+        Debug.LogWarning($"UI Perform failed to find action AKA fix me!");
         reset();
     }
 
@@ -191,26 +192,7 @@ public static class AFilter
          return false;
     }
 
-    private static void ShowNextAction()
-    {
-        ResetClickedData();
-        switch (State)
-        {
-            case ChoosingKind:
-                Show.ShowActionsForAPiece();
-                return;
-            case ChoosingTargetCell:
-                if (Chosen[(int)ChoosingKind] == Create) { Show.ShowCreateCellOptions(); return; }
-                Show.ShowTargetCellOptions();
-                return;
-            case ChoosingTargetType:
-                Show.ShowUpgradeOptions();
-                return;
-            case ChoosingWallConfig:
-                Show.WallConfigOptions();
-                return;
-        }
-    }
+   
 
 
 
@@ -234,7 +216,7 @@ public static class AFilter
         EndRoundTotals.updateEndRoundTotals();
     }
 
-    private static void ResetClickedData()
+    public static void ResetClickedData()
     {
         for (int i = 0; i < UInput.Length; i++) UInput[i] = -1;
     }

@@ -293,7 +293,7 @@ public static class CreateAction
 
          var TargetCell = theAction.TargetCell;
 
-        PaySacCost(theAction, player, gameIndex);
+        // PaySacCost(theAction, player, gameIndex);
 
         int pid = bm.AllocateRow();
         bm.PlacePieceRow(pid, player, (byte)theAction.TargetType, TargetCell, Piece.maxHP[theAction.TargetType]);
@@ -308,135 +308,135 @@ public static class CreateAction
         GameActions.RefreshConnectorState(gameIndex);
     }
 
-    public static void PaySacCost(Action theAction, byte player, int gameIndex)
-    {
-        var bm = GameRegistry.game[gameIndex].boardModel;
-        if (Piece.sacrificeCost_enabled[theAction.TargetType])
-        {
-            int need = Piece.sacrificeCost_howManyItNeeds[theAction.TargetType];
-            if (need > 0 && theAction.SacCost != null)
-            {
-                int killed = 0;
-                for (int i = 0; i < theAction.SacCost.Length && killed < need; i++)
-                {
-                    int pieceid = theAction.SacCost[i];
-                    if (!bm.IsValidPieceId(pieceid)) continue;
-                    if (bm.GetPieceOwner(pieceid) != player) continue;
-                    GameActions.pieceKilled(pieceid, gameIndex);
-                    killed++;
-                }
-                if (killed < need) return; // safety: not enough valid sacrifices
-            }
-        }
-    }
+    // public static void PaySacCost(Action theAction, byte player, int gameIndex)
+    // {
+    //     var bm = GameRegistry.game[gameIndex].boardModel;
+    //     if (Piece.sacrificeCost_enabled[theAction.TargetType])
+    //     {
+    //         int need = Piece.sacrificeCost_howManyItNeeds[theAction.TargetType];
+    //         if (need > 0 && theAction.SacCost != null)
+    //         {
+    //             int killed = 0;
+    //             for (int i = 0; i < theAction.SacCost.Length && killed < need; i++)
+    //             {
+    //                 int pieceid = theAction.SacCost[i];
+    //                 if (!bm.IsValidPieceId(pieceid)) continue;
+    //                 if (bm.GetPieceOwner(pieceid) != player) continue;
+    //                 GameActions.pieceKilled(pieceid, gameIndex);
+    //                 killed++;
+    //             }
+    //             if (killed < need) return; // safety: not enough valid sacrifices
+    //         }
+    //     }
+    // }
 
 
 
 
-    public static bool CopyOfGenerateSacrificeCosts(List<Game.Core.Action> actions, ref OfferBuild offerBuild)
-    {
-        // We must preserve the original actions while computing,
-        // because we are going to overwrite this same list later.
-        int actionCount = actions.Count;
+    // public static bool CopyOfGenerateSacrificeCosts(List<Game.Core.Action> actions, ref OfferBuild offerBuild)
+    // {
+    //     // We must preserve the original actions while computing,
+    //     // because we are going to overwrite this same list later.
+    //     int actionCount = actions.Count;
 
-        // Cache original actions (shallow copy is enough)
-        // This prevents us from destroying our input.
-        var sourceActions = new List<Game.Core.Action>(actions);
+    //     // Cache original actions (shallow copy is enough)
+    //     // This prevents us from destroying our input.
+    //     var sourceActions = new List<Game.Core.Action>(actions);
 
-        // All actions share the same pieceType
-        var firstAction = sourceActions[0];
-        int pieceType = firstAction.TargetType;
+    //     // All actions share the same pieceType
+    //     var firstAction = sourceActions[0];
+    //     int pieceType = firstAction.TargetType;
 
-        int needPerAction = Piece.sacrificeCost_howManyItNeeds[pieceType];
-        bool requiresSpecific = Piece.sacrificeCost_isNeedsSpecificPiece[pieceType];
-        int requiredType = Piece.sacrificeCost_specificPiece[pieceType];
+    //     int needPerAction = Piece.sacrificeCost_howManyItNeeds[pieceType];
+    //     bool requiresSpecific = Piece.sacrificeCost_isNeedsSpecificPiece[pieceType];
+    //     int requiredType = Piece.sacrificeCost_specificPiece[pieceType];
 
-        var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
-        // ------------------------------------------------------------------
-        // 1) Get all pieces owned by the player
-        // ------------------------------------------------------------------
-        int[] owned = Scratch.GetScratchCellBuffer(offerBuild.gameIndex);
-        int ownedCount = bm.GetOwnedPieceIds(offerBuild.query.playerId, owned);
+    //     var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
+    //     // ------------------------------------------------------------------
+    //     // 1) Get all pieces owned by the player
+    //     // ------------------------------------------------------------------
+    //     int[] owned = Scratch.GetScratchCellBuffer(offerBuild.gameIndex);
+    //     int ownedCount = bm.GetOwnedPieceIds(offerBuild.query.playerId, owned);
 
-        if (ownedCount < needPerAction)
-            return false;
+    //     if (ownedCount < needPerAction)
+    //         return false;
 
-        // ------------------------------------------------------------------
-        // 2) Build eligible list (shared across all actions)
-        // ------------------------------------------------------------------
-        int eligibleCount = 0;
-        for (int i = 0; i < ownedCount; i++)
-        {
-            int pid = owned[i];
-            if (firstAction.kind == Upgrade)
-            {
-              if (bm.pieceCellId[pid] == bm.GetCellOccupant(firstAction.ActorsCell)) continue;  
-            }  
-            if (!bm.IsValidPieceId(pid)) continue;
-            if (requiresSpecific && bm.pieceType[pid] != requiredType) continue;
+    //     // ------------------------------------------------------------------
+    //     // 2) Build eligible list (shared across all actions)
+    //     // ------------------------------------------------------------------
+    //     int eligibleCount = 0;
+    //     for (int i = 0; i < ownedCount; i++)
+    //     {
+    //         int pid = owned[i];
+    //         if (firstAction.kind == Upgrade)
+    //         {
+    //           if (bm.pieceCellId[pid] == bm.GetCellOccupant(firstAction.ActorsCell)) continue;  
+    //         }  
+    //         if (!bm.IsValidPieceId(pid)) continue;
+    //         if (requiresSpecific && bm.pieceType[pid] != requiredType) continue;
 
-            owned[eligibleCount++] = pid;
-        }
+    //         owned[eligibleCount++] = pid;
+    //     }
 
-        if (eligibleCount < needPerAction) return false;
+    //     if (eligibleCount < needPerAction) return false;
             
 
-        return addCostCac(owned, needPerAction, sourceActions, actions);
+    //     return addCostCac(owned, needPerAction, sourceActions, actions);
 
-    }
+    // }
 
     //input- All Elgiable Pieces, if it needs spercfic, what the sperfic is. theAction
 
-    public static bool addCostCac(int[] PieceCandidates, int howManyNeeded, List<Action> sourceActions, List<Action> actions)
-    {
-        Array.Sort(PieceCandidates, 0, PieceCandidates.Length); // deterministic
+    // public static bool addCostCac(int[] PieceCandidates, int howManyNeeded, List<Action> sourceActions, List<Action> actions)
+    // {
+    //     Array.Sort(PieceCandidates, 0, PieceCandidates.Length); // deterministic
 
-        // ------------------------------------------------------------------
-        // 3) Generate ALL valid combinations per action
-        // ------------------------------------------------------------------
-        bool foundAny = false;
-        int[] combination = new int[howManyNeeded];
+    //     // ------------------------------------------------------------------
+    //     // 3) Generate ALL valid combinations per action
+    //     // ------------------------------------------------------------------
+    //     bool foundAny = false;
+    //     int[] combination = new int[howManyNeeded];
 
-        void RecurseChoose(int startIndex, int depth, Game.Core.Action baseAction)
-        {
-            if (depth == howManyNeeded)
-            {
-                int[] addCost = new int[howManyNeeded];
-                Array.Copy(combination, addCost, howManyNeeded);
+    //     void RecurseChoose(int startIndex, int depth, Game.Core.Action baseAction)
+    //     {
+    //         if (depth == howManyNeeded)
+    //         {
+    //             int[] addCost = new int[howManyNeeded];
+    //             Array.Copy(combination, addCost, howManyNeeded);
 
-                // Sort addCost descending
-                Array.Sort(addCost);
-                Array.Reverse(addCost);
+    //             // Sort addCost descending
+    //             Array.Sort(addCost);
+    //             Array.Reverse(addCost);
 
-                actions.Add(new Game.Core.Action
-                {
-                    kind = baseAction.kind,
-                    ActorsCell = baseAction.ActorsCell,
-                    TargetCell = baseAction.TargetCell,
-                    TargetType = baseAction.TargetType,
-                    WallConfig = baseAction.WallConfig,
-                    SacCost = addCost
-                });
+    //             actions.Add(new Game.Core.Action
+    //             {
+    //                 kind = baseAction.kind,
+    //                 ActorsCell = baseAction.ActorsCell,
+    //                 TargetCell = baseAction.TargetCell,
+    //                 TargetType = baseAction.TargetType,
+    //                 WallConfig = baseAction.WallConfig,
+    //                 SacCost = addCost
+    //             });
 
-                foundAny = true;
-                return;
-            }
+    //             foundAny = true;
+    //             return;
+    //         }
 
-            int remaining = howManyNeeded - depth;
-            for (int i = startIndex; i <= PieceCandidates.Length - remaining; i++)
-            {
-                combination[depth] = PieceCandidates[i];
-                RecurseChoose(i + 1, depth + 1, baseAction);
-            }
-        }
+    //         int remaining = howManyNeeded - depth;
+    //         for (int i = startIndex; i <= PieceCandidates.Length - remaining; i++)
+    //         {
+    //             combination[depth] = PieceCandidates[i];
+    //             RecurseChoose(i + 1, depth + 1, baseAction);
+    //         }
+    //     }
 
-        actions.Clear();
-        for (int ai = 0; ai < actions.Count; ai++)
-        {
-            var baseAction = sourceActions[ai];
-            RecurseChoose(0, 0, baseAction);
-        }
+    //     actions.Clear();
+    //     for (int ai = 0; ai < actions.Count; ai++)
+    //     {
+    //         var baseAction = sourceActions[ai];
+    //         RecurseChoose(0, 0, baseAction);
+    //     }
 
-        return foundAny;
-    }
+    //     return foundAny;
+    // }
 }

@@ -24,6 +24,18 @@ public sealed class HumanInteractionController : MonoBehaviour
     [Header("Config & Refs")]
     public InteractionConfig config;
 
+    
+    [Header("Action Selection Display")]
+    public Button ShowActionSelectionButton;
+    public GameObject ActionSelectionDisplayRoot;
+    public TMP_Text displaykind;
+    public TMP_Text displayActorsCell;
+    public TMP_Text displayTargetCell;
+    public TMP_Text displayTargetType;
+    public TMP_Text displayWallConfig;
+    public TMP_Text displayIntakeCell;
+
+
     [Header("Canvas/UI")]
     
     public Button BackgroundExitButton;
@@ -73,6 +85,7 @@ public sealed class HumanInteractionController : MonoBehaviour
     public TMP_Text Header_ModeText;
 
     //my own little additon- New Event Manager system, might update everything to go through that script
+    public Button ShowOrdinals; 
     public GameObject SubscribedUIRoot;
     public TMP_Text turnNumberText;
     public TMP_Text roundNumberText;
@@ -137,14 +150,12 @@ public sealed class HumanInteractionController : MonoBehaviour
     public TMP_Text[] pieceInfoHeaders;
     public TMP_Text[] pieceInfoFeilds;
 
-    [Header("Toggles")]
-    public bool showCellIds = false;
-    public bool showPieceHP = true;
-    [Tooltip("When enabled, logs connector masks for each piece as snapshots are applied.")]
-    public bool logConnectorMasks = false;
+    // [Header("Toggles")]
+    // public bool showCellIds = false;
+    // public bool showPieceHP = true;
+    // [Tooltip("When enabled, logs connector masks for each piece as snapshots are applied.")]
+    // public bool logConnectorMasks = false;
 
-    //I dont think i need this
-    //[SerializeField, Range(0, 3)] public static byte _humanPlayer = 0; // bound by bootstrapper 
     #endregion
 
 

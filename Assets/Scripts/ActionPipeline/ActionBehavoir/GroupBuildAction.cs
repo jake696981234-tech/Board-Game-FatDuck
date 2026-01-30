@@ -87,7 +87,7 @@ public static class GroupBuildAction
                 ActorsCell = baseAction.ActorsCell,
                 TargetCell = baseAction.TargetCell,
                 TargetType = baseAction.TargetType,
-                SacCost = clusterCells.ToArray()
+                // SacCost = clusterCells.ToArray()
             });
             foundAny = true;
         }
@@ -139,18 +139,18 @@ public static class GroupBuildAction
     {
         var bm = GameRegistry.game[gameIndex].boardModel;
         
-        if (Piece.groupBuild_deletion[bm.GetPieceTypeFromCell(theAction.ActorsCell)]) groupBuildDeletion(theAction, gameIndex);
+        // if (Piece.groupBuild_deletion[bm.GetPieceTypeFromCell(theAction.ActorsCell)]) groupBuildDeletion(theAction, gameIndex);
         CreateAction.placePiece(theAction, player, gameIndex);
     }
 
-    private static void groupBuildDeletion(Action theAction, int gameIndex)
-    {
-        var bm = GameRegistry.game[gameIndex].boardModel;
+    // private static void groupBuildDeletion(Action theAction, int gameIndex)
+    // {
+    //     var bm = GameRegistry.game[gameIndex].boardModel;
 
-        for (int i = 0; i < theAction.SacCost.Length; i++)
-        {
-            int victim = bm.GetCellOccupant(theAction.SacCost[i]);
-            GameActions.pieceKilled(victim, gameIndex);
-        }   
-    }
+    //     for (int i = 0; i < theAction.SacCost.Length; i++)
+    //     {
+    //         int victim = bm.GetCellOccupant(theAction.SacCost[i]);
+    //         GameActions.pieceKilled(victim, gameIndex);
+    //     }   
+    // }
 }

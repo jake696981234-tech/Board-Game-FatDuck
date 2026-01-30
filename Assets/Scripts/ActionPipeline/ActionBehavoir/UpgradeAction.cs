@@ -29,7 +29,7 @@ public static class UpgradeAction
             };
 
             List<Action> CreateActions = new List<Action> {theAction};
-            if (Piece.sacrificeCost_enabled[upgradedToPieceType] && !CreateAction.GenerateSacrificeCosts(CreateActions, ref offerBuild)) return;
+            // if (Piece.sacrificeCost_enabled[upgradedToPieceType] && !CreateAction.GenerateSacrificeCosts(CreateActions, ref offerBuild)) return;
             for (int i = 0; i < CreateActions.Count; i++) { OfferProvider.Emit(CreateActions[i], ref offerBuild); }
         }
     }
@@ -42,7 +42,7 @@ public static class UpgradeAction
         var gameState = GameRegistry.game[gameIndex].gameState;
         var bm = GameRegistry.game[gameIndex].boardModel;
 
-        CreateAction.PaySacCost(theAction, player, gameIndex);
+        // CreateAction.PaySacCost(theAction, player, gameIndex);
 
         var UpgradedFromPieceId = bm.GetCellOccupant(theAction.ActorsCell);
         var sourceConnector = bm.pieceConnectorConfig[UpgradedFromPieceId];

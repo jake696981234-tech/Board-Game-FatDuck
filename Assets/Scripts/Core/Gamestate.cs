@@ -130,10 +130,10 @@ namespace Game.Core
                 if (theAction.TargetCell != offers[i].TargetCell) continue;
                 if (theAction.TargetType != offers[i].TargetType) continue;
                 if (theAction.WallConfig != offers[i].WallConfig) continue;
-                if ((theAction.kind == Create || theAction.kind == Upgrade) && Piece.sacrificeCost_enabled[theAction.TargetType])
-                {
-                    if (!SacCostEquals(theAction.SacCost, offers[i].SacCost)) continue;
-                }
+                // if ((theAction.kind == Create || theAction.kind == Upgrade) && Piece.sacrificeCost_enabled[theAction.TargetType])
+                // {
+                //     if (!SacCostEquals(theAction.SacCost, offers[i].SacCost)) continue;
+                // }
                 return true;
             }
             return false;

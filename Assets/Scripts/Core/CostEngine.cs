@@ -10,10 +10,6 @@ using static Game.Core.ActionKind; // import enum values
 /// </summary>
 public static class CostEngine
 {
-    public static int baseActionCost;
-    public static float actionGrowthFactor;
-
-
     /// <summary>
     /// Pure read: return the deterministic price of taking <paramref name="theAction"/> in the given context.
     /// Quote = TurnFee(k) + AbilityCost + BuildCost, where k = cur.actionIndexThisTurn.
@@ -22,35 +18,7 @@ public static class CostEngine
     public static int Quote(in Action theAction, int gameIndex, int player)
     {
         var gameState = GameRegistry.game[gameIndex].gameState;
-        var bm = GameRegistry.game[gameIndex].boardModel;
-
-        // Turn fee: 0 for the first action; then geometric progression from config.
-        int k = gameState.ps[player].actionIndexThisTurn; // before taking this action
-        int turnFee = (k == 0) ? 0 : RoundToInt(baseActionCost * MathF.Pow(actionGrowthFactor, k - 1));
-
-
-        // Ability surcharge: none for EndTurn/invalid.
-        int botSurcharge = 0;
-
-        if (gameState.ps[player].applyBotSurcharges) botSurcharge = whatIsbotSurcharge(gameState.ps[player], theAction, gameIndex);
-        // Build cost: Create or Spawner actions.
-        int buildCost = 0;
-        if (theAction.kind == ActionKind.Create)
-        {
-            buildCost = Piece.BuildCost[theAction.TargetType]; // new accessor on PieceDefinition
-        }
-        else if (theAction.kind == ActionKind.Spawner)
-        {
-            int targetType = Piece.spawn_targetType[bm.GetPieceTypeFromCell(theAction.ActorsCell)];
-            int amount = Piece.spawn_pieceAmount[bm.GetPieceTypeFromCell(theAction.ActorsCell)];
-            if (targetType >= 0 && amount > 0) buildCost = Piece.BuildCost[targetType] * amount;
-        }
-        else if (theAction.kind == ActionKind.Upgrade)
-        {
-            buildCost = Piece.BuildCost[bm.GetPieceTypeFromCell(theAction.ActorsCell)];
-        }
-
-        return turnFee + botSurcharge + buildCost;
+        return turnFee(player, gameState) + whatIsbotSurcharge(in gameState.ps[player], in theAction, gameIndex) + buildCost(theAction, gameIndex);
     }
 
     /// <summary>
@@ -131,7 +99,7 @@ public static class CostEngine
     public static int turnFee(in PlayerState cur)
     {
         int ActionIndex = cur.actionIndexThisTurn;
-        return (ActionIndex == 0) ? 0 : RoundToInt(baseActionCost * MathF.Pow(actionGrowthFactor, ActionIndex - 1));
+        return (ActionIndex == 0) ? 0 : RoundToInt(Info.baseActionCost * MathF.Pow(Info.actionGrowthFactor, ActionIndex - 1));
     }
 
     public static int turnFee(int PlayerIndex, GameState gameState)

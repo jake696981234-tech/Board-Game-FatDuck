@@ -9,6 +9,26 @@ using static AFilter.UICState;
 
 public static class Show
 {
+    public static void NextAction()
+    {
+        AFilter.ResetClickedData();
+        switch (AFilter.State)
+        {
+            case ChoosingKind:
+                ShowActionsForAPiece();
+                return;
+            case ChoosingTargetCell:
+                if (AFilter.Chosen[(int)ChoosingKind] == Create) { ShowCreateCellOptions(); return; }
+                ShowTargetCellOptions();
+                return;
+            case ChoosingTargetType:
+                ShowUpgradeOptions();
+                return;
+            case ChoosingWallConfig:
+                WallConfigOptions();
+                return;
+        }
+    }
    public static void ShowActionsForAPiece()
     {
         SetGeneralUI(backDropColor: UI.hic.config.pieceActionBackground, panelColor: UI.hic.config.pieceActionPanelBackground, cellColor: UI.hic.config.defaultCellColor, build: false, create: true, action: false, pieceFull: true, execute: false, walls: false, secondWalls: false);
@@ -77,11 +97,19 @@ public static class Show
         for (int i = 0; i < UIBridge._count; i++)
         {
             var action = UIBridge._offers[i];
-            if (action.kind == EndTurn) continue; // exclude non-piece actions
-            if (action.kind == Create) continue;
-            if (action.kind == Move && !UI.hic.config.GiveRawActionOffers)
             {
                 if (!seen.Add(action.TargetCell)) continue;
+            }
+            switch (action.kind)
+            {
+                case EndTurn:
+                case Create:
+                    continue;
+                case Move:
+                case Shoot:
+                    if (UI.hic.config.GiveRawActionOffers) break;
+                    if (!seen.Add(action.kind)) continue;
+                    break;
             }
             bool legal = UIBridge._mask[i] != 0;
             int kind = action.kind;
