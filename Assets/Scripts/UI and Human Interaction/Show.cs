@@ -115,7 +115,7 @@ public static class Show
             if (UIBridge._offers[i].TargetCell != AFilter.Chosen[(int)ChoosingTargetCell] && TargetCell) continue;
             if (UIBridge._offers[i].TargetType != AFilter.Chosen[(int)ChoosingTargetType] && TargetType) continue;
             if (UIBridge._offers[i].WallConfig != AFilter.Chosen[(int)ChoosingWallConfig] && WallConfig) continue;
-            if (UIBridge._offers[i].intakeCell != AFilter.Chosen[(int)ChoosingInstakeCellID] && intakeCell) continue;
+            if (UIBridge._offers[i].IntakeCell != AFilter.Chosen[(int)ChoosingInstakeCellID] && intakeCell) continue;
             if (UIBridge._mask[i] == 0 && Legal) continue;
             
             // if (action.addCost == null || action.addCost.Length == 0) continue;

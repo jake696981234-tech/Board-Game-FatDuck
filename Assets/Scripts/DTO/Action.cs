@@ -43,9 +43,9 @@ namespace Game.Core
         /// For Shoot: targetPieceId; otherwise 0.
         /// </summary>
         public ushort WallConfig;
-        public int intakeCell;
+        public int IntakeCell;
 
-        public int[] addCost;
+        public int[] SacCost;
 
         /// <summary>Convenience constructor (optional).</summary>
         public Action(int kind, int ActorsCell, int TargetCell = -1, int TargetType = -1, ushort WallConfig = 0, int intakeCell = -1, int[] addCost = null)
@@ -55,8 +55,8 @@ namespace Game.Core
             this.TargetCell = TargetCell;
             this.TargetType = TargetType;
             this.WallConfig = WallConfig; //wall of 6 options
-            this.intakeCell = intakeCell; 
-            this.addCost = addCost ?? Array.Empty<int>();
+            this.IntakeCell = intakeCell; 
+            this.SacCost = addCost ?? Array.Empty<int>();
         }
 
         // public override string ToString()

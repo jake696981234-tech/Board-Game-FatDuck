@@ -132,7 +132,7 @@ namespace Game.Core
                 if (theAction.WallConfig != offers[i].WallConfig) continue;
                 if ((theAction.kind == Create || theAction.kind == Upgrade) && Piece.sacrificeCost_enabled[theAction.TargetType])
                 {
-                    if (!SacCostEquals(theAction.addCost, offers[i].addCost)) continue;
+                    if (!SacCostEquals(theAction.SacCost, offers[i].SacCost)) continue;
                 }
                 return true;
             }

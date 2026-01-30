@@ -223,7 +223,7 @@ public static class CreateAction
                     TargetCell = baseAction.TargetCell,
                     TargetType = baseAction.TargetType,
                     WallConfig = baseAction.WallConfig,
-                    addCost = addCost
+                    SacCost = addCost
                 });
 
                 foundAny = true;
@@ -285,12 +285,12 @@ public static class CreateAction
         if (Piece.sacrificeCost_enabled[theAction.TargetType])
         {
             int need = Piece.sacrificeCost_howManyItNeeds[theAction.TargetType];
-            if (need > 0 && theAction.addCost != null)
+            if (need > 0 && theAction.SacCost != null)
             {
                 int killed = 0;
-                for (int i = 0; i < theAction.addCost.Length && killed < need; i++)
+                for (int i = 0; i < theAction.SacCost.Length && killed < need; i++)
                 {
-                    int pieceid = theAction.addCost[i];
+                    int pieceid = theAction.SacCost[i];
                     if (!bm.IsValidPieceId(pieceid)) continue;
                     if (bm.GetPieceOwner(pieceid) != player) continue;
                     GameActions.pieceKilled(pieceid, gameIndex);
@@ -386,7 +386,7 @@ public static class CreateAction
                     TargetCell = baseAction.TargetCell,
                     TargetType = baseAction.TargetType,
                     WallConfig = baseAction.WallConfig,
-                    addCost = addCost
+                    SacCost = addCost
                 });
 
                 foundAny = true;

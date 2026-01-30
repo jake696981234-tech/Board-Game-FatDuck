@@ -87,7 +87,7 @@ public static class GroupBuildAction
                 ActorsCell = baseAction.ActorsCell,
                 TargetCell = baseAction.TargetCell,
                 TargetType = baseAction.TargetType,
-                addCost = clusterCells.ToArray()
+                SacCost = clusterCells.ToArray()
             });
             foundAny = true;
         }
@@ -147,9 +147,9 @@ public static class GroupBuildAction
     {
         var bm = GameRegistry.game[gameIndex].boardModel;
 
-        for (int i = 0; i < theAction.addCost.Length; i++)
+        for (int i = 0; i < theAction.SacCost.Length; i++)
         {
-            int victim = bm.GetCellOccupant(theAction.addCost[i]);
+            int victim = bm.GetCellOccupant(theAction.SacCost[i]);
             GameActions.pieceKilled(victim, gameIndex);
         }   
     }

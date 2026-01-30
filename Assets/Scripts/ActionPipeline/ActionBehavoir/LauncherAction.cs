@@ -18,7 +18,7 @@ public static class LauncherAction
                 kind = Move,
                 ActorsCell = cell,
                 TargetCell = dst,
-                intakeCell = tgtPid, //to do, probs needs fix this, this encoding seems weird
+                IntakeCell = tgtPid, //to do, probs needs fix this, this encoding seems weird
             };
             OfferProvider.Emit(theAction, ref offerBuild);
         }
@@ -80,7 +80,7 @@ public static class LauncherAction
     {
         var bm = GameRegistry.game[gameIndex].boardModel;
 
-        int targetPid = a.intakeCell;
+        int targetPid = a.IntakeCell;
         if (targetPid < 0) return;
         bm.MovePieceRow(targetPid, a.TargetCell);
         GameActions.RefreshConnectorState(gameIndex);

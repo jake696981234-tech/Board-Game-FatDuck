@@ -41,7 +41,7 @@ public static class UIHelpers
             case Game.Core.ActionKind.Push: return $"Push target @ {theAction.TargetCell}";
             case Game.Core.ActionKind.GroupBuild: return $"Group Build {theAction.TargetType} @ {theAction.TargetCell}";
             case Game.Core.ActionKind.Upgrade: return $"Upgrade → {UIBridge.bm.GetPieceTypeFromCell(theAction.ActorsCell)} @ {theAction.TargetCell}";
-            case Game.Core.ActionKind.Launcher: return $"Launch {theAction.intakeCell} → {theAction.TargetCell}";
+            case Game.Core.ActionKind.Launcher: return $"Launch {theAction.IntakeCell} → {theAction.TargetCell}";
             // case Game.Core.ActionKind.Spawner:
             //     // pieceType carries the actor type; aux carries the target type for readability
             //     return $"Spawn x? {(theAction.aux != 0 ? theAction.aux : Piece.spawn_targetType[theAction.pieceType])} @ {theAction.TargetCell}"; to do

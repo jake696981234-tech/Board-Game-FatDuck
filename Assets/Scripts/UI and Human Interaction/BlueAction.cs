@@ -158,7 +158,7 @@ public static class AFilter
             if (UIBridge._offers[theAction].TargetCell != Chosen[(int)ChoosingTargetCell] && iNeedTargetCell) continue;
             if (UIBridge._offers[theAction].TargetType != Chosen[(int)ChoosingTargetType] && TargetType) continue;
             if (UIBridge._offers[theAction].WallConfig != Chosen[(int)ChoosingWallConfig] && iNeedWallConfig) continue;
-            if (UIBridge._offers[theAction].intakeCell != Chosen[(int)ChoosingInstakeCellID] && iNeedintakeCell) continue;
+            if (UIBridge._offers[theAction].IntakeCell != Chosen[(int)ChoosingInstakeCellID] && iNeedintakeCell) continue;
             UIBridge.PerformActionIndex(UIBridge._offers[theAction]);
             reset();
             return;

@@ -237,7 +237,7 @@ public static class MLActions
             if (MLSam.bot.Offers[theAction].TargetCell != MLSam.ChosenAction[(int)ChoosingTargetCell] && iNeedTargetCell) continue;
             if (MLSam.bot.Offers[theAction].TargetType != MLSam.ChosenAction[(int)ChoosingTargetType] && TargetType) continue;
             if (MLSam.bot.Offers[theAction].WallConfig != MLSam.ChosenAction[(int)ChoosingWallConfig] && iNeedWallConfig) continue;
-            if (MLSam.bot.Offers[theAction].intakeCell != MLSam.ChosenAction[(int)ChoosingInstakeCellID] && iNeedintakeCell) continue;
+            if (MLSam.bot.Offers[theAction].IntakeCell != MLSam.ChosenAction[(int)ChoosingInstakeCellID] && iNeedintakeCell) continue;
             peformAction(MLSam.bot.Offers[theAction], MLSam);
         }
     }
