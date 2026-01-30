@@ -1,5 +1,6 @@
 // Assets/Scripts/UI/HIC/InteractionConfig.cs
 using UnityEngine;
+using System.Collections.Generic;
 
 [CreateAssetMenu(menuName = "BGO/InteractionConfig")]
 public class InteractionConfig : ScriptableObject
@@ -25,7 +26,6 @@ public class InteractionConfig : ScriptableObject
     public Color createModeCellHighlight = new(0.1f, 0.1f, 0.1f, 0.85f);
     public Color SacrificeCostCellHighlight = new(0.1f, 0.1f, 0.1f, 0.85f);
 
-    // NOTE: We now use ONE colour for all legal action cells:
     public Color actionLegalTargetHighlight = new(0.1f, 0.1f, 0.1f, 0.85f);
     public Color defaultCellColor = Color.white;
 
@@ -35,6 +35,16 @@ public class InteractionConfig : ScriptableObject
     public Color cellDisabledTint = new(0.50f, 0.50f, 0.50f, 1f);
 
     public Color selectionHighlight = new(0.85f, 0.85f, 0.10f, 0.80f);
+
+    [Header("Build Menu")]
+    public Color BuildingColour = new(0f, 0.5450981f, 0.5450981f, 1f);
+    public Color SoldierColour = new(0.7215686f, 0.5254902f, 0.04313726f, 1f);
+
+    public List<FactionColor> FactionColors;
+
+
+
+
 
     [Header("Input")]
     public bool blockInputWhenNotYourTurn = true;
@@ -49,4 +59,11 @@ public class InteractionConfig : ScriptableObject
     public bool HumanTimeDecrease = false;
     public bool altWallSelect = false;
     public bool skipNumberWallSelect = false;
+
+    [System.Serializable]
+    public struct FactionColor
+    {
+        public string faction;
+        public Color color;
+    }
 }

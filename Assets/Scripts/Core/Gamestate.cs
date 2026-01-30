@@ -29,8 +29,15 @@ namespace Game.Core
         
         #region The Action method
 
-        
         public bool Perform(in Action theAction, Action[] offers)
+        {
+            bool success = ActuallyPerform(theAction, offers);
+            TickPlayer();
+            return success;
+        }
+
+        
+        private bool ActuallyPerform(in Action theAction, Action[] offers)
         {
             ref var cur = ref ps[currentPlayer];
 
@@ -102,7 +109,7 @@ namespace Game.Core
             // Tell listeners (Bootstrapper/View) to refresh visuals
             OnActionExecuted?.Invoke();
             return true;
-
+            
         }
 
         
@@ -154,7 +161,6 @@ namespace Game.Core
             if (LogEnabled) DbLog.onTurnBegin(currentPlayer, gameIndex);
             if (ps[currentPlayer].applyStartOfTurnBudgetDecrease) ps[currentPlayer].AddBudget(-(float)Info.startOfTurnBudgetDecrease);
             PiecesSides.RecomputeConnectorComponents(gameIndex);
-            TickPlayer();
         }
 
         private void ApplyEndTurn()

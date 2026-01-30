@@ -15,7 +15,7 @@ public static class AFilter
         //     UIBridge.PerformActionIndex(UIHelpers.FindEndTurnIndex());
         //     reset();
         // }
-        if (uIType == Cell) UI.hic.BackgroundExit.gameObject.SetActive(true);
+        // if (uIType == Cell) UI.hic.BackgroundExit.gameObject.SetActive(true);
         
         bool correctInput = IsCorrectInput();
         if (!correctInput) 
@@ -24,8 +24,10 @@ public static class AFilter
             ResetClickedData();
             return; 
         }
-        Show.displayPieceInfo();
-        if (!advaPathAndTryPerformAction()) ShowNextAction();
+        // Show.displayPieceInfo();
+        if (advaPathAndTryPerformAction()) return;
+        UI.hic.Personal_ChoosingState.text = State.ToString();
+        ShowNextAction();
     }
 
     public static bool advaPathAndTryPerformAction()
@@ -86,11 +88,11 @@ public static class AFilter
                             State = ChoosingWallConfig;
                             return false;
                         }
-                        PerformAction(iNeedKind: true, iNeedActorsCell: false, iNeedTargetCell: true, TargetType: false, iNeedWallConfig: false, iNeedintakeCell: false);
+                        PerformAction(iNeedKind: true, iNeedActorsCell: false, iNeedTargetCell: true, TargetType: true, iNeedWallConfig: false, iNeedintakeCell: false);
                         return true;                   
                     case ChoosingWallConfig:                
                         Chosen[(int)ChoosingWallConfig] = UInput[(int)WallConfig];
-                        PerformAction(iNeedKind: true, iNeedActorsCell: false, iNeedTargetCell: true, TargetType: false, iNeedWallConfig: true, iNeedintakeCell: false);
+                        PerformAction(iNeedKind: true, iNeedActorsCell: false, iNeedTargetCell: true, TargetType: true, iNeedWallConfig: true, iNeedintakeCell: false);
                         return false;
                 }
                 break;
@@ -131,6 +133,22 @@ public static class AFilter
         return false;  
     }
 
+    // private static void PerformAction(bool iNeedKind, bool iNeedActorsCell, bool iNeedTargetCell, bool TargetType, bool iNeedWallConfig, bool iNeedintakeCell)
+    // {
+    //     for (int theAction = 0; theAction < UIBridge._count; theAction++)
+    //     {
+    //         if (UIBridge._offers[theAction].kind != Chosen[(int)ChoosingKind] && iNeedKind) continue;
+    //         if (UIBridge._offers[theAction].ActorsCell != Chosen[(int)ChoosingActorsCell] && iNeedActorsCell) continue;
+    //         if (UIBridge._offers[theAction].TargetCell != Chosen[(int)ChoosingTargetCell] && iNeedTargetCell) continue;
+    //         if (UIBridge._offers[theAction].TargetType != Chosen[(int)ChoosingTargetType] && TargetType) continue;
+    //         if (UIBridge._offers[theAction].WallConfig != Chosen[(int)ChoosingWallConfig] && iNeedWallConfig) continue;
+    //         if (UIBridge._offers[theAction].intakeCell != Chosen[(int)ChoosingInstakeCellID] && iNeedintakeCell) continue;
+    //         UIBridge.PerformActionIndex(UIBridge._offers[theAction]);
+    //         reset();
+    //         return;
+    //     }
+    // }
+
     private static void PerformAction(bool iNeedKind, bool iNeedActorsCell, bool iNeedTargetCell, bool TargetType, bool iNeedWallConfig, bool iNeedintakeCell)
     {
         for (int theAction = 0; theAction < UIBridge._count; theAction++)
@@ -142,19 +160,19 @@ public static class AFilter
             if (UIBridge._offers[theAction].WallConfig != Chosen[(int)ChoosingWallConfig] && iNeedWallConfig) continue;
             if (UIBridge._offers[theAction].intakeCell != Chosen[(int)ChoosingInstakeCellID] && iNeedintakeCell) continue;
             UIBridge.PerformActionIndex(UIBridge._offers[theAction]);
-            State = ChoosingActorsCell;
             reset();
             return;
         }
+        reset();
     }
 
     private static bool IsCorrectInput()
     {
-        if (uIType == Cancel) { Debug.Log($"Clicked Cancel"); reset();  return false; }
+        if (uIType == Cancel) { reset();  return false; }
         switch (State)
         {
             case ChoosingActorsCell:
-                if ((uIType == BuildItem && Chosen[(int)ChoosingKind] == -1) || uIType == Cell) return true;
+                if ((uIType == BuildItem && Chosen[(int)ChoosingKind] == -1) || (uIType == Cell && Show.DoesThisPieceHaveActions(UInput[(int)Cell]))) return true;
                 return true;
             case ChoosingKind:
                 if (uIType == PieceActionKind) return true;
@@ -199,10 +217,12 @@ public static class AFilter
     public static void reset()
     {
         ResetClickedData();
+        State = ChoosingActorsCell;
+        UI.hic.Personal_ChoosingState.text = State.ToString();
         for (int i = 0; i < Chosen.Length; i++) Chosen[i] = -1;
 
         UIBridge.RebuildOffersForCurrentPlayer();
-        ShowRightPanel.PushNonPieceActionList();
+        ShowRightPanel.PushEndTurn();
         ShowRightPanel.PushCreateActionMenu();
 
         showBoard.ClearHighlights();
@@ -224,7 +244,7 @@ public static class AFilter
 
     #region fields
     public static UIType uIType;
-    public static List<int> cachedLegalTargetCellId = new List<int>(UIBridge.bm._cellCount);
+    public static List<int> cachedLegalTargetCellId;
     public static int[] Chosen = new int[6];
     public static int[] UInput = new int[6];
     public static UICState State = ChoosingActorsCell;

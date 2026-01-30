@@ -12,24 +12,23 @@ public static class Show
    public static void ShowActionsForAPiece()
     {
         SetGeneralUI(backDropColor: UI.hic.config.pieceActionBackground, panelColor: UI.hic.config.pieceActionPanelBackground, cellColor: UI.hic.config.defaultCellColor, build: false, create: true, action: false, pieceFull: true, execute: false, walls: false, secondWalls: false);
-        PieceInfo.SetPieceInfo(AFilter.Chosen[(int)ChoosingTargetType]);
+        PieceInfo.SetPieceInfo(UIBridge.bm.GetPieceTypeFromCell(AFilter.Chosen[(int)ChoosingActorsCell]));
         PushPieceActionListForSelection();
     }
-
     public static void ShowCreateCellOptions()
     {
-        Debug.LogWarning($"Reached Show Create Cell Options");
-        SetGeneralUI(backDropColor: UI.hic.config.createModeBackground, panelColor: UI.hic.config.createModePanelBackground, cellColor: UI.hic.config.defaultCellColor, build: false, create: false, action: false, pieceFull: false, execute: true, walls: false, secondWalls: false);
-        showBoard.HighlightCells(GiveMeOffersContaining(GiveMe: (int)ChoosingTargetCell, Legal: true, Kind: true, ActorsCell: false, TargetCell: false, Type: true, WallConfig: false, intakeCell: false), UI.hic.config.createModeCellHighlight);
+        SetGeneralUI(backDropColor: UI.hic.config.createModeBackground, panelColor: UI.hic.config.createModePanelBackground, cellColor: UI.hic.config.defaultCellColor, build: false, create: true, action: false, pieceFull: false, execute: false, walls: false, secondWalls: false);
+        showBoard.HighlightCells(GiveMeOffersContaining(GiveMe: (int)ChoosingTargetCell, Legal: true, Kind: true, ActorsCell: false, TargetCell: false, TargetType: true, WallConfig: false, intakeCell: false), UI.hic.config.createModeCellHighlight);
         PieceInfo.SetPieceInfo(AFilter.Chosen[(int)ChoosingTargetType]);
     }
-
     public static void ShowTargetCellOptions()
     {
         if (UI.hic.actionTitleText) UI.hic.actionTitleText.text = $"Action: {AFilter.Chosen[(int)ChoosingKind]}"; // to do, probs need fix it to enum to string
         if (UI.hic.actionPieceText) UI.hic.actionPieceText.text = $"Piece #{UIBridge.bm.occupantPieceId[AFilter.Chosen[(int)ChoosingActorsCell]]}";
+        SetGeneralUI(backDropColor: UI.hic.config.actionExecuteBackground, panelColor: UI.hic.config.pieceActionPanelBackground, cellColor: UI.hic.config.defaultCellColor, build: false, create: false, action: false, pieceFull: false, execute: true, walls: false, secondWalls: false);
         // if (UI.hic.actionCostText) UI.hic.actionCostText.text = $"Cost: {action.cost}"; to do, add cost
-        showBoard.HighlightCells(GiveMeOffersContaining(GiveMe: (int)ChoosingTargetCell, Legal: true, Kind: true, ActorsCell: true, TargetCell: false, Type: true, WallConfig: true, intakeCell: false), UI.hic.config.actionLegalTargetHighlight);
+        showBoard.HighlightCells(GiveMeOffersContaining(GiveMe: (int)ChoosingTargetCell, Legal: true, Kind: true, ActorsCell: true, TargetCell: false, TargetType: false, WallConfig: false, intakeCell: false), UI.hic.config.actionLegalTargetHighlight);
+        PieceInfo.SetPieceInfo(UIBridge.bm.GetPieceTypeFromCell(AFilter.Chosen[(int)ChoosingActorsCell]));
     }
 
     public static void ShowUpgradeOptions()
@@ -74,31 +73,17 @@ public static class Show
     private static void PushPieceActionListForSelection()
     {
         var items = new List<ActionItem>();
-        bool moveAddedForCell = false;
-        
+        var seen = new HashSet<int>();
         for (int i = 0; i < UIBridge._count; i++)
         {
             var action = UIBridge._offers[i];
             if (action.kind == EndTurn) continue; // exclude non-piece actions
-            // if (action.kind == GroupBuild) to do- re add this path
-            // {
-            //     if (!IsGroupBuildForSelection(action, UIBridge._mask[i])) continue;
-            // }
-            // else
-            {
-                if (action.ActorsCell != AFilter.Chosen[(int)ChoosingActorsCell]) continue;               // only actions from this piece
-                if (action.kind != Upgrade && action.TargetType != UIBridge.bm.GetPieceTypeFromCell(AFilter.Chosen[(int)ChoosingTargetType])) continue;
-            }
-
-            // Show only one Move per selected piece unless raw offers requested
+            if (action.kind == Create) continue;
             if (action.kind == Move && !UI.hic.config.GiveRawActionOffers)
             {
-                if (moveAddedForCell) continue;
-                moveAddedForCell = true;
+                if (!seen.Add(action.TargetCell)) continue;
             }
-
             bool legal = UIBridge._mask[i] != 0;
-
             int kind = action.kind;
             string label = UIHelpers.PrettyAction(action);
             int cost = Mathf.RoundToInt(UIBridge._quoted[i]);
@@ -109,7 +94,18 @@ public static class Show
         UI.hic.pieceActionListFull.Show(items);
     }
 
-    public static IEnumerable<int> GiveMeOffersContaining(byte GiveMe, bool Legal, bool Kind, bool ActorsCell, bool TargetCell, bool Type, bool WallConfig, bool intakeCell)
+    // DoesThisHave(Have: (int)ChoosingActorsCell, Legal: true, Kind: true, ActorsCell: false, TargetCell: false, Type: true, WallConfig: false, intakeCell: false)
+    public static bool DoesThisPieceHaveActions(int cell)
+    {
+        for (int i = 0; i < UIBridge._count; i++)
+        {
+            if (UIBridge._offers[i].ActorsCell == cell) return true;
+            
+        }
+        return false;
+    }
+
+    public static IEnumerable<int> GiveMeOffersContaining(byte GiveMe, bool Legal, bool Kind, bool ActorsCell, bool TargetCell, bool TargetType, bool WallConfig, bool intakeCell)
     {
         List<int> ReturningList = new List<int>(UIBridge.bm._cellCount);
         for (int i = 0; i < UIBridge._count; i++)
@@ -117,7 +113,7 @@ public static class Show
             if (UIBridge._offers[i].kind != AFilter.Chosen[(int)ChoosingKind] && Kind) continue;
             if (UIBridge._offers[i].ActorsCell != AFilter.Chosen[(int)ChoosingActorsCell] && ActorsCell) continue;
             if (UIBridge._offers[i].TargetCell != AFilter.Chosen[(int)ChoosingTargetCell] && TargetCell) continue;
-            if (UIBridge._offers[i].TargetType != AFilter.Chosen[(int)ChoosingTargetType] && Type) continue;
+            if (UIBridge._offers[i].TargetType != AFilter.Chosen[(int)ChoosingTargetType] && TargetType) continue;
             if (UIBridge._offers[i].WallConfig != AFilter.Chosen[(int)ChoosingWallConfig] && WallConfig) continue;
             if (UIBridge._offers[i].intakeCell != AFilter.Chosen[(int)ChoosingInstakeCellID] && intakeCell) continue;
             if (UIBridge._mask[i] == 0 && Legal) continue;
@@ -135,10 +131,7 @@ public static class Show
                     break;
             }
         }
-        if (GiveMe == (int)ChoosingWallConfig)
-        {
-            return ReturningList;
-        }
+        if (GiveMe == (int)ChoosingWallConfig) return ReturningList;
         AFilter.cachedLegalTargetCellId = ReturningList;
         return ReturningList;
     }
@@ -147,7 +140,7 @@ public static class Show
         {
             int cachedKind = AFilter.Chosen[(int)ChoosingKind];
             AFilter.Chosen[(int)ChoosingKind] = Kind;
-            IEnumerable<int> returningList = GiveMeOffersContaining(GiveMe: GiveMe, Legal: Legal, Kind: true, ActorsCell: ActorsCell, TargetCell: TargetCell, Type: Type, WallConfig: WallConfig, intakeCell: intakeCell);
+            IEnumerable<int> returningList = GiveMeOffersContaining(GiveMe: GiveMe, Legal: Legal, Kind: true, ActorsCell: ActorsCell, TargetCell: TargetCell, TargetType: Type, WallConfig: WallConfig, intakeCell: intakeCell);
             AFilter.Chosen[(int)ChoosingKind] = cachedKind;
             return returningList;
         }
@@ -155,7 +148,7 @@ public static class Show
 
         public static IEnumerable<ushort> GiveMeOffersContaining(bool Legal, bool Kind, bool ActorsCell, bool TargetCell, bool Type, bool WallConfig, bool intakeCell)
         {
-            return GiveMeOffersContaining(GiveMe: (int)ChoosingWallConfig, Legal: Legal, Kind: Kind, ActorsCell: ActorsCell, TargetCell: TargetCell, Type: Type, WallConfig: WallConfig, intakeCell: intakeCell).Select(i => unchecked((ushort)i));
+            return GiveMeOffersContaining(GiveMe: (int)ChoosingWallConfig, Legal: Legal, Kind: Kind, ActorsCell: ActorsCell, TargetCell: TargetCell, TargetType: Type, WallConfig: WallConfig, intakeCell: intakeCell).Select(i => unchecked((ushort)i));
         }
 
     

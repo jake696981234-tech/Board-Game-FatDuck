@@ -109,6 +109,7 @@ public class GameController : MonoBehaviour
         SetDataBaseLogging();
         setInspectGame();
         gameState.BeginTurn();
+        gameState.TickPlayer();
     }
     private void setGameConfigValues()
     {
@@ -161,9 +162,9 @@ public class GameController : MonoBehaviour
         
         // pick the first seat marked Human
         byte humanSeat = 0;
-        for (byte s = 0; s < Info.playerCount; s++)
+        for (byte seat = 0; seat < Info.playerCount; seat++)
         {
-            if (Info.playerControl[s] == Info.ControlMode.Human) { humanSeat = s; break; }
+            if (Info.playerControl[seat] == Info.ControlMode.Human) { humanSeat = seat; break; }
         }
 
         UIBridge.Init(hic, gameIndex, humanSeat);

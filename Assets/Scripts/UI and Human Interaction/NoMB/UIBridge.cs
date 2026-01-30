@@ -64,7 +64,7 @@ public static class UIBridge
 
         // Build the query from live systems (readonly struct → must use constructor)
         var query = new OfferQuery(
-            gameState.CurrentPlayerId,
+            _humanPlayer,
             gameState.PieceLimitEnabled,
             gameState.pieceLimitPerPlayer
         );

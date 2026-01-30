@@ -29,6 +29,15 @@ MonoBehaviour:
   cellPressedTint: {r: 0.9098039, g: 0.3647059, b: 0.3647059, a: 1}
   cellDisabledTint: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   selectionHighlight: {r: 0.85, g: 0.85, b: 0.1, a: 0.8}
+  BuildingColour: {r: 0, g: 0.5450981, b: 0.5450981, a: 1}
+  SoldierColour: {r: 0.7215686, g: 0.5254902, b: 0.04313726, a: 1}
+  FactionColors:
+  - faction: Bear
+    color: {r: 0.5031446, g: 0.19903484, b: 0.10917282, a: 1}
+  - faction: Frog
+    color: {r: 0.06220075, g: 0.5345911, b: 0.09510474, a: 1}
+  - faction: Penguin
+    color: {r: 0.043787736, g: 0.40376174, b: 0.51572317, a: 1}
   blockInputWhenNotYourTurn: 1
   GiveRawActionOffers: 0
   ManualStepThroughSnapShots: 0

@@ -55,7 +55,7 @@ public static class ShowRightPanel
         UI.hic.buildMenu.Show(items, UI.hic.config);
     }
 
-    public static void PushNonPieceActionList()
+    public static void PushEndTurn()
     {
         var items = new List<ActionItem>();
         for (int i = 0; i < UIBridge._count; i++)

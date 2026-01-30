@@ -20,17 +20,8 @@ public sealed class BuildMenuItemView : MonoBehaviour
 
     public void Bind(Game.Core.Action data, UIInfo uiInfo, Action<Game.Core.Action, UIInfo> onClick)
     {
-        FactionColourSet.color = FactionColorUtil.ColorFromString(Piece.factionName[data.TargetType]);
-
-        if (Piece.isBuilding[data.TargetType])
-        {
-            BuildingColourSet.color = Color.darkCyan;
-        }
-        else
-        {
-            BuildingColourSet.color = Color.darkGoldenRod;
-        }
-
+        setFactionColor(data);
+        setIfBuildingColor(data);
         _data = data;
         if (nameText) nameText.text = Piece.name[data.TargetType];
         if (costText) costText.text = uiInfo.fullCost.ToString();
@@ -46,6 +37,24 @@ public sealed class BuildMenuItemView : MonoBehaviour
         button.onClick.AddListener(() => onClick?.Invoke(_data, uiInfo));
 
         setLegality(uiInfo.legal);
+    }
+
+    private void setFactionColor(Game.Core.Action data)
+    {
+        for (int i = 0; i < UI.hic.config.FactionColors.Count; i++)
+        {
+            if (UI.hic.config.FactionColors[i].faction == Piece.factionName[data.TargetType])
+            {
+                FactionColourSet.color = UI.hic.config.FactionColors[i].color;
+                return;
+            }
+        }
+        FactionColourSet.color = FactionColorUtil.ColorFromString(Piece.factionName[data.TargetType]);
+    }
+
+    private void setIfBuildingColor(Game.Core.Action data)
+    {
+        if (Piece.isBuilding[data.TargetType]) { BuildingColourSet.color = Color.darkCyan; } else { BuildingColourSet.color = Color.darkGoldenRod; }
     }
 
     public void setLegality(bool legal)

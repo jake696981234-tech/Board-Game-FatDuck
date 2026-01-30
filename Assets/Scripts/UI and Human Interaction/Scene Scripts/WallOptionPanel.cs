@@ -13,8 +13,6 @@ public sealed class WallOptionPanel : MonoBehaviour
 
     public GameObject FirstWallOptionPanel;
 
-    
-
     public WallOptionPrefab wallOptionPrefab;
 
     public HumanInteractionController HumanController;
@@ -26,24 +24,24 @@ public sealed class WallOptionPanel : MonoBehaviour
 
     private List<ushort> cachedwallOptions = new();
 
-    public void showNumberOfWallS(IEnumerable<ushort> wallOptions)
-    {
-        // WallCreatePanel2.SetActive(false);
-        FirstWallOptionPanel.SetActive(true);
+    // public void showNumberOfWallS(IEnumerable<ushort> wallOptions)
+    // {
+    //     // WallCreatePanel2.SetActive(false);
+    //     FirstWallOptionPanel.SetActive(true);
 
 
-        DestoryAllWallOptions();
-        wallConfigOption.Clear();
+    //     DestoryAllWallOptions();
+    //     wallConfigOption.Clear();
 
-        cachedwallOptions = wallOptions.ToList();
-        for (int i = 0; i < blockOption.Length; i++) // auto-scale
-        {
-            bool existsWithThisCount = wallOptions.Any(w => PiecesSides.CountWalls(w) == i);
+    //     cachedwallOptions = wallOptions.ToList();
+    //     for (int i = 0; i < blockOption.Length; i++) // auto-scale
+    //     {
+    //         bool existsWithThisCount = wallOptions.Any(w => PiecesSides.CountWalls(w) == i);
 
 
-            blockOption[i].SetActive(!existsWithThisCount);
-        }
-    }
+    //         blockOption[i].SetActive(!existsWithThisCount);
+    //     }
+    // }
 
     public void showWallConfigOptions(IEnumerable<ushort> wallsToShow)
     {
@@ -51,11 +49,12 @@ public sealed class WallOptionPanel : MonoBehaviour
         wallConfigOption.Clear();
 
         var seen = new HashSet<ushort>();
-            wallsToShow = cachedwallOptions
-                .Where(w => seen.Add(w));   // only first time a value appears
+
+        // wallsToShow = cachedwallOptions.Where(w => seen.Add(w));   // only first time a value appears
         
         foreach (var wall in wallsToShow)
         {
+            if (!seen.Add(wall)) continue;
             var prefabReference = Instantiate(wallOptionPrefab, WallContent);
             prefabReference.gameObject.SetActive(true);
             wallConfigOption.Add(prefabReference);
@@ -63,40 +62,40 @@ public sealed class WallOptionPanel : MonoBehaviour
         }
     }
 
-    public void showWallConfigOptions(int howMany)
-    {
-        // WallCreatePanel2.SetActive(true);
-        DestoryAllWallOptions();
-        wallConfigOption.Clear();
+    // public void showWallConfigOptions(int howMany)
+    // {
+    //     // WallCreatePanel2.SetActive(true);
+    //     DestoryAllWallOptions();
+    //     wallConfigOption.Clear();
 
 
 
-        // Decide what set of walls we're going to show
-        IEnumerable<ushort> wallsToShow;
+    //     // Decide what set of walls we're going to show
+    //     IEnumerable<ushort> wallsToShow;
 
-        if (UI.giveRawActionOffers)
-        {
-            // Raw: show all that match howMany
-            wallsToShow = cachedwallOptions.Where(w => howMany == PiecesSides.CountWalls(w));
-        }
-        else
-        {
-            // Filtered: unique options that match howMany
-            var seen = new HashSet<ushort>();
-            wallsToShow = cachedwallOptions
-                .Where(w => howMany == PiecesSides.CountWalls(w))
-                .Where(w => seen.Add(w));   // only first time a value appears
-        }
+    //     if (UI.giveRawActionOffers)
+    //     {
+    //         // Raw: show all that match howMany
+    //         wallsToShow = cachedwallOptions.Where(w => howMany == PiecesSides.CountWalls(w));
+    //     }
+    //     else
+    //     {
+    //         // Filtered: unique options that match howMany
+    //         var seen = new HashSet<ushort>();
+    //         wallsToShow = cachedwallOptions
+    //             .Where(w => howMany == PiecesSides.CountWalls(w))
+    //             .Where(w => seen.Add(w));   // only first time a value appears
+    //     }
 
-        // Now actually spawn UI for the chosen walls
-        foreach (var wall in wallsToShow)
-        {
-            var prefabReference = Instantiate(wallOptionPrefab, WallContent);
-            prefabReference.gameObject.SetActive(true);
-            wallConfigOption.Add(prefabReference);
-            prefabReference.SeedData(wall);
-        }
-    }
+    //     // Now actually spawn UI for the chosen walls
+    //     foreach (var wall in wallsToShow)
+    //     {
+    //         var prefabReference = Instantiate(wallOptionPrefab, WallContent);
+    //         prefabReference.gameObject.SetActive(true);
+    //         wallConfigOption.Add(prefabReference);
+    //         prefabReference.SeedData(wall);
+    //     }
+    // }
 
 
     public void DestoryAllWallOptions()
@@ -110,30 +109,30 @@ public sealed class WallOptionPanel : MonoBehaviour
     }
 
     
-    public void whenButtonOneIsClicked()
-    {
-        UIInput.OnWallNumberClicked(1);
-        FirstWallOptionPanel.SetActive(false);
-    }
-    public void whenButtonTwoIsClicked()
-    {
-        UIInput.OnWallNumberClicked(2);
-        FirstWallOptionPanel.SetActive(false);
-    }
-    public void whenButtonThreeIsClicked()
-    {
-        UIInput.OnWallNumberClicked(3);
-        FirstWallOptionPanel.SetActive(false);
-    }
-    public void whenButtonFourIsClicked()
-    {
-        UIInput.OnWallNumberClicked(4);
-        FirstWallOptionPanel.SetActive(false);
-    }
-    public void whenButtonFiveIsClicked()
-    {
-        UIInput.OnWallNumberClicked(5);
-        FirstWallOptionPanel.SetActive(false);
-    }
+    // public void whenButtonOneIsClicked()
+    // {
+    //     UIInput.OnWallNumberClicked(1);
+    //     FirstWallOptionPanel.SetActive(false);
+    // }
+    // public void whenButtonTwoIsClicked()
+    // {
+    //     UIInput.OnWallNumberClicked(2);
+    //     FirstWallOptionPanel.SetActive(false);
+    // }
+    // public void whenButtonThreeIsClicked()
+    // {
+    //     UIInput.OnWallNumberClicked(3);
+    //     FirstWallOptionPanel.SetActive(false);
+    // }
+    // public void whenButtonFourIsClicked()
+    // {
+    //     UIInput.OnWallNumberClicked(4);
+    //     FirstWallOptionPanel.SetActive(false);
+    // }
+    // public void whenButtonFiveIsClicked()
+    // {
+    //     UIInput.OnWallNumberClicked(5);
+    //     FirstWallOptionPanel.SetActive(false);
+    // }
 
 }

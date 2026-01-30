@@ -16,35 +16,27 @@ public sealed class BuildMenuPresenter : MonoBehaviour
     public readonly List<BuildMenuItemView> _pool = new();
     public List<UIInfo> theUIInfo = new();
 
-    private static bool isWeirdAction(IEnumerable<Game.Core.Action> rawItems) //please rename me
-    {
-        var item = rawItems.FirstOrDefault().kind;
-        return item == Upgrade || item == GroupBuild;
-    }
+    // private static bool isWeirdAction(IEnumerable<Game.Core.Action> rawItems) //please rename me
+    // {
+    //     var item = rawItems.FirstOrDefault().kind;
+    //     return item == Upgrade || item == GroupBuild;
+    // }
 
     public void Show(IEnumerable<Game.Core.Action> rawItems, InteractionConfig config)
     {
-        IEnumerable<Game.Core.Action> items;
+        IEnumerable<Game.Core.Action> theActions;
         
-        if (config.GiveRawActionOffers || isWeirdAction(rawItems))
-        {
-            items = rawItems;
-        }
-        else
-        {
-            items = filteredBuildOptions(rawItems);
-        }
-
+        if (config.GiveRawActionOffers) { theActions = rawItems; } else { theActions = filteredBuildOptions(rawItems); }
         gameObject.SetActive(true);
         List<UIInfo> UiInfo = new();
         int i = 0;
-        foreach (var item in items)
+        foreach (var theAction in theActions)
         {
-            UIInfo uiinfo = new(UIBridge.gameState.ps[UIBridge._humanPlayer].budget > Piece.BuildCost[item.TargetType], Piece.BuildCost[item.TargetType]);
+            UIInfo uiinfo = new(UIBridge.gameState.ps[UIBridge._humanPlayer].budget > Piece.BuildCost[theAction.TargetType], Piece.BuildCost[theAction.TargetType]);
             UiInfo.Add(uiinfo);
             
             var view = Ensure(i++);
-            view.Bind(item, uiinfo, OnItemClicked);
+            view.Bind(theAction, uiinfo, OnItemClicked);
             view.gameObject.SetActive(true);
         }
         for (; i < _pool.Count; i++) _pool[i].gameObject.SetActive(false);

@@ -83,6 +83,7 @@ public sealed class HumanInteractionController : MonoBehaviour
     public TMP_Text Personal_VPText;
     public TMP_Text Personal_ActionFee;
     public TMP_Text Personal_BudgetAfterActionFee;
+    public TMP_Text Personal_ChoosingState;
     public TMP_Text Personal_CoreHPText;
     public Image Personal_TintSwatch; // optional
 

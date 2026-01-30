@@ -13,7 +13,7 @@ public class Bot
     //                ReadOnlySpan<byte> mask,
     //                int gameIndex,
     //                 byte playerId);
-    public readonly byte playerId = 0; // 0..3
+    public readonly byte playerId; // 0..3
     public readonly int gameIndex;
     public Action[] Offers = new Action[Info.maxOffersToConsider];
     public int NumberOfOffers;
