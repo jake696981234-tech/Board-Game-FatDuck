@@ -128,6 +128,23 @@ public static class AFilter
                         Debug.LogWarning($"Unhandled ActionKind");
                         return false;                      
                 }
+            case Launcher:
+                // need actors cell, targetCell, IntakeCell
+                switch (State)
+                {
+                    case ChoosingKind:                       
+                        State = ChoosingIntakeCell;
+                        return false;                                           
+                    case ChoosingIntakeCell:                        
+                        Chosen[(int)ChoosingIntakeCell] = UInput[(int)Cell];
+                        State = ChoosingTargetCell;
+                        return false;                        
+                    case ChoosingTargetCell:                        
+                        Chosen[(int)ChoosingTargetCell] = UInput[(int)Cell];
+                        PerformAction(iNeedKind: true, iNeedActorsCell: true, iNeedTargetCell: true, TargetType: false, iNeedWallConfig: false, iNeedintakeCell: true);
+                        return true;  
+                }
+                break;
         }
         Debug.LogWarning($"Fix ME!");
         return false;  
@@ -158,11 +175,13 @@ public static class AFilter
             if (UIBridge._offers[theAction].TargetCell != Chosen[(int)ChoosingTargetCell] && iNeedTargetCell) continue;
             if (UIBridge._offers[theAction].TargetType != Chosen[(int)ChoosingTargetType] && TargetType) continue;
             if (UIBridge._offers[theAction].WallConfig != Chosen[(int)ChoosingWallConfig] && iNeedWallConfig) continue;
-            if (UIBridge._offers[theAction].IntakeCell != Chosen[(int)ChoosingInstakeCellID] && iNeedintakeCell) continue;
+            if (UIBridge._offers[theAction].IntakeCell != Chosen[(int)ChoosingIntakeCell] && iNeedintakeCell) continue;
+            DisplaySelect.CacheDisplaySelect();
             UIBridge.PerformActionIndex(UIBridge._offers[theAction]);
             reset();
             return;
         }
+        DisplaySelect.CacheDisplaySelect();
         Debug.LogWarning($"UI Perform failed to find action AKA fix me!");
         reset();
     }
@@ -174,7 +193,7 @@ public static class AFilter
         {
             case ChoosingActorsCell:
                 if ((uIType == BuildItem && Chosen[(int)ChoosingKind] == -1) || (uIType == Cell && Show.DoesThisPieceHaveActions(UInput[(int)Cell]))) return true;
-                return true;
+                return false;
             case ChoosingKind:
                 if (uIType == PieceActionKind) return true;
                 return false;
@@ -186,6 +205,9 @@ public static class AFilter
                 return false;
             case ChoosingWallConfig:
                 if (uIType == WallConfig) return true;
+                return false;
+            case ChoosingIntakeCell:
+                if (uIType == Cell) return true;
                 return false;
         }
          Debug.LogWarning($"Unhandled ActionKind");
@@ -219,10 +241,11 @@ public static class AFilter
     public static void ResetClickedData()
     {
         for (int i = 0; i < UInput.Length; i++) UInput[i] = -1;
+        uIType = Invalid;
     }
     
 
-    public enum UIType { BuildItem = 0, NumberOfWalls = 1, WallConfig = 2, Cell = 3, PieceActionKind = 4, Cancel = 5, EndTurnButton = 6, }
+    public enum UIType { BuildItem = 0, NumberOfWalls = 1, WallConfig = 2, Cell = 3, PieceActionKind = 4, Cancel = 5, EndTurnButton = 6, Invalid = 7}
 
     #region fields
     public static UIType uIType;
@@ -240,6 +263,6 @@ public static class AFilter
         ChoosingTargetCell = 2,
         ChoosingTargetType = 3,
         ChoosingWallConfig = 4,
-        ChoosingInstakeCellID = 5,
+        ChoosingIntakeCell = 5,
     }
 }

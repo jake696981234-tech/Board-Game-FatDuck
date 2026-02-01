@@ -11,8 +11,9 @@ using System.Collections;
 
 public sealed class HumanInteractionController : MonoBehaviour
 {
-    #region Refrences
+    #region Right Panel
 
+    [Header("-------------Right Side panel-----------")]
     [Header("Create Menu Filters")]
     public Button legalButtonFilter;
     public Button BuildingButtonFilter;
@@ -21,34 +22,8 @@ public sealed class HumanInteractionController : MonoBehaviour
     public Button PenguinButtonFilter;
     public Button FrogButtonFilter;
 
-    [Header("Config & Refs")]
-    public InteractionConfig config;
-
-    
-    [Header("Action Selection Display")]
-    public Button ShowActionSelectionButton;
-    public GameObject ActionSelectionDisplayRoot;
-    public TMP_Text displaykind;
-    public TMP_Text displayActorsCell;
-    public TMP_Text displayTargetCell;
-    public TMP_Text displayTargetType;
-    public TMP_Text displayWallConfig;
-    public TMP_Text displayIntakeCell;
-
-
-    [Header("Canvas/UI")]
-    
-    public Button BackgroundExitButton;
-    public RectTransform BackgroundExit;
-    public Image backdrop;
-    public Image panelBackDrop;
-    public GameObject blockInputOverlay;
-
-    // public TMP_Text turnStatusText;
-    // public TMP_Text budgetText;
-    public Button endTurnButton;
-
     [Header("Panels")]
+    public Image panelBackDrop;
     public BuildMenuPresenter buildMenu;         // BuildPanel
     public RectTransform createPanel;       // CreatePanel
     public RectTransform CreatePanelBackGround;
@@ -59,92 +34,17 @@ public sealed class HumanInteractionController : MonoBehaviour
     public TMP_Text createActionTurnFee;
     public TMP_Text createTotalCost;
     public TMP_Text createBudgetAfter;
-
-
     public Image createSprite;
-
     public GameObject WallOptionPanelObject;
     public WallOptionPanel wallOptionPanel;
-
     // Right side (default layout): Build (60%) + Action (non-piece actions) (40%)
     public RectTransform actionPanel;                // 40% panel for non-piece actions
     public ActionListPresenter nonPieceActionList;   // presenter on actionPanel
-
     // Full coverage panel shown only in PieceAction mode (piece-driven actions)
     public RectTransform pieceActionPanelFull;       // full coverage on right side
     public ActionListPresenter pieceActionListFull;  // presenter on pieceActionPanelFull
-
-
     public RectTransform actionExecutePanel; // ActionExecutePanel
     public TMP_Text actionTitleText, actionPieceText, actionCostText;
-
-
-    // ---------------- HUD (Left) ----------------
-    [Header("HUD / Match Header")]
-    public TMP_Text Header_TurnOwnerText;
-    public TMP_Text Header_ModeText;
-
-    //my own little additon- New Event Manager system, might update everything to go through that script
-    public Button ShowOrdinals; 
-    public GameObject SubscribedUIRoot;
-    public TMP_Text turnNumberText;
-    public TMP_Text roundNumberText;
-    public TMP_Text gameNumberText;
-
-    [Header("HUD / Player Panel - Personal")]
-    public TMP_Text Personal_BudgetText;
-    public TMP_Text Personal_VPText;
-    public TMP_Text Personal_ActionFee;
-    public TMP_Text Personal_BudgetAfterActionFee;
-    public TMP_Text Personal_ChoosingState;
-    public TMP_Text Personal_CoreHPText;
-    public Image Personal_TintSwatch; // optional
-
-    [Header("HUD / Player Panel - All Players")]
-    public RectTransform AllPlayers_ListRoot; // container to hold rows
-    public GameObject PlayerRowPrefab;     // prefab with child names:
-                                           // PlayerRow_NameText, PlayerRow_TintSwatch,
-                                           // PlayerRow_BudgetText, PlayerRow_VPText, PlayerRow_CoreHPText
-    public Button SeePerPieceTypeTotalsButton;
-    public Button[] PlayerRow_Button;
-
-    [Header("HUD / Debug Box")]
-    public TMP_Text Debug_OffersText;
-    public TMP_Text Debug_LastActionText;
-    public TMP_Text Debug_SnapshotText;
-
-
-    [Header("Player End Round Totals")]
-
-    // public GameObject Payout_Panel1;
-    // public GameObject Payout_Panel2;
-    // public TMP_Text TotalPayoutText;
-    // public TMP_Text VpBonusText;
-    // public TMP_Text CoreBonusText;
-    // public TMP_Text TotalFactoryTotalText;
-
-    // public GameObject PerTypeFactoryPayOutPrefab;
-    // public RectTransform PerTypeFactoryPayOutRoot;
-
-    [Header("new factory Totals")]
-
-    public Button ShowMeEndRoundTotals;
-    public GameObject EndRoundTotalsRoot;
-    public TMP_Text newTotalEndRoundPayOutText;
-    public TMP_Text newTotalEndRoundPayOutWithPenaltiesText;
-    public TMP_Text newVpBonusText;
-    public TMP_Text newCoreBonusText;
-    public TMP_Text newTotalPerPiecePayOutText;
-    public TMP_Text newPerTypeCurrentPayOut;
-    public TMP_Text PieceDrivenPenalties;
-
-    //Stuff from Baoard Controller
-    [Header("Scene/Hierarchy")]
-    public Transform cellRoot;
-    public Transform pieceRoot;
-
-    [Header("Prefabs")]
-    public PieceView piecePrefab;
 
     [Header("Piece Extended Information")]
     public TMP_Text[] pieceInfoHeaders;
@@ -157,9 +57,74 @@ public sealed class HumanInteractionController : MonoBehaviour
     // public bool logConnectorMasks = false;
 
     #endregion
+    #region Left Panel
+    [Header("--------------------Left Panel---------------------")]
+    [Header("HUD / Player Panel - Personal")]
+    public TMP_Text Personal_BudgetText;
+    public TMP_Text Personal_VPText;
+    public TMP_Text Personal_ActionFee;
+    public TMP_Text Personal_BudgetAfterActionFee;
+    public TMP_Text Personal_ChoosingState;
+    public TMP_Text Personal_CoreHPText;
+    public Image Personal_TintSwatch; // optional
 
+    [Header("Lower Side of the Left Panel")]
+    [Header("factory Totals")]
+    public Button ShowMeEndRoundTotals;
+    public GameObject EndRoundTotalsRoot;
+    public TMP_Text newTotalEndRoundPayOutText;
+    public TMP_Text newTotalEndRoundPayOutWithPenaltiesText;
+    public TMP_Text newVpBonusText;
+    public TMP_Text newCoreBonusText;
+    public TMP_Text newTotalPerPiecePayOutText;
+    public TMP_Text newPerTypeCurrentPayOut;
+    public TMP_Text PieceDrivenPenalties;
 
-    #region monoBehavour Util 
+     [Header("HUD / Match Header")]
+    public TMP_Text Header_TurnOwnerText;
+    public TMP_Text Header_ModeText;
+    //my own little additon- New Event Manager system, might update everything to go through that script
+    public Button ShowOrdinals; 
+    public GameObject SubscribedUIRoot;
+    public TMP_Text turnNumberText;
+    public TMP_Text roundNumberText;
+    public TMP_Text gameNumberText;
+    [Header("Action Selection Display")]
+    public Toggle ShowLastAction;
+    public Button ShowActionSelectionButton;
+    public GameObject ActionSelectionDisplayRoot;
+    public TMP_Text displaykind;
+    public TMP_Text displayActorsCell;
+    public TMP_Text displayTargetCell;
+    public TMP_Text displayTargetType;
+    public TMP_Text displayWallConfig;
+    public TMP_Text displayIntakeCell;
+
+    #endregion
+
+     #region Core
+    [Header("--------------------Core---------------------")]
+    [Header("Config & Refs")]
+    public InteractionConfig config;
+    [Header("Pieces and Board")]
+    [Header("Scene/Hierarchy")]
+    public Transform cellRoot;
+    public Transform pieceRoot;
+    [Header("Prefabs")]
+    public PieceView piecePrefab;
+    [Header("Canvas/UI")]
+    public Button BackgroundExitButton;
+    public RectTransform BackgroundExit;
+    public Image backdrop;
+    public GameObject blockInputOverlay;
+
+    // public TMP_Text turnStatusText;
+    // public TMP_Text budgetText;
+    public Button endTurnButton;
+
+    #endregion
+    
+    #region Util 
 
     public void Update()
     {
@@ -184,5 +149,21 @@ public sealed class HumanInteractionController : MonoBehaviour
         }
         UIBridge._applyQueueRoutine = null;
     }
+    #endregion
+    #region grave
+    [Header("--------------------Pretty Sure Graveyard---------------------")] //to do, remove from system
+    [Header("HUD / Player Panel - All Players")]
+    public RectTransform AllPlayers_ListRoot; // container to hold rows
+    public GameObject PlayerRowPrefab;     // prefab with child names:
+                                           // PlayerRow_NameText, PlayerRow_TintSwatch,
+                                           // PlayerRow_BudgetText, PlayerRow_VPText, PlayerRow_CoreHPText
+    public Button SeePerPieceTypeTotalsButton;
+    public Button[] PlayerRow_Button;
+
+    [Header("HUD / Debug Box")]
+    public TMP_Text Debug_OffersText;
+    public TMP_Text Debug_LastActionText;
+    public TMP_Text Debug_SnapshotText;
+
     #endregion
 }

@@ -90,6 +90,7 @@ public static class Info
     // [Header("Wall config")]
     public static readonly bool ContiguousWalls;
     public static readonly bool AdjecentWallContiguous;
+    public static readonly bool AbilitysCanSeperatePiecesWithWalls;
 
     // ---- NEW: Control & ML authoring ----
     // [Header("DB Logging Tuning")]
@@ -198,6 +199,7 @@ public static class Info
 
         ContiguousWalls = config.ContiguousWalls;
         AdjecentWallContiguous = config.AdjecentWallContiguous;
+        AbilitysCanSeperatePiecesWithWalls = config.AbilitysCanSeperatePiecesWithWalls;
         dbLogging = config.dbLogging;
     }
 

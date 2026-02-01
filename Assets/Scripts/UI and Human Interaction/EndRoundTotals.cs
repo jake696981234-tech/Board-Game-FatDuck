@@ -11,6 +11,7 @@ public static class EndRoundTotals
         UI.hic.ShowMeEndRoundTotals.onClick.AddListener(() => DisplaySelect.ToggleLeftPanels(ordinals: false, payout: true, actionSelect: false));
         UI.hic.ShowOrdinals.onClick.AddListener(() => DisplaySelect.ToggleLeftPanels(ordinals: true, payout: false, actionSelect: false));
         UI.hic.ShowActionSelectionButton.onClick.AddListener(() => DisplaySelect.ToggleLeftPanels(ordinals: false, payout: false, actionSelect: true));
+        UI.hic.ShowLastAction.onValueChanged.AddListener(DisplaySelect.SwapCache);
     }
 
     // public static void flipBool()

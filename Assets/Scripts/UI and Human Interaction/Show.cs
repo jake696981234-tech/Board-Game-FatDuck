@@ -27,9 +27,13 @@ public static class Show
             case ChoosingWallConfig:
                 WallConfigOptions();
                 return;
+            case ChoosingIntakeCell:
+                launcherFilter();
+                return;
+                
         }
     }
-   public static void ShowActionsForAPiece()
+    public static void ShowActionsForAPiece()
     {
         SetGeneralUI(backDropColor: UI.hic.config.pieceActionBackground, panelColor: UI.hic.config.pieceActionPanelBackground, cellColor: UI.hic.config.defaultCellColor, build: false, create: true, action: false, pieceFull: true, execute: false, walls: false, secondWalls: false);
         PieceInfo.SetPieceInfo(UIBridge.bm.GetPieceTypeFromCell(AFilter.Chosen[(int)ChoosingActorsCell]));
@@ -50,7 +54,14 @@ public static class Show
         showBoard.HighlightCells(GiveMeOffersContaining(GiveMe: (int)ChoosingTargetCell, Legal: true, Kind: true, ActorsCell: true, TargetCell: false, TargetType: false, WallConfig: false, intakeCell: false), UI.hic.config.actionLegalTargetHighlight);
         PieceInfo.SetPieceInfo(UIBridge.bm.GetPieceTypeFromCell(AFilter.Chosen[(int)ChoosingActorsCell]));
     }
-
+    public static void WallConfigOptions()
+    {
+        // UI.hic.wallOptionPanel.showNumberOfWallS(GiveMeOffersContaining(Legal: true, Kind: true, ActorsCell: false, TargetCell: true, Type: true, WallConfig: false, intakeCell: false));
+        // UI.hic.wallOptionPanel.FirstWallOptionPanel.SetActive(false);
+        SetGeneralUI(backDropColor: UI.hic.config.ConnectorModeBackground, panelColor: UI.hic.config.buildModePanelBackground, cellColor: UI.hic.config.defaultCellColor, build: false, create: true, action: false, pieceFull: false, execute: false, walls: false, secondWalls: true);
+        UI.hic.wallOptionPanel.showWallConfigOptions(GiveMeOffersContaining(Legal: true, Kind: true, ActorsCell: false, TargetCell: true, Type: true, WallConfig: false, intakeCell: false));
+        PieceInfo.SetPieceInfo(AFilter.Chosen[(int)ChoosingTargetType]);
+    }
     public static void ShowUpgradeOptions()
     {
         SetGeneralUI(backDropColor: UI.hic.config.buildModeBackground, panelColor: UI.hic.config.buildModePanelBackground, cellColor: UI.hic.config.defaultCellColor, build: true, create: false, action: true, pieceFull: false, execute: false, walls: false, secondWalls: false);
@@ -68,15 +79,17 @@ public static class Show
         }
         UI.hic.buildMenu.Show(items, UI.hic.config);
     }
-
-    public static void WallConfigOptions()
+    private static void launcherFilter()
     {
-        // UI.hic.wallOptionPanel.showNumberOfWallS(GiveMeOffersContaining(Legal: true, Kind: true, ActorsCell: false, TargetCell: true, Type: true, WallConfig: false, intakeCell: false));
-        // UI.hic.wallOptionPanel.FirstWallOptionPanel.SetActive(false);
-        SetGeneralUI(backDropColor: UI.hic.config.ConnectorModeBackground, panelColor: UI.hic.config.buildModePanelBackground, cellColor: UI.hic.config.defaultCellColor, build: false, create: true, action: false, pieceFull: false, execute: false, walls: false, secondWalls: true);
-        UI.hic.wallOptionPanel.showWallConfigOptions(GiveMeOffersContaining(Legal: true, Kind: true, ActorsCell: false, TargetCell: true, Type: true, WallConfig: false, intakeCell: false));
-        PieceInfo.SetPieceInfo(AFilter.Chosen[(int)ChoosingTargetType]);
+        if (UI.hic.actionTitleText) UI.hic.actionTitleText.text = $"Action: {AFilter.Chosen[(int)ChoosingKind]}"; // to do, probs need fix it to enum to string
+        if (UI.hic.actionPieceText) UI.hic.actionPieceText.text = $"Piece #{UIBridge.bm.occupantPieceId[AFilter.Chosen[(int)ChoosingActorsCell]]}";
+        SetGeneralUI(backDropColor: UI.hic.config.actionExecuteBackground, panelColor: UI.hic.config.pieceActionPanelBackground, cellColor: UI.hic.config.defaultCellColor, build: false, create: false, action: false, pieceFull: false, execute: true, walls: false, secondWalls: false);
+        // if (UI.hic.actionCostText) UI.hic.actionCostText.text = $"Cost: {action.cost}"; to do, add cost
+        showBoard.HighlightCells(GiveMeOffersContaining(GiveMe: (int)ChoosingIntakeCell, Legal: true, Kind: true, ActorsCell: true, TargetCell: false, TargetType: false, WallConfig: false, intakeCell: false), UI.hic.config.actionLegalTargetHighlight);
+        PieceInfo.SetPieceInfo(UIBridge.bm.GetPieceTypeFromCell(AFilter.Chosen[(int)ChoosingActorsCell]));
     }
+
+    
 
     public static void SetGeneralUI(Color backDropColor, Color panelColor, Color cellColor, bool build, bool create, bool action, bool pieceFull, bool execute, bool walls, bool secondWalls)
     {
@@ -128,7 +141,6 @@ public static class Show
         for (int i = 0; i < UIBridge._count; i++)
         {
             if (UIBridge._offers[i].ActorsCell == cell) return true;
-            
         }
         return false;
     }
@@ -143,7 +155,7 @@ public static class Show
             if (UIBridge._offers[i].TargetCell != AFilter.Chosen[(int)ChoosingTargetCell] && TargetCell) continue;
             if (UIBridge._offers[i].TargetType != AFilter.Chosen[(int)ChoosingTargetType] && TargetType) continue;
             if (UIBridge._offers[i].WallConfig != AFilter.Chosen[(int)ChoosingWallConfig] && WallConfig) continue;
-            if (UIBridge._offers[i].IntakeCell != AFilter.Chosen[(int)ChoosingInstakeCellID] && intakeCell) continue;
+            if (UIBridge._offers[i].IntakeCell != AFilter.Chosen[(int)ChoosingIntakeCell] && intakeCell) continue;
             if (UIBridge._mask[i] == 0 && Legal) continue;
             
             // if (action.addCost == null || action.addCost.Length == 0) continue;
@@ -156,6 +168,9 @@ public static class Show
                     break;
                 case (int)ChoosingWallConfig:
                     ReturningList.Add(UIBridge._offers[i].WallConfig);
+                    break;
+                case (int)ChoosingIntakeCell:
+                    ReturningList.Add(UIBridge._offers[i].IntakeCell);
                     break;
             }
         }
@@ -182,13 +197,13 @@ public static class Show
     
 
 
-    public static void displayPieceInfo()
-    {
-        var pieceId = UIBridge.bm.GetCellOccupant(AFilter.UInput[(int)Cell]);
-        if (AFilter.uIType != Cell || (pieceId == UIBridge.bm._invalidId)) return;
-        if (UIBridge.bm.GetPieceOwnerFromCell(AFilter.UInput[(int)Cell]) != UIBridge._humanPlayer) return;
-        PieceInfo.SetPieceInfo(UIBridge.bm.pieceType[pieceId]);
-        PanelToggles.TogglePanels(build: false, create: true, action: false, pieceFull: false, execute: false, walls: false, secondWalls: false);
-    }
+    // public static void displayPieceInfo()
+    // {
+    //     var pieceId = UIBridge.bm.GetCellOccupant(AFilter.UInput[(int)Cell]);
+    //     if (AFilter.uIType != Cell || (pieceId == UIBridge.bm._invalidId)) return;
+    //     if (UIBridge.bm.GetPieceOwnerFromCell(AFilter.UInput[(int)Cell]) != UIBridge._humanPlayer) return;
+    //     PieceInfo.SetPieceInfo(UIBridge.bm.pieceType[pieceId]);
+    //     PanelToggles.TogglePanels(build: false, create: true, action: false, pieceFull: false, execute: false, walls: false, secondWalls: false);
+    // }
     
 }

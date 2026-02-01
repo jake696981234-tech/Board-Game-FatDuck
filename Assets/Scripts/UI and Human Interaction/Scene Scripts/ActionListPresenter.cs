@@ -29,18 +29,6 @@ public sealed class ActionListPresenter : MonoBehaviour
         for (; i < _pool.Count; i++) _pool[i].gameObject.SetActive(false);
     }
 
-    // public void Show(IEnumerable<int> TargetTypes)
-    // {
-    //     // gameObject.SetActive(true);
-    //     int i = 0;
-    //     foreach (var Type in TargetTypes)
-    //     {
-    //         var ItemView = Ensure(i++);
-    //         ItemView.Bind(Type, OnItemClicked);
-    //         ItemView.gameObject.SetActive(true);
-    //     }
-    //     for (; i < _pool.Count; i++) _pool[i].gameObject.SetActive(false);
-    // }
 
     public void Hide() => gameObject.SetActive(false);
 

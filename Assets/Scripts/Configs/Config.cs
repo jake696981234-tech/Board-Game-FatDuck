@@ -7,18 +7,26 @@ using Unity.InferenceEngine;
 [CreateAssetMenu(fileName = "Config", menuName = "Game/Config", order = 0)]
 public sealed class Config : ScriptableObject
 {
-    [Header("General Players Config")]
+    [Header("----------Players Config-----------")]
     public bool useMLAgents = false; 
 
-    [Header("Player Control")]
+    [Header("How Mnay Players")]
     [Range(1, 4)] public int playerCount = 4;
 
-    [Header("What Controls Player")] 
+    [Header("What Controls Players")] 
     public Info.ControlMode[] playerControl = new Info.ControlMode[4] {
     Info.ControlMode.DumbGreg,
     Info.ControlMode.DumbGreg,
     Info.ControlMode.DumbGreg,
     Info.ControlMode.DumbGreg
+    };
+
+    [Header("Players GamePlay")]
+    public PlayerConfig[] players = new PlayerConfig[4] {
+    new PlayerConfig{ name="P0", isAI=false, applyBotSurcharges=false, applyStartOfTurnBudgetDecrease=false, startingBudgetOverride=-1, team=0 },
+    new PlayerConfig{ name="P1", isAI=false, applyBotSurcharges=false, applyStartOfTurnBudgetDecrease=false, startingBudgetOverride=-1, team=1 },
+    new PlayerConfig{ name="P2", isAI=true,  applyBotSurcharges=true,  applyStartOfTurnBudgetDecrease=false, startingBudgetOverride=-1, team=2 },
+    new PlayerConfig{ name="P3", isAI=true,  applyBotSurcharges=true,  applyStartOfTurnBudgetDecrease=false, startingBudgetOverride=-1, team=3 },
     };
 
     // [Header("If is, What Dumb Bot")]
@@ -41,7 +49,7 @@ public sealed class Config : ScriptableObject
         seedBySeat = true
     };
 
-    [Header("ML Settings")]
+    [Header("---------ML Settings---------")]
     [Header("ML Behavior Parameters (auto-injected)")]
     public BehaviorParametersAuthoring behaviorParams = new BehaviorParametersAuthoring
     {
@@ -99,22 +107,15 @@ public sealed class Config : ScriptableObject
     public int gamesToRun;
     public bool inspectGame = false;
 
-    [Header("Game Play")]
-    [Header("Players")]
-    public PlayerConfig[] players = new PlayerConfig[4] {
-    new PlayerConfig{ name="P0", isAI=false, applyBotSurcharges=false, applyStartOfTurnBudgetDecrease=false, startingBudgetOverride=-1, team=0 },
-    new PlayerConfig{ name="P1", isAI=false, applyBotSurcharges=false, applyStartOfTurnBudgetDecrease=false, startingBudgetOverride=-1, team=1 },
-    new PlayerConfig{ name="P2", isAI=true,  applyBotSurcharges=true,  applyStartOfTurnBudgetDecrease=false, startingBudgetOverride=-1, team=2 },
-    new PlayerConfig{ name="P3", isAI=true,  applyBotSurcharges=true,  applyStartOfTurnBudgetDecrease=false, startingBudgetOverride=-1, team=3 },
-    };
-
+    [Header("---------Game Play---------")]
+    
     [Header("Match Defaults")]
     public MatchAuthoring match = new MatchAuthoring { startingBudgetPerRound = new float[4], numberOfRounds = 5, startOfTurnBudgetDecrease = 5, startCenterVP = 5, startCoreHp = 3 };
 
     [Header("Cost Tuning")]
     public CostAuthoring costs = new CostAuthoring { baseActionCost = 10, actionGrowthFactor = 1.5f };
 
-    [Header("Rewards / Economy")]
+    [Header("Budget Rewards")]
     public RewardAuthoring rewards = new RewardAuthoring { budgetBonusForVP = 5, budgetBonusForCoreDamage = 5 };
     
     [Header("Board")]
@@ -123,6 +124,8 @@ public sealed class Config : ScriptableObject
     [Header("Wall config")]
     public bool ContiguousWalls = false;
     public bool AdjecentWallContiguous = false;
+
+    public bool AbilitysCanSeperatePiecesWithWalls = false;
 
 
     // ---- NEW: Control & ML authoring ----

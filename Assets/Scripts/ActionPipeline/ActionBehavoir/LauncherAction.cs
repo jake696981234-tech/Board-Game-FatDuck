@@ -7,18 +7,18 @@ public static class LauncherAction
 {
     public static void CreateActions(int pieceId, byte actorType, int cell, ref OfferBuild offerBuild)
     {
-        int[] scratch = Scratch.GetScratchCellBuffer(offerBuild.gameIndex);
-        int theNumberOfTargets = GetLegalTargets(pieceId, actorType, scratch, offerBuild.gameIndex);
+        int[] pairs = Scratch.GetScratchCellBuffer(offerBuild.gameIndex);
+        int theNumberOfTargets = GetLegalTargets(pieceId, actorType, pairs, offerBuild.gameIndex);
         for (int i = 0; i < theNumberOfTargets; i += 2)
         {
-            int tgtPid = scratch[i];
-            int dst = scratch[i + 1];
+            int victimscell = pairs[i];
+            int targetcell = pairs[i + 1];
             var theAction = new Action
             {
-                kind = Move,
+                kind = Launcher,
                 ActorsCell = cell,
-                TargetCell = dst,
-                IntakeCell = tgtPid, //to do, probs needs fix this, this encoding seems weird
+                TargetCell = targetcell,
+                IntakeCell = victimscell, 
             };
             OfferProvider.Emit(theAction, ref offerBuild);
         }
@@ -27,7 +27,6 @@ public static class LauncherAction
      public static int GetLegalTargets(int actorPid, int actorType, int[] outPairs, int gameIndex)
     {
         var bm = GameRegistry.game[gameIndex].boardModel;
-
 
         int inputRange = Piece.launcher_inputRange[actorType];
         int outputRange = Piece.launcher_outputRange[actorType];
@@ -45,30 +44,30 @@ public static class LauncherAction
         int actorOwner = bm.GetPieceOwner(actorPid);
 
         // Find candidate pieces
-        for (int c = 0; c < cellCount; c++)
+        for (int victimsCell = 0; victimsCell < cellCount; victimsCell++)
         {
-            int pid = bm.GetCellOccupant(c);
-            if (pid < 0) continue;
-            byte owner = (byte)bm.GetPieceOwner(pid);
+            if (bm.GetCellOccupant(victimsCell) == bm._invalidId) continue;
+            if (!Info.AbilitysCanSeperatePiecesWithWalls && Piece.connectors_enabled[bm.GetPieceTypeFromCell(victimsCell)]) continue;
+            byte owner = (byte)bm.GetPieceOwnerFromCell(victimsCell);
             if (owner == actorOwner && !allowFriendly) continue;
             if (owner != actorOwner && !allowEnemy) continue;
 
-            int distIn = bm.Distance(originCell, c);
+            int distIn = bm.Distance(originCell, victimsCell);
             if (distIn < 1 || distIn > inputRange) continue;
-            if (!BmCac.LineOfSightClear(originCell, c, gameIndex)) continue;
+            if (!BmCac.LineOfSightClear(originCell, victimsCell, gameIndex)) continue;
 
             // For each candidate destination within outputRange from launcher
-            for (int dst = 0; dst < cellCount; dst++)
+            for (int targetCell = 0; targetCell < cellCount; targetCell++)
             {
-                if (!bm.IsEmpty(dst)) continue;
-                int distOut = bm.Distance(originCell, dst);
+                if (!bm.IsEmpty(targetCell)) continue;
+                int distOut = bm.Distance(originCell, targetCell);
                 if (distOut < 1 || distOut > outputRange) continue;
-                if (!BmCac.LineOfSightClear(originCell, dst, gameIndex)) continue;
+                if (!BmCac.LineOfSightClear(originCell, targetCell, gameIndex)) continue;
 
                 if (write + 1 >= cap) return write; // buffer full; return what we wrote
 
-                outPairs[write] = pid;
-                outPairs[write + 1] = dst;
+                outPairs[write] = victimsCell;
+                outPairs[write + 1] = targetCell;
                 write += 2;
             }
         }
@@ -76,13 +75,10 @@ public static class LauncherAction
         return write; // count of ints (pairs pid,dst)
     }
 
-    public static void Apply(in Action a, byte p, int gameIndex)
+    public static void Apply(in Action theAction, byte player, int gameIndex)
     {
         var bm = GameRegistry.game[gameIndex].boardModel;
-
-        int targetPid = a.IntakeCell;
-        if (targetPid < 0) return;
-        bm.MovePieceRow(targetPid, a.TargetCell);
+        bm.MovePieceRow(bm.occupantPieceId[theAction.IntakeCell], theAction.TargetCell);
         GameActions.RefreshConnectorState(gameIndex);
     }
 }

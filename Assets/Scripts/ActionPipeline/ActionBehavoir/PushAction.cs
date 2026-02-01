@@ -52,6 +52,7 @@ public static class PushAction
             if (!allowFriendly && bm.GetPieceOwner(victimId) == actorOwner) continue;
 
             byte type = bm.GetPieceType(victimId);
+            if (!Info.AbilitysCanSeperatePiecesWithWalls && Piece.connectors_enabled[type]) continue;
             bool targetIsBuilding = Piece.isBuilding[type];
             if (targetIsBuilding && !allowBuildings) continue;
             if (!targetIsBuilding && !allowSoldiers) continue;
