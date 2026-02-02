@@ -7,86 +7,76 @@ namespace Game.Core
 {
     public static class GameActions
     {
-        public static void pieceKilled(int victim, int gameIndex)
+        public static void pieceKilledWithNoTriggers(int victimsCell, int gameIndex)
         {
             var gameState = GameRegistry.game[gameIndex].gameState;
             var bm = GameRegistry.game[gameIndex].boardModel;
 
-            int deadOwner = bm.GetPieceOwner(victim);
-            byte deadType = bm.GetPieceType(victim);
-            int g = Piece.digitItGives[deadType];
-            if (g >= 0) gameState.ps[deadOwner].RevokeDigit(g);
-            bm.FreeRowSwapBack(victim);
+            int g = Piece.digitItGives[(byte)bm.GetPieceTypeFromCell(victimsCell)];
+            if (g >= 0) gameState.ps[bm.GetPieceOwnerFromCell(victimsCell)].RevokeDigit(g);
+            bm.FreeRowSwapBack(victimsCell);
             RefreshConnectorState(gameIndex);
         }
 
-        public static void pieceKilled(int victim, int gameIndex, Action theAction)
+        public static void pieceKilled(int victimsCell, int actorsCell, int gameIndex)
         {
             var bm = GameRegistry.game[gameIndex].boardModel;
             var gameState = GameRegistry.game[gameIndex].gameState;
 
-            int pieceId = bm.GetCellOccupant(theAction.ActorsCell);
+            int ActorsPieceId = bm.GetCellOccupant(actorsCell);
 
-            bm.pieceKillCount[pieceId]++;
-            bm.pieceFactoryAux[pieceId] += Piece.eat_amount[theAction.TargetType];
-            gameState.ps[bm.pieceOwner[pieceId]].perRoundPieceKillCount++;
+            bm.pieceKillCount[ActorsPieceId]++;
+            bm.pieceFactoryAux[ActorsPieceId] += Piece.eat_amount[bm.pieceType[ActorsPieceId]];
+            gameState.ps[bm.pieceOwner[ActorsPieceId]].perRoundPieceKillCount++;
 
-            PassiveActions.FeedingGround(gameIndex, victim);
+            PassiveActions.FeedingGround(gameIndex, bm.GetPieceTypeFromCell(victimsCell));
 
-            if (Piece.zombie_enabled[theAction.TargetType]) //move this above the above the other benefifts if you dont want the others to trigger
+            if (Piece.zombie_enabled[bm.GetPieceTypeFromCell(victimsCell)]) //move this above the above the other benefifts if you dont want the others to trigger
             {
-                Zombie(victim, gameIndex, theAction);
+                Zombie(victimsCell, actorsCell, gameIndex);
                 return;
             }
-            NecroSpawnAction.Record(gameIndex, victim);
-            pieceKilled(victim, gameIndex);
+            NecroSpawnAction.Record(gameIndex, bm.GetCellOccupant(victimsCell));
+            pieceKilledWithNoTriggers(bm.GetCellOccupant(victimsCell), gameIndex);
         }
 
-        private static void Zombie(int victim, int gameIndex, Action theAction)
+        private static void Zombie(int victimsCell, int actorsCell, int gameIndex)
         {
             var bm = GameRegistry.game[gameIndex].boardModel;
             var gameState = GameRegistry.game[gameIndex].gameState;
-
-            bm.pieceOwner[victim] = bm.pieceOwner[bm.occupantPieceId[theAction.ActorsCell]];
-            bm.pieceHP[victim] = Piece.maxHP[bm.pieceType[victim]];
-
-            int g = Piece.digitItGives[(byte)theAction.TargetType];
-            if (g >= 0) gameState.ps[bm.pieceOwner[victim]].GrantDigit(g);
+            bm.pieceOwner[bm.GetCellOccupant(victimsCell)] = bm.GetPieceOwnerFromCell(actorsCell);
+            bm.pieceHP[bm.GetCellOccupant(victimsCell)] = Piece.maxHP[bm.GetPieceTypeFromCell(victimsCell)];
+            int g = Piece.digitItGives[(byte)bm.GetPieceTypeFromCell(victimsCell)];
+            if (g >= 0) gameState.ps[bm.GetPieceOwnerFromCell(victimsCell)].GrantDigit(g);
             RefreshConnectorState(gameIndex);
         }
 
-
-        public static bool ApplyDamageWithCapital(int attackerCell, int targetPid, int dmg, int gameIndex)
+        public static bool ApplyTypicalDamageAndPieceKill(int actorsCell, int victimsCell, int dmg, int gameIndex)
+        {
+            bool killed = ApplyDamageToPiece(ActorsCell: actorsCell, victimCell: victimsCell, dmg: dmg, gameIndex: gameIndex);
+            if (killed) pieceKilled(victimsCell: victimsCell, actorsCell: actorsCell, gameIndex: gameIndex);
+            return killed;
+        }
+        public static bool ApplyDamageToPiece(int ActorsCell, int victimCell, int dmg, int gameIndex)
         {
             var bm = GameRegistry.game[gameIndex].boardModel;
-
-            if (targetPid < 0 || dmg <= 0) return false;
-
-            int incomingDir = BmCac.GetDirectionIndex(attackerCell, bm.GetPieceCell(targetPid), gameIndex);
-            if (incomingDir >= 0 && Piece.connectors_enabled[bm.GetPieceType(targetPid)])
+            if (dmg <= 0) return false;
+            int targetPid = bm.GetCellOccupant(victimCell);
+            if (!Piece.connectors_enabled[bm.GetPieceType(targetPid)]) return bm.DamagePieceRow(targetPid, dmg);
+            if (!PiecesSides.IsConnectorSide(bm.pieceConnectorConfig[targetPid], PiecesSides.OppositeDir(BmCac.GetDirectionIndex(ActorsCell, victimCell, gameIndex)))) return bm.DamagePieceRow(targetPid, dmg);
+            int CapitalHealth = bm.pieceCapitalHP[targetPid];
+            if (CapitalHealth <= 0) return bm.DamagePieceRow(targetPid, dmg);
+            int CapitalHealthremaining = CapitalHealth - dmg;
+            if (CapitalHealthremaining >= 0)
             {
-                int hitSide = PiecesSides.OppositeDir(incomingDir);
-                bool sideIsConnector = PiecesSides.IsConnectorSide(bm.pieceConnectorConfig[targetPid], hitSide);
-                if (!sideIsConnector)
-                {
-                    int cap = bm.pieceCapitalHP[targetPid];
-                    if (cap > 0)
-                    {
-                        int remaining = cap - dmg;
-                        if (remaining >= 0)
-                        {
-                            bm.pieceCapitalHP[targetPid] = remaining;
-                            dmg = 0;
-                        }
-                        else
-                        {
-                            bm.pieceCapitalHP[targetPid] = 0;
-                            dmg = (short)(-remaining);
-                        }
-                    }
-                }
+                bm.pieceCapitalHP[targetPid] = CapitalHealthremaining;
+                dmg = 0;
             }
-
+            else
+            {
+                bm.pieceCapitalHP[targetPid] = 0;
+                dmg = (short)-CapitalHealthremaining;
+            }
             if (dmg <= 0) return false;
             return bm.DamagePieceRow(targetPid, dmg);
         }
@@ -101,36 +91,21 @@ namespace Game.Core
             for (int i = 0; i < toDestroy.Count; i++)
             {
                 int victimID = toDestroy[i];
-                if (bm.IsValidPieceId(victimID))
-                    pieceKilled(victimID, gameIndex);
+                if (bm.IsValidPieceId(victimID)) pieceKilledWithNoTriggers(victimID, gameIndex);
             }
         }
 
 
 
-        public static void ResolveMelee(int actorPid, int victimID, in Action theAction, int gameIndex)
+        public static void ResolveMelee(int actorsCell, int victimsCell, int gameIndex)
         {
             var bm = GameRegistry.game[gameIndex].boardModel;
-
-            int dmg = Piece.move_damage[theAction.TargetType];
-            int attackerCell = theAction.ActorsCell;
-            int victimCell = bm.GetPieceCell(victimID);
-            bool killed = ApplyDamageWithCapital(attackerCell, victimID, dmg, gameIndex);
-            if (killed)
+            if (ApplyTypicalDamageAndPieceKill(actorsCell: actorsCell, victimsCell: victimsCell, dmg: Piece.move_damage[bm.GetPieceTypeFromCell(actorsCell)], gameIndex: gameIndex))
             {
-                pieceKilled(victimID, gameIndex, theAction);
-                if (bm.IsValidCellId(victimCell) && bm.IsEmpty(victimCell))
-                {
-                    int attackerId = bm.GetCellOccupant(attackerCell);
-                    if (attackerId >= 0) bm.MovePieceRow(attackerId, victimCell);
-                }
+                if (bm.IsEmpty(victimsCell)) bm.MovePieceRow(bm.occupantPieceId[actorsCell], victimsCell);
+                return;
             }
-            else
-            {
-                int best = BmCac.FindNearestEmptyAdjacent(attackerCell, victimCell, gameIndex);
-                if (best >= 0) bm.MovePieceRow(actorPid, best);
-            }
-            // Connector state refresh happens in GameActions after move/shoot/push/kill
+            bm.MovePieceRow(bm.occupantPieceId[actorsCell], BmCac.FindNearestEmptyAdjacent(actorsCell, victimsCell, gameIndex));
         }
 
 

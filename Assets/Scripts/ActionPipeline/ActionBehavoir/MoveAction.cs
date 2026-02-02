@@ -2,6 +2,7 @@ using UnityEngine;
 using Game.Core;
 using Action = Game.Core.Action;
 using static Game.Core.ActionKind; // import enum values
+using static Game.Core.GameActions;
 
 public static class MoveAction
 {
@@ -110,18 +111,14 @@ public static class MoveAction
     public static void Apply(in Action theAction, byte player, int gameIndex)
     {
         var bm = GameRegistry.game[gameIndex].boardModel;
-
-        int actorPid = bm.GetCellOccupant(theAction.ActorsCell);
-        if (actorPid < 0) return;
-        int dstOcc = bm.GetCellOccupant(theAction.TargetCell);
-        if (dstOcc >= 0)
+        if (bm.IsCellOccupied(theAction.TargetCell))
         {
-            GameActions.ResolveMelee(actorPid, dstOcc, in theAction, gameIndex);
+            ResolveMelee(actorsCell: theAction.ActorsCell, victimsCell: theAction.TargetCell, gameIndex: gameIndex);
         }
         else
         {
-            bm.MovePieceRow(actorPid, theAction.TargetCell);
+            bm.MovePieceRow(bm.occupantPieceId[theAction.ActorsCell], theAction.TargetCell);
         }
-        GameActions.RefreshConnectorState(gameIndex);
+        RefreshConnectorState(gameIndex);
     }
 }

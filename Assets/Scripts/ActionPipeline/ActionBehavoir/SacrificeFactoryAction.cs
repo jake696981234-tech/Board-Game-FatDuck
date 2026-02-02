@@ -2,6 +2,7 @@ using UnityEngine;
 using Game.Core;
 using Action = Game.Core.Action;
 using static Game.Core.ActionKind; // import enum values
+using static Game.Core.GameActions;
 
 public static class SacrificeFactoryAction
 {
@@ -60,15 +61,8 @@ public static class SacrificeFactoryAction
     public static void Apply(in Action theAction, byte player, int gameIndex)
     {
         var bm = GameRegistry.game[gameIndex].boardModel;
-        var events = GameRegistry.game[gameIndex].eventManager;
-
-        int victimID = bm.GetCellOccupant(theAction.TargetCell);
-        if (victimID < 0) return;
-        int Pieceid = bm.GetCellOccupant(theAction.ActorsCell);
-        bm.pieceFactoryAux[Pieceid] += Piece.sacrificeFactory_amount[bm.GetPieceTypeFromCell(theAction.ActorsCell)];
-
-        GameActions.pieceKilled(victimID, gameIndex, theAction);
-        GameActions.RefreshConnectorState(gameIndex);
+        bm.pieceFactoryAux[bm.GetCellOccupant(theAction.ActorsCell)] += Piece.sacrificeFactory_amount[bm.GetPieceTypeFromCell(theAction.ActorsCell)];
+        pieceKilled(victimsCell: theAction.TargetCell, actorsCell: theAction.ActorsCell, gameIndex: gameIndex);
     }
   
 }

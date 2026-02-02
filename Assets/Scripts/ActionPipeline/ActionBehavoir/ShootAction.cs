@@ -2,6 +2,7 @@ using UnityEngine;
 using Game.Core;
 using Action = Game.Core.Action;
 using static Game.Core.ActionKind; // import enum values
+using static Game.Core.GameActions;
 
 public static class ShootAction
 {
@@ -60,17 +61,6 @@ public static class ShootAction
     public static void Apply(in Action theAction, byte player, int gameIndex)
     {
         var bm = GameRegistry.game[gameIndex].boardModel;
-        var events = GameRegistry.game[gameIndex].eventManager;
-
-        // int victimID = theAction.aux;
-        // if (victimID < 0) { Debug.Log("Shoot Action Encoding is broken, this should not be possible"); return; }
-        int dmg = Piece.shoot_damage[bm.GetPieceTypeFromCell(theAction.ActorsCell)];
-        bool killed = GameActions.ApplyDamageWithCapital(theAction.ActorsCell, bm.GetCellOccupant(theAction.TargetCell), dmg, gameIndex);
-        if (killed)
-        {
-            // Revoke digit from the defender's owner if this type granted one
-            GameActions.pieceKilled(bm.GetCellOccupant(theAction.TargetCell), gameIndex, theAction);
-        }
-        GameActions.RefreshConnectorState(gameIndex);
+        ApplyTypicalDamageAndPieceKill(actorsCell: theAction.ActorsCell, victimsCell: theAction.TargetCell, dmg: Piece.shoot_damage[bm.GetPieceTypeFromCell(theAction.ActorsCell)], gameIndex: gameIndex);
     }
 }

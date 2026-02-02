@@ -2,6 +2,8 @@ using UnityEngine;
 using Game.Core;
 using Action = Game.Core.Action;
 using static Game.Core.ActionKind; // import enum values
+using static Game.Core.GameActions;
+
 
 public static class PushAction
 {
@@ -28,7 +30,7 @@ public static class PushAction
     {
         var bm = GameRegistry.game[gameIndex].boardModel;
 
-        // Inline minimal legality similar to GameActions.GetLegalTargets_Push
+        // Inline minimal legality similar to GetLegalTargets_Push
         int originCell = bm.GetPieceCell(actorPieceId);
         if (originCell < 0) return 0;
 
@@ -74,28 +76,8 @@ public static class PushAction
     public static void Apply(in Action theAction, byte player, int gameIndex)
     {
         var bm = GameRegistry.game[gameIndex].boardModel;
-        var events = GameRegistry.game[gameIndex].eventManager;
-
-        // int victimID = theAction.TargetCell;
-        // if (victimID < 0) return;
-
-        // int actorPid = bm.GetCellOccupant(theAction.ActorsCell);
-        // if (actorPid < 0) return;
-
-        // byte actorType = bm.GetPieceType(actorPid);
-
-        int dmg = Piece.push_damage[bm.GetPieceTypeFromCell(theAction.ActorsCell)];
-        bool killed = GameActions.ApplyDamageWithCapital(theAction.ActorsCell, bm.GetCellOccupant(theAction.TargetCell), dmg, gameIndex);
-        if (killed)
-        {
-            // Revoke digit from the defender's owner if this type granted one
-            GameActions.pieceKilled(bm.GetCellOccupant(theAction.TargetCell), gameIndex, theAction);
-        }
-        else
-        {
-            int pushedCellID = BmCac.ComputePushDestination(actorPieceId: bm.GetCellOccupant(theAction.ActorsCell), actorType: bm.GetPieceTypeFromCell(theAction.ActorsCell), targetPieceId: bm.GetCellOccupant(theAction.TargetCell), gameIndex: gameIndex);
-            bm.MovePieceRow(bm.GetCellOccupant(theAction.TargetCell), pushedCellID);
-        }
-        GameActions.RefreshConnectorState(gameIndex);
+        if (ApplyTypicalDamageAndPieceKill(actorsCell: theAction.ActorsCell, victimsCell: theAction.TargetCell, dmg: Piece.push_damage[bm.GetPieceTypeFromCell(theAction.ActorsCell)], gameIndex: gameIndex)) return;
+        bm.MovePieceRow(bm.GetCellOccupant(theAction.TargetCell), BmCac.ComputePushDestination(actorPieceId: bm.GetCellOccupant(theAction.ActorsCell), actorType: bm.GetPieceTypeFromCell(theAction.ActorsCell), targetPieceId: bm.GetCellOccupant(theAction.TargetCell), gameIndex: gameIndex));
+        RefreshConnectorState(gameIndex);
     }
 }

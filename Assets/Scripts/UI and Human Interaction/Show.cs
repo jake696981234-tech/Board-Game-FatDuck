@@ -22,6 +22,7 @@ public static class Show
                 ShowTargetCellOptions();
                 return;
             case ChoosingTargetType:
+                if (AFilter.Chosen[(int)ChoosingKind] == Spawner) { ShowSpawnerOptions(); return; }
                 ShowUpgradeOptions();
                 return;
             case ChoosingWallConfig:
@@ -62,22 +63,15 @@ public static class Show
         UI.hic.wallOptionPanel.showWallConfigOptions(GiveMeOffersContaining(Legal: true, Kind: true, ActorsCell: false, TargetCell: true, Type: true, WallConfig: false, intakeCell: false));
         PieceInfo.SetPieceInfo(AFilter.Chosen[(int)ChoosingTargetType]);
     }
+    public static void ShowSpawnerOptions()
+    {
+        SetGeneralUI(backDropColor: UI.hic.config.buildModeBackground, panelColor: UI.hic.config.buildModePanelBackground, cellColor: UI.hic.config.defaultCellColor, build: true, create: false, action: true, pieceFull: false, execute: false, walls: false, secondWalls: false);
+        ShowBuildItemsContaining(Legal: false, Kind: true, ActorsCell: true, TargetCell: true, TargetType: false, WallConfig: false, intakeCell: false);
+    }
     public static void ShowUpgradeOptions()
     {
         SetGeneralUI(backDropColor: UI.hic.config.buildModeBackground, panelColor: UI.hic.config.buildModePanelBackground, cellColor: UI.hic.config.defaultCellColor, build: true, create: false, action: true, pieceFull: false, execute: false, walls: false, secondWalls: false);
-        var items = new List<Game.Core.Action>(UIBridge._count);
-        var uiInfo = new List<UIInfo>(UIBridge._count);
-        for (int i = 0; i < UIBridge._count; i++)
-        {
-            var theAction = UIBridge._offers[i];
-            if (theAction.kind != Upgrade) continue;
-            if (theAction.ActorsCell != AFilter.Chosen[(int)ChoosingActorsCell]) continue;
-            int fullCost = Mathf.RoundToInt(UIBridge._quoted[i]);
-            bool legal = UIBridge._mask[i] != 0;           // 1 = affordable+legal; 0 = masked out by cost, etc. :contentReference[oaicite:8]{index=8}
-            items.Add(theAction);
-            uiInfo.Add(new UIInfo(legal, fullCost));
-        }
-        UI.hic.buildMenu.Show(items, UI.hic.config);
+        ShowBuildItemsContaining(Legal: false, Kind: true, ActorsCell: true, TargetCell: false, TargetType: false, WallConfig: false, intakeCell: false);
     }
     private static void launcherFilter()
     {
@@ -120,6 +114,7 @@ public static class Show
                     continue;
                 case Move:
                 case Shoot:
+                case Launcher:
                     if (UI.hic.config.GiveRawActionOffers) break;
                     if (!seen.Add(action.kind)) continue;
                     break;
@@ -133,6 +128,30 @@ public static class Show
         }
         
         UI.hic.pieceActionListFull.Show(items);
+    }
+
+    #region Helpers
+
+    public static void ShowBuildItemsContaining(bool Legal, bool Kind, bool ActorsCell, bool TargetCell, bool TargetType, bool WallConfig, bool intakeCell)
+    {
+        var items = new List<Game.Core.Action>(UIBridge._count);
+        var uiInfo = new List<UIInfo>(UIBridge._count);
+        for (int i = 0; i < UIBridge._count; i++)
+        {
+            if (UIBridge._offers[i].kind != AFilter.Chosen[(int)ChoosingKind] && Kind) continue;
+            if (UIBridge._offers[i].ActorsCell != AFilter.Chosen[(int)ChoosingActorsCell] && ActorsCell) continue;
+            if (UIBridge._offers[i].TargetCell != AFilter.Chosen[(int)ChoosingTargetCell] && TargetCell) continue;
+            if (UIBridge._offers[i].TargetType != AFilter.Chosen[(int)ChoosingTargetType] && TargetType) continue;
+            if (UIBridge._offers[i].WallConfig != AFilter.Chosen[(int)ChoosingWallConfig] && WallConfig) continue;
+            if (UIBridge._offers[i].IntakeCell != AFilter.Chosen[(int)ChoosingIntakeCell] && intakeCell) continue;
+            bool isLegal = UIBridge._mask[i] != 0;
+            if (isLegal && Legal) continue;
+
+            items.Add(UIBridge._offers[i]);
+            int fullCost = Mathf.RoundToInt(UIBridge._quoted[i]);
+            uiInfo.Add(new UIInfo(isLegal, fullCost));
+        }
+        UI.hic.buildMenu.Show(items, UI.hic.config);
     }
 
     // DoesThisHave(Have: (int)ChoosingActorsCell, Legal: true, Kind: true, ActorsCell: false, TargetCell: false, Type: true, WallConfig: false, intakeCell: false)
@@ -194,6 +213,8 @@ public static class Show
             return GiveMeOffersContaining(GiveMe: (int)ChoosingWallConfig, Legal: Legal, Kind: Kind, ActorsCell: ActorsCell, TargetCell: TargetCell, TargetType: Type, WallConfig: WallConfig, intakeCell: intakeCell).Select(i => unchecked((ushort)i));
         }
 
+        #endregion
+
     
 
 
@@ -204,6 +225,24 @@ public static class Show
     //     if (UIBridge.bm.GetPieceOwnerFromCell(AFilter.UInput[(int)Cell]) != UIBridge._humanPlayer) return;
     //     PieceInfo.SetPieceInfo(UIBridge.bm.pieceType[pieceId]);
     //     PanelToggles.TogglePanels(build: false, create: true, action: false, pieceFull: false, execute: false, walls: false, secondWalls: false);
+    // }
+
+    // ublic static void ShowUpgradeOptions()
+    // {
+    //     SetGeneralUI(backDropColor: UI.hic.config.buildModeBackground, panelColor: UI.hic.config.buildModePanelBackground, cellColor: UI.hic.config.defaultCellColor, build: true, create: false, action: true, pieceFull: false, execute: false, walls: false, secondWalls: false);
+    //     var items = new List<Game.Core.Action>(UIBridge._count);
+    //     var uiInfo = new List<UIInfo>(UIBridge._count);
+    //     for (int i = 0; i < UIBridge._count; i++)
+    //     {
+    //         var theAction = UIBridge._offers[i];
+    //         if (theAction.kind != Upgrade) continue;
+    //         if (theAction.ActorsCell != AFilter.Chosen[(int)ChoosingActorsCell]) continue;
+    //         int fullCost = Mathf.RoundToInt(UIBridge._quoted[i]);
+    //         bool legal = UIBridge._mask[i] != 0;           // 1 = affordable+legal; 0 = masked out by cost, etc. :contentReference[oaicite:8]{index=8}
+    //         items.Add(theAction);
+    //         uiInfo.Add(new UIInfo(legal, fullCost));
+    //     }
+    //     UI.hic.buildMenu.Show(items, UI.hic.config);
     // }
     
 }

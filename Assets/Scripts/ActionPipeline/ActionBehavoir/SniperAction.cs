@@ -4,6 +4,7 @@ using Action = Game.Core.Action;
 using static Game.Core.ActionKind; // import enum values
 using System.Collections.Generic;
 using System;
+using static Game.Core.GameActions;
 
 public static class SniperAction
 {
@@ -82,12 +83,6 @@ public static class SniperAction
         var victimsCells = BmCac.OccupiedCellsInLine(theAction.ActorsCell, Piece.sniper_maxRange[bm.GetPieceTypeFromCell(theAction.ActorsCell)], Piece.sniper_minRange[bm.GetPieceTypeFromCell(theAction.ActorsCell)], direction, Piece.sniper_isLineOfSight[bm.GetPieceTypeFromCell(theAction.ActorsCell)], Piece.sniper_isFriendlyFire[bm.GetPieceTypeFromCell(theAction.ActorsCell)], Piece.sniper_isonlySoldiers[bm.GetPieceTypeFromCell(theAction.ActorsCell)], player, gameIndex);
         if (victimsCells.Length <= 0) { Debug.Log("sniper Action Encoding is broken, this should not be possible"); return; }
         int dmg = Piece.sniper_damage[bm.GetPieceTypeFromCell(theAction.ActorsCell)];
-
-        for (int i = 0; i < victimsCells.Length; i++)
-        {
-            bool killed = GameActions.ApplyDamageWithCapital(theAction.ActorsCell, bm.occupantPieceId[victimsCells[i]], dmg, gameIndex);
-            if (killed) GameActions.pieceKilled(bm.occupantPieceId[victimsCells[i]], gameIndex, theAction);
-            GameActions.RefreshConnectorState(gameIndex);
-        }
+        for (int i = 0; i < victimsCells.Length; i++) ApplyTypicalDamageAndPieceKill(actorsCell: theAction.ActorsCell, victimsCell: victimsCells[i], dmg: dmg, gameIndex: gameIndex);
     }
 }

@@ -12,10 +12,7 @@ namespace Game.Core
 
 
     //general to do list:
-    //-2. Change the way launcher is encoded "intakeCell" is PieceID, Where ML system Needs CellID
-    //-1. Re factor Actions DTO
-    //0. Hook up Terminal end for the new ML agent
-    //1. With ML agent training- If the ML agent being trained is eliminated, you can just skip to the next game. 
+    //1. Organise Board Model
     //2. If a player has 0 budget, and their payout is zero, they should be eliminated.
     public class GameState
     {

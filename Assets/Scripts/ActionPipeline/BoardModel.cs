@@ -110,7 +110,7 @@ public class BoardModel
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool IsValidPieceId(int pieceId) => (uint)pieceId < (uint)pieceCount;
-
+    public bool IsCellOccupied(int cell) => GetCellOccupant(cell) != _invalidId;
     // =====================================================================
     // Minimal wrappers many systems expect (ID-only)
     // =====================================================================
@@ -357,7 +357,7 @@ public class BoardModel
     }
 
     /// <summary>Subtract hp; returns true if the row died (hp <= 0). Caller will FreeRowSwapBack.</summary>
-    public bool DamagePieceRow(int pieceId, int delta)
+    public bool DamagePieceRow(int pieceId, int delta) // dont use this one, go through the damage in gameActions
     {
         int hp = pieceHP[pieceId] - delta;
         if (hp > 0) { pieceHP[pieceId] = (short)hp; return false; }
