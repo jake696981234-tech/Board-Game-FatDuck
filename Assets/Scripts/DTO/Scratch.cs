@@ -7,8 +7,8 @@ public static class Scratch
     {
         var bm = GameRegistry.game[gameIndex].boardModel;
 
-        if (_scratchCells == null || _scratchCells.Length != bm._cellCount)
-            _scratchCells = new int[bm._cellCount];
+        if (_scratchCells == null || _scratchCells.Length != Info.totalCells)
+            _scratchCells = new int[Info.totalCells];
         return _scratchCells;
     }
 
@@ -17,8 +17,8 @@ public static class Scratch
     {
         var bm = GameRegistry.game[gameIndex].boardModel;
 
-        if (_scratchCells2 == null || _scratchCells2.Length != bm._cellCount)
-            _scratchCells2 = new int[bm._cellCount];
+        if (_scratchCells2 == null || _scratchCells2.Length != Info.totalCells)
+            _scratchCells2 = new int[Info.totalCells];
         return _scratchCells2;
     }
 

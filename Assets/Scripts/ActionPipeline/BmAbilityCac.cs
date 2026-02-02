@@ -44,7 +44,7 @@ public static class BmCac
         for (int step = 1; step <= maxRange; step++)
         {
             int cell = StepInDirection(StartingCell, direction, step, gameIndex);
-            if (!bm.IsValidCellId(cell) || cell == bm._invalidId)
+            if (!bm.IsValidCellId(cell) || cell == Info.invalidId)
                 break;
 
             int occupant = bm.GetCellOccupant(cell);
@@ -52,12 +52,12 @@ public static class BmCac
             // line of sight stops at the first blocker, even if outside minRange
             if (step < minRange)
             {
-                if (needsLineOfSight && occupant != bm._invalidId)
+                if (needsLineOfSight && occupant != Info.invalidId)
                     break;
                 continue;
             }
 
-            if (occupant == bm._invalidId)
+            if (occupant == Info.invalidId)
                 continue;
 
             if (onlySoldiers && Piece.isBuilding[bm.GetPieceType(occupant)])
@@ -153,7 +153,7 @@ public static class BmCac
         var bm = GameRegistry.game[gameIndex].boardModel;
 
         if (!bm.IsValidCellId(startCell) || (uint)dir >= 6 || steps <= 0)
-            return bm._invalidId;
+            return Info.invalidId;
 
         int current = startCell;
         var neighbors = bm.geo.neighborsById;
@@ -161,7 +161,7 @@ public static class BmCac
         for (int i = 0; i < steps; i++)
         {
             int next = neighbors[current][dir];
-            if (next < 0) return bm._invalidId;
+            if (next < 0) return Info.invalidId;
             current = next;
         }
 
@@ -299,7 +299,7 @@ public static class BmCac
         for (int i = 0; i < limit; i++)
         {
             int pid = bm.occupantPieceId[scratchCells[i]];
-            if (pid == bm._invalidId || !bm.IsValidPieceId(pid)) continue;
+            if (pid == Info.invalidId || !bm.IsValidPieceId(pid)) continue;
             if (write < outPieceIds.Length)
                 outPieceIds[write] = pid;
             write++;
@@ -317,10 +317,10 @@ public static class BmCac
     {
         var bm = GameRegistry.game[gameIndex].boardModel;
 
-        if (!bm.IsValidCellId(centerCell)) return bm._invalidId;
+        if (!bm.IsValidCellId(centerCell)) return Info.invalidId;
 
         var neigh = bm.geo.neighborsById[centerCell];
-        int best = bm._invalidId;
+        int best = Info.invalidId;
         int bestDist = int.MaxValue;
 
         for (int d = 0; d < 6; d++)
@@ -372,7 +372,7 @@ public static class BmCac
 
             if (!bm.geo.idByAxial.TryGetValue((rq, rr), out int midId))
                 return false; // Off-board—treat as blocked (topology mismatch)
-            if (bm.occupantPieceId[midId] != bm._invalidId)
+            if (bm.occupantPieceId[midId] != Info.invalidId)
                 return false; // blocked by any piece
         }
         return true;
@@ -390,12 +390,12 @@ public static class BmCac
         int targetCell = bm.GetPieceCell(targetPieceId);
 
         if (actorCell < 0 || targetCell < 0)
-            return bm.InvalidId;
+            return Info.invalidId;
 
 
         int pushAmount = Piece.push_pushAmount[actorType];
         if (pushAmount <= 0)
-            return bm.InvalidId;
+            return Info.invalidId;
 
         bool isPull = Piece.push_isPull[actorType];
 
@@ -403,7 +403,7 @@ public static class BmCac
             ? GetDirectionIndex(targetCell, actorCell, gameIndex)
             : GetDirectionIndex(actorCell, targetCell, gameIndex);
         if (dir < 0)
-            return bm.InvalidId;
+            return Info.invalidId;
 
         int targetOwner = bm.GetPieceOwner(targetPieceId);
         int ownerCoreCell = bm.GetPlayerCoreCellId((byte)targetOwner);
@@ -467,7 +467,7 @@ public static class BmCac
                 }
             }
 
-            int bestCell = bm.InvalidId;
+            int bestCell = Info.invalidId;
             int bestScore = int.MaxValue;
 
             for (int i = 0; i < farCount; i++)
@@ -489,7 +489,7 @@ public static class BmCac
                 return bestCell;
         }
 
-        return bm.InvalidId;
+        return Info.invalidId;
     }
 
 

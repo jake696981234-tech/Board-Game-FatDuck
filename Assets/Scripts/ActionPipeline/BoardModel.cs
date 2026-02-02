@@ -12,11 +12,6 @@ using System.Runtime.CompilerServices;
 /// </summary>
 public class BoardModel
 {
-    // ---------- Immutable board constants (set once at Init) ----------
-    private int _radius;
-    public int _cellCount;
-    public int _invalidId;
-
     // ---------- Scenario anchors (cell IDs; set at Init) ----------
     private int _vpCellId;
     private int[] _coreCellIdByPlayer = new int[4]; // len = playerCount, cores assumed static
@@ -66,9 +61,9 @@ public class BoardModel
     {
         // store snapshots
         geo = geometry;
-        _radius = Info.radius;
-        _cellCount = Info.totalCells;
-        _invalidId = Info.invalidId;
+        // _radius = Info.radius;
+        // _cellCount = Info.totalCells;
+        // _invalidId = Info.invalidId;
         _vpCellId = geo.idByAxial[Info.VpAxial];
         // _coreCellIdByPlayer = coreCellIdOverride != null
         //     ? (int[])coreCellIdOverride.Clone()
@@ -78,12 +73,12 @@ public class BoardModel
         _coreCellIdByPlayer[2] = geo.idByAxial[Info.PlayerCoreAxialCord[2]];
         _coreCellIdByPlayer[3] = geo.idByAxial[Info.PlayerCoreAxialCord[3]];
         
-        occupantPieceId = new int[_cellCount];
-        for (int i = 0; i < _cellCount; i++) occupantPieceId[i] = _invalidId;
+        occupantPieceId = new int[Info.totalCells];
+        for (int i = 0; i < Info.totalCells; i++) occupantPieceId[i] = Info.invalidId;
 
         // inside BoardModel.Init(...)
-        occupantPieceId = new int[_cellCount];
-        for (int i = 0; i < _cellCount; i++) occupantPieceId[i] = _invalidId;
+        occupantPieceId = new int[Info.totalCells];
+        for (int i = 0; i < Info.totalCells; i++) occupantPieceId[i] = Info.invalidId;
 
 
         // allocate occupancy & pieces as before, using initialPieceCapacity
@@ -99,23 +94,20 @@ public class BoardModel
     // Properties / shallow queries
     // =====================================================================
 
-    public int Radius => _radius;
-    public int CellCount => _cellCount;
-    public int InvalidId => _invalidId;
-    public int VictoryPointCellId => _vpCellId;
+    
     public int CoreCellIdForPlayer(byte p) => _coreCellIdByPlayer[p];
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool IsValidCellId(int cellId) => (uint)cellId < (uint)_cellCount;
+    public bool IsValidCellId(int cellId) => (uint)cellId < (uint)Info.totalCells;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool IsValidPieceId(int pieceId) => (uint)pieceId < (uint)pieceCount;
-    public bool IsCellOccupied(int cell) => GetCellOccupant(cell) != _invalidId;
+    public bool IsCellOccupied(int cell) => GetCellOccupant(cell) != Info.invalidId;
     // =====================================================================
     // Minimal wrappers many systems expect (ID-only)
     // =====================================================================
 
-    public int GetCellCount() => _cellCount; // The Places that refrence this can should refrence the struct directly
+    public int GetCellCount() => Info.totalCells; // The Places that refrence this can should refrence the struct directly
 
     public int GetPieceTypeFromCell(int cellId)
     {
@@ -133,10 +125,10 @@ public class BoardModel
     }
 
     public int GetCellOccupant(int cellId)
-        => (IsValidCellId(cellId) && occupantPieceId != null) ? occupantPieceId[cellId] : _invalidId;
+        => (IsValidCellId(cellId) && occupantPieceId != null) ? occupantPieceId[cellId] : Info.invalidId;
 
     public int GetPieceCell(int pieceId)
-        => (IsValidPieceId(pieceId) && pieceCellId != null) ? pieceCellId[pieceId] : _invalidId;
+        => (IsValidPieceId(pieceId) && pieceCellId != null) ? pieceCellId[pieceId] : Info.invalidId;
 
     public int GetPieceOwner(int pieceId)
         => (IsValidPieceId(pieceId) && pieceOwner != null) ? pieceOwner[pieceId] : -1;
@@ -146,14 +138,14 @@ public class BoardModel
 
     public int GetNeighborCell(int cellId, int dir)
     {
-        if (!IsValidCellId(cellId) || (uint)dir >= 6) return _invalidId;
+        if (!IsValidCellId(cellId) || (uint)dir >= 6) return Info.invalidId;
         return geo.neighborsById[cellId][dir];
     }
 
     public int GetVictoryPointCellId() => _vpCellId; // The Places that refrence this can should refrence the struct directly
 
     public int GetPlayerCoreCellId(int owner)
-        => (owner >= 0 && owner < _coreCellIdByPlayer.Length) ? _coreCellIdByPlayer[owner] : _invalidId;
+        => (owner >= 0 && owner < _coreCellIdByPlayer.Length) ? _coreCellIdByPlayer[owner] : Info.invalidId;
 
     public void SetPlayerCoreCells(int[] coreCellIds)
     {
@@ -191,7 +183,7 @@ public class BoardModel
 
     public bool TryGetNeighbor(int cellId, int dir, out int neighborId)
     {
-        neighborId = _invalidId;
+        neighborId = Info.invalidId;
         if (!IsValidCellId(cellId) || (uint)dir >= 6) return false;
         neighborId = geo.neighborsById[cellId][dir];
         return neighborId >= 0;
@@ -212,8 +204,8 @@ public class BoardModel
     /// <summary>Distance to VP: if your geometry carries a dist map, use it; else fall back to DistanceCells.</summary>
     public int DistToVictoryPoint(int cellId)
     {
-        if (!IsValidCellId(cellId) || _vpCellId == _invalidId) return int.MaxValue / 4;
-        if (_distFromVP != null && _distFromVP.Length == _cellCount)
+        if (!IsValidCellId(cellId) || _vpCellId == Info.invalidId) return int.MaxValue / 4;
+        if (_distFromVP != null && _distFromVP.Length == Info.totalCells)
             return _distFromVP[cellId];
         // Fallback: compute on the fly if precompute is unavailable
         return DistanceCells(cellId, _vpCellId);
@@ -225,7 +217,7 @@ public class BoardModel
     private int[] ComputeDistFromCell(int startCell)
     {
         if (!IsValidCellId(startCell)) return null;
-        var dist = new int[_cellCount];
+        var dist = new int[Info.totalCells];
         for (int i = 0; i < dist.Length; i++) dist[i] = int.MaxValue / 4;
         var q = new System.Collections.Generic.Queue<int>();
         dist[startCell] = 0;
@@ -237,7 +229,7 @@ public class BoardModel
             for (int i = 0; i < 6 && i < nbrs.Length; i++)
             {
                 int nb = nbrs[i];
-                if (nb < 0 || nb >= _cellCount) continue;
+                if (nb < 0 || nb >= Info.totalCells) continue;
                 if (dist[nb] <= dist[c] + 1) continue;
                 dist[nb] = dist[c] + 1;
                 q.Enqueue(nb);
@@ -247,7 +239,7 @@ public class BoardModel
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool IsEmpty(int cellId) => IsValidCellId(cellId) && occupantPieceId[cellId] == _invalidId;
+    public bool IsEmpty(int cellId) => IsValidCellId(cellId) && occupantPieceId[cellId] == Info.invalidId;
 
     public bool IsVictoryPointCell(int cellId) => cellId == _vpCellId;
 
@@ -307,7 +299,7 @@ public class BoardModel
         // clear previous cell occupancy
         int oldCell = pieceCellId[pieceId];
         if (IsValidCellId(oldCell) && occupantPieceId[oldCell] == pieceId)
-            occupantPieceId[oldCell] = _invalidId;
+            occupantPieceId[oldCell] = Info.invalidId;
 
         // swap with last if needed
         if (pieceId != last)
@@ -351,7 +343,7 @@ public class BoardModel
     public void MovePieceRow(int pieceId, int dstCellId)
     {
         int src = pieceCellId[pieceId];
-        if (IsValidCellId(src) && occupantPieceId[src] == pieceId) occupantPieceId[src] = _invalidId;
+        if (IsValidCellId(src) && occupantPieceId[src] == pieceId) occupantPieceId[src] = Info.invalidId;
         pieceCellId[pieceId] = dstCellId;
         if (IsValidCellId(dstCellId)) occupantPieceId[dstCellId] = pieceId;
     }
@@ -371,7 +363,7 @@ public class BoardModel
     {
         int removed = pieceCount;
         if (occupantPieceId != null)
-            for (int i = 0; i < occupantPieceId.Length; i++) occupantPieceId[i] = _invalidId;
+            for (int i = 0; i < occupantPieceId.Length; i++) occupantPieceId[i] = Info.invalidId;
         pieceCount = 0;
         return removed;
     }
@@ -390,9 +382,9 @@ public class BoardModel
 
     public void EnsureScratchAllocated()
     {
-        if (_q == null || _q.Length != _cellCount) _q = new int[_cellCount];
-        if (_seen == null || _seen.Length != _cellCount) _seen = new int[_cellCount];
-        if (_dist == null || _dist.Length != _cellCount) _dist = new short[_cellCount];
+        if (_q == null || _q.Length != Info.totalCells) _q = new int[Info.totalCells];
+        if (_seen == null || _seen.Length != Info.totalCells) _seen = new int[Info.totalCells];
+        if (_dist == null || _dist.Length != Info.totalCells) _dist = new short[Info.totalCells];
         if (_stamp == int.MaxValue) { Array.Clear(_seen, 0, _seen.Length); _stamp = 0; }
     }
 

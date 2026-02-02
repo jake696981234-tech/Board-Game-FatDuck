@@ -41,7 +41,7 @@ public static class MLObservation
         {
             float Occupancy = CellOccupancy(bm, cell);
             MLSam.Observations[MLSam.Count++] = Occupancy;
-            if (Occupancy == bm._invalidId) { WriteNotOccupiedCellObservations(MLSam); } else { WriteOccupiedCellObservations(cell, MLSam); }
+            if (Occupancy == Info.invalidId) { WriteNotOccupiedCellObservations(MLSam); } else { WriteOccupiedCellObservations(cell, MLSam); }
             // distance to cores
             // distance to Vp
             MLSam.Observations[MLSam.Count++] = isPieceVPCell(bm, cell);
@@ -195,7 +195,7 @@ public static class MLObservation
     private static float RoundPayOut(int gameIndex, int playerIndex) => normalize(PassiveActions.ComputeFactoryIncome((byte)playerIndex, gameIndex), Info.capMaxBudget);
     private static float CellOccupancy(BoardModel bm, int cell) 
     {
-        if (bm.GetCellOccupant(cell) != bm._invalidId)
+        if (bm.GetCellOccupant(cell) != Info.invalidId)
         { return 1f; }
         else
         { return 0f; } 

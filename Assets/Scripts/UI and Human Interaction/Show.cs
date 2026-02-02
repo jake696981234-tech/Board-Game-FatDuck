@@ -166,7 +166,7 @@ public static class Show
 
     public static IEnumerable<int> GiveMeOffersContaining(byte GiveMe, bool Legal, bool Kind, bool ActorsCell, bool TargetCell, bool TargetType, bool WallConfig, bool intakeCell)
     {
-        List<int> ReturningList = new List<int>(UIBridge.bm._cellCount);
+        List<int> ReturningList = new List<int>(Info.totalCells);
         for (int i = 0; i < UIBridge._count; i++)
         {
             if (UIBridge._offers[i].kind != AFilter.Chosen[(int)ChoosingKind] && Kind) continue;

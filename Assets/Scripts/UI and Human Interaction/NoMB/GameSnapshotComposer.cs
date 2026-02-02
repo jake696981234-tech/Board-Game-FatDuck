@@ -31,7 +31,7 @@ public sealed class GameSnapshotComposer
         for (int id = 0; id < staticSnapshot.cellCount; id++)
         {
             var (q, r) = geometry.coordById[id];
-            staticSnapshot.worldPosById[id] = AxialToWorld(q, r, board.Radius);
+            staticSnapshot.worldPosById[id] = AxialToWorld(q, r, Info.radius);
         }
 
         staticSnapshot.victoryPointCellId = board.GetVictoryPointCellId();

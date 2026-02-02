@@ -128,7 +128,7 @@ public static class OfferProvider
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool IsInvalid(BoardModel bm, int pieceId) => pieceId == bm.InvalidId;
+    public static bool IsInvalid(BoardModel bm, int pieceId) => pieceId == Info.invalidId;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void Emit(Action theAction, ref OfferBuild offerBuild)

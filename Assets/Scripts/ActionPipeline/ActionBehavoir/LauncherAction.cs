@@ -46,7 +46,7 @@ public static class LauncherAction
         // Find candidate pieces
         for (int victimsCell = 0; victimsCell < cellCount; victimsCell++)
         {
-            if (bm.GetCellOccupant(victimsCell) == bm._invalidId) continue;
+            if (bm.GetCellOccupant(victimsCell) == Info.invalidId) continue;
             if (!Info.AbilitysCanSeperatePiecesWithWalls && Piece.connectors_enabled[bm.GetPieceTypeFromCell(victimsCell)]) continue;
             byte owner = (byte)bm.GetPieceOwnerFromCell(victimsCell);
             if (owner == actorOwner && !allowFriendly) continue;
