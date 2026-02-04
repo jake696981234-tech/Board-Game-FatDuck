@@ -37,7 +37,7 @@ public static class MLObservation
         MLSam.Observations[MLSam.Count++] = CostEngine.turnFee(MLSam.bot.playerId, gameState);
         WritePlayersStats(gameState, MLSam);
 
-        for (int cell = 0; cell < Info.maxCells; cell++)
+        for (int cell = 0; cell < Info.totalCells; cell++)
         {
             float Occupancy = CellOccupancy(bm, cell);
             MLSam.Observations[MLSam.Count++] = Occupancy;

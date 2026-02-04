@@ -26,7 +26,7 @@ public sealed class BuildMenuPresenter : MonoBehaviour
     public void ShowBuildActionMenu((List<Action> BuildActions, List<UIInfo> uiInfo) data)
     {
         for (int i = 0; i < BuildActionPrefabs.Length; i++) if (BuildActionPrefabs[i] != null) Destroy(BuildActionPrefabs[i].gameObject);
-        UI.hic.buildMenu.BuildActionPrefabs = new BuildMenuItemView[data.BuildActions.Count()];
+        BuildActionPrefabs = new BuildMenuItemView[data.BuildActions.Count()];
         for (int i = 0; i < data.BuildActions.Count(); i++)
         {
             var prefab = Instantiate(itemPrefab, listContent);
@@ -34,14 +34,6 @@ public sealed class BuildMenuPresenter : MonoBehaviour
             prefab.Bind(data.BuildActions[i], data.uiInfo[i], OnItemClicked);
             BuildActionPrefabs[i].gameObject.SetActive(true);
         }
-
-        // for (int i = 0; i < UIBridge.totalCells; i++)
-        // {
-        //      if (BuildActionPrefabs[i] != null) Destroy(BuildActionPrefabs[i].gameObject);
-        //     BuildActionPrefabs[i] = Instantiate(itemPrefab, listContent);
-        //     BuildActionPrefabs[i].Bind(data.BuildActions[i], data.uiInfo[i], OnItemClicked);
-        //     BuildActionPrefabs[i].gameObject.SetActive(true);
-        // }
     }
 
     // public void DestoryAllBuildActionPrefabs()

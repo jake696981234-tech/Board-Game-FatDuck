@@ -58,6 +58,8 @@ public static class ShootAction
         return count;
     }
 
+    
+
     public static void Apply(in Action theAction, byte player, int gameIndex)
     {
         var bm = GameRegistry.game[gameIndex].boardModel;

@@ -17,12 +17,12 @@ public static class OfferProvider
     // intake Cell ID - For Launcher
     public static int cellCount; // this is not hooked up, this is a to do field
 
-    public static int[] ActionKinds = new int[16 + 1];
+    public static int[] ActionKinds = new int[Piece.ActiveAbilityCount + 1];
     public static int[] ActorsCelID = new int[cellCount + 1];
-    public static int[] TargetCell = new int[cellCount+ 1];
+    public static int[] TargetCell = new int[cellCount + 1];
     public static int[] PieceType = new int[Piece.name.Length+ 1];
-    public static int[] WallConfig = new int[32+ 1];
-    public static int[] IntakeCellID = new int[Piece.name.Length+ 1];
+    public static int[] WallConfig = new int[32 + 1];
+    public static int[] IntakeCellID = new int[cellCount + 1];
 
 
     public static void BuildActionbranches(ref OfferBuild offerBuild)
@@ -82,7 +82,7 @@ public static class OfferProvider
         // if (Piece.pieceBuild_enabled[actorType]) PieceBuildAction.CreateActions(pieceId, actorType, cell, ref offerBuild);
         if (Piece.sniper_enabled[actorType]) SniperAction.CreateActions(pieceId, actorType, cell, ref offerBuild);
         if (Piece.necroSpawn_enabled[actorType]) NecroSpawnAction.CreateActions(pieceId, actorType, cell, ref offerBuild);
-        
+        if (Piece.workYard_enabled[actorType]) WorkYard.CreateActions(pieceId, actorType, cell, ref offerBuild);
         UpgradeAction.CreateActions(pieceId, actorType, cell, ref offerBuild);
     }
 

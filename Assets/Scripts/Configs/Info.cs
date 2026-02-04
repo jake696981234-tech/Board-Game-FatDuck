@@ -33,8 +33,8 @@ public static class Info
     public static readonly int rolloutDepth;         // e.g. 2
     public static readonly int thinkBudgetMs;        // e.g. 5
     // [Header("Observations (Phase A schema)")]
-    public static readonly int maxCells;     // e.g., 217 (set below)
-    public static readonly int maxDistance;  // e.g., 16  (set below)
+    // public static readonly int maxCells;     // e.g., 217 (set below)
+    // public static readonly int maxDistance;  // e.g., 16  (set below) //to do fix me
     // [Header("ML Rewards Tuning")]
     public static readonly float rewardWin;
     public static readonly float rewardLoss;
@@ -142,8 +142,7 @@ public static class Info
         rolloutDepth = config.agent.rolloutDepth;
         thinkBudgetMs = config.agent.thinkBudgetMs;
 
-        maxCells = config.observations.maxCells;
-        maxDistance = config.observations.maxDistance;
+   
 
         rewardWin = config.mlRewards.rewardWin;
         rewardLoss = config.mlRewards.rewardLoss;

@@ -226,6 +226,11 @@ public static class PiecesCsvImporter
             Piece.necroSpawn_range[typeId] = GetInt(cols, H, "necroSpawn_range", defaultValue: 0);
             Piece.necroSpawn_botSurcharge[typeId] = GetInt(cols, H, "necroSpawn_botSurcharge", defaultValue: 0);
             #endregion 
+            #region WorkYard
+            Piece.workYard_enabled[typeId] = GetBool(cols, H, "workYard_enabled", defaultValue: false);            
+            Piece.workYard_range[typeId] = GetInt(cols, H, "workYard_range", defaultValue: 0);
+            Piece.workYard_botSurcharge[typeId] = GetInt(cols, H, "workYard_botSurcharge", defaultValue: 0);
+            #endregion 
         }
     }
 
@@ -551,6 +556,11 @@ public static class PiecesCsvImporter
         Piece.necroSpawn_enabled = new bool[count];
         Piece.necroSpawn_range = new int[count];
         Piece.necroSpawn_botSurcharge = new int[count];
+        #endregion
+        #region necroSpawn
+        Piece.workYard_enabled = new bool[count];
+        Piece.workYard_range = new int[count];
+        Piece.workYard_botSurcharge = new int[count];
         #endregion
     }
 

@@ -1,3 +1,4 @@
+
 using static Piece.AbilityKind;
 
 public static class Piece
@@ -18,6 +19,7 @@ public static class Piece
         Explosive = 11,
         Sniper = 12,
         NecroSpawn = 13,
+        WorkYard = 14,
         Create = 14,
         EndTurn = 15,
         Factory = 16,
@@ -29,7 +31,7 @@ public static class Piece
         Invalid = 22,
     }
 
-    public const int ActiveAbilityCount = 15;
+    public const int ActiveAbilityCount = 16;
     public static bool[,] ActiveAbilitesEnabledFromType = new bool[typeCount , ActiveAbilityCount]; 
 
     public static void SetActiveAbilitesEnabledFromType()
@@ -221,6 +223,12 @@ public static class Piece
     public static bool[] necroSpawn_enabled;
     public static int[] necroSpawn_range;
     public static int[] necroSpawn_botSurcharge;
+
+    #endregion
+    #region 
+    public static bool[] workYard_enabled;
+    public static int[] workYard_range;
+    public static int[] workYard_botSurcharge;
     #endregion
     public static bool IsConnectorConfigAllowed(byte type, int configIndex)
     {

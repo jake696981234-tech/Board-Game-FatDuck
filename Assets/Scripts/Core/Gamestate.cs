@@ -12,7 +12,7 @@ namespace Game.Core
 
 
     //general to do list:
-    //-1. Check if Info.TotalCells Auto scales to board raduis
+    //
     //1. Organise Board Model
     //2. If a player has 0 budget, and their payout is zero, they should be eliminated.
     public class GameState

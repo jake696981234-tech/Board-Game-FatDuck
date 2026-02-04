@@ -3,17 +3,18 @@ using Game.Core; // for GameState and Action Kind
 using System.Collections.Generic;
 using System;
 using System.IO;
+using static AFilter.UICState;
 
 public static class UIHelpers
 {
-    
+
     public static Game.Core.Action FindEndTurnIndex()
     {
         for (int i = 0; i < UIBridge._count; i++) if (UIBridge._offers[i].kind == Game.Core.ActionKind.EndTurn) return UIBridge._offers[i];
         throw new InvalidDataException("Failed To Find End Turn");
     }
 
-   
+
     public static bool HasPieceActionsForCell(int cellId)
     {
         ushort src = (ushort)cellId;
@@ -28,7 +29,7 @@ public static class UIHelpers
         return false;
     }
 
-   
+
     public static string PrettyAction(Game.Core.Action theAction)
     {
         switch (theAction.kind)
@@ -42,9 +43,9 @@ public static class UIHelpers
             case Game.Core.ActionKind.GroupBuild: return $"Group Build {theAction.TargetType} @ {theAction.TargetCell}";
             case Game.Core.ActionKind.Upgrade: return $"Upgrade → {UIBridge.bm.GetPieceTypeFromCell(theAction.ActorsCell)} @ {theAction.TargetCell}";
             case Game.Core.ActionKind.Launcher: return $"Launch {theAction.IntakeCell} → {theAction.TargetCell}";
-            // case Game.Core.ActionKind.Spawner:
-            //     // pieceType carries the actor type; aux carries the target type for readability
-            //     return $"Spawn x? {(theAction.aux != 0 ? theAction.aux : Piece.spawn_targetType[theAction.pieceType])} @ {theAction.TargetCell}"; to do
+            case Game.Core.ActionKind.Spawner:
+                // pieceType carries the actor type; aux carries the target type for readability
+                return $"Spawn at {Piece.name[theAction.TargetType]} @ {AFilter.Chosen[(int)ChoosingTargetCell]}";
             case Game.Core.ActionKind.SacrificeFactory: return $"Sacrifice Factory {theAction.ActorsCell} → {theAction.TargetCell}";
             case Game.Core.ActionKind.ConversionFactory: return $"ConversionFactory";
             case Game.Core.ActionKind.EndTurn: return "End Turn";

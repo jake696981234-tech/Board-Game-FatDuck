@@ -41,7 +41,7 @@ public class HCost : MonoBehaviour
 
     public static void UpdatePieceActionsLegality()
     {
-        for (int i = 0; i < UI.hic.pieceActionListFull.theItems.Length; i++) if (UIBridge.gameState.ps[UIBridge._humanPlayer].budget < UI.hic.pieceActionListFull.theItems[i].cost) UI.hic.pieceActionListFull._pool[i].setLegality(false);
+        for (int i = 0; i < UI.hic.pieceActionListFull.theItems.Length; i++) if (UIBridge.gameState.ps[UIBridge._humanPlayer].budget < UI.hic.pieceActionListFull.theItems[i].cost) UI.hic.pieceActionListFull.PieceActionPrefabs[i].setLegality(false);
     }
 }
 

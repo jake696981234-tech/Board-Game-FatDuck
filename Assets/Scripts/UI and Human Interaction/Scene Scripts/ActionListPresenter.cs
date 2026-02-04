@@ -12,33 +12,46 @@ public sealed class ActionListPresenter : MonoBehaviour
 
     public event Action<ActionItem> OnItemClicked;
 
-    public readonly List<ActionListItemView> _pool = new();
+    public ActionListItemView[] PieceActionPrefabs;
     public ActionItem[] theItems;
 
-    public void Show(IEnumerable<ActionItem> items)
+    // public void Show(IEnumerable<ActionItem> items)
+    // {
+    //     theItems = items.ToArray();
+    //     gameObject.SetActive(true);
+    //     int i = 0;
+    //     foreach (var it in items)
+    //     {
+    //         var v = Ensure(i++);
+    //         v.Bind(it, OnItemClicked);
+    //         v.gameObject.SetActive(true);
+    //     }
+    //     for (; i < PieceActionPrefabs.Count; i++) PieceActionPrefabs[i].gameObject.SetActive(false);
+    // }
+
+    public void Show(List<ActionItem> items)
     {
-        theItems = items.ToArray();
-        gameObject.SetActive(true);
-        int i = 0;
-        foreach (var it in items)
+        for (int i = 0; i < PieceActionPrefabs.Length; i++) if (PieceActionPrefabs[i] != null) Destroy(PieceActionPrefabs[i].gameObject);
+        PieceActionPrefabs = new ActionListItemView[items.Count()];
+        for (int i = 0; i < items.Count(); i++)
         {
-            var v = Ensure(i++);
-            v.Bind(it, OnItemClicked);
-            v.gameObject.SetActive(true);
+            var prefab = Instantiate(itemPrefab, listContent);
+            PieceActionPrefabs[i] = prefab;
+            prefab.Bind(items[i], OnItemClicked);
+            PieceActionPrefabs[i].gameObject.SetActive(true);
         }
-        for (; i < _pool.Count; i++) _pool[i].gameObject.SetActive(false);
     }
 
 
     public void Hide() => gameObject.SetActive(false);
 
-    private ActionListItemView Ensure(int index)
-    {
-        while (_pool.Count <= index)
-        {
-            var v = Instantiate(itemPrefab, listContent);
-            _pool.Add(v);
-        }
-        return _pool[index];
-    }
+    // private ActionListItemView Ensure(int index)
+    // {
+    //     while (PieceActionPrefabs.Count <= index)
+    //     {
+    //         var v = Instantiate(itemPrefab, listContent);
+    //         PieceActionPrefabs.Add(v);
+    //     }
+    //     return PieceActionPrefabs[index];
+    // }
 }

@@ -104,9 +104,10 @@ public static class Show
         for (int i = 0; i < UIBridge._count; i++)
         {
             var action = UIBridge._offers[i];
-            {
-                if (!seen.Add(action.TargetCell)) continue;
-            }
+
+            if (UIBridge._offers[i].ActorsCell != AFilter.Chosen[(int)ChoosingActorsCell]) continue;
+
+
             switch (action.kind)
             {
                 case EndTurn:
@@ -115,6 +116,9 @@ public static class Show
                 case Move:
                 case Shoot:
                 case Launcher:
+                case Push:
+                case Upgrade:
+                case Spawner:
                     if (UI.hic.config.GiveRawActionOffers) break;
                     if (!seen.Add(action.kind)) continue;
                     break;
@@ -216,8 +220,8 @@ public static class Show
                 case (int)ChoosingIntakeCell:
                     ReturningList.Add(UIBridge._offers[i].IntakeCell);
                     break;
-                case (int)ChoosingIntakeCell:
-                    ReturningList.Add(UIBridge._offers[i].IntakeCell);
+                case (int)ChoosingKind:
+                    ReturningList.Add(UIBridge._offers[i].kind);
                     break;
             }
         }

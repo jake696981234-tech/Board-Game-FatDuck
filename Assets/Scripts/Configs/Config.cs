@@ -70,12 +70,12 @@ public sealed class Config : ScriptableObject
         thinkBudgetMs = 5
     };
 
-    [Header("Observations (Phase A schema)")]
-    public ObservationAuthoring observations = new ObservationAuthoring //to do- need to could get rid of this, to make it dynamic
-    {
-        maxCells = 217,
-        maxDistance = 16
-    };
+    // [Header("Observations (Phase A schema)")]
+    // public ObservationAuthoring observations = new ObservationAuthoring //to do- need to could get rid of this, to make it dynamic
+    // {
+    //     maxCells = 217,
+    //     maxDistance = 16
+    // };
 
     [Header("ML Rewards Tuning")]
     public MLRewardsAuthoring mlRewards = new MLRewardsAuthoring
@@ -373,12 +373,12 @@ public sealed class Config : ScriptableObject
         public int team;
     }
 
-        [System.Serializable]
-    public struct ObservationAuthoring
-    {
-        [Min(1)] public int maxCells;     // e.g., 217 (set below)
-        [Min(1)] public int maxDistance;  // e.g., 16  (set below)
-    }
+        // [System.Serializable]
+    // public struct ObservationAuthoring
+    // {
+    //     [Min(1)] public int maxCells;     // e.g., 217 (set below)
+    //     [Min(1)] public int maxDistance;  // e.g., 16  (set below)
+    // }
 
 
     [System.Serializable]
