@@ -212,7 +212,7 @@ public static class showBoard
         }
 
         // --- Center VP pool ---
-        if (UIBridge._snapshot.victoryPointCellId >= 0 && UIBridge._snapshot.victoryPointCellId < UIBridge._snapshot.cellCount)
+        if (UIBridge._snapshot.victoryPointCellId >= 0 && UIBridge._snapshot.victoryPointCellId < Info.totalCells)
         {
             SetCellStatusNumber(UIBridge._snapshot.victoryPointCellId, UIBridge._snapshot.centerVP);
         }
@@ -224,7 +224,7 @@ public static class showBoard
             for (int p = 0; p < n; p++)
             {
                 int cellId = UIBridge._snapshot.coreCellIdByPlayer[p];
-                if (cellId >= 0 && cellId < UIBridge._snapshot.cellCount)
+                if (cellId >= 0 && cellId < Info.totalCells)
                 {
                     SetCellStatusNumber(cellId, UIBridge._snapshot.coreHPByPlayer[p]);
                 }

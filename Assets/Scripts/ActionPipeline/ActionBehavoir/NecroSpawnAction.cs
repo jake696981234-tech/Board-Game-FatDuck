@@ -19,9 +19,9 @@ public static class NecroSpawnAction
             int type = bm.necroSpawnStore[actorPid];
             if (!CreateAction.isPieceTypeLegal(type, ref offerBuild)) return;
             if (Piece.isBuilding[type]) return;
-            var emptyCells = BmCac.CellIdsRingAndLessthanRing(actorCell, Piece.necroSpawn_range[actorType], true, false, offerBuild.gameIndex);
+            var emptyCells = BmCac.CellIdsRingAndLessthanRing(originCell: actorCell, ringSize: Piece.necroSpawn_range[actorType], requireEmpty: true, requireOcc: false, requireOwned: -1, gameIndex: offerBuild.gameIndex);
             Debug.Log($"Necro Spawn, Empty Cells amount:{emptyCells.Count}");
-            if (emptyCells.Count < 0) return;
+            if (emptyCells.Count < 1) return;
             for (int i = 0; i < emptyCells.Count; i++)
             {
                 Action theAction = new Action

@@ -225,10 +225,11 @@ public static class Piece
     public static int[] necroSpawn_botSurcharge;
 
     #endregion
-    #region 
+    #region workYard
     public static bool[] workYard_enabled;
     public static int[] workYard_range;
     public static int[] workYard_botSurcharge;
+    public static bool[] workYard_excludeBuildings;
     #endregion
     public static bool IsConnectorConfigAllowed(byte type, int configIndex)
     {

@@ -24,17 +24,16 @@ public sealed class GameSnapshotComposer
 
     private void BuildStaticGeometry()
     {
-        staticSnapshot.cellCount = board.GetCellCount();
-        staticSnapshot.worldPosById = new Vector3[staticSnapshot.cellCount];
+        staticSnapshot.worldPosById = new Vector3[Info.totalCells];
 
         // axial -> world (pointy-top)
-        for (int id = 0; id < staticSnapshot.cellCount; id++)
+        for (int id = 0; id < Info.totalCells; id++)
         {
             var (q, r) = geometry.coordById[id];
             staticSnapshot.worldPosById[id] = AxialToWorld(q, r, Info.radius);
         }
 
-        staticSnapshot.victoryPointCellId = board.GetVictoryPointCellId();
+        staticSnapshot.victoryPointCellId = board._vpCellId;
 
         staticSnapshot.coreCellIdByPlayer = new int[4];
         for (byte p = 0; p < 4; p++)
@@ -67,7 +66,6 @@ public sealed class GameSnapshotComposer
         var snapshot = new GameSnapshot();
 
         // Static geometry (share references; immutable)
-        snapshot.cellCount = staticSnapshot.cellCount;
         snapshot.worldPosById = staticSnapshot.worldPosById;
         snapshot.victoryPointCellId = staticSnapshot.victoryPointCellId;
         snapshot.coreCellIdByPlayer = staticSnapshot.coreCellIdByPlayer;

@@ -230,6 +230,7 @@ public static class PiecesCsvImporter
             Piece.workYard_enabled[typeId] = GetBool(cols, H, "workYard_enabled", defaultValue: false);            
             Piece.workYard_range[typeId] = GetInt(cols, H, "workYard_range", defaultValue: 0);
             Piece.workYard_botSurcharge[typeId] = GetInt(cols, H, "workYard_botSurcharge", defaultValue: 0);
+            Piece.workYard_excludeBuildings[typeId] = GetBool(cols, H, "workYard_excludeBuildings", defaultValue: false);            
             #endregion 
         }
     }
@@ -561,6 +562,7 @@ public static class PiecesCsvImporter
         Piece.workYard_enabled = new bool[count];
         Piece.workYard_range = new int[count];
         Piece.workYard_botSurcharge = new int[count];
+        Piece.workYard_excludeBuildings = new bool[count];
         #endregion
     }
 

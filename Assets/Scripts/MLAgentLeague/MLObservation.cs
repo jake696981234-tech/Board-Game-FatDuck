@@ -53,7 +53,7 @@ public static class MLObservation
     #region Write Occ Cells
     private static void WriteNotOccupiedCellObservations(MLSam MLSam)
     {
-         for (int i = 0; i < 34; i++)
+        for (int i = 0; i < 34; i++)
         {
             MLSam.Observations[MLSam.Count++] = 0f;
         }
@@ -69,21 +69,21 @@ public static class MLObservation
         WritePieceSides(MLSam.bot.gameIndex, cell, MLSam); //6
         int PieceType = bm.GetPieceTypeFromCell(cell);
         WriteActiveAbilties(cell, PieceType, MLSam); //Piece.ActiveAbilityCount - 15
-        MLSam.Observations[MLSam.Count++] = Piece.isBuilding[PieceType]  ? 1f : 0f;
-        MLSam.Observations[MLSam.Count++] = Piece.connectors_enabled[PieceType]  ? 1f : 0f;
-        MLSam.Observations[MLSam.Count++] = Piece.connector_isCapital[PieceType]  ? 1f : 0f;
-        MLSam.Observations[MLSam.Count++] = Piece.factory_enabled[PieceType]  ? 1f : 0f;
-        MLSam.Observations[MLSam.Count++] = Piece.sanctuary_enabled[PieceType]  ? 1f : 0f;
-        MLSam.Observations[MLSam.Count++] = Piece.eat_enabled[PieceType]  ? 1f : 0f;
-        MLSam.Observations[MLSam.Count++] = Piece.feedingGround_enabled[PieceType]  ? 1f : 0f;
-        MLSam.Observations[MLSam.Count++] = Piece.zombie_enabled[PieceType]  ? 1f : 0f;
+        MLSam.Observations[MLSam.Count++] = Piece.isBuilding[PieceType] ? 1f : 0f;
+        MLSam.Observations[MLSam.Count++] = Piece.connectors_enabled[PieceType] ? 1f : 0f;
+        MLSam.Observations[MLSam.Count++] = Piece.connector_isCapital[PieceType] ? 1f : 0f;
+        MLSam.Observations[MLSam.Count++] = Piece.factory_enabled[PieceType] ? 1f : 0f;
+        MLSam.Observations[MLSam.Count++] = Piece.sanctuary_enabled[PieceType] ? 1f : 0f;
+        MLSam.Observations[MLSam.Count++] = Piece.eat_enabled[PieceType] ? 1f : 0f;
+        MLSam.Observations[MLSam.Count++] = Piece.feedingGround_enabled[PieceType] ? 1f : 0f;
+        MLSam.Observations[MLSam.Count++] = Piece.zombie_enabled[PieceType] ? 1f : 0f;
         //to do check order of building offers
         MLSam.Observations[MLSam.Count++] = isLegalActor(MLSam, cell) ? 1f : 0f;
         MLSam.Observations[MLSam.Count++] = isLegalTarget(MLSam, cell) ? 1f : 0f;
 
     }
 
-   
+
 
     private static bool isLegalTarget(MLSam MLSam, int cell)
     {
@@ -101,12 +101,12 @@ public static class MLObservation
                 case ConversionFactory:
                     continue;
                 case Explosive:
-                    if (isExplosiveVictimAction(MLSam.bot.Offers[theAction], MLSam, cell)) {return true; } else {continue;}
+                    if (isExplosiveVictimAction(MLSam.bot.Offers[theAction], MLSam, cell)) { return true; } else { continue; }
                 case Move:
                 case Shoot:
                 case Push:
-                //need to add aniper here to- to do
-                     if (MLSam.bot.Offers[theAction].TargetCell == cell) {return true;} else {continue;}
+                    //need to add aniper here to- to do
+                    if (MLSam.bot.Offers[theAction].TargetCell == cell) { return true; } else { continue; }
             }
         }
         return false;
@@ -118,7 +118,7 @@ public static class MLObservation
 
         int maxRange = Piece.explosive_range[bm.GetPieceTypeFromCell(theAction.ActorsCell)];
         bool friendlyFire = Piece.explosive_isFriendlyFire[bm.GetPieceTypeFromCell(theAction.ActorsCell)];
-        var occCells = BmCac.CellIdsRingAndLessthanRing(theAction.ActorsCell, maxRange, false, true, MLSam.bot.gameIndex);
+        var occCells = BmCac.CellIdsRingAndLessthanRing(originCell: theAction.ActorsCell, ringSize: maxRange, requireEmpty: false, requireOcc: true, requireOwned: -1, gameIndex: MLSam.bot.gameIndex);
 
         for (int i = 0; i < occCells.Count; i++)
         {
@@ -131,7 +131,7 @@ public static class MLObservation
         return false;
     }
 
-     
+
 
     private static bool isLegalActor(MLSam MLSam, int cell)
     {
@@ -148,7 +148,7 @@ public static class MLObservation
     {
         for (int i = 0; i < Piece.ActiveAbilityCount; i++)
         {
-            MLSam.Observations[MLSam.Count++] =  Piece.ActiveAbilitesEnabledFromType[PieceType, i] ? 1f : 0f;
+            MLSam.Observations[MLSam.Count++] = Piece.ActiveAbilitesEnabledFromType[PieceType, i] ? 1f : 0f;
         }
     }
 
@@ -164,7 +164,7 @@ public static class MLObservation
                 MLSam.Observations[MLSam.Count++] = 0f;
                 continue;
             }
-           MLSam.Observations[MLSam.Count++] = isPieceSideConnector(cell, i, gameIndex);
+            MLSam.Observations[MLSam.Count++] = isPieceSideConnector(cell, i, gameIndex);
         }
     }
     #endregion
@@ -193,18 +193,18 @@ public static class MLObservation
     private static float VPGained(GameState gameState, int playerIndex) => normalize(gameState.GetVP((byte)playerIndex), Info.capMaxVP);
     private static float CoreHealth(GameState gameState, int playerIndex) => normalize(gameState.GetCoreHealth((byte)playerIndex), Info.capMaxCoreHealth);
     private static float RoundPayOut(int gameIndex, int playerIndex) => normalize(PassiveActions.ComputeFactoryIncome((byte)playerIndex, gameIndex), Info.capMaxBudget);
-    private static float CellOccupancy(BoardModel bm, int cell) 
+    private static float CellOccupancy(BoardModel bm, int cell)
     {
         if (bm.GetCellOccupant(cell) != Info.invalidId)
         { return 1f; }
         else
-        { return 0f; } 
+        { return 0f; }
     }
 
     private static float PieceOwner(BoardModel bm, int cell, int PlayerIndex) => (bm.GetPieceOwnerFromCell(cell) == PlayerIndex) ? 1f : 0f;
     private static float PieceEnemy(BoardModel bm, int cell, int PlayerIndex) => (bm.GetPieceOwnerFromCell(cell) == PlayerIndex) ? 0f : 1f;
     private static float PieceHP(BoardModel bm, int cell) => normalize(bm.GetPieceHPFromCell(cell), Info.capMaxPieceHP);
-    private static float isPieceVPCell(BoardModel bm, int cell) => (bm.GetVictoryPointCellId() == cell) ? 1f : 0f;
+    private static float isPieceVPCell(BoardModel bm, int cell) => (bm._vpCellId == cell) ? 1f : 0f;
     private static float isYourCore(BoardModel bm, MLSam MLSam, int cell) => (bm.GetPlayerCoreCellId(MLSam.bot.playerId) == cell) ? 1f : 0f;
     private static float isEnemyCore(BoardModel bm, MLSam MLSam, int cell)
     {
@@ -217,7 +217,7 @@ public static class MLObservation
     }
 
     //piece State
-    private static float isPieceSideConnector(int cell, int direction, int gameIndex)  => BmCac.isConnectorSideFromCell(cell, direction, gameIndex) ? 1f : 0f;
+    private static float isPieceSideConnector(int cell, int direction, int gameIndex) => BmCac.isConnectorSideFromCell(cell, direction, gameIndex) ? 1f : 0f;
     //abilitys
     #endregion
     private static float normalize(int num, int Max)
@@ -237,7 +237,7 @@ public static class MLObservation
     }
 
 
-    
+
     // GLOBAL BLOCK (always first)
 
     // vpLeftNorm

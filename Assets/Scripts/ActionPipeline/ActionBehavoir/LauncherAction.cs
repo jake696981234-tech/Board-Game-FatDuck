@@ -40,11 +40,11 @@ public static class LauncherAction
         int write = 0;
         if (cap < 2) return 0; // need at least one pid,dst pair slot
 
-        int cellCount = bm.GetCellCount();
+
         int actorOwner = bm.GetPieceOwner(actorPid);
 
         // Find candidate pieces
-        for (int victimsCell = 0; victimsCell < cellCount; victimsCell++)
+        for (int victimsCell = 0; victimsCell < Info.totalCells; victimsCell++)
         {
             if (bm.GetCellOccupant(victimsCell) == Info.invalidId) continue;
             if (!Info.AbilitysCanSeperatePiecesWithWalls && Piece.connectors_enabled[bm.GetPieceTypeFromCell(victimsCell)]) continue;
@@ -57,7 +57,7 @@ public static class LauncherAction
             if (!BmCac.LineOfSightClear(originCell, victimsCell, gameIndex)) continue;
 
             // For each candidate destination within outputRange from launcher
-            for (int targetCell = 0; targetCell < cellCount; targetCell++)
+            for (int targetCell = 0; targetCell < Info.totalCells; targetCell++)
             {
                 if (!bm.IsEmpty(targetCell)) continue;
                 int distOut = bm.Distance(originCell, targetCell);

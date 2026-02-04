@@ -44,9 +44,8 @@ public static class PushAction
 
         int cap = outPieceIds != null ? outPieceIds.Length : 0;
         int count = 0;
-        int cellCount = bm.GetCellCount();
 
-        for (int c = 0; c < cellCount; c++)
+        for (int c = 0; c < Info.totalCells; c++)
         {
             int victimId = bm.GetCellOccupant(c);
             if (victimId < 0) continue;

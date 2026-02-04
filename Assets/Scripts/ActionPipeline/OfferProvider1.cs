@@ -15,14 +15,14 @@ public static class OfferProvider
     // Piece Type - for Building, Spawner, Upgrade
     // Wall Config - for Building
     // intake Cell ID - For Launcher
-    public static int cellCount; // this is not hooked up, this is a to do field
+
 
     public static int[] ActionKinds = new int[Piece.ActiveAbilityCount + 1];
-    public static int[] ActorsCelID = new int[cellCount + 1];
-    public static int[] TargetCell = new int[cellCount + 1];
-    public static int[] PieceType = new int[Piece.name.Length+ 1];
+    public static int[] ActorsCelID = new int[Info.totalCells + 1];
+    public static int[] TargetCell = new int[Info.totalCells + 1];
+    public static int[] PieceType = new int[Piece.name.Length + 1];
     public static int[] WallConfig = new int[32 + 1];
-    public static int[] IntakeCellID = new int[cellCount + 1];
+    public static int[] IntakeCellID = new int[Info.totalCells + 1];
 
 
     public static void BuildActionbranches(ref OfferBuild offerBuild)
@@ -32,20 +32,18 @@ public static class OfferProvider
         //     ActionKinds 
         // }
     }
-     public static int BuildActionList(ref OfferBuild offerBuild)
+    public static int BuildActionList(ref OfferBuild offerBuild)
     {
-        offerBuild.cap =  offerBuild.outActions.Length;
+        offerBuild.cap = offerBuild.outActions.Length;
         if (offerBuild.outCosts.Length < offerBuild.cap) offerBuild.cap = offerBuild.outCosts.Length;
         if (offerBuild.outMask.Length < offerBuild.cap) offerBuild.cap = offerBuild.outMask.Length;
 
         offerBuild.write = 0;
         offerBuild.total = 0;
 
-        var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
-        int cellCount = bm.GetCellCount();
         int[] scratch = Scratch.GetScratchCellBuffer(offerBuild.gameIndex); // neighbor buffer, etc. (no allocs)
 
-        for (int cell = 0; cell < cellCount; cell++)
+        for (int cell = 0; cell < Info.totalCells; cell++)
         {
             PieceActions(ref offerBuild, cell, ref scratch);
             CreateAction.CreateActions(cell, ref offerBuild);
@@ -54,7 +52,7 @@ public static class OfferProvider
         EndTurnAction(ref offerBuild);
 
         ZeroTail(offerBuild.write, offerBuild.outCosts, offerBuild.outMask);
-        return offerBuild.total; 
+        return offerBuild.total;
     }
 
 
@@ -82,13 +80,13 @@ public static class OfferProvider
         // if (Piece.pieceBuild_enabled[actorType]) PieceBuildAction.CreateActions(pieceId, actorType, cell, ref offerBuild);
         if (Piece.sniper_enabled[actorType]) SniperAction.CreateActions(pieceId, actorType, cell, ref offerBuild);
         if (Piece.necroSpawn_enabled[actorType]) NecroSpawnAction.CreateActions(pieceId, actorType, cell, ref offerBuild);
-        if (Piece.workYard_enabled[actorType]) WorkYard.CreateActions(pieceId, actorType, cell, ref offerBuild);
+        if (Piece.workYard_enabled[actorType]) WorkYardAction.CreateActions(pieceId, actorType, cell, ref offerBuild);
         UpgradeAction.CreateActions(pieceId, actorType, cell, ref offerBuild);
     }
 
     private static void EndTurnAction(ref OfferBuild offerBuild)
     {
-    // =============================
+        // =============================
         // EndTurn (always present, always last in prefix, always mask=1)
         // =============================
         offerBuild.total++;

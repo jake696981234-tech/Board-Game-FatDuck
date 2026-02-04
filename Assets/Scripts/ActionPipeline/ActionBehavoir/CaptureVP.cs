@@ -10,7 +10,7 @@ public static class CaptureVPAction
     {
         var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
 
-        ushort vpCell = (ushort)bm.GetVictoryPointCellId();
+        ushort vpCell = (ushort)bm._vpCellId;
         if (cell != vpCell) return;
         if (!Piece.captureVP_enabled[actorType]) return;
 

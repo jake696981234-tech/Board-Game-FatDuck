@@ -23,7 +23,7 @@ public static class ExplosiveAction
     public static void Apply(in Action theAction, byte player, int gameIndex)
     {
         var bm = GameRegistry.game[gameIndex].boardModel;
-        var occCells = BmCac.CellIdsRingAndLessthanRing(theAction.ActorsCell, Piece.explosive_range[Piece.explosive_damage[bm.GetPieceTypeFromCell(theAction.ActorsCell)]], false, true, gameIndex);
+        var occCells = BmCac.CellIdsRingAndLessthanRing(originCell: theAction.ActorsCell, ringSize: Piece.explosive_range[Piece.explosive_damage[bm.GetPieceTypeFromCell(theAction.ActorsCell)]], requireEmpty: false, requireOcc: true, requireOwned: -1, gameIndex: gameIndex);
         for (int i = 0; i < occCells.Count; i++)
         {
             if (occCells[i] == theAction.ActorsCell) continue;

@@ -28,8 +28,7 @@ public static class SpawnAction
             // Collect empty, LOS-valid cells within range from launcher
             int[] empties = Scratch.GetScratchCellBuffer(offerBuild.gameIndex);
             int eCount = 0;
-            int cellCount = bm.GetCellCount();
-            for (int c = 0; c < cellCount; c++)
+            for (int c = 0; c < Info.totalCells; c++)
             {
                 if (!bm.IsEmpty(c)) continue;
                 int dist = bm.Distance(actorCell, c);
@@ -106,9 +105,8 @@ public static class SpawnAction
 
         // Gather empty cells in range with LOS
         int[] scratch = Scratch.GetScratchCellBuffer(gameIndex);
-        int cellCount = bm.GetCellCount();
         int emptyCount = 0;
-        for (int c = 0; c < cellCount; c++)
+        for (int c = 0; c < Info.totalCells; c++)
         {
             if (!bm.IsEmpty(c)) continue;
             int dist = bm.Distance(origin, c);
@@ -150,9 +148,8 @@ public static class SpawnAction
 
         int origin = bm.GetPieceCell(actorPid);
         int[] empties = Scratch.GetScratchCellBuffer(gameIndex);
-        int cellCount = bm.GetCellCount();
         int eCount = 0;
-        for (int c = 0; c < cellCount; c++)
+        for (int c = 0; c < Info.totalCells; c++)
         {
             if (!bm.IsEmpty(c)) continue;
             int dist = bm.Distance(origin, c);

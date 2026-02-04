@@ -5,7 +5,6 @@ using UnityEngine;
 public sealed class GameSnapshot
 {
     // --- Board layout ---
-    public int cellCount;
     public Vector3[] worldPosById;
     public int victoryPointCellId;
     public int[] coreCellIdByPlayer;

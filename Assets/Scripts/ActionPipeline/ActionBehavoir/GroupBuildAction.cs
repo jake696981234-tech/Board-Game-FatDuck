@@ -40,9 +40,9 @@ public static class GroupBuildAction
         if (CreateAction.PieceLimitReached(ref offerBuild)) return;
 
         var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
-        int cellCount = bm.GetCellCount();
 
-        for (int cell = 0; cell < cellCount; cell++)
+
+        for (int cell = 0; cell < Info.totalCells; cell++)
         {
             if (!CreateAction.isCellLegalPlacement(cell, ref offerBuild)) continue;
             for (int i = 0; i < theActions.Length; i++)

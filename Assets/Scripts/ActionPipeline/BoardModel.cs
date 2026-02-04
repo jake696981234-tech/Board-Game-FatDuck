@@ -10,36 +10,11 @@ using System.Runtime.CompilerServices;
 /// - Stores only anchors (VP cell, per-player core cells), occupancy, and dense piece tables.
 /// - Geometry is injected (BoardGeometry) for zero-alloc neighbors/distance/LOS. 
 /// </summary>
-public class BoardModel
+public partial class BoardModel
 {
-    // ---------- Scenario anchors (cell IDs; set at Init) ----------
-    private int _vpCellId;
-    private int[] _coreCellIdByPlayer = new int[4]; // len = playerCount, cores assumed static
-
     // ---------- Geometry (injected at Init; shared, readonly) ----------
     public BoardGeometry geo;
-
-    // Precomputed per-cell shortest-path distances to the configured VP cell
-    private int[] _distFromVP;
-
-    // ---------- Cells (mutable occupancy) ----------
-    // occupantPieceId[cellId] = pieceId | -1
-    public int[] occupantPieceId;
-
-    // ---------- Pieces (mutable dense table) ----------
-    public int pieceCount;    // rows in use [0..pieceCount-1]
-    public int pieceCapacity; // allocated length of columns
-
-    public int[] pieceOwner;   // [pieceId] -> player index
-    public int[] pieceCellId;  // [pieceId] -> cellId
-    public byte[] pieceType;    // [pieceId] -> type index (semantics live in Pieces.cs)
-    public short[] pieceHP;      // [pieceId] -> hp (unit/building maxHP comes from Pieces.cs)
-    public int[] pieceFactoryAux;
-    public int[] pieceFactoryKillGoalAux;
-    public int[] pieceKillCount;
-    public int[] necroSpawnStore;
-    public byte[] pieceConnectorConfig; // [pieceId] -> connector configuration index (0-63) if hasConnectors, else 0
-    public int[] pieceCapitalHP;       // [pieceId] -> current capital HP buff (0 if none)
+   
 
     public HashSet<int> spawnerUsedThisTurn = new HashSet<int>();
     
@@ -85,84 +60,11 @@ public class BoardModel
         _distFromVP = ComputeDistFromCell(_vpCellId);
     }
 
-
-    // =====================================================================
-    // Properties / shallow queries
-    // =====================================================================
-
-    
-    public int CoreCellIdForPlayer(byte p) => _coreCellIdByPlayer[p];
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool IsValidCellId(int cellId) => (uint)cellId < (uint)Info.totalCells;
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool IsValidPieceId(int pieceId) => (uint)pieceId < (uint)pieceCount;
-    public bool IsCellOccupied(int cell) => GetCellOccupant(cell) != Info.invalidId;
-    // =====================================================================
-    // Minimal wrappers many systems expect (ID-only)
-    // =====================================================================
-
-    public int GetCellCount() => Info.totalCells; // The Places that refrence this can should refrence the struct directly
-
-    public int GetPieceTypeFromCell(int cellId)
-    {
-        return pieceType[GetCellOccupant(cellId)];
-    }
-
-    public int GetPieceOwnerFromCell(int cellId)
-    {
-        return pieceOwner[GetCellOccupant(cellId)];
-    }
-
-    public int GetPieceHPFromCell(int cellId)
-    {
-        return PieceHP(GetCellOccupant(cellId));
-    }
-
-    public int GetCellOccupant(int cellId)
-        => (IsValidCellId(cellId) && occupantPieceId != null) ? occupantPieceId[cellId] : Info.invalidId;
-
-    public int GetPieceCell(int pieceId)
-        => (IsValidPieceId(pieceId) && pieceCellId != null) ? pieceCellId[pieceId] : Info.invalidId;
-
-    public int GetPieceOwner(int pieceId)
-        => (IsValidPieceId(pieceId) && pieceOwner != null) ? pieceOwner[pieceId] : -1;
-
-    public byte GetPieceType(int pieceId)
-        => (IsValidPieceId(pieceId) && pieceType != null) ? pieceType[pieceId] : (byte)0;
-
-    public int GetNeighborCell(int cellId, int dir)
-    {
-        if (!IsValidCellId(cellId) || (uint)dir >= 6) return Info.invalidId;
-        return geo.neighborsById[cellId][dir];
-    }
-
-    public int GetVictoryPointCellId() => _vpCellId; // The Places that refrence this can should refrence the struct directly
-
-    public int GetPlayerCoreCellId(int owner)
-        => (owner >= 0 && owner < _coreCellIdByPlayer.Length) ? _coreCellIdByPlayer[owner] : Info.invalidId;
-
     public void SetPlayerCoreCells(int[] coreCellIds)
     {
         _coreCellIdByPlayer = coreCellIds != null ? (int[])coreCellIds.Clone() : Array.Empty<int>();
     }
 
-    /// <summary>True if cell belongs to any opponent core (owner != actorOwner).</summary>
-    public bool IsEnemyCoreCell(int cellId, int actorOwner)
-    {
-        for (int i = 0; i < _coreCellIdByPlayer.Length; i++)
-        {
-            if (i == actorOwner) continue;
-            if (_coreCellIdByPlayer[i] == cellId) return true;
-        }
-        return false;
-    }
-
-
-    // =====================================================================
-    // Geometry passthrough (no allocations)
-    // =====================================================================
 
     /// <summary>Writes up to 6 neighbor ids to out6 in fixed dir order 0..5. Returns count written.</summary>
     public int GetNeighbors(int cellId, Span<int> out6)

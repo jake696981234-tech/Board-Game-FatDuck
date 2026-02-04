@@ -135,8 +135,7 @@ public static class PiecesSides
     {
         var bm = GameRegistry.game[gameIndex].boardModel;
 
-        int cellCount = bm.GetCellCount();
-        bool[] visited = new bool[cellCount];
+        bool[] visited = new bool[Info.totalCells];
         int[] queue = Scratch.GetScratchCellBuffer(gameIndex);
         int head = 0, tail = 0;
 

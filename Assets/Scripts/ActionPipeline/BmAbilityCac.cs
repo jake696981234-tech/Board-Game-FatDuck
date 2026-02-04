@@ -174,30 +174,11 @@ public static class BmCac
         return result;
     }
 
-    public static int OccCellIdsRingAndLessthanRing(int originCell, int ringSize, Span<int> outCells, int gameIndex)
-    {
-        var bm = GameRegistry.game[gameIndex].boardModel;
 
-        Span<int> cells = Scratch.GetScratchCellBuffer(gameIndex);
-        int totalCells = CellIdsRingAndLessthanRing(originCell, ringSize, requireEmpty: false, cells, gameIndex);
-
-        Debug.Log($"[BmCac] OccCellIdsRingAndLessthanRing origin={originCell} ringSize={ringSize} totalCellsWithinRange={totalCells} gameIndex={gameIndex}");
-
-        int written = 0;
-        for (int i = 0; i < totalCells && written < outCells.Length; i++)
-        {
-            int cell = cells[i];
-            if (bm.IsEmpty(cell)) continue;
-            outCells[written++] = cell;
-        }
-
-        Debug.Log($"[BmCac] OccCellIdsRingAndLessthanRing wroteOccupied={written} bufferLen={outCells.Length}");
-        return written;
-    }
 
         
     
-    public static List<int> CellIdsRingAndLessthanRing(int originCell, int ringSize, bool requireEmpty, bool requireOcc, int gameIndex)
+    public static List<int> CellIdsRingAndLessthanRing(int originCell, int ringSize, bool requireEmpty, bool requireOcc, int requireOwned, int gameIndex)
     {
         var bm = GameRegistry.game[gameIndex].boardModel;
 
@@ -209,8 +190,12 @@ public static class BmCac
             int foundAtDist = cellIdsRingAroundCell(originCell, CheckRingSize, requireEmpty, cells, gameIndex);
             for (int i = 0; i < foundAtDist; i++)
             {
-                 if (requireOcc && bm.IsEmpty(cells[i])) continue;
-                 outCells.Add(cells[i]);
+                if (requireOcc)
+                {
+                    if (bm.IsEmpty(cells[i])) continue;
+                    if (requireOwned != -1 && bm.isPieceIDOwnedFromCell(requireOwned, cells[i])) continue;
+                }
+                outCells.Add(cells[i]);
             } 
         }
         return outCells;
