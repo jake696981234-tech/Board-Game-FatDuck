@@ -14,7 +14,7 @@ namespace Game.Core
 
             int g = Piece.digitItGives[(byte)bm.GetPieceTypeFromCell(victimsCell)];
             if (g >= 0) gameState.ps[bm.GetPieceOwnerFromCell(victimsCell)].RevokeDigit(g);
-            bm.FreeRowSwapBack(victimsCell);
+            bm.FreeRowSwapBack(pieceId: bm.occupantPieceId[victimsCell]);
             RefreshConnectorState(gameIndex);
         }
 
@@ -28,16 +28,15 @@ namespace Game.Core
             bm.pieceKillCount[ActorsPieceId]++;
             bm.pieceFactoryAux[ActorsPieceId] += Piece.eat_amount[bm.pieceType[ActorsPieceId]];
             gameState.ps[bm.pieceOwner[ActorsPieceId]].perRoundPieceKillCount++;
-
-            PassiveActions.FeedingGround(gameIndex, bm.GetPieceTypeFromCell(victimsCell));
-
+            PassiveActions.FeedingGround(gameIndex, bm.GetCellOccupant(victimsCell));
             if (Piece.zombie_enabled[bm.GetPieceTypeFromCell(victimsCell)]) //move this above the above the other benefifts if you dont want the others to trigger
             {
                 Zombie(victimsCell, actorsCell, gameIndex);
                 return;
             }
             NecroSpawnAction.Record(gameIndex, bm.GetCellOccupant(victimsCell));
-            pieceKilledWithNoTriggers(bm.GetCellOccupant(victimsCell), gameIndex);
+            
+            pieceKilledWithNoTriggers(victimsCell: victimsCell, gameIndex: gameIndex);
         }
 
         private static void Zombie(int victimsCell, int actorsCell, int gameIndex)
@@ -54,6 +53,7 @@ namespace Game.Core
         public static bool ApplyTypicalDamageAndPieceKill(int actorsCell, int victimsCell, int dmg, int gameIndex)
         {
             bool killed = ApplyDamageToPiece(ActorsCell: actorsCell, victimCell: victimsCell, dmg: dmg, gameIndex: gameIndex);
+            
             if (killed) pieceKilled(victimsCell: victimsCell, actorsCell: actorsCell, gameIndex: gameIndex);
             return killed;
         }
@@ -91,7 +91,7 @@ namespace Game.Core
             for (int i = 0; i < toDestroy.Count; i++)
             {
                 int victimID = toDestroy[i];
-                if (bm.IsValidPieceId(victimID)) pieceKilledWithNoTriggers(victimID, gameIndex);
+                if (bm.IsValidPieceId(victimID)) pieceKilledWithNoTriggers(victimsCell: bm.pieceCellId[victimID], gameIndex: gameIndex);
             }
         }
 

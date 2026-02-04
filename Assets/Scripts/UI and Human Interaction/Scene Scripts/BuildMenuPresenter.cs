@@ -22,11 +22,11 @@ public sealed class BuildMenuPresenter : MonoBehaviour
     //     return item == Upgrade || item == GroupBuild;
     // }
 
-    public void Show(IEnumerable<Game.Core.Action> rawItems, InteractionConfig config)
+    public void Show(IEnumerable<Game.Core.Action> BuildActions)
     {
         IEnumerable<Game.Core.Action> theActions;
         
-        if (config.GiveRawActionOffers) { theActions = rawItems; } else { theActions = filteredBuildOptions(rawItems); }
+        if (config.GiveRawActionOffers) { theActions = BuildActions; } else { theActions = filteredBuildOptions(BuildActions); }
         gameObject.SetActive(true);
         List<UIInfo> UiInfo = new();
         int i = 0;

@@ -15,7 +15,7 @@ public static class AFilter
         //     UIBridge.PerformActionIndex(UIHelpers.FindEndTurnIndex());
         //     reset();
         // }
-        // if (uIType == Cell) UI.hic.BackgroundExit.gameObject.SetActive(true);
+        if (uIType == Cell) UI.hic.BackgroundExit.gameObject.SetActive(true);
         
         if (!IsCorrectInput()) 
         { 

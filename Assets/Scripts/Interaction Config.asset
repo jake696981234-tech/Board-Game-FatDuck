@@ -46,6 +46,6 @@ MonoBehaviour:
   HumanTimeDecrease: 1
   altWallSelect: 1
   skipNumberWallSelect: 1
-  showCellIds: 1
+  showCellIds: 0
   showPieceHP: 1
   logConnectorMasks: 0

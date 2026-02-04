@@ -17,8 +17,6 @@ namespace Game.Core
     //2. If a player has 0 budget, and their payout is zero, they should be eliminated.
     public class GameState
     {
-        
-
         public void TickPlayer() // to do
         {
             playerManager.tickPlayerIndex(currentPlayer, this);
@@ -398,11 +396,6 @@ namespace Game.Core
         #region Accessors
         // --- Current player read-only accessors ---
         public byte CurrentPlayerId => currentPlayer;
-        public float CurrentBudget => ps[currentPlayer].budget;
-        public byte CurrentActionIndex => ps[currentPlayer].actionIndexThisTurn;
-        public bool CurrentDidCaptureVP => ps[currentPlayer].didCaptureVP;
-        public bool CurrentDidCoreDamage => ps[currentPlayer].didCoreDamage;
-        public ref readonly PlayerState CurrentPlayerRef => ref ps[currentPlayer];
 
         public bool PassedTurn(int playerID)
         => ps[playerID].endedWithoutActionThisCycle;

@@ -31,6 +31,6 @@ public static class ExplosiveAction
             if (ApplyDamageToPiece(theAction.ActorsCell, bm.occupantPieceId[occCells[i]], Piece.explosive_damage[bm.GetPieceTypeFromCell(theAction.ActorsCell)], gameIndex)) pieceKilled(victimsCell: occCells[i], actorsCell: theAction.ActorsCell, gameIndex: gameIndex);
         }
         if (!Piece.explosive_isKillItself[bm.GetPieceTypeFromCell(theAction.ActorsCell)]) return;
-        pieceKilledWithNoTriggers(victimsCell: theAction.TargetCell, gameIndex: gameIndex);
+        pieceKilledWithNoTriggers(victimsCell: theAction.ActorsCell, gameIndex: gameIndex);
     }
 }

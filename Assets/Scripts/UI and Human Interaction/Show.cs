@@ -136,6 +136,7 @@ public static class Show
     {
         var items = new List<Game.Core.Action>(UIBridge._count);
         var uiInfo = new List<UIInfo>(UIBridge._count);
+        var iHaveAlreadySeenYou = new HashSet<int>();
         for (int i = 0; i < UIBridge._count; i++)
         {
             if (UIBridge._offers[i].kind != AFilter.Chosen[(int)ChoosingKind] && Kind) continue;
@@ -144,6 +145,8 @@ public static class Show
             if (UIBridge._offers[i].TargetType != AFilter.Chosen[(int)ChoosingTargetType] && TargetType) continue;
             if (UIBridge._offers[i].WallConfig != AFilter.Chosen[(int)ChoosingWallConfig] && WallConfig) continue;
             if (UIBridge._offers[i].IntakeCell != AFilter.Chosen[(int)ChoosingIntakeCell] && intakeCell) continue;
+            if (!iHaveAlreadySeenYou.Add(UIBridge._offers[i].TargetType) && !UI.hic.config.GiveRawActionOffers) continue;
+  
             bool isLegal = UIBridge._mask[i] != 0;
             if (isLegal && Legal) continue;
 
@@ -151,7 +154,7 @@ public static class Show
             int fullCost = Mathf.RoundToInt(UIBridge._quoted[i]);
             uiInfo.Add(new UIInfo(isLegal, fullCost));
         }
-        UI.hic.buildMenu.Show(items, UI.hic.config);
+        UI.hic.buildMenu.Show(items);
     }
 
     // DoesThisHave(Have: (int)ChoosingActorsCell, Legal: true, Kind: true, ActorsCell: false, TargetCell: false, Type: true, WallConfig: false, intakeCell: false)

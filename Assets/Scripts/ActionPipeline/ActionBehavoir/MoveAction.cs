@@ -114,11 +114,9 @@ public static class MoveAction
         if (bm.IsCellOccupied(theAction.TargetCell))
         {
             ResolveMelee(actorsCell: theAction.ActorsCell, victimsCell: theAction.TargetCell, gameIndex: gameIndex);
+            return;
         }
-        else
-        {
-            bm.MovePieceRow(bm.occupantPieceId[theAction.ActorsCell], theAction.TargetCell);
-        }
+        bm.MovePieceRow(bm.occupantPieceId[theAction.ActorsCell], theAction.TargetCell);
         RefreshConnectorState(gameIndex);
     }
 }

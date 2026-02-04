@@ -59,11 +59,7 @@ public class BoardModel
     // BoardModel.cs
     public void Init(in BoardGeometry geometry, int initialPieceCapacity = 8, int[] coreCellIdOverride = null)
     {
-        // store snapshots
         geo = geometry;
-        // _radius = Info.radius;
-        // _cellCount = Info.totalCells;
-        // _invalidId = Info.invalidId;
         _vpCellId = geo.idByAxial[Info.VpAxial];
         // _coreCellIdByPlayer = coreCellIdOverride != null
         //     ? (int[])coreCellIdOverride.Clone()
