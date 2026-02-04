@@ -22,22 +22,14 @@ public sealed class BuildMenuPresenter : MonoBehaviour
     //     return item == Upgrade || item == GroupBuild;
     // }
 
-    public void Show(IEnumerable<Game.Core.Action> BuildActions)
+    public void Show(Action[] BuildActions, UIInfo[] uiInfo)
     {
-        IEnumerable<Game.Core.Action> theActions;
-        
-        if (config.GiveRawActionOffers) { theActions = BuildActions; } else { theActions = filteredBuildOptions(BuildActions); }
-        gameObject.SetActive(true);
-        List<UIInfo> UiInfo = new();
-        int i = 0;
-        foreach (var theAction in theActions)
+        for (int i = 0; i < BuildActions.Length; i++)
         {
-            UIInfo uiinfo = new(UIBridge.gameState.ps[UIBridge._humanPlayer].budget > Piece.BuildCost[theAction.TargetType], Piece.BuildCost[theAction.TargetType]);
-            UiInfo.Add(uiinfo);
-            
-            var view = Ensure(i++);
-            view.Bind(theAction, uiinfo, OnItemClicked);
+            var view = Ensure(i);
+            view.Bind(BuildActions[i], uiInfo[i], OnItemClicked);
             view.gameObject.SetActive(true);
+            i++;
         }
         for (; i < _pool.Count; i++) _pool[i].gameObject.SetActive(false);
         theUIInfo = UiInfo;

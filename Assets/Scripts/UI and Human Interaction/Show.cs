@@ -154,7 +154,7 @@ public static class Show
             int fullCost = Mathf.RoundToInt(UIBridge._quoted[i]);
             uiInfo.Add(new UIInfo(isLegal, fullCost));
         }
-        UI.hic.buildMenu.Show(items);
+        UI.hic.buildMenu.Show(items, uiInfo);
     }
 
     // DoesThisHave(Have: (int)ChoosingActorsCell, Legal: true, Kind: true, ActorsCell: false, TargetCell: false, Type: true, WallConfig: false, intakeCell: false)
