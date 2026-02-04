@@ -16,12 +16,12 @@ public static class AFilter
         //     reset();
         // }
         if (uIType == Cell) UI.hic.BackgroundExit.gameObject.SetActive(true);
-        
-        if (!IsCorrectInput()) 
-        { 
+
+        if (!IsCorrectInput())
+        {
             ResetClickedData();
             DisplaySelect.updateDisplaySelect();
-            return; 
+            return;
         }
         // Show.displayPieceInfo();
         if (advaPathAndTryPerformAction()) return;
@@ -68,9 +68,9 @@ public static class AFilter
                 switch (State)
                 {
                     //I Need ActorsCellID and TargetCell
-                    case ChoosingKind:                    
+                    case ChoosingKind:
                         State = ChoosingTargetCell;
-                        return false;                 
+                        return false;
                     case ChoosingTargetCell:
                         Chosen[(int)ChoosingTargetCell] = UInput[(int)Cell];
                         PerformAction(iNeedKind: true, iNeedActorsCell: true, iNeedTargetCell: true, TargetType: false, iNeedWallConfig: false, iNeedintakeCell: false);
@@ -80,8 +80,8 @@ public static class AFilter
             case Create:
                 //I need TargetCell, PieceType, maybe WallConfig.
                 switch (State)
-                {                 
-                    case ChoosingTargetCell:                    
+                {
+                    case ChoosingTargetCell:
                         Chosen[(int)ChoosingTargetCell] = UInput[(int)Cell];
                         if (Piece.connectors_enabled[Chosen[(int)ChoosingTargetType]])
                         {
@@ -89,8 +89,8 @@ public static class AFilter
                             return false;
                         }
                         PerformAction(iNeedKind: true, iNeedActorsCell: false, iNeedTargetCell: true, TargetType: true, iNeedWallConfig: false, iNeedintakeCell: false);
-                        return true;                   
-                    case ChoosingWallConfig:                
+                        return true;
+                    case ChoosingWallConfig:
                         Chosen[(int)ChoosingWallConfig] = UInput[(int)WallConfig];
                         PerformAction(iNeedKind: true, iNeedActorsCell: false, iNeedTargetCell: true, TargetType: true, iNeedWallConfig: true, iNeedintakeCell: false);
                         return false;
@@ -100,54 +100,54 @@ public static class AFilter
                 //I need ActorsCellID, PieceType, maybe WallConfig.
                 switch (State)
                 {
-                    case ChoosingKind:                    
+                    case ChoosingKind:
                         State = ChoosingTargetType;
-                        return false;                                       
-                    case ChoosingTargetType:                   
+                        return false;
+                    case ChoosingTargetType:
                         Chosen[(int)ChoosingTargetType] = UInput[(int)BuildItem];
                         PerformAction(iNeedKind: true, iNeedActorsCell: true, iNeedTargetCell: false, TargetType: true, iNeedWallConfig: false, iNeedintakeCell: false);
-                        return true;                 
+                        return true;
                 }
                 break;
             case Spawner:
-             //I need ActorsCellID, TargetCell, PieceType, maybe WallConfig.
+                //I need ActorsCellID, TargetCell, PieceType, maybe WallConfig.
                 switch (State)
                 {
-                    case ChoosingKind:                       
+                    case ChoosingKind:
                         State = ChoosingTargetCell;
-                        return false;                                           
-                    case ChoosingTargetCell:                        
+                        return false;
+                    case ChoosingTargetCell:
                         Chosen[(int)ChoosingTargetCell] = UInput[(int)Cell];
                         State = ChoosingTargetType;
-                        return false;                        
-                    case ChoosingTargetType:                        
+                        return false;
+                    case ChoosingTargetType:
                         Chosen[(int)ChoosingTargetType] = UInput[(int)BuildItem];
                         PerformAction(iNeedKind: true, iNeedActorsCell: true, iNeedTargetCell: true, TargetType: true, iNeedWallConfig: false, iNeedintakeCell: false);
-                        return true;                                      
-                    default:                        
+                        return true;
+                    default:
                         Debug.LogWarning($"Unhandled ActionKind");
-                        return false;                      
+                        return false;
                 }
             case Launcher:
                 // need actors cell, targetCell, IntakeCell
                 switch (State)
                 {
-                    case ChoosingKind:                       
+                    case ChoosingKind:
                         State = ChoosingIntakeCell;
-                        return false;                                           
-                    case ChoosingIntakeCell:                        
+                        return false;
+                    case ChoosingIntakeCell:
                         Chosen[(int)ChoosingIntakeCell] = UInput[(int)Cell];
                         State = ChoosingTargetCell;
-                        return false;                        
-                    case ChoosingTargetCell:                        
+                        return false;
+                    case ChoosingTargetCell:
                         Chosen[(int)ChoosingTargetCell] = UInput[(int)Cell];
                         PerformAction(iNeedKind: true, iNeedActorsCell: true, iNeedTargetCell: true, TargetType: false, iNeedWallConfig: false, iNeedintakeCell: true);
-                        return true;  
+                        return true;
                 }
                 break;
         }
         Debug.LogWarning($"Fix ME!");
-        return false;  
+        return false;
     }
 
     // private static void PerformAction(bool iNeedKind, bool iNeedActorsCell, bool iNeedTargetCell, bool TargetType, bool iNeedWallConfig, bool iNeedintakeCell)
@@ -188,7 +188,7 @@ public static class AFilter
 
     private static bool IsCorrectInput()
     {
-        if (uIType == Cancel) { reset();  return false; }
+        if (uIType == Cancel) { reset(); return false; }
         switch (State)
         {
             case ChoosingActorsCell:
@@ -210,11 +210,11 @@ public static class AFilter
                 if (uIType == Cell) return true;
                 return false;
         }
-         Debug.LogWarning($"Unhandled ActionKind");
-         return false;
+        Debug.LogWarning($"Unhandled ActionKind");
+        return false;
     }
 
-   
+
 
 
 
@@ -227,14 +227,8 @@ public static class AFilter
 
         UIBridge.RebuildOffersForCurrentPlayer();
         ShowRightPanel.PushEndTurn();
-        ShowRightPanel.PushCreateActionMenu();
-
-        showBoard.ClearHighlights();
-        showBoard.ApplyDefaultCellColor(UI.hic.config.defaultCellColor);
-        UIHelpers.SetBackdropColor(UI.hic.config ? UI.hic.config.buildModeBackground : new Color(0, 0, 0, 0.8f));
-        UIHelpers.SetPanelBackdropColor(UI.hic.config ? UI.hic.config.buildModePanelBackground : new Color(0, 0, 0, 0.8f));
-        PanelToggles.TogglePanels(build: true, create: false, action: true, pieceFull: false, execute: false, walls: false, secondWalls: false);
-        ShowLeftPanel.HudRefresh();
+        Show.PushCreateActionMenu();
+        Show.SetGeneralUI(backDropColor: UI.hic.config.buildModeBackground, panelColor: UI.hic.config.buildModePanelBackground, cellColor: UI.hic.config.defaultCellColor, build: true, create: false, action: true, pieceFull: false, execute: false, walls: false, secondWalls: false);
         EndRoundTotals.updateEndRoundTotals();
     }
 
@@ -243,9 +237,9 @@ public static class AFilter
         for (int i = 0; i < UInput.Length; i++) UInput[i] = -1;
         uIType = Invalid;
     }
-    
 
-    public enum UIType { BuildItem = 0, NumberOfWalls = 1, WallConfig = 2, Cell = 3, PieceActionKind = 4, Cancel = 5, EndTurnButton = 6, Invalid = 7}
+
+    public enum UIType { BuildItem = 0, NumberOfWalls = 1, WallConfig = 2, Cell = 3, PieceActionKind = 4, Cancel = 5, EndTurnButton = 6, Invalid = 7 }
 
     #region fields
     public static UIType uIType;

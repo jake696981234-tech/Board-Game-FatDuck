@@ -29,22 +29,20 @@ public static class UIBridge
 
         UI.Init(theHic, events);
 
+
         ShowLeftPanel.HudRefresh();
         // showBoard.IndexCellViews();
         showBoard.IndexCellViewsByAxial();
 
         if (UI.hic.config.HumanTimeDecrease)
-        { 
+        {
             GameObject TimeDecrease = new GameObject("TimeDecrease");
             TimeDecrease.AddComponent<HCost>();
         }
-
-        ShowRightPanel.BuildMeanufilterSubscribe();
+        UIInput.BuildMeanufilterSubscribe();
         EndRoundTotals.SubscribeEndRoundTotals();
         UI.hic.BackgroundExit.gameObject.SetActive(false);
     }
-
-
 
     #region Action in Point
 

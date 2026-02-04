@@ -31,7 +31,7 @@ public static class Show
             case ChoosingIntakeCell:
                 launcherFilter();
                 return;
-                
+
         }
     }
     public static void ShowActionsForAPiece()
@@ -66,12 +66,12 @@ public static class Show
     public static void ShowSpawnerOptions()
     {
         SetGeneralUI(backDropColor: UI.hic.config.buildModeBackground, panelColor: UI.hic.config.buildModePanelBackground, cellColor: UI.hic.config.defaultCellColor, build: true, create: false, action: true, pieceFull: false, execute: false, walls: false, secondWalls: false);
-        ShowBuildItemsContaining(Legal: false, Kind: true, ActorsCell: true, TargetCell: true, TargetType: false, WallConfig: false, intakeCell: false);
+        UI.hic.buildMenu.ShowBuildActionMenu(giveMeBuildItemsContaining(withFilter: false, Legal: true, Kind: true, ActorsCell: true, TargetCell: false, TargetType: false, WallConfig: false, intakeCell: false));
     }
     public static void ShowUpgradeOptions()
     {
         SetGeneralUI(backDropColor: UI.hic.config.buildModeBackground, panelColor: UI.hic.config.buildModePanelBackground, cellColor: UI.hic.config.defaultCellColor, build: true, create: false, action: true, pieceFull: false, execute: false, walls: false, secondWalls: false);
-        ShowBuildItemsContaining(Legal: false, Kind: true, ActorsCell: true, TargetCell: false, TargetType: false, WallConfig: false, intakeCell: false);
+        UI.hic.buildMenu.ShowBuildActionMenu(giveMeBuildItemsContaining(withFilter: false, Legal: true, Kind: true, ActorsCell: true, TargetCell: false, TargetType: false, WallConfig: false, intakeCell: false));
     }
     private static void launcherFilter()
     {
@@ -83,7 +83,7 @@ public static class Show
         PieceInfo.SetPieceInfo(UIBridge.bm.GetPieceTypeFromCell(AFilter.Chosen[(int)ChoosingActorsCell]));
     }
 
-    
+
 
     public static void SetGeneralUI(Color backDropColor, Color panelColor, Color cellColor, bool build, bool create, bool action, bool pieceFull, bool execute, bool walls, bool secondWalls)
     {
@@ -123,19 +123,24 @@ public static class Show
             int kind = action.kind;
             string label = UIHelpers.PrettyAction(action);
             int cost = Mathf.RoundToInt(UIBridge._quoted[i]);
-            
+
             items.Add(new ActionItem(i.ToString(), label, cost, legal, Array.Empty<int>(), kind));
         }
-        
+
         UI.hic.pieceActionListFull.Show(items);
+    }
+
+    public static void PushCreateActionMenu()
+    {
+        UI.hic.buildMenu.ShowBuildActionMenu(giveMeBuildItemsContaining(withFilter: true, Legal: false, Kind: Create, ActorsCell: false, TargetCell: false, TargetType: false, WallConfig: false, intakeCell: false));
     }
 
     #region Helpers
 
-    public static void ShowBuildItemsContaining(bool Legal, bool Kind, bool ActorsCell, bool TargetCell, bool TargetType, bool WallConfig, bool intakeCell)
+    public static (List<Game.Core.Action> Actions, List<UIInfo> UIInfos) giveMeBuildItemsContaining(bool withFilter, bool Legal, bool Kind, bool ActorsCell, bool TargetCell, bool TargetType, bool WallConfig, bool intakeCell)
     {
-        var items = new List<Game.Core.Action>(UIBridge._count);
-        var uiInfo = new List<UIInfo>(UIBridge._count);
+        var CreateItems = new List<Game.Core.Action>();
+        var uiInfo = new List<UIInfo>();
         var iHaveAlreadySeenYou = new HashSet<int>();
         for (int i = 0; i < UIBridge._count; i++)
         {
@@ -146,15 +151,32 @@ public static class Show
             if (UIBridge._offers[i].WallConfig != AFilter.Chosen[(int)ChoosingWallConfig] && WallConfig) continue;
             if (UIBridge._offers[i].IntakeCell != AFilter.Chosen[(int)ChoosingIntakeCell] && intakeCell) continue;
             if (!iHaveAlreadySeenYou.Add(UIBridge._offers[i].TargetType) && !UI.hic.config.GiveRawActionOffers) continue;
-  
             bool isLegal = UIBridge._mask[i] != 0;
-            if (isLegal && Legal) continue;
+            if (!isLegal && Legal) continue;
 
-            items.Add(UIBridge._offers[i]);
-            int fullCost = Mathf.RoundToInt(UIBridge._quoted[i]);
-            uiInfo.Add(new UIInfo(isLegal, fullCost));
+            if (withFilter)
+            {
+                if (UIInput.BuildMeanuFilter[0] && !isLegal) continue;
+                if (UIInput.BuildMeanuFilter[1] && !Piece.isBuilding[UIBridge._offers[i].TargetType]) continue;
+                if (UIInput.BuildMeanuFilter[2] && Piece.isBuilding[UIBridge._offers[i].TargetType]) continue;
+                if (UIInput.BuildMeanuFilter[3] && Piece.factionName[UIBridge._offers[i].TargetType] != "Bear") continue;
+                if (UIInput.BuildMeanuFilter[4] && Piece.factionName[UIBridge._offers[i].TargetType] != "Penguin") continue;
+                if (UIInput.BuildMeanuFilter[5] && Piece.factionName[UIBridge._offers[i].TargetType] != "Frog") continue;
+            }
+
+            CreateItems.Add(UIBridge._offers[i]);
+            uiInfo.Add(new UIInfo(isLegal, Mathf.RoundToInt(UIBridge._quoted[i])));
         }
-        UI.hic.buildMenu.Show(items);
+        return (CreateItems, uiInfo);
+    }
+
+    public static (List<Game.Core.Action> Actions, List<UIInfo> UIInfos) giveMeBuildItemsContaining(bool withFilter, bool Legal, byte Kind, bool ActorsCell, bool TargetCell, bool TargetType, bool WallConfig, bool intakeCell)
+    {
+        int cachedKind = AFilter.Chosen[(int)ChoosingKind];
+        AFilter.Chosen[(int)ChoosingKind] = Kind;
+        var (actions, uiInfos) = giveMeBuildItemsContaining(withFilter: withFilter, Legal: Legal, Kind: true, ActorsCell: ActorsCell, TargetCell: TargetCell, TargetType: TargetType, WallConfig: WallConfig, intakeCell: intakeCell);
+        AFilter.Chosen[(int)ChoosingKind] = cachedKind;
+        return (actions, uiInfos);
     }
 
     // DoesThisHave(Have: (int)ChoosingActorsCell, Legal: true, Kind: true, ActorsCell: false, TargetCell: false, Type: true, WallConfig: false, intakeCell: false)
@@ -179,7 +201,7 @@ public static class Show
             if (UIBridge._offers[i].WallConfig != AFilter.Chosen[(int)ChoosingWallConfig] && WallConfig) continue;
             if (UIBridge._offers[i].IntakeCell != AFilter.Chosen[(int)ChoosingIntakeCell] && intakeCell) continue;
             if (UIBridge._mask[i] == 0 && Legal) continue;
-            
+
             // if (action.addCost == null || action.addCost.Length == 0) continue;
             // if (!action.addCost.Contains(actorCell)) continue;
             // if (!targetCells.Contains(action.ActorsCell))
@@ -194,6 +216,9 @@ public static class Show
                 case (int)ChoosingIntakeCell:
                     ReturningList.Add(UIBridge._offers[i].IntakeCell);
                     break;
+                case (int)ChoosingIntakeCell:
+                    ReturningList.Add(UIBridge._offers[i].IntakeCell);
+                    break;
             }
         }
         if (GiveMe == (int)ChoosingWallConfig) return ReturningList;
@@ -201,24 +226,24 @@ public static class Show
         return ReturningList;
     }
 
-        public static IEnumerable<int> GiveMeOffersContaining(byte GiveMe, bool Legal, byte Kind, bool ActorsCell, bool TargetCell, bool Type, bool WallConfig, bool intakeCell)
-        {
-            int cachedKind = AFilter.Chosen[(int)ChoosingKind];
-            AFilter.Chosen[(int)ChoosingKind] = Kind;
-            IEnumerable<int> returningList = GiveMeOffersContaining(GiveMe: GiveMe, Legal: Legal, Kind: true, ActorsCell: ActorsCell, TargetCell: TargetCell, TargetType: Type, WallConfig: WallConfig, intakeCell: intakeCell);
-            AFilter.Chosen[(int)ChoosingKind] = cachedKind;
-            return returningList;
-        }
+    public static IEnumerable<int> GiveMeOffersContaining(byte GiveMe, bool Legal, byte Kind, bool ActorsCell, bool TargetCell, bool Type, bool WallConfig, bool intakeCell)
+    {
+        int cachedKind = AFilter.Chosen[(int)ChoosingKind];
+        AFilter.Chosen[(int)ChoosingKind] = Kind;
+        IEnumerable<int> returningList = GiveMeOffersContaining(GiveMe: GiveMe, Legal: Legal, Kind: true, ActorsCell: ActorsCell, TargetCell: TargetCell, TargetType: Type, WallConfig: WallConfig, intakeCell: intakeCell);
+        AFilter.Chosen[(int)ChoosingKind] = cachedKind;
+        return returningList;
+    }
 
 
-        public static IEnumerable<ushort> GiveMeOffersContaining(bool Legal, bool Kind, bool ActorsCell, bool TargetCell, bool Type, bool WallConfig, bool intakeCell)
-        {
-            return GiveMeOffersContaining(GiveMe: (int)ChoosingWallConfig, Legal: Legal, Kind: Kind, ActorsCell: ActorsCell, TargetCell: TargetCell, TargetType: Type, WallConfig: WallConfig, intakeCell: intakeCell).Select(i => unchecked((ushort)i));
-        }
+    public static IEnumerable<ushort> GiveMeOffersContaining(bool Legal, bool Kind, bool ActorsCell, bool TargetCell, bool Type, bool WallConfig, bool intakeCell)
+    {
+        return GiveMeOffersContaining(GiveMe: (int)ChoosingWallConfig, Legal: Legal, Kind: Kind, ActorsCell: ActorsCell, TargetCell: TargetCell, TargetType: Type, WallConfig: WallConfig, intakeCell: intakeCell).Select(i => unchecked((ushort)i));
+    }
 
-        #endregion
+    #endregion
 
-    
+
 
 
     // public static void displayPieceInfo()
@@ -247,5 +272,5 @@ public static class Show
     //     }
     //     UI.hic.buildMenu.Show(items, UI.hic.config);
     // }
-    
+
 }

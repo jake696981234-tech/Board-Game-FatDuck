@@ -32,7 +32,11 @@ public class HCost : MonoBehaviour
 
     public static void UpdateBuildActionsLegality()
     {
-        for (int i = 0; i < UI.hic.buildMenu.theUIInfo.Count; i++) if (UIBridge.gameState.ps[UIBridge._humanPlayer].budget < UI.hic.buildMenu.theUIInfo[i].fullCost) UI.hic.buildMenu._pool[i].setLegality(false);
+        for (int i = 0; i < UI.hic.buildMenu.BuildActionPrefabs.Length; i++)
+        {
+            if (UI.hic.buildMenu.BuildActionPrefabs[i] == null) continue;
+            if (UIBridge.gameState.ps[UIBridge._humanPlayer].budget < UI.hic.buildMenu.BuildActionPrefabs[i].cachedUIInfo.fullCost) UI.hic.buildMenu.BuildActionPrefabs[i].setLegality(false);
+        }
     }
 
     public static void UpdatePieceActionsLegality()

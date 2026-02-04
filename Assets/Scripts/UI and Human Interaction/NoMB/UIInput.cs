@@ -88,5 +88,27 @@ public static class UIInput
         AFilter.uIType = EndTurnButton;
          AFilter.topFilter();
     }
+
+    public static bool[] BuildMeanuFilter = new bool[6];
+    public static void BuildMeanufilterSubscribe()
+    {
+        UI.hic.legalButtonFilter.onClick.AddListener(() => BuildMeanuFilter[0] = !BuildMeanuFilter[0]);
+        UI.hic.legalButtonFilter.onClick.AddListener(() => Show.PushCreateActionMenu());
+
+        UI.hic.BuildingButtonFilter.onClick.AddListener(() => BuildMeanuFilter[1] = !BuildMeanuFilter[1]);
+        UI.hic.BuildingButtonFilter.onClick.AddListener(() => Show.PushCreateActionMenu());
+
+        UI.hic.SolidierButtonFilter.onClick.AddListener(() => BuildMeanuFilter[2] = !BuildMeanuFilter[2]);
+        UI.hic.SolidierButtonFilter.onClick.AddListener(() => Show.PushCreateActionMenu());
+
+        UI.hic.BearButtonFilter.onClick.AddListener(() => BuildMeanuFilter[3] = !BuildMeanuFilter[3]);
+        UI.hic.BearButtonFilter.onClick.AddListener(() => Show.PushCreateActionMenu());
+
+        UI.hic.PenguinButtonFilter.onClick.AddListener(() => BuildMeanuFilter[4] = !BuildMeanuFilter[4]);
+        UI.hic.PenguinButtonFilter.onClick.AddListener(() => Show.PushCreateActionMenu());
+
+        UI.hic.FrogButtonFilter.onClick.AddListener(() => BuildMeanuFilter[5] = !BuildMeanuFilter[5]);
+        UI.hic.FrogButtonFilter.onClick.AddListener(() => Show.PushCreateActionMenu());
+    }
    
 }

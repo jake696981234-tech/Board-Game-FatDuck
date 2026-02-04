@@ -4,6 +4,8 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
+using static Game.Core.ActionKind;
+
 
 public sealed class BuildMenuItemView : MonoBehaviour
 {
@@ -16,27 +18,31 @@ public sealed class BuildMenuItemView : MonoBehaviour
     public Image FactionColourSet;
     public Image BuildingColourSet;
 
-    private Game.Core.Action _data;
+    private Game.Core.Action cachedAction;
+    public UIInfo cachedUIInfo;
 
-    public void Bind(Game.Core.Action data, UIInfo uiInfo, Action<Game.Core.Action, UIInfo> onClick)
+    public void Bind(Game.Core.Action theAction, UIInfo uiInfo, Action<Game.Core.Action, UIInfo> onClick)
     {
-        setFactionColor(data);
-        setIfBuildingColor(data);
-        _data = data;
-        if (nameText) nameText.text = Piece.name[data.TargetType];
+        setFactionColor(theAction);
+        setIfBuildingColor(theAction);
+        cachedAction = theAction;
+        if (nameText) nameText.text = Piece.name[theAction.TargetType];
         if (costText) costText.text = uiInfo.fullCost.ToString();
 
-        if (icon)
-        {
-            var sprite = !string.IsNullOrEmpty(Piece.spritePath[data.TargetType]) ? Resources.Load<Sprite>(Piece.spritePath[data.TargetType]) : null;
-            icon.sprite = sprite;
-            icon.enabled = (sprite != null);
-        }
+        var sprite = getSprite(theAction);
+        icon.sprite = sprite;
+        icon.enabled = sprite != null;
 
         button.onClick.RemoveAllListeners();
-        button.onClick.AddListener(() => onClick?.Invoke(_data, uiInfo));
+        button.onClick.AddListener(() => onClick?.Invoke(cachedAction, uiInfo));
 
         setLegality(uiInfo.legal);
+    }
+
+    private Sprite getSprite(Game.Core.Action theAction)
+    {
+        if (theAction.kind == Spawner) return !string.IsNullOrEmpty(Piece.spritePath[Piece.spawn_targetType[UIBridge.bm.GetPieceTypeFromCell(theAction.ActorsCell)]]) ? Resources.Load<Sprite>(Piece.spritePath[Piece.spawn_targetType[UIBridge.bm.GetPieceTypeFromCell(theAction.ActorsCell)]]) : null;
+        return !string.IsNullOrEmpty(Piece.spritePath[theAction.TargetType]) ? Resources.Load<Sprite>(Piece.spritePath[theAction.TargetType]) : null;
     }
 
     private void setFactionColor(Game.Core.Action data)

@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Action = Game.Core.Action;
 using System.Linq;
 using static Game.Core.ActionKind;
 
@@ -13,8 +14,8 @@ public sealed class BuildMenuPresenter : MonoBehaviour
 
     public event Action<Game.Core.Action, UIInfo> OnItemClicked;
 
-    public readonly List<BuildMenuItemView> _pool = new();
-    public List<UIInfo> theUIInfo = new();
+    public BuildMenuItemView[] BuildActionPrefabs;
+    // public List<UIInfo> theUIInfo = new(Info.totalCells);
 
     // private static bool isWeirdAction(IEnumerable<Game.Core.Action> rawItems) //please rename me
     // {
@@ -22,57 +23,62 @@ public sealed class BuildMenuPresenter : MonoBehaviour
     //     return item == Upgrade || item == GroupBuild;
     // }
 
-    public void Show(IEnumerable<Game.Core.Action> BuildActions)
+    public void ShowBuildActionMenu((List<Action> BuildActions, List<UIInfo> uiInfo) data)
     {
-        IEnumerable<Game.Core.Action> theActions;
-        
-        if (config.GiveRawActionOffers) { theActions = BuildActions; } else { theActions = filteredBuildOptions(BuildActions); }
-        gameObject.SetActive(true);
-        List<UIInfo> UiInfo = new();
-        int i = 0;
-        foreach (var theAction in theActions)
+        for (int i = 0; i < BuildActionPrefabs.Length; i++) if (BuildActionPrefabs[i] != null) Destroy(BuildActionPrefabs[i].gameObject);
+        UI.hic.buildMenu.BuildActionPrefabs = new BuildMenuItemView[data.BuildActions.Count()];
+        for (int i = 0; i < data.BuildActions.Count(); i++)
         {
-            UIInfo uiinfo = new(UIBridge.gameState.ps[UIBridge._humanPlayer].budget > Piece.BuildCost[theAction.TargetType], Piece.BuildCost[theAction.TargetType]);
-            UiInfo.Add(uiinfo);
-            
-            var view = Ensure(i++);
-            view.Bind(theAction, uiinfo, OnItemClicked);
-            view.gameObject.SetActive(true);
+            var prefab = Instantiate(itemPrefab, listContent);
+            BuildActionPrefabs[i] = prefab;
+            prefab.Bind(data.BuildActions[i], data.uiInfo[i], OnItemClicked);
+            BuildActionPrefabs[i].gameObject.SetActive(true);
         }
-        for (; i < _pool.Count; i++) _pool[i].gameObject.SetActive(false);
-        theUIInfo = UiInfo;
+
+        // for (int i = 0; i < UIBridge.totalCells; i++)
+        // {
+        //      if (BuildActionPrefabs[i] != null) Destroy(BuildActionPrefabs[i].gameObject);
+        //     BuildActionPrefabs[i] = Instantiate(itemPrefab, listContent);
+        //     BuildActionPrefabs[i].Bind(data.BuildActions[i], data.uiInfo[i], OnItemClicked);
+        //     BuildActionPrefabs[i].gameObject.SetActive(true);
+        // }
     }
 
-    private IEnumerable<Game.Core.Action> filteredBuildOptions(IEnumerable<Game.Core.Action> items)
-    {
-        var filteredItems = new List<Game.Core.Action>();
-        var iHaveAlreadySeenYou = new HashSet<int>();
+    // public void DestoryAllBuildActionPrefabs()
+    // {
+    //     foreach (var obj in BuildActionPrefabs) Destroy(obj.gameObject);
+    // }
 
-        int i = 0;
-        foreach (var item in items)
-        {
-            if (iHaveAlreadySeenYou.Add(item.TargetType))
-            {
-                filteredItems.Add(item);
-                i++;
-            }
-        }
-        return filteredItems;
-    }
+    // private IEnumerable<Action> filteredBuildOptions(IEnumerable<Game.Core.Action> items)
+    // {
+    //     var filteredItems = new List<Action>();
+    //     var iHaveAlreadySeenYou = new HashSet<int>();
+
+    //     int i = 0;
+    //     foreach (var item in items)
+    //     {
+    //         if (iHaveAlreadySeenYou.Add(item.TargetType))
+    //         {
+    //             filteredItems.Add(item);
+    //             i++;
+    //         }
+    //     }
+    //     return filteredItems;
+    // }
 
 
 
     public void Hide() => gameObject.SetActive(false);
 
-    private BuildMenuItemView Ensure(int index)
-    {
-        while (_pool.Count <= index)
-        {
-            var v = Instantiate(itemPrefab, listContent);
-            _pool.Add(v);
-        }
-        return _pool[index];
-    }
+    // private BuildMenuItemView Ensure(int index)
+    // {
+    //     while (BuildActionPrefabs.Count <= index)
+    //     {
+    //         var v = Instantiate(itemPrefab, listContent);
+    //         BuildActionPrefabs.Add(v);
+    //     }
+    //     return BuildActionPrefabs[index];
+    // }
 }
 
 public struct FilterForBuildItems
