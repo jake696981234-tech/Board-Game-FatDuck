@@ -65,6 +65,7 @@ public static class AFilter
             case Sniper:
             case SacrificeFactory:
             case NecroSpawn:
+            case WorkYard:
                 switch (State)
                 {
                     //I Need ActorsCellID and TargetCell

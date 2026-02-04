@@ -173,6 +173,7 @@ public partial class BoardModel
         Array.Resize(ref pieceFactoryAux, newCap);
         Array.Resize(ref pieceKillCount, newCap);
         Array.Resize(ref necroSpawnStore, newCap);
+        Array.Resize(ref WorkYardBudget, newCap);
         Array.Resize(ref pieceFactoryKillGoalAux, newCap);
         Array.Resize(ref pieceConnectorConfig, newCap);
         Array.Resize(ref pieceCapitalHP, newCap);
@@ -210,6 +211,7 @@ public partial class BoardModel
             pieceFactoryKillGoalAux[pieceId] = pieceFactoryKillGoalAux[last];
             pieceKillCount[pieceId] = pieceKillCount[last];
             necroSpawnStore[pieceId] = necroSpawnStore[last];
+            WorkYardBudget[pieceId] = WorkYardBudget[last];
             pieceConnectorConfig[pieceId] = pieceConnectorConfig[last];
             pieceCapitalHP[pieceId] = pieceCapitalHP[last];
 
@@ -230,7 +232,8 @@ public partial class BoardModel
         pieceHP[pieceId] = hp; // clamp to type maxHP happens in GameState via Pieces metadata, if needed
         pieceFactoryAux[pieceId] = 0; //Add to the paramter if you want this to actually have a starting value
         pieceKillCount[pieceId] = 0;
-        necroSpawnStore[pieceId] = -1;            
+        necroSpawnStore[pieceId] = -1;
+        WorkYardBudget[pieceId] = 0;            
         pieceFactoryKillGoalAux[pieceId] = 0;
         pieceConnectorConfig[pieceId] = 0;
         pieceCapitalHP[pieceId] = 0;

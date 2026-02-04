@@ -67,7 +67,7 @@ public static class PieceInfo
         AddAbility(Piece.conversionFactory_enabled[pieceType], ConversionFactory);
         AddAbility(Piece.sacrificeFactory_enabled[pieceType], SacrificeFactory);
         AddAbility(Piece.feedingGround_enabled[pieceType], FeedingGround);
-        AddAbility(Piece.sacrificeCost_enabled[pieceType], SacrificeCost);
+        // AddAbility(Piece.sacrificeCost_enabled[pieceType], SacrificeCost);
         AddAbility(Piece.launcher_enabled[pieceType], Launcher);
         AddAbility(Piece.push_enabled[pieceType], Push);
         // AddAbility(Piece.pieceBuild_enabled[pieceType], PieceBuild);
@@ -234,10 +234,10 @@ public static class PieceInfo
                 AddField($"Payout: {Piece.sacrificeFactory_amount[pieceType]}");
                 AddField($"Range: {FormatRange(Piece.sacrificeFactory_rangeMin[pieceType], Piece.sacrificeFactory_rangeMax[pieceType])}");
                 break;
-            case SacrificeCost:
-                AddField($"Needs: {Piece.sacrificeCost_howManyItNeeds[pieceType]}");
-                AddField($"Piece: {(Piece.sacrificeCost_isNeedsSpecificPiece[pieceType] ? GetPieceName(Piece.sacrificeCost_specificPiece[pieceType]) : "Any")}");
-                break;
+            // case SacrificeCost:
+            //     AddField($"Needs: {Piece.sacrificeCost_howManyItNeeds[pieceType]}");
+            //     AddField($"Piece: {(Piece.sacrificeCost_isNeedsSpecificPiece[pieceType] ? GetPieceName(Piece.sacrificeCost_specificPiece[pieceType]) : "Any")}");
+            //     break;
             case FeedingGround:
                 AddField($"Range: {Piece.feedingGround_Range[pieceType]}");
                 AddField($"Payout: {Piece.feedingGround_payOut[pieceType]}");

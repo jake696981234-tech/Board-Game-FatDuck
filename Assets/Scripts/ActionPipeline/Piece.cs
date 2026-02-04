@@ -183,10 +183,10 @@ public static class Piece
     public static int[] coreDamage_botSurcharge;
     #endregion
     #region sacrificeCost
-    public static bool[] sacrificeCost_enabled;
-    public static bool[] sacrificeCost_isNeedsSpecificPiece;
-    public static int[] sacrificeCost_specificPiece;
-    public static int[] sacrificeCost_howManyItNeeds;
+    // public static bool[] sacrificeCost_enabled;
+    // public static bool[] sacrificeCost_isNeedsSpecificPiece;
+    // public static int[] sacrificeCost_specificPiece;
+    // public static int[] sacrificeCost_howManyItNeeds;
 
     #endregion
     #region Feeding Ground
@@ -201,11 +201,11 @@ public static class Piece
     public static int[] explosive_damage;
     public static int[] explosive_range;
     #endregion
-    #region piece Build
-    public static bool[] pieceBuild_enabled;
-    public static int[] pieceBuild_range;
-    public static int[][] pieceBuild_targetIds;
-    #endregion
+    // #region piece Build
+    // public static bool[] pieceBuild_enabled;
+    // public static int[] pieceBuild_range;
+    // public static int[][] pieceBuild_targetIds;
+    // #endregion
     #region sniper
     public static bool[] sniper_enabled;
     public static int[] sniper_minRange;

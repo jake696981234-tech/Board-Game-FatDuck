@@ -183,14 +183,13 @@ public static class PiecesCsvImporter
             Piece.coreDamage_damage[typeId] = GetInt(cols, H, "coreDamage_damage", defaultValue: 0);
             Piece.coreDamage_botSurcharge[typeId] = GetInt(cols, H, "coreDamage_botSurcharge", defaultValue: 0);
 
+            // #endregion
+            // #region sacrificeCost
+            // Piece.sacrificeCost_enabled[typeId] = GetBool(cols, H, "sacrificeCost_enabled", defaultValue: false);
+            // Piece.sacrificeCost_isNeedsSpecificPiece[typeId] = GetBool(cols, H, "sacrificeCost_isNeedsSpecificPiece", defaultValue: false);
+            // Piece.sacrificeCost_specificPiece[typeId] = GetInt(cols, H, "sacrificeCost_specificPiece", defaultValue: -1);
+            // Piece.sacrificeCost_howManyItNeeds[typeId] = GetInt(cols, H, "sacrificeCost_howManyItNeeds", defaultValue: -1);
             #endregion
-            #region sacrificeCost
-            Piece.sacrificeCost_enabled[typeId] = GetBool(cols, H, "sacrificeCost_enabled", defaultValue: false);
-            Piece.sacrificeCost_isNeedsSpecificPiece[typeId] = GetBool(cols, H, "sacrificeCost_isNeedsSpecificPiece", defaultValue: false);
-            Piece.sacrificeCost_specificPiece[typeId] = GetInt(cols, H, "sacrificeCost_specificPiece", defaultValue: -1);
-            Piece.sacrificeCost_howManyItNeeds[typeId] = GetInt(cols, H, "sacrificeCost_howManyItNeeds", defaultValue: -1);
-            #endregion
-
             #region Feeding Ground
             Piece.feedingGround_enabled[typeId] = GetBool(cols, H, "feedingGround_enabled", defaultValue: false);
             Piece.feedingGround_payOut[typeId] = GetInt(cols, H, "feedingGround_payOut", defaultValue: -1);
@@ -203,11 +202,11 @@ public static class PiecesCsvImporter
             Piece.explosive_damage[typeId] = GetInt(cols, H, "explosive_damage", defaultValue: 0);
             Piece.explosive_range[typeId] = GetInt(cols, H, "explosive_range", defaultValue: 0);
             #endregion
-            #region build
-            Piece.pieceBuild_enabled[typeId] = GetBool(cols, H, "pieceBuild_enabled", defaultValue: false);            
-            Piece.pieceBuild_range[typeId] = GetInt(cols, H, "pieceBuild_range", defaultValue: 0);
-            Piece.pieceBuild_targetIds[typeId] = GetIntArray(cols, H, "pieceBuild_targetIds", defaultValue: 0);
-            #endregion
+            // #region build
+            // Piece.pieceBuild_enabled[typeId] = GetBool(cols, H, "pieceBuild_enabled", defaultValue: false);            
+            // Piece.pieceBuild_range[typeId] = GetInt(cols, H, "pieceBuild_range", defaultValue: 0);
+            // Piece.pieceBuild_targetIds[typeId] = GetIntArray(cols, H, "pieceBuild_targetIds", defaultValue: 0);
+            // #endregion
             #region sniper
             Piece.sniper_enabled[typeId] = GetBool(cols, H, "sniper_enabled", defaultValue: false);            
             Piece.sniper_minRange[typeId] = GetInt(cols, H, "sniper_minRange", defaultValue: 0);
@@ -515,12 +514,12 @@ public static class PiecesCsvImporter
         Piece.coreDamage_damage = new int[count];
         Piece.coreDamage_botSurcharge = new int[count];
 
-        #endregion
-        #region sacrificeCost
-        Piece.sacrificeCost_enabled = new bool[count];
-        Piece.sacrificeCost_isNeedsSpecificPiece = new bool[count];
-        Piece.sacrificeCost_specificPiece = new int[count];
-        Piece.sacrificeCost_howManyItNeeds = new int[count];
+        // #endregion
+        // #region sacrificeCost
+        // Piece.sacrificeCost_enabled = new bool[count];
+        // Piece.sacrificeCost_isNeedsSpecificPiece = new bool[count];
+        // Piece.sacrificeCost_specificPiece = new int[count];
+        // Piece.sacrificeCost_howManyItNeeds = new int[count];
 
         #endregion
         #region Feeding Ground
@@ -535,11 +534,11 @@ public static class PiecesCsvImporter
         Piece.explosive_damage = new int[count];
         Piece.explosive_range = new int[count];
         #endregion
-        #region pieceBuild
-        Piece.pieceBuild_enabled = new bool[count];        
-        Piece.pieceBuild_range = new int[count];
-        Piece.pieceBuild_targetIds = new int[count][];
-        #endregion
+        // #region pieceBuild
+        // Piece.pieceBuild_enabled = new bool[count];        
+        // Piece.pieceBuild_range = new int[count];
+        // Piece.pieceBuild_targetIds = new int[count][];
+        // #endregion
         #region sniper
         Piece.sniper_enabled = new bool[count];
         Piece.sniper_minRange = new int[count];

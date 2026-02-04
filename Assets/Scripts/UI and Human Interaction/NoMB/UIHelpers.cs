@@ -34,21 +34,22 @@ public static class UIHelpers
     {
         switch (theAction.kind)
         {
-            case Game.Core.ActionKind.Move: return $"Move {theAction.ActorsCell} → {theAction.TargetCell}";
-            case Game.Core.ActionKind.Shoot: return $"Shoot {theAction.ActorsCell} → {theAction.TargetCell}";
-            case Game.Core.ActionKind.Create: return $"Create {theAction.TargetType} @ {theAction.TargetCell}";
-            case Game.Core.ActionKind.CaptureVP: return $"Capture VP @ {theAction.TargetCell}";
-            case Game.Core.ActionKind.CoreDamage: return $"Core Damage @ {theAction.TargetCell}";
-            case Game.Core.ActionKind.Push: return $"Push target @ {theAction.TargetCell}";
-            case Game.Core.ActionKind.GroupBuild: return $"Group Build {theAction.TargetType} @ {theAction.TargetCell}";
-            case Game.Core.ActionKind.Upgrade: return $"Upgrade → {UIBridge.bm.GetPieceTypeFromCell(theAction.ActorsCell)} @ {theAction.TargetCell}";
-            case Game.Core.ActionKind.Launcher: return $"Launch {theAction.IntakeCell} → {theAction.TargetCell}";
-            case Game.Core.ActionKind.Spawner:
+            case ActionKind.Move: return $"Move {theAction.ActorsCell} → {theAction.TargetCell}";
+            case ActionKind.Shoot: return $"Shoot {theAction.ActorsCell} → {theAction.TargetCell}";
+            case ActionKind.Create: return $"Create {theAction.TargetType} @ {theAction.TargetCell}";
+            case ActionKind.CaptureVP: return $"Capture VP @ {theAction.TargetCell}";
+            case ActionKind.CoreDamage: return $"Core Damage @ {theAction.TargetCell}";
+            case ActionKind.Push: return $"Push target @ {theAction.TargetCell}";
+            case ActionKind.GroupBuild: return $"Group Build {theAction.TargetType} @ {theAction.TargetCell}";
+            case ActionKind.Upgrade: return $"Upgrade → {UIBridge.bm.GetPieceTypeFromCell(theAction.ActorsCell)} @ {theAction.TargetCell}";
+            case ActionKind.Launcher: return $"Launch {theAction.IntakeCell} → {theAction.TargetCell}";
+            case ActionKind.Spawner:
                 // pieceType carries the actor type; aux carries the target type for readability
                 return $"Spawn at {Piece.name[theAction.TargetType]} @ {AFilter.Chosen[(int)ChoosingTargetCell]}";
-            case Game.Core.ActionKind.SacrificeFactory: return $"Sacrifice Factory {theAction.ActorsCell} → {theAction.TargetCell}";
-            case Game.Core.ActionKind.ConversionFactory: return $"ConversionFactory";
-            case Game.Core.ActionKind.EndTurn: return "End Turn";
+            case ActionKind.SacrificeFactory: return $"Sacrifice Factory {theAction.ActorsCell} → {theAction.TargetCell}";
+            case ActionKind.ConversionFactory: return $"ConversionFactory";
+            case ActionKind.EndTurn: return "End Turn";
+            case ActionKind.WorkYard: return $"WorkYard @ {theAction.TargetCell}";
             default: return $"{theAction.kind} [{theAction.ActorsCell}->{theAction.TargetCell}]";
         }
     }

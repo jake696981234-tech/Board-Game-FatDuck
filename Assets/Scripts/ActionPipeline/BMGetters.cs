@@ -22,6 +22,7 @@ public partial class BoardModel
     public int[] pieceFactoryKillGoalAux;
     public int[] pieceKillCount;
     public int[] necroSpawnStore;
+    public int[] WorkYardBudget;
     public byte[] pieceConnectorConfig; 
     public int[] pieceCapitalHP;   
     #endregion  
