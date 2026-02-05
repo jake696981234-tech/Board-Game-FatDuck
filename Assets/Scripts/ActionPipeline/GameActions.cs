@@ -28,7 +28,7 @@ namespace Game.Core
             bm.pieceKillCount[ActorsPieceId]++;
             bm.pieceFactoryAux[ActorsPieceId] += Piece.eat_amount[bm.pieceType[ActorsPieceId]];
             gameState.ps[bm.pieceOwner[ActorsPieceId]].perRoundPieceKillCount++;
-            PassiveActions.FeedingGround(gameIndex, bm.GetCellOccupant(victimsCell));
+            FeedingGroundAction.FeedingGround(gameIndex, bm.GetCellOccupant(victimsCell));
             if (Piece.zombie_enabled[bm.GetPieceTypeFromCell(victimsCell)]) //move this above the above the other benefifts if you dont want the others to trigger
             {
                 Zombie(victimsCell, actorsCell, gameIndex);

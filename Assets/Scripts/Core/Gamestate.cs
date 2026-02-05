@@ -236,7 +236,7 @@ namespace Game.Core
         private float[] perPlayerFactoryIncome = new float[4]; // allocated once
         public float ComputePlayerPayOut(int playerId)
         {
-            perPlayerFactoryIncome = PassiveActions.ComputePlayersFactoryIncome(gameIndex);
+            perPlayerFactoryIncome = FactoryAction.ComputePlayersFactoryIncome(gameIndex);
             float payout =
                     ComputePlayerVPReward(playerId) +
                     ComputePlayeroreDamageReward(playerId) +

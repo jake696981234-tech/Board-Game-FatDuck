@@ -1,11 +1,11 @@
+using UnityEngine;
 using System.Collections.Generic;
 using System;
 using Game.Core;
 
-public static class PassiveActions
+public static class FactoryAction
 {
-       
-    #region Factory Ability
+     #region Factory Ability
     public static float[] ComputePlayersFactoryIncome(int gameIndex)
     {
         float[] perPlayerFactoryIncome = new float[4];
@@ -113,106 +113,6 @@ public static class PassiveActions
         }
         return payOut;
     }
-
-    #endregion
-
-    #region Sanctuary
-    public static int ProtectedBySanctuary(Span<int> outPieceIds, int gameIndex)
-    {
-        var bm = GameRegistry.game[gameIndex].boardModel;
-        var gameState = GameRegistry.game[gameIndex].gameState;
-
-        gameState.dublicateFilter.Clear();
-        Span<int> protectedpieces = stackalloc int[240];
-        int foundPieces = 0;
-
-        for (int pid = 0; pid < bm.pieceCount; pid++)
-        {
-            byte type = bm.GetPieceType(pid);
-            int sanctuaryRange = -1;
-
-            // Find a Sanctuary ability on this type and grab its range
-
-            if (!Piece.sanctuary_enabled[type]) continue;
-            sanctuaryRange = Piece.sanctuary_range[type];
-
-            if (sanctuaryRange < 0) continue;
-            int centerCell = bm.pieceCellId[pid];
-            if (centerCell < 0) continue;
-
-            for (int range = 0; range <= sanctuaryRange; range++)
-            {
-                int found = BmCac.pieceIdsRingAroundCell(centerCell, range, protectedpieces, gameIndex);
-
-                if (found <= 0) continue;
-
-                for (int pp = 0; pp < found; pp++)
-                {
-                    if (gameState.dublicateFilter.Add(protectedpieces[pp]))
-                    {
-                        outPieceIds[foundPieces] = protectedpieces[pp];
-                        foundPieces++;
-                    }
-                }
-            }
-        }
-        return foundPieces;
-    }
-
-    private static bool IsPieceProtectedBySanctuary(int pieceId, int gameIndex)
-    {
-        Span<int> protectedpieces = stackalloc int[240];
-        int numberOfProtectedPieces = ProtectedBySanctuary(protectedpieces, gameIndex);
-
-        for (int i = 0; i < numberOfProtectedPieces; i++)
-        {
-            if (pieceId != protectedpieces[i]) continue;
-            return true;
-        }
-        return false;
-    }
-
-    public static bool IsPieceApartOfSpan(int PieceId, Span<int> inPieceIds, int spanLength)
-    {
-        for (int i = 0; i < spanLength; i++)
-        {
-            if (PieceId != inPieceIds[i]) continue;
-            return true;
-        }
-        return false;
-    }
-    #endregion
-    #region Feeding Ground
-
-    public static void FeedingGround(int gameIndex, int pieceIDKilled)
-    {
-        var bm = GameRegistry.game[gameIndex].boardModel;
-        int[] PiecesInRange = Scratch.GetScratchCellBuffer(gameIndex);
-
-        int Player = bm.pieceOwner[pieceIDKilled];
-
-        for (int pid = 0; pid < bm.pieceCount; pid++)
-        {
-            if (bm.pieceOwner[pid] == Player) continue;
-            int pieceType = bm.pieceType[pid];
-            if (!Piece.feedingGround_enabled[pieceType]) continue;
-
-            for (int range = 0; range <= Piece.feedingGround_Range[pieceType]; range++)
-            {
-                int found = BmCac.pieceIdsRingAroundCell(bm.pieceCellId[pid], range, PiecesInRange, gameIndex);
-
-                if (found <= 0) continue;
-
-                for (int i = 0; i < found; i++)
-                {
-                    if (PiecesInRange[i] != pieceIDKilled) continue;
-                    bm.pieceFactoryAux[pid] += Piece.feedingGround_payOut[pieceType];
-                }
-            }
-        }
-    }
-
-    
 
     #endregion
 }

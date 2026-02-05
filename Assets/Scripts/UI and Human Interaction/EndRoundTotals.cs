@@ -24,8 +24,8 @@ public static class EndRoundTotals
     {
         if (!DisplaySelect.EndRoundTotalsVisible) return;
 
-        PerPiecePayout perPiecePayout = PassiveActions.ComputeDetailedPlayerFactoryIncome(UIBridge._humanPlayer, UIBridge.gameIndex);
-        float totalFactory = PassiveActions.ComputeFactoryIncome(UIBridge._humanPlayer, UIBridge.gameIndex);
+        PerPiecePayout perPiecePayout = FactoryAction.ComputeDetailedPlayerFactoryIncome(UIBridge._humanPlayer, UIBridge.gameIndex);
+        float totalFactory = FactoryAction.ComputeFactoryIncome(UIBridge._humanPlayer, UIBridge.gameIndex);
         float vpBonus = UIBridge.gameState.ComputePlayerVPReward(UIBridge._humanPlayer);
         float coreBonus = UIBridge.gameState.ComputePlayeroreDamageReward(UIBridge._humanPlayer);
         float totalEndRound = totalFactory + vpBonus + coreBonus;
