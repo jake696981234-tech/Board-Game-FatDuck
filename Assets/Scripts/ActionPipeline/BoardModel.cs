@@ -75,6 +75,17 @@ public partial class BoardModel
         for (int i = 0; i < n; i++) out6[i] = row[i];
         return n;
     }
+    public int GetNeighborOccupiedCells(int cellId, Span<int> out6)
+    {
+        var neighbors = geo.neighborsById[cellId];
+        int found = 0;
+        for (int i = 0; i < neighbors.Length; i++) 
+        {
+            if (!IsCellOccupied(neighbors[i])) continue;
+            out6[found++] = neighbors[i];
+        }
+        return found;
+    }
 
     /// <summary>Neighbor row view. Read-only; do not cache across resizes (IDs are stable).</summary>
     public int[] Neighbors(int cellId) => IsValidCellId(cellId) ? geo.neighborsById[cellId] : Array.Empty<int>();
@@ -421,6 +432,7 @@ public partial class BoardModel
         int n = GetNeighbors(cellId, outNeighborCells.AsSpan());
         return n;
     }
+
 
 
     // 2) Pieces calls Distance(...), so provide a wrapper

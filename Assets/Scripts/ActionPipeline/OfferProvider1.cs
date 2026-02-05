@@ -81,6 +81,7 @@ public static class OfferProvider
         if (Piece.sniper_enabled[actorType]) SniperAction.CreateActions(pieceId, actorType, cell, ref offerBuild);
         if (Piece.necroSpawn_enabled[actorType]) NecroSpawnAction.CreateActions(pieceId, actorType, cell, ref offerBuild);
         if (Piece.workYard_enabled[actorType]) WorkYardAction.CreateActions(pieceId, actorType, cell, ref offerBuild);
+        if (Piece.hop_enabled[actorType]) HopAction.CreateActions(pieceId, actorType, cell, ref offerBuild);
         UpgradeAction.CreateActions(pieceId, actorType, cell, ref offerBuild);
     }
 

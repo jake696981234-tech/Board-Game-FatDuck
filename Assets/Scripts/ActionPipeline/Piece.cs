@@ -20,18 +20,19 @@ public static class Piece
         Sniper = 12,
         NecroSpawn = 13,
         WorkYard = 14,
-        Create = 14,
-        EndTurn = 15,
-        Factory = 16,
-        Sanctuary = 17,
-        Eat = 18,
-        SacrificeCost = 19,
-        FeedingGround = 20,
-        Zombie = 21,
-        Invalid = 22,
+        Hop = 15,
+        Create = 16,
+        EndTurn = 17,
+        Factory = 18,
+        Sanctuary = 19,
+        Eat = 20,
+        SacrificeCost = 21,
+        FeedingGround = 22,
+        Zombie = 23,
+        Invalid = 24,
     }
 
-    public const int ActiveAbilityCount = 16;
+    public const int ActiveAbilityCount = 17;
     public static bool[,] ActiveAbilitesEnabledFromType = new bool[typeCount , ActiveAbilityCount]; 
 
     public static void SetActiveAbilitesEnabledFromType()
@@ -230,6 +231,10 @@ public static class Piece
     public static int[] workYard_range;
     public static int[] workYard_botSurcharge;
     public static bool[] workYard_excludeBuildings;
+    #endregion
+    #region Hop
+    public static bool[] hop_enabled;
+    public static int[] hop_damage;
     #endregion
     public static bool IsConnectorConfigAllowed(byte type, int configIndex)
     {

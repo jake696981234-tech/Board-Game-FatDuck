@@ -50,6 +50,7 @@ public static class UIHelpers
             case ActionKind.ConversionFactory: return $"ConversionFactory";
             case ActionKind.EndTurn: return "End Turn";
             case ActionKind.WorkYard: return $"WorkYard @ {theAction.TargetCell}";
+            case ActionKind.Hop: return $"Hop Over {theAction.TargetCell}";
             default: return $"{theAction.kind} [{theAction.ActorsCell}->{theAction.TargetCell}]";
         }
     }

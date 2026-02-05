@@ -80,7 +80,8 @@ namespace Game.Core
         public const byte Sniper = 12;
         public const byte NecroSpawn = 13;
         public const byte WorkYard = 14;
-        public const byte Create = 15;
-        public const byte EndTurn = 16;
+        public const byte Hop = 15;
+        public const byte Create = 16;
+        public const byte EndTurn = 17;
     }
 }

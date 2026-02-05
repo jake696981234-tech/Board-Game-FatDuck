@@ -95,6 +95,7 @@ namespace Game.Core
                 case Sniper: SniperAction.Apply(in theAction, currentPlayer, gameIndex); break;
                 case NecroSpawn: NecroSpawnAction.Apply(in theAction, currentPlayer, gameIndex); break;
                 case WorkYard: WorkYardAction.Apply(in theAction, currentPlayer, gameIndex); break;
+                case Hop: HopAction.Apply(in theAction, currentPlayer, gameIndex); break;
                 default:
                     Debug.Log("Find Action Match returned false");
                     return false;

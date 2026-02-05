@@ -168,6 +168,8 @@ public static class BmCac
         return current;
     }
 
+    public static int FindDirectionAndStep(int fromCell, int toCell, int steps, int gameIndex) => StepInDirection(startCell: fromCell, dir: GetDirectionIndex(fromCell: fromCell, toCell: toCell, gameIndex: gameIndex), steps: steps, gameIndex: gameIndex);
+
     public static int[] CellIdsLessPieceIds(int[] cellIds, int[] removedCells)
     {
         int[] result = cellIds.Except(removedCells).ToArray();
