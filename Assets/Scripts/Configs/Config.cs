@@ -8,12 +8,12 @@ using Unity.InferenceEngine;
 public sealed class Config : ScriptableObject
 {
     [Header("----------Players Config-----------")]
-    public bool useMLAgents = false; 
+    public bool useMLAgents = false;
 
     [Header("How Mnay Players")]
     [Range(1, 4)] public int playerCount = 4;
 
-    [Header("What Controls Players")] 
+    [Header("What Controls Players")]
     public Info.ControlMode[] playerControl = new Info.ControlMode[4] {
     Info.ControlMode.DumbGreg,
     Info.ControlMode.DumbGreg,
@@ -108,7 +108,7 @@ public sealed class Config : ScriptableObject
     public bool inspectGame = false;
 
     [Header("---------Game Play---------")]
-    
+
     [Header("Match Defaults")]
     public MatchAuthoring match = new MatchAuthoring { startingBudgetPerRound = new float[4], numberOfRounds = 5, startOfTurnBudgetDecrease = 5, startCenterVP = 5, startCoreHp = 3 };
 
@@ -117,7 +117,7 @@ public sealed class Config : ScriptableObject
 
     [Header("Budget Rewards")]
     public RewardAuthoring rewards = new RewardAuthoring { budgetBonusForVP = 5, budgetBonusForCoreDamage = 5 };
-    
+
     [Header("Board")]
     public BoardAuthoring board = new BoardAuthoring { radius = 8, invalidId = -1, victoryPointCellId = 108, firstCoreCellAxialByPlayer = new short[4], secondCoreCellAxialByPlayer = new short[4], shuffleCoreCellsPerGame = false, coreShuffleSeed = 0 };
 
@@ -126,6 +126,7 @@ public sealed class Config : ScriptableObject
     public bool AdjecentWallContiguous = false;
 
     public bool AbilitysCanSeperatePiecesWithWalls = false;
+    public bool ConnectorsInvalidIfBoarderingEdge = true;
 
 
     // ---- NEW: Control & ML authoring ----
@@ -146,7 +147,7 @@ public sealed class Config : ScriptableObject
         retryBackoffMs = 250
     };
 
-    
+
 
 
 
@@ -239,163 +240,163 @@ public sealed class Config : ScriptableObject
     //     );
     // }
 
-    
+
 }
 
 
 
-    #region structs
+#region structs
 
-    [System.Serializable]
-    public struct PlayerBehaviorConfig
-    {
-        public ModelAsset modelAsset;                  // Drag/drop imported ONNX (ModelAsset)
-        public bool deterministicInference;
-        public BehaviorType behaviorType;              // Default | HeuristicOnly | InferenceOnly
-    }
-
-
-    public struct DumbGregAuthoring
-    {
-        [Range(0f, 1f)] public float endTurnAfterFirstPct; // chance to end turn after first action
-        [Range(0f, 1f)] public float shootInsteadPct;       // chance to shoot instead within tiers
-        [Range(0f, 1f)] public float moveAnotherPct;        // chance to pick second-best move
-        [Range(0f, 1f)] public float moveBuildingPct;       // chance to move building instead
-        [Range(0f, 1f)] public float createInsteadPct;      // chance to create instead within tiers
-
-        public int seedBase;          // base seed used for RNG (combine with seat)
-        public bool seedBySeat;       // if true, actual seed = seedBase + seat
-    }
-
-    [System.Serializable]
-    public struct MLRewardsAuthoring
-    {
-        public float rewardWin;
-        public float rewardLoss;
-        public float rewardDraw;
-        public float rewardCaptureVP;
-        public float rewardCoreDamage;
-        public float moveTowardVpScale;   // multiplied by (distBefore - distAfter)
-        public float costPenaltyScale;    // multiplied by normalized cost (0..1)
-        public float stepPenalty;         // applied each action
-        public float endTurnPenalty;      // additional penalty if EndTurn
-    }
-
-    [System.Serializable]
-    public struct DbLoggingAuthoring
-    {
-        public bool enabled;
-        public int simID;
-        public string simName;
-        public string ruleVersion;
-        public string notes;
-        public bool useSharedSession;
-        public bool transactionalSession;
-        [Min(1)] public int batchSize;
-        [Min(1)] public int flushIntervalMs;
-        [Min(1)] public int maxQueue;
-        [Min(0)] public int maxRetries;
-        [Min(0)] public int retryBackoffMs;
-    }
-
-     [System.Serializable]
-    public struct AutoSimAuthoring
-    {
-        [Tooltip("When checked, automatically start a new game when one ends.")]
-        public bool autoRestartOnGameOver;
-        [Tooltip("Maximum number of games to auto-play. 0 = unlimited.")]
-        [Min(0)] public int maxAutoGames;
-    }
-
-    [System.Serializable]
-    public struct BoardAuthoring
-    {
-        [Range(1, 10)] public byte radius;
-        public int invalidId;
-        public int victoryPointCellId;      // e.g., center
-        // public int[] coreCellIdByPlayer; // set per map
-        public short[] firstCoreCellAxialByPlayer;
-        public short[] secondCoreCellAxialByPlayer;
-        public short firstVpAxial;
-        public short secoundVpAxial;
-        public (short q, short r) VpAxial => (firstVpAxial, secoundVpAxial);
-
-        [Tooltip("When enabled, shuffle the 4 core cell ids each game so seats spawn at different cores.")]
-        public bool shuffleCoreCellsPerGame;
-        [Tooltip("Optional seed for core shuffling. 0 = non-deterministic per match.")]
-        public int coreShuffleSeed;
-    }
-
-    [System.Serializable]
-    public struct MatchAuthoring
-    {
-        public float[] startingBudgetPerRound;
-        public int numberOfRounds;
-        public int startOfTurnBudgetDecrease;
-        public int startCenterVP;
-        public int startCoreHp;
-    }
-
-    [System.Serializable]
-    public struct CostAuthoring
-    {
-        public int baseActionCost;
-        public float actionGrowthFactor;
-    }
-
-     [System.Serializable]
-    public struct RewardAuthoring
-    {
-        public int budgetBonusForVP;
-        public int budgetBonusForCoreDamage;
-    }
-
-     [System.Serializable]
-    public struct CapsAuthoring
-    {
-        public int capMaxActionsPerTurn;
-        public int capMaxVP;
-        public float capMaxBudget;
-        public int capMaxVPPool;
-        public int capMaxPieceHP;
-        public int capMaxCoreHealth;
-    }
-
-     // Config.cs  (inside the class)
-    [System.Serializable]
-    public struct PlayerConfig
-    {
-        public string name;
-        public bool isAI;
-        public bool applyBotSurcharges;
-        public bool applyStartOfTurnBudgetDecrease;
-        public float startingBudgetOverride;   // < 0 => use global default
-        public int team;
-    }
-
-        // [System.Serializable]
-    // public struct ObservationAuthoring
-    // {
-    //     [Min(1)] public int maxCells;     // e.g., 217 (set below)
-    //     [Min(1)] public int maxDistance;  // e.g., 16  (set below)
-    // }
+[System.Serializable]
+public struct PlayerBehaviorConfig
+{
+    public ModelAsset modelAsset;                  // Drag/drop imported ONNX (ModelAsset)
+    public bool deterministicInference;
+    public BehaviorType behaviorType;              // Default | HeuristicOnly | InferenceOnly
+}
 
 
-    [System.Serializable]
-    public struct AgentAuthoring
-    {
-        [Min(1)] public int maxOffersToConsider;  // e.g. 64
-        [Min(0)] public int rolloutDepth;         // e.g. 2
-        [Min(0)] public int thinkBudgetMs;        // e.g. 5
-    }
+public struct DumbGregAuthoring
+{
+    [Range(0f, 1f)] public float endTurnAfterFirstPct; // chance to end turn after first action
+    [Range(0f, 1f)] public float shootInsteadPct;       // chance to shoot instead within tiers
+    [Range(0f, 1f)] public float moveAnotherPct;        // chance to pick second-best move
+    [Range(0f, 1f)] public float moveBuildingPct;       // chance to move building instead
+    [Range(0f, 1f)] public float createInsteadPct;      // chance to create instead within tiers
 
-    [System.Serializable]
-    public struct BehaviorParametersAuthoring
-    {
-        public string behaviorName;
-        public bool useChildSensors;
-        [Min(1)] public int vectorObservationSize;
-        [Min(1)] public int actionBranchSize;
-    }
-    #endregion
+    public int seedBase;          // base seed used for RNG (combine with seat)
+    public bool seedBySeat;       // if true, actual seed = seedBase + seat
+}
+
+[System.Serializable]
+public struct MLRewardsAuthoring
+{
+    public float rewardWin;
+    public float rewardLoss;
+    public float rewardDraw;
+    public float rewardCaptureVP;
+    public float rewardCoreDamage;
+    public float moveTowardVpScale;   // multiplied by (distBefore - distAfter)
+    public float costPenaltyScale;    // multiplied by normalized cost (0..1)
+    public float stepPenalty;         // applied each action
+    public float endTurnPenalty;      // additional penalty if EndTurn
+}
+
+[System.Serializable]
+public struct DbLoggingAuthoring
+{
+    public bool enabled;
+    public int simID;
+    public string simName;
+    public string ruleVersion;
+    public string notes;
+    public bool useSharedSession;
+    public bool transactionalSession;
+    [Min(1)] public int batchSize;
+    [Min(1)] public int flushIntervalMs;
+    [Min(1)] public int maxQueue;
+    [Min(0)] public int maxRetries;
+    [Min(0)] public int retryBackoffMs;
+}
+
+[System.Serializable]
+public struct AutoSimAuthoring
+{
+    [Tooltip("When checked, automatically start a new game when one ends.")]
+    public bool autoRestartOnGameOver;
+    [Tooltip("Maximum number of games to auto-play. 0 = unlimited.")]
+    [Min(0)] public int maxAutoGames;
+}
+
+[System.Serializable]
+public struct BoardAuthoring
+{
+    [Range(1, 10)] public byte radius;
+    public int invalidId;
+    public int victoryPointCellId;      // e.g., center
+                                        // public int[] coreCellIdByPlayer; // set per map
+    public short[] firstCoreCellAxialByPlayer;
+    public short[] secondCoreCellAxialByPlayer;
+    public short firstVpAxial;
+    public short secoundVpAxial;
+    public (short q, short r) VpAxial => (firstVpAxial, secoundVpAxial);
+
+    [Tooltip("When enabled, shuffle the 4 core cell ids each game so seats spawn at different cores.")]
+    public bool shuffleCoreCellsPerGame;
+    [Tooltip("Optional seed for core shuffling. 0 = non-deterministic per match.")]
+    public int coreShuffleSeed;
+}
+
+[System.Serializable]
+public struct MatchAuthoring
+{
+    public float[] startingBudgetPerRound;
+    public int numberOfRounds;
+    public int startOfTurnBudgetDecrease;
+    public int startCenterVP;
+    public int startCoreHp;
+}
+
+[System.Serializable]
+public struct CostAuthoring
+{
+    public int baseActionCost;
+    public float actionGrowthFactor;
+}
+
+[System.Serializable]
+public struct RewardAuthoring
+{
+    public int budgetBonusForVP;
+    public int budgetBonusForCoreDamage;
+}
+
+[System.Serializable]
+public struct CapsAuthoring
+{
+    public int capMaxActionsPerTurn;
+    public int capMaxVP;
+    public float capMaxBudget;
+    public int capMaxVPPool;
+    public int capMaxPieceHP;
+    public int capMaxCoreHealth;
+}
+
+// Config.cs  (inside the class)
+[System.Serializable]
+public struct PlayerConfig
+{
+    public string name;
+    public bool isAI;
+    public bool applyBotSurcharges;
+    public bool applyStartOfTurnBudgetDecrease;
+    public float startingBudgetOverride;   // < 0 => use global default
+    public int team;
+}
+
+// [System.Serializable]
+// public struct ObservationAuthoring
+// {
+//     [Min(1)] public int maxCells;     // e.g., 217 (set below)
+//     [Min(1)] public int maxDistance;  // e.g., 16  (set below)
+// }
+
+
+[System.Serializable]
+public struct AgentAuthoring
+{
+    [Min(1)] public int maxOffersToConsider;  // e.g. 64
+    [Min(0)] public int rolloutDepth;         // e.g. 2
+    [Min(0)] public int thinkBudgetMs;        // e.g. 5
+}
+
+[System.Serializable]
+public struct BehaviorParametersAuthoring
+{
+    public string behaviorName;
+    public bool useChildSensors;
+    [Min(1)] public int vectorObservationSize;
+    [Min(1)] public int actionBranchSize;
+}
+#endregion
 

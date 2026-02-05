@@ -80,11 +80,11 @@ public static class Info
     // public static readonly short[][] BackupfirstCoreCellAxialByPlayer;
     // public static readonly short[][] BackupsecondCoreCellAxialByPlayer;
     public static readonly (short q, short r)[] PlayerCoreAxialCord;
-  
+
     public static readonly short firstVpAxial;
     public static readonly short secoundVpAxial;
-    
-    
+
+
     public static (short q, short r) VpAxial => (firstVpAxial, secoundVpAxial);
 
     public static readonly bool shuffleCoreCellsPerGame;
@@ -95,6 +95,7 @@ public static class Info
     public static readonly bool ContiguousWalls;
     public static readonly bool AdjecentWallContiguous;
     public static readonly bool AbilitysCanSeperatePiecesWithWalls;
+    public static readonly bool ConnectorsInvalidIfBoarderingEdge;
 
     // ---- NEW: Control & ML authoring ----
     // [Header("DB Logging Tuning")]
@@ -107,9 +108,9 @@ public static class Info
     public readonly static int HowManyGamesWonToGraduate = 100;
     public static string[] LearningPlayersBehaviorNames;
     public static List<DumbGregAuthoring[]> DumbGregs;
-    public static List<ModelAsset> FrozenBrains = new(); 
+    public static List<ModelAsset> FrozenBrains = new();
 
-    #endregion 
+    #endregion
 
     static Info()
     {
@@ -146,7 +147,7 @@ public static class Info
         rolloutDepth = config.agent.rolloutDepth;
         thinkBudgetMs = config.agent.thinkBudgetMs;
 
-   
+
 
         rewardWin = config.mlRewards.rewardWin;
         rewardLoss = config.mlRewards.rewardLoss;
@@ -189,23 +190,24 @@ public static class Info
         secondCoreCellAxialByPlayer = (short[])config.board.secondCoreCellAxialByPlayer.Clone();
         firstVpAxial = config.board.firstVpAxial;
         secoundVpAxial = config.board.secoundVpAxial;
-        
-        PlayerCoreAxialCord =  new (short q, short r)[]
+
+        PlayerCoreAxialCord = new (short q, short r)[]
         {
             (firstCoreCellAxialByPlayer[0], secondCoreCellAxialByPlayer[0]),
             (firstCoreCellAxialByPlayer[1], secondCoreCellAxialByPlayer[1]),
             (firstCoreCellAxialByPlayer[2], secondCoreCellAxialByPlayer[2]),
             (firstCoreCellAxialByPlayer[3], secondCoreCellAxialByPlayer[3]),
         };
-       
 
-       
+
+
         shuffleCoreCellsPerGame = config.board.shuffleCoreCellsPerGame;
         coreShuffleSeed = config.board.coreShuffleSeed;
 
         ContiguousWalls = config.ContiguousWalls;
         AdjecentWallContiguous = config.AdjecentWallContiguous;
         AbilitysCanSeperatePiecesWithWalls = config.AbilitysCanSeperatePiecesWithWalls;
+        ConnectorsInvalidIfBoarderingEdge = config.ConnectorsInvalidIfBoarderingEdge;
         dbLogging = config.dbLogging;
     }
 

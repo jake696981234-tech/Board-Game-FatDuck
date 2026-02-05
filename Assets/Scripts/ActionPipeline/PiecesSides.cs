@@ -37,16 +37,16 @@ public static class PiecesSides
 
     // public static bool DoesBorderInvalid(int cell, int gameIndex)
     // {
-        
+
     // }
 
     public static bool IsConnectorConfigAllowed(byte PieceType, int configIndex)
     {
-    if (configIndex < 0 || configIndex >= 64) return false;
-    if (PieceType >= Piece.connector_allowedMasks.Length) return false;
-    if (!AreWallsContiguous(configIndex) && Info.ContiguousWalls) return false;
-    
-    return (Piece.connector_allowedMasks[PieceType] & (1UL << configIndex)) != 0;
+        if (configIndex < 0 || configIndex >= 64) return false;
+        if (PieceType >= Piece.connector_allowedMasks.Length) return false;
+        if (!AreWallsContiguous(configIndex) && Info.ContiguousWalls) return false;
+
+        return (Piece.connector_allowedMasks[PieceType] & (1UL << configIndex)) != 0;
     }
 
     /// <summary>
@@ -60,13 +60,16 @@ public static class PiecesSides
         if (!IsConnectorConfigAllowed(type, configIndex)) return false;
 
         // Adjacent wall/connector compatibility
-        int[] neigh = Scratch.GetScratchNeighborBuffer(gameIndex);
-        int n = bm.GetNeighbors(cell, neigh);
+        int[] neighCells = Scratch.GetScratchNeighborBuffer(gameIndex);
+        int n = bm.GetNeighbors(cell, neighCells);
         for (int i = 0; i < n; i++)
         {
-            int nbCell = neigh[i];
-            if (nbCell < 0) continue;
-            int nbPid = bm.GetCellOccupant(nbCell);
+            if (!bm.IsValidCellId(neighCells[i]))
+            {
+                if (Info.ConnectorsInvalidIfBoarderingEdge && IsConnectorSide(configIndex, i)) return false;
+                continue;
+            }
+            int nbPid = bm.GetCellOccupant(neighCells[i]);
             if (nbPid < 0) continue;
 
             bool nbHasConn = Piece.connectors_enabled[bm.GetPieceType(nbPid)];
@@ -95,13 +98,13 @@ public static class PiecesSides
     private static bool isAdjecentWallContiguousLegal(int nbConfig, int configIndex, int direction)
     {
         int firstPieceDirectionToCheck;
-        if (direction == 0) 
+        if (direction == 0)
         { firstPieceDirectionToCheck = 5; }
-        else {firstPieceDirectionToCheck = direction - 1; }
+        else { firstPieceDirectionToCheck = direction - 1; }
 
         int secondPieceDirectionToCheck;
         if (direction == 5) { secondPieceDirectionToCheck = 0; }
-        else {secondPieceDirectionToCheck = direction + 1; }
+        else { secondPieceDirectionToCheck = direction + 1; }
 
         bool firstDirectionLegality = (IsConnectorSide(nbConfig, OppositeDir(firstPieceDirectionToCheck)) && IsConnectorSide(configIndex, secondPieceDirectionToCheck)) || (!IsConnectorSide(nbConfig, OppositeDir(firstPieceDirectionToCheck)) && !IsConnectorSide(configIndex, secondPieceDirectionToCheck));
         bool secoundDirectionLegality = (IsConnectorSide(nbConfig, OppositeDir(secondPieceDirectionToCheck)) && IsConnectorSide(configIndex, firstPieceDirectionToCheck)) || (!IsConnectorSide(nbConfig, OppositeDir(secondPieceDirectionToCheck)) && !IsConnectorSide(configIndex, firstPieceDirectionToCheck));
@@ -138,7 +141,7 @@ public static class PiecesSides
 
     //         if (i == 5) { NeighPieceDirectionToCheck = 0; }
     //         else {NeighPieceDirectionToCheck = i + 1; }
-            
+
     //         bool secoundDirectionLegality = (IsConnectorSide(nbConfig, OppositeDir(NeighPieceDirectionToCheck)) && IsConnectorSide(configIndex, i - 1)) || (!IsConnectorSide(nbConfig, OppositeDir(NeighPieceDirectionToCheck)) && !IsConnectorSide(configIndex, i - 1));
 
     //         return firstDirectionLegality || secoundDirectionLegality;
