@@ -20,7 +20,7 @@ public class HCost : MonoBehaviour
         if (secondAccumulator < 1f) return;
         secondAccumulator -= 1f;
 
-        UIBridge.gameState.ps[UIBridge._humanPlayer].budget -= 1;
+        UIBridge.gameState.ps[UIBridge._humanPlayer].budget -= UI.hic.config.HumanTimeDecreaseAmountPerSecound;
 
         UI.hic.Personal_BudgetText.text = "Budget: " + $"{UIBridge.gameState.ps[UIBridge._humanPlayer].budget}";
         UI.hic.Personal_BudgetAfterActionFee.text = "Budget - Action Fee: " + $"{UIBridge.gameState.ps[UIBridge._humanPlayer].budget - ShowLeftPanel.curActionFee}";
