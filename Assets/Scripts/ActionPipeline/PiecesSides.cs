@@ -35,6 +35,20 @@ public static class PiecesSides
         return transitions <= 2;
     }
 
+    // public static bool DoesBorderInvalid(int cell, int gameIndex)
+    // {
+        
+    // }
+
+    public static bool IsConnectorConfigAllowed(byte PieceType, int configIndex)
+    {
+    if (configIndex < 0 || configIndex >= 64) return false;
+    if (PieceType >= Piece.connector_allowedMasks.Length) return false;
+    if (!AreWallsContiguous(configIndex) && Info.ContiguousWalls) return false;
+    
+    return (Piece.connector_allowedMasks[PieceType] & (1UL << configIndex)) != 0;
+    }
+
     /// <summary>
     /// Returns true if placing a piece of <paramref name="type"/> with the given connector config at <paramref name="cell"/>
     /// does not violate connector-vs-wall adjacency, and (if required) is connected via connectors to a capital.
@@ -43,7 +57,7 @@ public static class PiecesSides
     {
         var bm = GameRegistry.game[gameIndex].boardModel;
 
-        if (!Piece.IsConnectorConfigAllowed(type, configIndex)) return false;
+        if (!IsConnectorConfigAllowed(type, configIndex)) return false;
 
         // Adjacent wall/connector compatibility
         int[] neigh = Scratch.GetScratchNeighborBuffer(gameIndex);
@@ -54,8 +68,8 @@ public static class PiecesSides
             if (nbCell < 0) continue;
             int nbPid = bm.GetCellOccupant(nbCell);
             if (nbPid < 0) continue;
-            byte nbType = bm.GetPieceType(nbPid);
-            bool nbHasConn = Piece.connectors_enabled[nbType];
+
+            bool nbHasConn = Piece.connectors_enabled[bm.GetPieceType(nbPid)];
             if (!nbHasConn) continue;
             int nbConfig = nbHasConn ? bm.pieceConnectorConfig[nbPid] : 0;
 

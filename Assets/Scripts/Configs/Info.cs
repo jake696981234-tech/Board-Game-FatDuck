@@ -73,10 +73,14 @@ public static class Info
     public static readonly short totalCells;
     public static readonly int invalidId;
     public static readonly int victoryPointCellId;      // e.g., center
-    public static readonly int[] coreCellIdByPlayer; // set per map
-    public static readonly short[] firstCoreCellAxialByPlayer;
-    public static readonly short[] secondCoreCellAxialByPlayer;
+    // public static readonly int[] coreCellIdByPlayer; // set per map
+    private static readonly short[] firstCoreCellAxialByPlayer;
+    private static readonly short[] secondCoreCellAxialByPlayer;
+
+    // public static readonly short[][] BackupfirstCoreCellAxialByPlayer;
+    // public static readonly short[][] BackupsecondCoreCellAxialByPlayer;
     public static readonly (short q, short r)[] PlayerCoreAxialCord;
+  
     public static readonly short firstVpAxial;
     public static readonly short secoundVpAxial;
     
@@ -180,7 +184,7 @@ public static class Info
         totalCells = (short)(1 + 3 * radius * (radius + 1));
         invalidId = config.board.invalidId;
         victoryPointCellId = config.board.victoryPointCellId;
-        coreCellIdByPlayer = (int[])config.board.coreCellIdByPlayer.Clone();
+        // coreCellIdByPlayer = (int[])config.board.coreCellIdByPlayer.Clone();
         firstCoreCellAxialByPlayer = (short[])config.board.firstCoreCellAxialByPlayer.Clone();
         secondCoreCellAxialByPlayer = (short[])config.board.secondCoreCellAxialByPlayer.Clone();
         firstVpAxial = config.board.firstVpAxial;
@@ -193,6 +197,9 @@ public static class Info
             (firstCoreCellAxialByPlayer[2], secondCoreCellAxialByPlayer[2]),
             (firstCoreCellAxialByPlayer[3], secondCoreCellAxialByPlayer[3]),
         };
+       
+
+       
         shuffleCoreCellsPerGame = config.board.shuffleCoreCellsPerGame;
         coreShuffleSeed = config.board.coreShuffleSeed;
 

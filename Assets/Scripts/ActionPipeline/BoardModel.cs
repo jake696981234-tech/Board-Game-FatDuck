@@ -36,13 +36,19 @@ public partial class BoardModel
     {
         geo = geometry;
         _vpCellId = geo.idByAxial[Info.VpAxial];
-        // _coreCellIdByPlayer = coreCellIdOverride != null
-        //     ? (int[])coreCellIdOverride.Clone()
-        //     : (int[])GameBootstrapper.hub.board_coreCellIdByPlayer.Clone();
-        _coreCellIdByPlayer[0] = geo.idByAxial[Info.PlayerCoreAxialCord[0]];
-        _coreCellIdByPlayer[1] = geo.idByAxial[Info.PlayerCoreAxialCord[1]];
-        _coreCellIdByPlayer[2] = geo.idByAxial[Info.PlayerCoreAxialCord[2]];
-        _coreCellIdByPlayer[3] = geo.idByAxial[Info.PlayerCoreAxialCord[3]];
+        if (coreCellIdOverride != null)
+        {
+            _coreCellIdByPlayer = (int[])coreCellIdOverride.Clone();
+        }
+        else
+        {
+            _coreCellIdByPlayer[0] = geo.idByAxial[Info.PlayerCoreAxialCord[0]];
+            _coreCellIdByPlayer[1] = geo.idByAxial[Info.PlayerCoreAxialCord[1]];
+            _coreCellIdByPlayer[2] = geo.idByAxial[Info.PlayerCoreAxialCord[2]];
+            _coreCellIdByPlayer[3] = geo.idByAxial[Info.PlayerCoreAxialCord[3]];
+        } 
+            // : (int[])Info.board_coreCellIdByPlayer.Clone();
+        
         
         occupantPieceId = new int[Info.totalCells];
         for (int i = 0; i < Info.totalCells; i++) occupantPieceId[i] = Info.invalidId;

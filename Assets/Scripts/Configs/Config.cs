@@ -119,7 +119,7 @@ public sealed class Config : ScriptableObject
     public RewardAuthoring rewards = new RewardAuthoring { budgetBonusForVP = 5, budgetBonusForCoreDamage = 5 };
     
     [Header("Board")]
-    public BoardAuthoring board = new BoardAuthoring { radius = 8, invalidId = -1, victoryPointCellId = 108, coreCellIdByPlayer = new int[4], firstCoreCellAxialByPlayer = new short[4], secondCoreCellAxialByPlayer = new short[4], shuffleCoreCellsPerGame = false, coreShuffleSeed = 0 };
+    public BoardAuthoring board = new BoardAuthoring { radius = 8, invalidId = -1, victoryPointCellId = 108, firstCoreCellAxialByPlayer = new short[4], secondCoreCellAxialByPlayer = new short[4], shuffleCoreCellsPerGame = false, coreShuffleSeed = 0 };
 
     [Header("Wall config")]
     public bool ContiguousWalls = false;
@@ -313,7 +313,7 @@ public sealed class Config : ScriptableObject
         [Range(1, 10)] public byte radius;
         public int invalidId;
         public int victoryPointCellId;      // e.g., center
-        public int[] coreCellIdByPlayer; // set per map
+        // public int[] coreCellIdByPlayer; // set per map
         public short[] firstCoreCellAxialByPlayer;
         public short[] secondCoreCellAxialByPlayer;
         public short firstVpAxial;

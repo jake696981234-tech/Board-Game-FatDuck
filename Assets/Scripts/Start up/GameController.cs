@@ -3,6 +3,7 @@ using Game.Core;
 using System;
 using Unity.MLAgents.Policies;
 
+
 public class GameController : MonoBehaviour
 {
     #region Game Flow
@@ -11,7 +12,7 @@ public class GameController : MonoBehaviour
         playerManager.onGameEnd(gameIndex);
         _completedGamesCount++;
         if (_completedGamesCount >= Info.maxAutoGames) return;
-        
+
         curriculumCheck();
         if (inspectGame && Info.dbLogging.enabled)
         {
@@ -27,7 +28,7 @@ public class GameController : MonoBehaviour
         GameRegistry.Register(gameIndex, gameState, board, eventManager, this);
         if (!inspectGame) return;
         currentSnapshot = snapshotComposer.GetSnapshot();
-        UIBridge.ApplySnapshot(currentSnapshot);  
+        UIBridge.ApplySnapshot(currentSnapshot);
     }
     #endregion
 
@@ -36,10 +37,22 @@ public class GameController : MonoBehaviour
     {
         int[] baseIds = new int[4];
         // (int[])GameBootstrapper.hub.board_coreCellIdByPlayer.Clone();
-        baseIds[0] = geos.idByAxial[Info.PlayerCoreAxialCord[0]];
-        baseIds[1] = geos.idByAxial[Info.PlayerCoreAxialCord[1]];
-        baseIds[2] = geos.idByAxial[Info.PlayerCoreAxialCord[2]];
-        baseIds[3] = geos.idByAxial[Info.PlayerCoreAxialCord[3]];
+        for (int i = 0; i < 4; i++)
+        {
+            if (geos.idByAxial.ContainsKey(Info.PlayerCoreAxialCord[i]))
+            {
+                baseIds[i] = geos.idByAxial[Info.PlayerCoreAxialCord[i]];
+            }
+            else
+            {
+                baseIds[i] = GiveMeBackUpPlayerCoreCell(i);
+            }
+        }
+        
+        
+        // baseIds[1] = geos.idByAxial[Info.PlayerCoreAxialCord[1]];
+        // baseIds[2] = geos.idByAxial[Info.PlayerCoreAxialCord[2]];
+        // baseIds[3] = geos.idByAxial[Info.PlayerCoreAxialCord[3]];
         if (!Info.shuffleCoreCellsPerGame)
         {
             _matchIndex++;
@@ -56,7 +69,36 @@ public class GameController : MonoBehaviour
         _matchIndex++;
         return baseIds;
     }
-    
+
+    public int GiveMeBackUpPlayerCoreCell(int player)
+    {
+        // Candidates are ordered from farthest to nearest to (0,0) for each player seat.
+        (short q, short r)[] candidates = player switch
+        {
+            0 => new (short, short)[] { (0, 7), (0, 6), (0, 5), (0, 4), (0, 3), (0, 2), (0, 1) },
+            1 => new (short, short)[] { (0, -7), (0, -6), (0, -5), (0, -4), (0, -3), (0, -2), (0, -1) },
+            2 => new (short, short)[] { (7, -7), (6, -6), (5, -5), (4, -4), (3, -3), (2, -2), (1, -1) },
+            3 => new (short, short)[] { (-7, 7), (-6, 6), (-5, 5), (-4, 4), (-3, 3), (-2, 2), (-1, 1) },
+            _ => Array.Empty<(short, short)>()
+        };
+
+        for (int i = 0; i < candidates.Length; i++)
+        {
+            var axial = candidates[i];
+            if (geos.idByAxial.TryGetValue(axial, out var id))
+            {
+                return id;
+            }
+        }
+
+        // // Fallbacks: center if present, otherwise invalid id.
+        // if (geos.idByAxial.TryGetValue(((short)0, (short)0), out var centerId))
+        //     return centerId;
+
+        Debug.LogWarning($"No backup core cell found for player {player}; returning invalid id.");
+        return Info.invalidId;
+    }
+
     private void curriculumCheck()
     {
         if (perGameConfig.Curriculum.Count == 0) return;
@@ -123,8 +165,8 @@ public class GameController : MonoBehaviour
         gameState.Initialize(board, players, startingPlayer, eventManager, this, playerManager, gameIndex);
         GameRegistry.Register(gameIndex, gameState, board, eventManager, this);
     }
-    
-    
+
+
     public void BuildTheBoard()
     {
         var geometry = GeometryBuilder.Build();
@@ -157,9 +199,9 @@ public class GameController : MonoBehaviour
     private void setInspectGame()
     {
         if (!inspectGame) return;
-        
+
         var hic = FindFirstObjectByType<HumanInteractionController>();
-        
+
         // pick the first seat marked Human
         byte humanSeat = 0;
         for (byte seat = 0; seat < Info.playerCount; seat++)
@@ -182,10 +224,10 @@ public class GameController : MonoBehaviour
             currentSnapshot = snapshotComposer.GetSnapshot();
             UIBridge.ApplySnapshot(currentSnapshot);
         };
-        
+
     }
 
-     private void OnDestroy()
+    private void OnDestroy()
     {
         if (Info.dbLogging.enabled && Info.dbLogging.useSharedSession) DbLog.EndLoggingSession(commit: true);
     }
@@ -237,9 +279,9 @@ public class GameController : MonoBehaviour
     //     return false;
     // }
 
-    
 
-     // void Update()
+
+    // void Update()
     // {
     //     // Auto-restart flow: detect game end once and optionally restart
     //     if (gameState != null && gameState.IsGameOver)
@@ -273,7 +315,7 @@ public class GameController : MonoBehaviour
     //     // ML seats: driven by ML-Agents components; Human seats: idle in Phase A
     // }
 
-    
+
     // private void RestartMatch()
     // {
     //     curriculumCheck();
@@ -329,5 +371,5 @@ public class GameController : MonoBehaviour
     //         _restartInProgress = false;
     //     }
     // }
-     #endregion
+    #endregion
 }

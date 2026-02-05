@@ -236,13 +236,6 @@ public static class Piece
     public static bool[] hop_enabled;
     public static int[] hop_damage;
     #endregion
-    public static bool IsConnectorConfigAllowed(byte type, int configIndex)
-    {
-        if (configIndex < 0 || configIndex >= 64) return false;
-        if (type >= connector_allowedMasks.Length) return false;
-        if (!PiecesSides.AreWallsContiguous(configIndex) && Info.ContiguousWalls) return false;
-        ulong mask = connector_allowedMasks[type];
-        return (mask & (1UL << configIndex)) != 0;
-    }
+
 
 }
