@@ -192,7 +192,7 @@ public static class MLObservation
     private static float Budget(GameState gameState, int playerIndex) => normalize(gameState.GetBudget((byte)playerIndex), Info.capMaxBudget);
     private static float VPGained(GameState gameState, int playerIndex) => normalize(gameState.GetVP((byte)playerIndex), Info.capMaxVP);
     private static float CoreHealth(GameState gameState, int playerIndex) => normalize(gameState.GetCoreHealth((byte)playerIndex), Info.capMaxCoreHealth);
-    private static float RoundPayOut(int gameIndex, int playerIndex) => normalize(FactoryAction.ComputeFactoryIncome((byte)playerIndex, gameIndex), Info.capMaxBudget);
+    private static float RoundPayOut(int gameIndex, int playerIndex) => normalize(FactoriesActions.ComputeFactoryIncome((byte)playerIndex, gameIndex), Info.capMaxBudget);
     private static float CellOccupancy(BoardModel bm, int cell)
     {
         if (bm.GetCellOccupant(cell) != Info.invalidId)

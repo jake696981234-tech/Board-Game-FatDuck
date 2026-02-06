@@ -3,6 +3,7 @@ using Game.Core;
 using Action = Game.Core.Action;
 using static Game.Core.ActionKind; // import enum values
 using System.Collections.Generic;
+using static Game.Core.GameActions;
 
 public static class UpgradeAction
 {
@@ -32,6 +33,7 @@ public static class UpgradeAction
             // if (Piece.sacrificeCost_enabled[upgradedToPieceType] && !CreateAction.GenerateSacrificeCosts(CreateActions, ref offerBuild)) return;
             for (int i = 0; i < CreateActions.Count; i++) { OfferProvider.Emit(CreateActions[i], ref offerBuild); }
         }
+
     }
 
     //isItLegal
@@ -39,21 +41,10 @@ public static class UpgradeAction
 
     public static void Apply(in Action theAction, byte player, int gameIndex)
     {
-        var gameState = GameRegistry.game[gameIndex].gameState;
         var bm = GameRegistry.game[gameIndex].boardModel;
+        var sourceConnector = bm.pieceConnectorConfig[bm.GetCellOccupant(theAction.ActorsCell)];
+        bm.FreeRowSwapBack(bm.GetCellOccupant(theAction.ActorsCell));
+        placePiece(wallConfig: sourceConnector, createdPieceType: theAction.TargetType, targetCell: theAction.ActorsCell, player: player, gameIndex: gameIndex);
 
-        // CreateAction.PaySacCost(theAction, player, gameIndex);
-
-        var UpgradedFromPieceId = bm.GetCellOccupant(theAction.ActorsCell);
-        var sourceConnector = bm.pieceConnectorConfig[UpgradedFromPieceId];
-        bm.FreeRowSwapBack(UpgradedFromPieceId);
-
-        int PieceId = bm.AllocateRow();
-        bm.PlacePieceRow(PieceId, player, (byte)theAction.TargetType, theAction.ActorsCell, Piece.maxHP[theAction.TargetType]);
-        if (Piece.connectors_enabled[theAction.TargetType]) { bm.pieceConnectorConfig[PieceId] = sourceConnector; } else { bm.pieceConnectorConfig[PieceId] = (byte)theAction.WallConfig; }
-        int g = Piece.digitItGives[(byte)theAction.TargetType];
-        if (g >= 0) gameState.ps[player].GrantDigit(g);
-
-        GameActions.RefreshConnectorState(gameIndex);
     }
 }

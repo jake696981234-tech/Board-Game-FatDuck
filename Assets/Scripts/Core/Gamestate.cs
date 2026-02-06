@@ -22,7 +22,7 @@ namespace Game.Core
             playerManager.tickPlayerIndex(currentPlayer, this);
         }
 
-        
+
         #region The Action method
 
         public bool Perform(in Action theAction, Action[] offers)
@@ -32,7 +32,7 @@ namespace Game.Core
             return success;
         }
 
-        
+
         private bool ActuallyPerform(in Action theAction, Action[] offers)
         {
             ref var cur = ref ps[currentPlayer];
@@ -103,14 +103,14 @@ namespace Game.Core
             cur.AddBudget(-(float)quote.Total);
             cur.AdvanceActionIndex();
             if (LogEnabled) DbLog.PostLogPerform(quote, gameIndex);
-        
+
             // Tell listeners (Bootstrapper/View) to refresh visuals
             OnActionExecuted?.Invoke();
             return true;
-            
+
         }
 
-        
+
 
         // private bool FastCheck(in Action a)
         // {
@@ -182,7 +182,7 @@ namespace Game.Core
             for (int c = 0; c < bm.pieceCount; c++)
             {
                 if (bm.pieceOwner[c] != playerId) continue;
-                if (Piece.factory_isKillPenalty[bm.pieceType[c]]) cachedPieceDrivenPenalties += Piece.factory_killsPunishment[bm.pieceType[c]];
+                if (Piece.Instantfactory_isKillPenalty[bm.pieceType[c]]) cachedPieceDrivenPenalties += Piece.Instantfactory_killsPunishment[bm.pieceType[c]];
             }
             return cachedPieceDrivenPenalties;
         }
@@ -236,7 +236,7 @@ namespace Game.Core
         private float[] perPlayerFactoryIncome = new float[4]; // allocated once
         public float ComputePlayerPayOut(int playerId)
         {
-            perPlayerFactoryIncome = FactoryAction.ComputePlayersFactoryIncome(gameIndex);
+            perPlayerFactoryIncome = FactoriesActions.ComputePlayersFactoryIncome(gameIndex);
             float payout =
                     ComputePlayerVPReward(playerId) +
                     ComputePlayeroreDamageReward(playerId) +

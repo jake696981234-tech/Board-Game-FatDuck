@@ -4,7 +4,7 @@ using System.Text;
 
 public static class EndRoundTotals
 {
-    
+
 
     public static void SubscribeEndRoundTotals()
     {
@@ -24,8 +24,8 @@ public static class EndRoundTotals
     {
         if (!DisplaySelect.EndRoundTotalsVisible) return;
 
-        PerPiecePayout perPiecePayout = FactoryAction.ComputeDetailedPlayerFactoryIncome(UIBridge._humanPlayer, UIBridge.gameIndex);
-        float totalFactory = FactoryAction.ComputeFactoryIncome(UIBridge._humanPlayer, UIBridge.gameIndex);
+        PerPiecePayout perPiecePayout = FactoriesActions.ComputeDetailedPlayerFactoryIncome(UIBridge._humanPlayer, UIBridge.gameIndex);
+        float totalFactory = FactoriesActions.ComputeFactoryIncome(UIBridge._humanPlayer, UIBridge.gameIndex);
         float vpBonus = UIBridge.gameState.ComputePlayerVPReward(UIBridge._humanPlayer);
         float coreBonus = UIBridge.gameState.ComputePlayeroreDamageReward(UIBridge._humanPlayer);
         float totalEndRound = totalFactory + vpBonus + coreBonus;

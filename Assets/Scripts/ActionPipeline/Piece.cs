@@ -33,11 +33,11 @@ public static class Piece
     }
 
     public const int ActiveAbilityCount = 17;
-    public static bool[,] ActiveAbilitesEnabledFromType = new bool[typeCount , ActiveAbilityCount]; 
+    public static bool[,] ActiveAbilitesEnabledFromType = new bool[typeCount, ActiveAbilityCount];
 
     public static void SetActiveAbilitesEnabledFromType()
     {
-        ActiveAbilitesEnabledFromType = new bool[typeCount , ActiveAbilityCount]; 
+        ActiveAbilitesEnabledFromType = new bool[typeCount, ActiveAbilityCount];
         for (int type = 0; type < typeCount; type++)
         {
             ActiveAbilitesEnabledFromType[type, (int)Move] = move_enabled[type];
@@ -113,7 +113,7 @@ public static class Piece
     #endregion
     #region spawn
     public static bool[] spawn_enabled;
-    public static int[] spawn_pieceAmount;
+    public static int[] spawn_pieceAmount; // to do- get rid of this field
     public static int[] spawn_targetType;
     public static int[] spawn_range;
     public static bool[] spawn_isOnlyOncePerTurn;
@@ -126,16 +126,23 @@ public static class Piece
     #endregion
     #region factory
     public static bool[] factory_enabled;
-    public static int[] factory_amount;
+    public static int[] factory_payout;
     public static bool[] factory_isRoundMultiplier;
-    public static bool[] factory_isGroup;
-    public static int[] factory_groupAmount;
-    public static bool[] factory_isInstantPayOut;
-    public static int[] factory_instantPayOutAmount;
-    public static bool[] factory_isKillPenalty;
-    public static int[] factory_killsNeeded;
-    public static int[] factory_killsPunishment;
-    
+    #endregion
+    #region groupFactory
+    public static bool[] groupFactory_enabled;
+    public static int[] groupFactory_require;
+    public static int[] groupFactory_payout;
+    public static bool[] groupFactory_isRoundMultiplier;
+
+    #endregion
+    #region Instantfactory
+    public static bool[] Instantfactory_enabled;
+    public static int[] Instantfactory_payout;
+    public static bool[] Instantfactory_isKillPenalty;
+    public static int[] Instantfactory_killsNeeded;
+    public static int[] Instantfactory_killsPunishment;
+
     #endregion
     #region sanctuary
     public static bool[] sanctuary_enabled;
@@ -197,8 +204,8 @@ public static class Piece
     #endregion
     #region Explosive
     public static bool[] explosive_enabled;
-    public static bool[] explosive_isFriendlyFire; 
-    public static bool[] explosive_isKillItself; 
+    public static bool[] explosive_isFriendlyFire;
+    public static bool[] explosive_isKillItself;
     public static int[] explosive_damage;
     public static int[] explosive_range;
     #endregion

@@ -14,10 +14,10 @@ public partial class BoardModel
 {
     // ---------- Geometry (injected at Init; shared, readonly) ----------
     public BoardGeometry geo;
-   
+
 
     public HashSet<int> spawnerUsedThisTurn = new HashSet<int>();
-    
+
 
     // ---------- Optional hook from Pieces (perf helper) ----------
     public Func<byte, bool> IsBuildingType;
@@ -46,10 +46,10 @@ public partial class BoardModel
             _coreCellIdByPlayer[1] = geo.idByAxial[Info.PlayerCoreAxialCord[1]];
             _coreCellIdByPlayer[2] = geo.idByAxial[Info.PlayerCoreAxialCord[2]];
             _coreCellIdByPlayer[3] = geo.idByAxial[Info.PlayerCoreAxialCord[3]];
-        } 
-            // : (int[])Info.board_coreCellIdByPlayer.Clone();
-        
-        
+        }
+        // : (int[])Info.board_coreCellIdByPlayer.Clone();
+
+
         occupantPieceId = new int[Info.totalCells];
         for (int i = 0; i < Info.totalCells; i++) occupantPieceId[i] = Info.invalidId;
 
@@ -85,7 +85,7 @@ public partial class BoardModel
     {
         var neighbors = geo.neighborsById[cellId];
         int found = 0;
-        for (int i = 0; i < neighbors.Length; i++) 
+        for (int i = 0; i < neighbors.Length; i++)
         {
             if (!IsCellOccupied(neighbors[i])) continue;
             out6[found++] = neighbors[i];
@@ -191,7 +191,7 @@ public partial class BoardModel
         Array.Resize(ref pieceKillCount, newCap);
         Array.Resize(ref necroSpawnStore, newCap);
         Array.Resize(ref WorkYardBudget, newCap);
-        Array.Resize(ref pieceFactoryKillGoalAux, newCap);
+        Array.Resize(ref Instantfactory_killGoal, newCap);
         Array.Resize(ref pieceConnectorConfig, newCap);
         Array.Resize(ref pieceCapitalHP, newCap);
         pieceCapacity = newCap;
@@ -225,7 +225,7 @@ public partial class BoardModel
             pieceType[pieceId] = pieceType[last];
             pieceHP[pieceId] = pieceHP[last];
             pieceFactoryAux[pieceId] = pieceFactoryAux[last];
-            pieceFactoryKillGoalAux[pieceId] = pieceFactoryKillGoalAux[last];
+            Instantfactory_killGoal[pieceId] = Instantfactory_killGoal[last];
             pieceKillCount[pieceId] = pieceKillCount[last];
             necroSpawnStore[pieceId] = necroSpawnStore[last];
             WorkYardBudget[pieceId] = WorkYardBudget[last];
@@ -250,8 +250,8 @@ public partial class BoardModel
         pieceFactoryAux[pieceId] = 0; //Add to the paramter if you want this to actually have a starting value
         pieceKillCount[pieceId] = 0;
         necroSpawnStore[pieceId] = -1;
-        WorkYardBudget[pieceId] = 0;            
-        pieceFactoryKillGoalAux[pieceId] = 0;
+        WorkYardBudget[pieceId] = 0;
+        Instantfactory_killGoal[pieceId] = 0;
         pieceConnectorConfig[pieceId] = 0;
         pieceCapitalHP[pieceId] = 0;
         if (IsValidCellId(cellId)) occupantPieceId[cellId] = pieceId;

@@ -514,6 +514,101 @@ public static class BmCac
         return count;
     }
 
+    public static int CountClusterOfType(byte type, int startCell, Span<int> outCells, int gameIndex)
+    {
+        var bm = GameRegistry.game[gameIndex].boardModel;
+
+        if (startCell < 0) return 0;
+        var visited = Scratch.GetScratchCellBuffer(gameIndex);
+        Array.Clear(visited, 0, visited.Length);
+        int[] queue = Scratch.GetScratchCellBuffer(gameIndex);
+        int head = 0, tail = 0;
+        queue[tail++] = startCell;
+        visited[startCell] = 1;
+        int count = 0;
+        while (head < tail)
+        {
+            int cell = queue[head++];
+            int pid = bm.GetCellOccupant(cell);
+            if (pid >= 0 && bm.GetPieceType(pid) == type)
+            {
+                if (count < outCells.Length) outCells[count] = cell;
+                count++;
+            }
+            int[] neigh = Scratch.GetScratchNeighborBuffer(gameIndex);
+            int n = bm.GetNeighbors(cell, neigh);
+            for (int i = 0; i < n; i++)
+            {
+                int nb = neigh[i];
+                if (nb < 0 || nb >= visited.Length) continue;
+                if (visited[nb] != 0) continue;
+                int nbPid = bm.GetCellOccupant(nb);
+                if (nbPid < 0 || bm.GetPieceType(nbPid) != type) continue;
+                visited[nb] = 1;
+                queue[tail++] = nb;
+            }
+        }
+        return count;
+    }
+
+    /// <summary>
+    /// Counts how many clusters of the given piece type (owned by player) fit into size 'required'.
+    /// Clusters larger than required contribute clusterSize / required (integer division).
+    /// Zero-alloc: reuses shared scratch buffers.
+    /// </summary>
+    public static int CountClustersOfType(int type, int required, int player, int gameIndex)
+    {
+        if (required <= 0) return 0;
+
+        var bm = GameRegistry.game[gameIndex].boardModel;
+        var visited = Scratch.GetScratchCellBuffer(gameIndex);
+        Array.Clear(visited, 0, visited.Length);
+        int[] queue = Scratch.GetScratchCellBuffer2(gameIndex);
+
+        int clusters = 0;
+
+        for (int cell = 0; cell < visited.Length; cell++)
+        {
+            if (visited[cell] != 0) continue;
+            int pid = bm.GetCellOccupant(cell);
+            if (pid < 0) continue;
+            if (bm.GetPieceOwner(pid) != player) continue;
+            if (bm.GetPieceType(pid) != type) continue;
+
+            int head = 0, tail = 0;
+            queue[tail++] = cell;
+            visited[cell] = 1;
+            int clusterSize = 0;
+
+            while (head < tail)
+            {
+                int cur = queue[head++];
+                int curPid = bm.GetCellOccupant(cur);
+                if (curPid >= 0 && bm.GetPieceOwner(curPid) == player && bm.GetPieceType(curPid) == type)
+                    clusterSize++;
+
+                int[] neigh = Scratch.GetScratchNeighborBuffer(gameIndex);
+                int n = bm.GetNeighbors(cur, neigh);
+                for (int i = 0; i < n; i++)
+                {
+                    int nb = neigh[i];
+                    if (nb < 0 || nb >= visited.Length) continue;
+                    if (visited[nb] != 0) continue;
+                    int nbPid = bm.GetCellOccupant(nb);
+                    if (nbPid < 0) continue;
+                    if (bm.GetPieceOwner(nbPid) != player) continue;
+                    if (bm.GetPieceType(nbPid) != type) continue;
+                    visited[nb] = 1;
+                    queue[tail++] = nb;
+                }
+            }
+
+            clusters += clusterSize / required;
+        }
+
+        return clusters;
+    }
+
     public static bool IsCreateGeometryLegal(int cell, byte player, int gameIndex)
     {
         var bm = GameRegistry.game[gameIndex].boardModel;

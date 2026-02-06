@@ -117,17 +117,17 @@ public static class PiecesCsvImporter
             #endregion
             #region factory
             Piece.factory_enabled[typeId] = GetBool(cols, H, "factory_enabled", defaultValue: false);
-            Piece.factory_amount[typeId] = GetInt(cols, H, "factory_amount", defaultValue: 0);
+            Piece.factory_payout[typeId] = GetInt(cols, H, "factory_amount", defaultValue: 0);
             Piece.factory_isRoundMultiplier[typeId] = GetBool(cols, H, "factory_isRoundMultiplier", defaultValue: false);
-            Piece.factory_isGroup[typeId] = GetBool(cols, H, "factory_isGroup", defaultValue: false);
-            Piece.factory_groupAmount[typeId] = GetInt(cols, H, "factory_groupAmount", defaultValue: 0);
+            Piece.groupFactory_enabled[typeId] = GetBool(cols, H, "factory_isGroup", defaultValue: false);
+            Piece.groupFactory_require[typeId] = GetInt(cols, H, "factory_groupAmount", defaultValue: 0);
 
-            Piece.factory_isInstantPayOut[typeId] = GetBool(cols, H, "factory_isInstantPayOut", defaultValue: false);
-            Piece.factory_instantPayOutAmount[typeId] = GetInt(cols, H, "factory_instantPayOutAmount", defaultValue: 0);
-            Piece.factory_isKillPenalty[typeId] = GetBool(cols, H, "factory_isKillPenalty", defaultValue: false);
-            Piece.factory_killsNeeded[typeId] = GetInt(cols, H, "factory_killsNeeded", defaultValue: 0);
-            Piece.factory_killsPunishment[typeId] = GetInt(cols, H, "factory_killsPunishment", defaultValue: 0);
-            
+            Piece.Instantfactory_enabled[typeId] = GetBool(cols, H, "factory_isInstantPayOut", defaultValue: false);
+            Piece.Instantfactory_payout[typeId] = GetInt(cols, H, "factory_instantPayOutAmount", defaultValue: 0);
+            Piece.Instantfactory_isKillPenalty[typeId] = GetBool(cols, H, "factory_isKillPenalty", defaultValue: false);
+            Piece.Instantfactory_killsNeeded[typeId] = GetInt(cols, H, "factory_killsNeeded", defaultValue: 0);
+            Piece.Instantfactory_killsPunishment[typeId] = GetInt(cols, H, "factory_killsPunishment", defaultValue: 0);
+
             #endregion
             #region sanctuary
             Piece.sanctuary_enabled[typeId] = GetBool(cols, H, "sanctuary_enabled", defaultValue: false);
@@ -208,33 +208,33 @@ public static class PiecesCsvImporter
             // Piece.pieceBuild_targetIds[typeId] = GetIntArray(cols, H, "pieceBuild_targetIds", defaultValue: 0);
             // #endregion
             #region sniper
-            Piece.sniper_enabled[typeId] = GetBool(cols, H, "sniper_enabled", defaultValue: false);            
+            Piece.sniper_enabled[typeId] = GetBool(cols, H, "sniper_enabled", defaultValue: false);
             Piece.sniper_minRange[typeId] = GetInt(cols, H, "sniper_minRange", defaultValue: 0);
             Piece.sniper_damage[typeId] = GetInt(cols, H, "sniper_damage", defaultValue: 0);
             Piece.sniper_maxRange[typeId] = GetInt(cols, H, "sniper_maxRange", defaultValue: 0);
-            Piece.sniper_isonlySoldiers[typeId] = GetBool(cols, H, "sniper_isonlySoldiers", defaultValue: false);            
-            Piece.sniper_isLineOfSight[typeId] = GetBool(cols, H, "sniper_isLineOfSight", defaultValue: false);            
-            Piece.sniper_isFriendlyFire[typeId] = GetBool(cols, H, "sniper_isFriendlyFire", defaultValue: false);            
+            Piece.sniper_isonlySoldiers[typeId] = GetBool(cols, H, "sniper_isonlySoldiers", defaultValue: false);
+            Piece.sniper_isLineOfSight[typeId] = GetBool(cols, H, "sniper_isLineOfSight", defaultValue: false);
+            Piece.sniper_isFriendlyFire[typeId] = GetBool(cols, H, "sniper_isFriendlyFire", defaultValue: false);
             Piece.sniper_lineLength[typeId] = GetInt(cols, H, "sniper_lineLength", defaultValue: 0);
             #endregion
             #region zombie
-            Piece.zombie_enabled[typeId] = GetBool(cols, H, "zombie_enabled", defaultValue: false);            
+            Piece.zombie_enabled[typeId] = GetBool(cols, H, "zombie_enabled", defaultValue: false);
             #endregion
             #region necroSpawn
-            Piece.necroSpawn_enabled[typeId] = GetBool(cols, H, "necroSpawn_enabled", defaultValue: false);            
+            Piece.necroSpawn_enabled[typeId] = GetBool(cols, H, "necroSpawn_enabled", defaultValue: false);
             Piece.necroSpawn_range[typeId] = GetInt(cols, H, "necroSpawn_range", defaultValue: 0);
             Piece.necroSpawn_botSurcharge[typeId] = GetInt(cols, H, "necroSpawn_botSurcharge", defaultValue: 0);
             #endregion 
             #region WorkYard
-            Piece.workYard_enabled[typeId] = GetBool(cols, H, "workYard_enabled", defaultValue: false);            
+            Piece.workYard_enabled[typeId] = GetBool(cols, H, "workYard_enabled", defaultValue: false);
             Piece.workYard_range[typeId] = GetInt(cols, H, "workYard_range", defaultValue: 0);
             Piece.workYard_botSurcharge[typeId] = GetInt(cols, H, "workYard_botSurcharge", defaultValue: 0);
-            Piece.workYard_excludeBuildings[typeId] = GetBool(cols, H, "workYard_excludeBuildings", defaultValue: false);            
-            #endregion 
+            Piece.workYard_excludeBuildings[typeId] = GetBool(cols, H, "workYard_excludeBuildings", defaultValue: false);
+            #endregion
             #region hop
-            Piece.hop_enabled[typeId] = GetBool(cols, H, "hop_enabled", defaultValue: false);            
+            Piece.hop_enabled[typeId] = GetBool(cols, H, "hop_enabled", defaultValue: false);
             Piece.hop_damage[typeId] = GetInt(cols, H, "hop_damage", defaultValue: 0);
-             #endregion 
+            #endregion
 
         }
     }
@@ -307,7 +307,7 @@ public static class PiecesCsvImporter
         {
             int idx = idxs[0];
             if (idx >= 0 && idx < cols.Length)
-            return cols[idx];
+                return cols[idx];
         }
         if (required)
             throw new InvalidDataException($"Missing required column '{key}'");
@@ -416,7 +416,7 @@ public static class PiecesCsvImporter
         Piece.upgrade_target = new int[count];
         Piece.upgrade_botSurcharge = new int[count];
         Piece.upgrade_killsNeeded = new int[count];
-        Piece.upgrade_isGoalKills = new bool[count];        
+        Piece.upgrade_isGoalKills = new bool[count];
 
         #endregion
         #region launcher
@@ -456,16 +456,16 @@ public static class PiecesCsvImporter
         #endregion
         #region factory
         Piece.factory_enabled = new bool[count];
-        Piece.factory_amount = new int[count];
+        Piece.factory_payout = new int[count];
         Piece.factory_isRoundMultiplier = new bool[count];
-        Piece.factory_isGroup = new bool[count];
-        Piece.factory_groupAmount = new int[count];
+        Piece.groupFactory_enabled = new bool[count];
+        Piece.groupFactory_require = new int[count];
 
-        Piece.factory_isInstantPayOut = new bool[count];
-        Piece.factory_instantPayOutAmount = new int[count];
-        Piece.factory_isKillPenalty = new bool[count];
-        Piece.factory_killsNeeded = new int[count];
-        Piece.factory_killsPunishment = new int[count];
+        Piece.Instantfactory_enabled = new bool[count];
+        Piece.Instantfactory_payout = new int[count];
+        Piece.Instantfactory_isKillPenalty = new bool[count];
+        Piece.Instantfactory_killsNeeded = new int[count];
+        Piece.Instantfactory_killsPunishment = new int[count];
 
 
         #endregion

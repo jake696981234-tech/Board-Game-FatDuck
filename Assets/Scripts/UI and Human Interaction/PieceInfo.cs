@@ -12,20 +12,20 @@ public static class PieceInfo
         totalCost = BuildCost - ShowLeftPanel.curActionFee;
 
         UI.hic.createTitleText.text = $"Create: {Piece.name[pieceType]}";
-        UI.hic.createCostText.text = $"Build Cost: {BuildCost}"; 
-        UI.hic.createActionTurnFee.text = $"Action Fee: {ShowLeftPanel.curActionFee}"; 
-        if (UI.hic.createTotalCost) UI.hic.createTotalCost.text = $"Total Cost: {totalCost}"; 
+        UI.hic.createCostText.text = $"Build Cost: {BuildCost}";
+        UI.hic.createActionTurnFee.text = $"Action Fee: {ShowLeftPanel.curActionFee}";
+        if (UI.hic.createTotalCost) UI.hic.createTotalCost.text = $"Total Cost: {totalCost}";
 
         if (!UI.hic.createSprite) return;
         var s = !string.IsNullOrEmpty(Piece.spritePath[pieceType]) ? Resources.Load<Sprite>(Piece.spritePath[pieceType]) : null;
         UI.hic.createSprite.sprite = s;
-        UI.hic.createSprite.enabled = (s != null);  
+        UI.hic.createSprite.enabled = (s != null);
     }
 
     public static void UpdateCreateCost()
     {
         var budgetAfter = UIBridge.gameState.ps[UIBridge._humanPlayer].budget - totalCost;
-        if (UI.hic.createBudgetAfter) UI.hic.createBudgetAfter.text = $"Budget After: {budgetAfter}"; 
+        if (UI.hic.createBudgetAfter) UI.hic.createBudgetAfter.text = $"Budget After: {budgetAfter}";
     }
 
 
@@ -211,12 +211,12 @@ public static class PieceInfo
                 AddField($"Once per turn: {BoolText(Piece.spawn_isOnlyOncePerTurn[pieceType])}");
                 break;
             case Factory:
-                AddField($"Payout: {Piece.factory_amount[pieceType]}");
-                if (Piece.factory_isGroup[pieceType]) AddField($"Group payout: {Piece.factory_groupAmount[pieceType]}");
-                if (Piece.factory_isInstantPayOut[pieceType]) AddField($"Instant payout: {Piece.factory_instantPayOutAmount[pieceType]}");
-                if (Piece.factory_isKillPenalty[pieceType])
+                AddField($"Payout: {Piece.factory_payout[pieceType]}");
+                if (Piece.groupFactory_enabled[pieceType]) AddField($"Group payout: {Piece.groupFactory_require[pieceType]}");
+                if (Piece.Instantfactory_enabled[pieceType]) AddField($"Instant payout: {Piece.Instantfactory_payout[pieceType]}");
+                if (Piece.Instantfactory_isKillPenalty[pieceType])
                 {
-                    AddField($"Kill penalty: -{Piece.factory_killsPunishment[pieceType]} after {Piece.factory_killsNeeded[pieceType]}");
+                    AddField($"Kill penalty: -{Piece.Instantfactory_killsPunishment[pieceType]} after {Piece.Instantfactory_killsNeeded[pieceType]}");
                 }
                 if (Piece.factory_isRoundMultiplier[pieceType]) AddField("Round multiplier: Yes");
                 break;

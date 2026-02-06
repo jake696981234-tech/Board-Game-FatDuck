@@ -4,6 +4,7 @@ using Game.Core;
 using Action = Game.Core.Action;
 using static Game.Core.ActionKind; // import enum values
 using System;
+using static Game.Core.GameActions;
 
 
 public static class CreateAction
@@ -16,7 +17,7 @@ public static class CreateAction
         int typeCount = Piece.typeCount;
         for (int type = 0; type < typeCount; type++)
         {
-            if (!Piece.isBuildable[type]) continue; 
+            if (!Piece.isBuildable[type]) continue;
             if (!isPieceTypeLegal(type, ref offerBuild)) continue;
             GenerateCompleteCreateActions(in cell, in type, ref offerBuild);
         }
@@ -24,28 +25,28 @@ public static class CreateAction
 
     public static void GenerateCompleteCreateActions(in int cell, in int type, ref OfferBuild offerBuild)
     {
-         Action theAction = new Game.Core.Action
+        Action theAction = new Game.Core.Action
         {
             kind = Create,
             ActorsCell = -1,
             TargetCell = cell,
             TargetType = type,
         };
-        List<Action> CreateActions = new List<Action> {theAction};
+        List<Action> CreateActions = new List<Action> { theAction };
         if (Piece.connectors_enabled[theAction.TargetType] && !CreateConnectorOptions(CreateActions, ref offerBuild)) return;
         // if (Piece.sacrificeCost_enabled[theAction.TargetType] && !GenerateSacrificeCosts(CreateActions, ref offerBuild)) return;
         for (int i = 0; i < CreateActions.Count; i++) { OfferProvider.Emit(CreateActions[i], ref offerBuild); }
-    } 
+    }
 
     public static bool PieceLimitReached(ref OfferBuild offerBuild)
     {
         var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
         bool limitActive = offerBuild.query.pieceLimitEnabled && offerBuild.query.pieceLimitPerPlayer > 0;
-        return limitActive && bm.GetPieceCountForPlayer(offerBuild.query.playerId) >= offerBuild.query.pieceLimitPerPlayer; 
+        return limitActive && bm.GetPieceCountForPlayer(offerBuild.query.playerId) >= offerBuild.query.pieceLimitPerPlayer;
     }
 
 
-    public static bool CreateConnectorOptions(List<Action> actions, ref OfferBuild offerBuild) 
+    public static bool CreateConnectorOptions(List<Action> actions, ref OfferBuild offerBuild)
     {
         List<Action> ConnectorActions = new List<Action>();
         bool legal = false;
@@ -79,13 +80,13 @@ public static class CreateAction
         return false;
     }
 
-    
+
 
     public static bool isPieceTypeLegal(int type, ref OfferBuild offerBuild)
     {
-        
-        if (!HasRequiredDigits(type, ref offerBuild)) return false;                                            
-        
+
+        if (!HasRequiredDigits(type, ref offerBuild)) return false;
+
         bool hasConn = Piece.connectors_enabled[type];
         ulong allowedMask = hasConn ? Piece.connector_allowedMasks[type] : 0UL;
         if (hasConn && allowedMask == 0UL) return false;
@@ -98,7 +99,7 @@ public static class CreateAction
         var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
         if (!bm.IsEmpty(cell)) return false; // only empties
 
-        var coreCell = bm.GetPlayerCoreCellId(offerBuild.query.playerId); 
+        var coreCell = bm.GetPlayerCoreCellId(offerBuild.query.playerId);
 
         if (cell == coreCell) return true;
         if (isBaseHex(ref offerBuild, coreCell, cell)) return true;
@@ -112,8 +113,8 @@ public static class CreateAction
         int[] neighScratch = Scratch.GetScratchNeighborBuffer(offerBuild.gameIndex);
 
         int numberOfCoreNeighbors = bm.GetNeighbors(coreCell, neighScratch);
-        for (int i = 0; i < numberOfCoreNeighbors; i++) 
-        { 
+        for (int i = 0; i < numberOfCoreNeighbors; i++)
+        {
             if (neighScratch[i] == cell) return true;
         }
         return false;
@@ -145,6 +146,12 @@ public static class CreateAction
         return true;
     }
 
+    public static void Apply(in Action theAction, byte player, int gameIndex)
+    {
+        placePiece(wallConfig: theAction.WallConfig, createdPieceType: theAction.TargetType, targetCell: theAction.TargetCell, player: player, gameIndex: gameIndex);
+    }
+
+
     // public static bool GenerateSacrificeCosts(List<Action> actions, ref OfferBuild offerBuild)
     // {
     //     List<Action> returnList = new List<Action>();
@@ -171,7 +178,7 @@ public static class CreateAction
 
     // public static IEnumerable<int> GiveMeSacrificeOptions()
     // {
-        
+
     // }
 
     /// <summary>
@@ -281,32 +288,28 @@ public static class CreateAction
 
 
 
-    public static void Apply(in Action theAction, byte player, int gameIndex)
-    {
-        placePiece(theAction, player, gameIndex);
-    }
 
-    public static void placePiece(in Action theAction, byte player, int gameIndex)
-    {
-        var gameState = GameRegistry.game[gameIndex].gameState;
-        var bm = GameRegistry.game[gameIndex].boardModel;
+    
 
-         var TargetCell = theAction.TargetCell;
+    // public static void placePiece(in Action theAction, byte player, int gameIndex)
+    // {
+    //     var gameState = GameRegistry.game[gameIndex].gameState;
+    //     var bm = GameRegistry.game[gameIndex].boardModel;
 
-        // PaySacCost(theAction, player, gameIndex);
+    //     var TargetCell = theAction.TargetCell;
 
-        int pid = bm.AllocateRow();
-        bm.PlacePieceRow(pid, player, (byte)theAction.TargetType, TargetCell, Piece.maxHP[theAction.TargetType]);
-        bm.pieceConnectorConfig[pid] = (byte)theAction.WallConfig;
-        int g = Piece.digitItGives[(byte)theAction.TargetType];
-        if (g >= 0) gameState.ps[player].GrantDigit(g);
+    //     // PaySacCost(theAction, player, gameIndex);
 
-        if (Piece.factory_isKillPenalty[theAction.TargetType]) bm.pieceFactoryKillGoalAux[pid] = Piece.factory_killsNeeded[pid];
-        if (Piece.factory_isInstantPayOut[theAction.TargetType]) gameState.ps[player].budget += Piece.factory_instantPayOutAmount[pid];
+    //     int pid = bm.AllocateRow();
+    //     bm.PlacePieceRow(pid, player, (byte)theAction.TargetType, TargetCell, Piece.maxHP[theAction.TargetType]);
+    //     bm.pieceConnectorConfig[pid] = (byte)theAction.WallConfig;
+    //     int g = Piece.digitItGives[(byte)theAction.TargetType];
+    //     if (g >= 0) gameState.ps[player].GrantDigit(g);
 
+    //     Payout.PlaceInstantFactory(createdPieceType: theAction.TargetType, createdPieceId: pid, player: player, gameIndex: gameIndex);
 
-        GameActions.RefreshConnectorState(gameIndex);
-    }
+    //     GameActions.RefreshConnectorState(gameIndex);
+    // }
 
     // public static void PaySacCost(Action theAction, byte player, int gameIndex)
     // {
@@ -379,7 +382,7 @@ public static class CreateAction
     //     }
 
     //     if (eligibleCount < needPerAction) return false;
-            
+
 
     //     return addCostCac(owned, needPerAction, sourceActions, actions);
 

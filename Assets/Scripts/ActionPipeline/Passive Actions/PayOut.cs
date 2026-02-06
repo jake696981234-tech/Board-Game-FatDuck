@@ -2,38 +2,34 @@ using UnityEngine;
 using System.Collections.Generic;
 using System;
 using Game.Core;
+using Action = Game.Core.Action;
 
-public static class PayOut
+public static class Payout
 {
     public static void GiveMePayPlayersOut(int gameIndex, int player)
     {
-        var gameState = GameRegistry.game[gameIndex].gameState;
         var bm = GameRegistry.game[gameIndex].boardModel;
 
-        int FinalPayment = 0;
-
-
+        int Payment = 0;
+        Payment += GroupFactoryAction.GiveMeTotalGroupFactoryForPlayer(player: player, gameIndex: gameIndex);
         for (int i = 0; i < bm.pieceCount; i++)
         {
             if (bm.pieceOwner[i] != player) continue;
-            int pieceType = bm.pieceType[i];
-            if (Piece.factory_enabled[pieceType]) FinalPayment += GiveMePayFactoryActionPayOut(pieceType, gameIndex)
+            if (!Piece.groupFactory_enabled[i]) continue;
+            if (Piece.factory_enabled[bm.pieceType[i]]) Payment += FactoryAction.GiveMePiecesFactoryPayOut(pieceType: bm.pieceType[i], gameIndex: gameIndex);
+            if (Piece.Instantfactory_enabled[bm.pieceType[i]]) Payment += InstantFactoryAction.GiveMePiecesInstantFactoryPenality(pieceId: i, pieceType: bm.pieceType[i], gameIndex: gameIndex);
         }
     }
 
-    public static int GiveMePayFactoryPayOut(int pieceType, int gameIndex)
-    {
-        var GroupFactory = new List<int>();
-        if (Piece.factory_isGroup[pieceType]) GroupFactory.Add
-    }
 
-    public static int GiveMeGroupFactory(pieceType, gameIndex)
-    {
 
-    }
 
-    public static void GiveMeDetialedPayOut()
-    {
 
-    }
+
+
+
+
+
+
+
 }

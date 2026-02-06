@@ -15,17 +15,17 @@ public partial class BoardModel
     #endregion
     #region Piece Fields
     public int[] pieceCellId;
-    public int[] pieceOwner;   
-    public byte[] pieceType;   
-    public short[] pieceHP;     
+    public int[] pieceOwner;
+    public byte[] pieceType;
+    public short[] pieceHP;
     public int[] pieceFactoryAux;
-    public int[] pieceFactoryKillGoalAux;
+    public int[] Instantfactory_killGoal;
     public int[] pieceKillCount;
     public int[] necroSpawnStore;
     public int[] WorkYardBudget;
-    public byte[] pieceConnectorConfig; 
-    public int[] pieceCapitalHP;   
-    #endregion  
+    public ushort[] pieceConnectorConfig;
+    public int[] pieceCapitalHP;
+    #endregion
     #region Pre Computed
     //These are precomputed to optmise
     private int[] _distFromVP;

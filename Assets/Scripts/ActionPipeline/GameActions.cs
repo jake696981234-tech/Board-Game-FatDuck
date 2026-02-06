@@ -7,6 +7,18 @@ namespace Game.Core
 {
     public static class GameActions
     {
+        public static void placePiece(ushort wallConfig, int createdPieceType, int targetCell, int player, int gameIndex)
+        {
+            var gameState = GameRegistry.game[gameIndex].gameState;
+            var bm = GameRegistry.game[gameIndex].boardModel;
+            // PaySacCost(theAction, player, gameIndex);
+            int createdPieceId = bm.AllocateRow();
+            bm.PlacePieceRow(createdPieceId, player, (byte)createdPieceType, targetCell, Piece.maxHP[createdPieceType]);
+            bm.pieceConnectorConfig[createdPieceId] = wallConfig;
+            if (Piece.digitItGives[(byte)createdPieceType] >= 0) gameState.ps[player].GrantDigit(Piece.digitItGives[(byte)createdPieceType]);
+            InstantFactoryAction.PlaceInstantFactory(createdPieceType: createdPieceType, createdPieceId: createdPieceId, player: player, gameIndex: gameIndex);
+            RefreshConnectorState(gameIndex);
+        }
         public static void pieceKilledWithNoTriggers(int victimsCell, int gameIndex)
         {
             var gameState = GameRegistry.game[gameIndex].gameState;
@@ -26,6 +38,7 @@ namespace Game.Core
             int ActorsPieceId = bm.GetCellOccupant(actorsCell);
 
             bm.pieceKillCount[ActorsPieceId]++;
+            InstantFactoryAction.IncrementInstantFactoryKills(gameIndex);
             bm.pieceFactoryAux[ActorsPieceId] += Piece.eat_amount[bm.pieceType[ActorsPieceId]];
             gameState.ps[bm.pieceOwner[ActorsPieceId]].perRoundPieceKillCount++;
             FeedingGroundAction.FeedingGround(gameIndex, bm.GetCellOccupant(victimsCell));
@@ -35,7 +48,7 @@ namespace Game.Core
                 return;
             }
             NecroSpawnAction.Record(gameIndex, bm.GetCellOccupant(victimsCell));
-            
+
             pieceKilledWithNoTriggers(victimsCell: victimsCell, gameIndex: gameIndex);
         }
 
@@ -53,7 +66,7 @@ namespace Game.Core
         public static bool ApplyTypicalDamageAndPieceKill(int actorsCell, int victimsCell, int dmg, int gameIndex)
         {
             bool killed = ApplyDamageToPiece(ActorsCell: actorsCell, victimCell: victimsCell, dmg: dmg, gameIndex: gameIndex);
-            
+
             if (killed) pieceKilled(victimsCell: victimsCell, actorsCell: actorsCell, gameIndex: gameIndex);
             return killed;
         }
@@ -162,11 +175,11 @@ namespace Game.Core
         // }
 
 
-//         #endregion
+        //         #endregion
 
 
 
-//         //Helper to call methods for applyActions easier
+        //         //Helper to call methods for applyActions easier
 
 
     }
