@@ -39,7 +39,7 @@ namespace Game.Core
 
             bm.pieceKillCount[ActorsPieceId]++;
             InstantFactoryAction.IncrementInstantFactoryKills(gameIndex);
-            bm.pieceFactoryAux[ActorsPieceId] += Piece.eat_amount[bm.pieceType[ActorsPieceId]];
+            bm.addToEndRoundPayout[ActorsPieceId] += Piece.eat_amount[bm.pieceType[ActorsPieceId]];
             gameState.ps[bm.pieceOwner[ActorsPieceId]].perRoundPieceKillCount++;
             FeedingGroundAction.FeedingGround(gameIndex, bm.GetCellOccupant(victimsCell));
             if (Piece.zombie_enabled[bm.GetPieceTypeFromCell(victimsCell)]) //move this above the above the other benefifts if you dont want the others to trigger

@@ -172,7 +172,7 @@ public partial class BoardModel
         return count;
     }
     public short PieceHP(int pieceId) => (IsValidPieceId(pieceId) && pieceHP != null) ? pieceHP[pieceId] : (short)0;
-    public int PieceFactoryAux(int pieceId) => (IsValidPieceId(pieceId) && pieceFactoryAux != null) ? pieceFactoryAux[pieceId] : 0;
+    public int PieceFactoryAux(int pieceId) => (IsValidPieceId(pieceId) && addToEndRoundPayout != null) ? addToEndRoundPayout[pieceId] : 0;
 
     // =====================================================================
     // Atomic piece ops (dense columns + cell occupancy kept in sync)
@@ -187,7 +187,7 @@ public partial class BoardModel
         Array.Resize(ref pieceCellId, newCap);
         Array.Resize(ref pieceType, newCap);
         Array.Resize(ref pieceHP, newCap);
-        Array.Resize(ref pieceFactoryAux, newCap);
+        Array.Resize(ref addToEndRoundPayout, newCap);
         Array.Resize(ref pieceKillCount, newCap);
         Array.Resize(ref necroSpawnStore, newCap);
         Array.Resize(ref WorkYardBudget, newCap);
@@ -224,7 +224,7 @@ public partial class BoardModel
             pieceCellId[pieceId] = pieceCellId[last];
             pieceType[pieceId] = pieceType[last];
             pieceHP[pieceId] = pieceHP[last];
-            pieceFactoryAux[pieceId] = pieceFactoryAux[last];
+            addToEndRoundPayout[pieceId] = addToEndRoundPayout[last];
             Instantfactory_killGoal[pieceId] = Instantfactory_killGoal[last];
             pieceKillCount[pieceId] = pieceKillCount[last];
             necroSpawnStore[pieceId] = necroSpawnStore[last];
@@ -247,7 +247,7 @@ public partial class BoardModel
         pieceCellId[pieceId] = cellId;
         if (hp < 0) hp = 0;
         pieceHP[pieceId] = hp; // clamp to type maxHP happens in GameState via Pieces metadata, if needed
-        pieceFactoryAux[pieceId] = 0; //Add to the paramter if you want this to actually have a starting value
+        addToEndRoundPayout[pieceId] = 0; //Add to the paramter if you want this to actually have a starting value
         pieceKillCount[pieceId] = 0;
         necroSpawnStore[pieceId] = -1;
         WorkYardBudget[pieceId] = 0;

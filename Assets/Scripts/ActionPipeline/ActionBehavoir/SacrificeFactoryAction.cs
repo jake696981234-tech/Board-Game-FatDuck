@@ -60,8 +60,8 @@ public static class SacrificeFactoryAction
     public static void Apply(in Action theAction, byte player, int gameIndex)
     {
         var bm = GameRegistry.game[gameIndex].boardModel;
-        bm.pieceFactoryAux[bm.GetCellOccupant(theAction.ActorsCell)] += Piece.sacrificeFactory_amount[bm.GetPieceTypeFromCell(theAction.ActorsCell)];
+        bm.addToEndRoundPayout[bm.GetCellOccupant(theAction.ActorsCell)] += Piece.sacrificeFactory_amount[bm.GetPieceTypeFromCell(theAction.ActorsCell)];
         pieceKilled(victimsCell: theAction.TargetCell, actorsCell: theAction.ActorsCell, gameIndex: gameIndex);
     }
-  
+
 }

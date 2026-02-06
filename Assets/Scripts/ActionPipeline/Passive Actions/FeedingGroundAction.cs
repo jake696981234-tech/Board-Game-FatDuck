@@ -24,7 +24,7 @@ public static class FeedingGroundAction
                 for (int i = 0; i < found; i++)
                 {
                     if (PiecesInRange[i] != pieceIDKilled) continue;
-                    bm.pieceFactoryAux[pid] += Piece.feedingGround_payOut[pieceType];
+                    bm.addToEndRoundPayout[pid] += Piece.feedingGround_payOut[pieceType];
                 }
             }
         }

@@ -134,7 +134,6 @@ public static class Piece
     public static int[] groupFactory_require;
     public static int[] groupFactory_payout;
     public static bool[] groupFactory_isRoundMultiplier;
-
     #endregion
     #region Instantfactory
     public static bool[] Instantfactory_enabled;
@@ -142,11 +141,16 @@ public static class Piece
     public static bool[] Instantfactory_isKillPenalty;
     public static int[] Instantfactory_killsNeeded;
     public static int[] Instantfactory_killsPunishment;
-
+    #region eat
+    public static bool[] eat_enabled;
+    public static int[] eat_amount;
     #endregion
-    #region sanctuary
-    public static bool[] sanctuary_enabled;
-    public static int[] sanctuary_range;
+    #region sacrifice Factory
+    public static bool[] sacrificeFactory_enabled;
+    public static int[] sacrificeFactory_amount;
+    public static int[] sacrificeFactory_rangeMin;
+    public static int[] sacrificeFactory_rangeMax;
+    public static int[] sacrificeFactory_botSurcharge;
     #endregion
     #region conversion Factory
     // may add this to the Factory region
@@ -156,10 +160,19 @@ public static class Piece
     public static int[] conversionFactory_amount;
     public static int[] conversionFactory_botSurcharge;
     #endregion
-    #region eat
-    public static bool[] eat_enabled;
-    public static int[] eat_amount;
+    #region Feeding Ground
+    public static bool[] feedingGround_enabled;
+    public static int[] feedingGround_Range;
+    public static int[] feedingGround_payOut;
     #endregion
+
+    #endregion
+    #region sanctuary
+    public static bool[] sanctuary_enabled;
+    public static int[] sanctuary_range;
+    #endregion
+    
+
     #region shoot
     public static bool[] shoot_enabled;
     public static int[] shoot_rangeMin;
@@ -174,13 +187,7 @@ public static class Piece
     public static int[] move_damage;
     public static int[] move_botSurcharge;
     #endregion
-    #region sacrifice Factory
-    public static bool[] sacrificeFactory_enabled;
-    public static int[] sacrificeFactory_amount;
-    public static int[] sacrificeFactory_rangeMin;
-    public static int[] sacrificeFactory_rangeMax;
-    public static int[] sacrificeFactory_botSurcharge;
-    #endregion
+    
     #region captureVP
     public static bool[] captureVP_enabled;
     public static int[] captureVP_botSurcharge;
@@ -197,11 +204,7 @@ public static class Piece
     // public static int[] sacrificeCost_howManyItNeeds;
 
     #endregion
-    #region Feeding Ground
-    public static bool[] feedingGround_enabled;
-    public static int[] feedingGround_Range;
-    public static int[] feedingGround_payOut;
-    #endregion
+
     #region Explosive
     public static bool[] explosive_enabled;
     public static bool[] explosive_isFriendlyFire;

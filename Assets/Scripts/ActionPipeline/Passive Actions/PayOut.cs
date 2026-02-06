@@ -6,30 +6,31 @@ using Action = Game.Core.Action;
 
 public static class Payout
 {
-    public static void GiveMePayPlayersOut(int gameIndex, int player)
+    public static int GiveMePayPlayersOut(int player, int gameIndex)
     {
         var bm = GameRegistry.game[gameIndex].boardModel;
-
-        int Payment = 0;
-        Payment += GroupFactoryAction.GiveMeTotalGroupFactoryForPlayer(player: player, gameIndex: gameIndex);
-        for (int i = 0; i < bm.pieceCount; i++)
+        var gameState = GameRegistry.game[gameIndex].gameState;
+        int payment = 0;
+        payment += GroupFactoryAction.GiveMeTotalGroupFactoryForPlayer(player: player, gameIndex: gameIndex);
+        for (int pieceId = 0; pieceId < bm.pieceCount; pieceId++)
         {
-            if (bm.pieceOwner[i] != player) continue;
-            if (!Piece.groupFactory_enabled[i]) continue;
-            if (Piece.factory_enabled[bm.pieceType[i]]) Payment += FactoryAction.GiveMePiecesFactoryPayOut(pieceType: bm.pieceType[i], gameIndex: gameIndex);
-            if (Piece.Instantfactory_enabled[bm.pieceType[i]]) Payment += InstantFactoryAction.GiveMePiecesInstantFactoryPenality(pieceId: i, pieceType: bm.pieceType[i], gameIndex: gameIndex);
+            if (bm.pieceOwner[pieceId] != player) continue;
+            payment += bm.addToEndRoundPayout[pieceId];
+            if (Piece.factory_enabled[bm.pieceType[pieceId]]) payment += FactoryAction.GiveMePiecesFactoryPayOut(pieceType: bm.pieceType[pieceId], gameIndex: gameIndex);
+            if (Piece.Instantfactory_enabled[bm.pieceType[pieceId]]) payment += InstantFactoryAction.GiveMePiecesInstantFactoryPenality(pieceId: pieceId, pieceType: bm.pieceType[pieceId], gameIndex: gameIndex);
+            if (Piece.Instantfactory_enabled[bm.pieceType[pieceId]]) payment += InstantFactoryAction.GiveMePiecesInstantFactoryPenality(pieceId: pieceId, pieceType: bm.pieceType[pieceId], gameIndex: gameIndex);
         }
+        payment += ComputePlayerVPReward(ps: gameState.ps[player]) + ComputePlayeroreDamageReward(ps: gameState.ps[player]);
+        return payment;
     }
 
+    public static int ComputePlayerVPReward(PlayerState ps)
+    {
+        return ps.vpGainedThisRound * Info.budgetBonusForVP;
+    }
 
-
-
-
-
-
-
-
-
-
-
+    public static int ComputePlayeroreDamageReward(PlayerState ps)
+    {
+        return ps.coreHitsThisRound * Info.budgetBonusForCoreDamage;
+    }
 }

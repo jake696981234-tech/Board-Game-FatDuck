@@ -174,26 +174,26 @@ namespace Game.Core
             if (ShouldEndRoundAfterEndTurn(playerWhoEnded)) { EndRound(); } else { BeginTurn(); }
         }
 
-        public int[] cachedPieceDrivenPenalties = new int[4];
+        // public int[] cachedPieceDrivenPenalties = new int[4];
 
-        public int playerPieceDrivenPenalties(int playerId)
-        {
-            int cachedPieceDrivenPenalties = 0;
-            for (int c = 0; c < bm.pieceCount; c++)
-            {
-                if (bm.pieceOwner[c] != playerId) continue;
-                if (Piece.Instantfactory_isKillPenalty[bm.pieceType[c]]) cachedPieceDrivenPenalties += Piece.Instantfactory_killsPunishment[bm.pieceType[c]];
-            }
-            return cachedPieceDrivenPenalties;
-        }
+        // public int playerPieceDrivenPenalties(int playerId)
+        // {
+        //     int cachedPieceDrivenPenalties = 0;
+        //     for (int c = 0; c < bm.pieceCount; c++)
+        //     {
+        //         if (bm.pieceOwner[c] != playerId) continue;
+        //         if (Piece.Instantfactory_isKillPenalty[bm.pieceType[c]]) cachedPieceDrivenPenalties += Piece.Instantfactory_killsPunishment[bm.pieceType[c]];
+        //     }
+        //     return cachedPieceDrivenPenalties;
+        // }
 
         private void EndRound()
         {
-            for (int i = 0; i < 4; i++)
-            {
-                cachedPieceDrivenPenalties[i] = 0;
-                cachedPieceDrivenPenalties[i] = playerPieceDrivenPenalties(i);
-            }
+            // for (int i = 0; i < 4; i++)
+            // {
+            //     cachedPieceDrivenPenalties[i] = 0;
+            //     cachedPieceDrivenPenalties[i] = playerPieceDrivenPenalties(i);
+            // }
             events.roundBegin();
             if (LogEnabled) DbLog.logEndRound();
             currentRoundNumber = Math.Max(1, currentRoundNumber); // ensure non-zero for next cycle
@@ -211,10 +211,7 @@ namespace Game.Core
 
             for (int i = 0; i < 4; i++)
             {
-                // payout uses each player's own round stats, not currentPlayer's
-                float payout = ComputePlayerPayOut(i);
-
-                ps[i].budget = payout;   // clamp if you wish via hub.cap_maxBudget
+                ps[i].budget = Payout.GiveMePayPlayersOut(player: i, gameIndex: gameIndex);   // clamp if you wish via hub.cap_maxBudget
                 ps[i].ClearRoundCounters();
                 ps[i].endedWithoutActionThisCycle = false;
             }

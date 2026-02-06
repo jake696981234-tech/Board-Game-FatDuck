@@ -18,7 +18,7 @@ public partial class BoardModel
     public int[] pieceOwner;
     public byte[] pieceType;
     public short[] pieceHP;
-    public int[] pieceFactoryAux;
+    public int[] addToEndRoundPayout;
     public int[] Instantfactory_killGoal;
     public int[] pieceKillCount;
     public int[] necroSpawnStore;
