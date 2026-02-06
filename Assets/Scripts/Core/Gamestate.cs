@@ -230,30 +230,6 @@ namespace Game.Core
         #endregion
         #region Game Loop Helpers
 
-        private float[] perPlayerFactoryIncome = new float[4]; // allocated once
-        public float ComputePlayerPayOut(int playerId)
-        {
-            perPlayerFactoryIncome = FactoriesActions.ComputePlayersFactoryIncome(gameIndex);
-            float payout =
-                    ComputePlayerVPReward(playerId) +
-                    ComputePlayeroreDamageReward(playerId) +
-                    Info.startingBudgetPerRound[currentRoundNumber - 1] +
-                    perPlayerFactoryIncome[playerId] +
-                    cachedPieceDrivenPenalties[playerId];
-
-            return payout;
-        }
-
-        public float ComputePlayerVPReward(int playerId)
-        {
-            return ps[playerId].vpGainedThisRound * Info.budgetBonusForVP;
-        }
-
-        public float ComputePlayeroreDamageReward(int playerId)
-        {
-            return ps[playerId].coreHitsThisRound * Info.budgetBonusForCoreDamage;
-        }
-
         private byte NextAlivePlayerAfter(byte p)
         {
             for (int k = 1; k <= 4; k++)

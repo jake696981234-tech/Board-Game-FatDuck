@@ -24,12 +24,14 @@ public static class Piece
         Create = 16,
         EndTurn = 17,
         Factory = 18,
-        Sanctuary = 19,
-        Eat = 20,
-        SacrificeCost = 21,
-        FeedingGround = 22,
-        Zombie = 23,
-        Invalid = 24,
+        GroupFactory = 19,
+        Instantfactory = 20,
+        Sanctuary = 21,
+        Eat = 22,
+        SacrificeCost = 23,
+        FeedingGround = 24,
+        Zombie = 25,
+        Invalid = 26,
     }
 
     public const int ActiveAbilityCount = 17;

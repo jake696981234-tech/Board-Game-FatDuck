@@ -14,7 +14,7 @@ public sealed class PieceView : MonoBehaviour
     public int owner;
     public byte type;
 
-    public byte? wallConfig;
+    public ushort? wallConfig;
 
     public SpriteRenderer spriteRenderer;
     public TextMeshPro hpLabel;

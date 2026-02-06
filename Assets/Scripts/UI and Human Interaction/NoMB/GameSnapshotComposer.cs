@@ -40,9 +40,9 @@ public sealed class GameSnapshotComposer
             staticSnapshot.coreCellIdByPlayer[p] = board.GetPlayerCoreCellId(p);
     }
 
-    private List<byte?> PiecesWithConnectors()
+    private List<ushort?> PiecesWithConnectors()
     {
-        List<byte?> FilteredPieces = new List<byte?>();
+        List<ushort?> FilteredPieces = new List<ushort?>();
         int i = 0;
         foreach (byte Piece in board.pieceType)
         {
@@ -106,16 +106,16 @@ public sealed class GameSnapshotComposer
         snapshot.version = ++versionCounter;
 
         snapshot.PerEndRoundPayOut = new CurrentEndRoundPayOut[4];
-        for (byte p = 0; p < 4; p++)
-        {
-            PerPiecePayout EndRoundPayOut = FactoriesActions.ComputeDetailedPlayerFactoryIncome(p, gameIndex);
+        // for (byte p = 0; p < 4; p++)
+        // {
+        //     // PerPiecePayout EndRoundPayOut = FactoriesActions.ComputeDetailedPlayerFactoryIncome(p, gameIndex);
 
-            snapshot.PerEndRoundPayOut[p] = new CurrentEndRoundPayOut(EndRoundPayOut.pieceType,
-                                                                        EndRoundPayOut.isGroup,
-                                                                        EndRoundPayOut.payout,
-                                                                        state.ComputePlayerVPReward(p),
-                                                                        state.ComputePlayeroreDamageReward(p));
-        }
+        //     snapshot.PerEndRoundPayOut[p] = new CurrentEndRoundPayOut(EndRoundPayOut.pieceType,
+        //                                                                 EndRoundPayOut.isGroup,
+        //                                                                 EndRoundPayOut.payout,
+        //                                                                 state.ComputePlayerVPReward(p),
+        //                                                                 state.ComputePlayeroreDamageReward(p));
+        // }
 
 
 

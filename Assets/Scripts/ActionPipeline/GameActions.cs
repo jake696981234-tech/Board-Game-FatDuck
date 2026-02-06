@@ -42,7 +42,7 @@ namespace Game.Core
             bm.addToEndRoundPayout[ActorsPieceId] += Piece.eat_amount[bm.pieceType[ActorsPieceId]];
             gameState.ps[bm.pieceOwner[ActorsPieceId]].perRoundPieceKillCount++;
             FeedingGroundAction.FeedingGround(gameIndex, bm.GetCellOccupant(victimsCell));
-            if (Piece.zombie_enabled[bm.GetPieceTypeFromCell(victimsCell)]) //move this above the above the other benefifts if you dont want the others to trigger
+            if (Piece.zombie_enabled[bm.GetPieceTypeFromCell(actorsCell)]) //move this above the above the other benefifts if you dont want the others to trigger
             {
                 Zombie(victimsCell, actorsCell, gameIndex);
                 return;

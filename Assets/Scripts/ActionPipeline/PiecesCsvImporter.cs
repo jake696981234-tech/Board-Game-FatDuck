@@ -119,15 +119,19 @@ public static class PiecesCsvImporter
             Piece.factory_enabled[typeId] = GetBool(cols, H, "factory_enabled", defaultValue: false);
             Piece.factory_payout[typeId] = GetInt(cols, H, "factory_amount", defaultValue: 0);
             Piece.factory_isRoundMultiplier[typeId] = GetBool(cols, H, "factory_isRoundMultiplier", defaultValue: false);
-            Piece.groupFactory_enabled[typeId] = GetBool(cols, H, "factory_isGroup", defaultValue: false);
-            Piece.groupFactory_require[typeId] = GetInt(cols, H, "factory_groupAmount", defaultValue: 0);
-
-            Piece.Instantfactory_enabled[typeId] = GetBool(cols, H, "factory_isInstantPayOut", defaultValue: false);
-            Piece.Instantfactory_payout[typeId] = GetInt(cols, H, "factory_instantPayOutAmount", defaultValue: 0);
-            Piece.Instantfactory_isKillPenalty[typeId] = GetBool(cols, H, "factory_isKillPenalty", defaultValue: false);
-            Piece.Instantfactory_killsNeeded[typeId] = GetInt(cols, H, "factory_killsNeeded", defaultValue: 0);
-            Piece.Instantfactory_killsPunishment[typeId] = GetInt(cols, H, "factory_killsPunishment", defaultValue: 0);
-
+            #endregion
+            #region groupFactory
+            Piece.groupFactory_enabled[typeId] = GetBool(cols, H, "groupFactory_enabled", defaultValue: false);
+            Piece.groupFactory_require[typeId] = GetInt(cols, H, "groupFactory_require", defaultValue: 0);
+            Piece.groupFactory_payout[typeId] = GetInt(cols, H, "groupFactory_payout", defaultValue: 0);
+            Piece.groupFactory_isRoundMultiplier[typeId] = GetBool(cols, H, "groupFactory_isRoundMultiplier", defaultValue: false);
+            #endregion
+            #region Instantfactory
+            Piece.Instantfactory_enabled[typeId] = GetBool(cols, H, "Instantfactory_enabled", defaultValue: false);
+            Piece.Instantfactory_payout[typeId] = GetInt(cols, H, "Instantfactory_payout", defaultValue: 0);
+            Piece.Instantfactory_isKillPenalty[typeId] = GetBool(cols, H, "Instantfactory_isKillPenalty", defaultValue: false);
+            Piece.Instantfactory_killsNeeded[typeId] = GetInt(cols, H, "Instantfactory_killsNeeded", defaultValue: 0);
+            Piece.Instantfactory_killsPunishment[typeId] = GetInt(cols, H, "Instantfactory_killsPunishment", defaultValue: 0);
             #endregion
             #region sanctuary
             Piece.sanctuary_enabled[typeId] = GetBool(cols, H, "sanctuary_enabled", defaultValue: false);
@@ -458,9 +462,14 @@ public static class PiecesCsvImporter
         Piece.factory_enabled = new bool[count];
         Piece.factory_payout = new int[count];
         Piece.factory_isRoundMultiplier = new bool[count];
+        #endregion
+        #region groupFactory
         Piece.groupFactory_enabled = new bool[count];
         Piece.groupFactory_require = new int[count];
-
+        Piece.groupFactory_payout = new int[count];
+        Piece.groupFactory_isRoundMultiplier = new bool[count];
+        #endregion
+        #region Instantfactory
         Piece.Instantfactory_enabled = new bool[count];
         Piece.Instantfactory_payout = new int[count];
         Piece.Instantfactory_isKillPenalty = new bool[count];

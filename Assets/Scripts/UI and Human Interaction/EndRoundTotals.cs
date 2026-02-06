@@ -24,29 +24,29 @@ public static class EndRoundTotals
     {
         if (!DisplaySelect.EndRoundTotalsVisible) return;
 
-        PerPiecePayout perPiecePayout = FactoriesActions.ComputeDetailedPlayerFactoryIncome(UIBridge._humanPlayer, UIBridge.gameIndex);
-        float totalFactory = FactoriesActions.ComputeFactoryIncome(UIBridge._humanPlayer, UIBridge.gameIndex);
-        float vpBonus = UIBridge.gameState.ComputePlayerVPReward(UIBridge._humanPlayer);
-        float coreBonus = UIBridge.gameState.ComputePlayeroreDamageReward(UIBridge._humanPlayer);
-        float totalEndRound = totalFactory + vpBonus + coreBonus;
-        float penalties = UIBridge.gameState.playerPieceDrivenPenalties(UIBridge._humanPlayer);
+        // PerPiecePayout perPiecePayout = FactoriesActions.ComputeDetailedPlayerFactoryIncome(UIBridge._humanPlayer, UIBridge.gameIndex);
+        // float totalFactory = FactoriesActions.ComputeFactoryIncome(UIBridge._humanPlayer, UIBridge.gameIndex);
+        // float vpBonus = UIBridge.gameState.ComputePlayerVPReward(UIBridge._humanPlayer);
+        // float coreBonus = UIBridge.gameState.ComputePlayeroreDamageReward(UIBridge._humanPlayer);
+        // float totalEndRound = totalFactory + vpBonus + coreBonus;
+        // float penalties = UIBridge.gameState.playerPieceDrivenPenalties(UIBridge._humanPlayer);
 
-        UI.hic.newTotalEndRoundPayOutText.text = $"Total End Round Payout = {totalEndRound}";
-        UI.hic.newVpBonusText.text = $"VP Bonus = {vpBonus}";
-        UI.hic.newCoreBonusText.text = $"Core Damage Bonus = {coreBonus}";
-        UI.hic.newTotalPerPiecePayOutText.text = $"Total Piece End Round Income = {totalFactory}";
+        UI.hic.newTotalEndRoundPayOutText.text = $"{Payout.GiveMePayPlayersOut(player: UIBridge._humanPlayer, gameIndex: UIBridge.gameIndex)}";
+        // UI.hic.newVpBonusText.text = $"VP Bonus = {vpBonus}";
+        // UI.hic.newCoreBonusText.text = $"Core Damage Bonus = {coreBonus}";
+        // UI.hic.newTotalPerPiecePayOutText.text = $"Total Piece End Round Income = {totalFactory}";
 
-        if (penalties > 0)
-        {
-            UI.hic.PieceDrivenPenalties.text = $"Total Piece Driven Penalties = {penalties}";
-            UI.hic.newTotalEndRoundPayOutWithPenaltiesText.text = $"Total - Penalties = {totalEndRound - penalties}";
-        }
-        else
-        {
-            UI.hic.PieceDrivenPenalties.text = string.Empty;
-            UI.hic.newTotalEndRoundPayOutWithPenaltiesText.text = string.Empty;
-        }
-        UI.hic.newPerTypeCurrentPayOut.text = BuildPerTypePayoutText(perPiecePayout);
+        // if (penalties > 0)
+        // {
+        //     UI.hic.PieceDrivenPenalties.text = $"Total Piece Driven Penalties = {penalties}";
+        //     UI.hic.newTotalEndRoundPayOutWithPenaltiesText.text = $"Total - Penalties = {totalEndRound - penalties}";
+        // }
+        // else
+        // {
+        //     UI.hic.PieceDrivenPenalties.text = string.Empty;
+        //     UI.hic.newTotalEndRoundPayOutWithPenaltiesText.text = string.Empty;
+        // }
+        // UI.hic.newPerTypeCurrentPayOut.text = BuildPerTypePayoutText(perPiecePayout);
     }
 
     private static string BuildPerTypePayoutText(PerPiecePayout perPiecePayout)

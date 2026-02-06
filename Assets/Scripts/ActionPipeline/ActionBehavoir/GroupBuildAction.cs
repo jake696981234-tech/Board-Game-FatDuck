@@ -4,6 +4,8 @@ using Action = Game.Core.Action;
 using static Game.Core.ActionKind; // import enum values
 using System;
 using System.Collections.Generic;
+using static Game.Core.GameActions;
+
 
 public static class GroupBuildAction
 {
@@ -140,7 +142,7 @@ public static class GroupBuildAction
         var bm = GameRegistry.game[gameIndex].boardModel;
         
         // if (Piece.groupBuild_deletion[bm.GetPieceTypeFromCell(theAction.ActorsCell)]) groupBuildDeletion(theAction, gameIndex);
-        CreateAction.placePiece(theAction, player, gameIndex);
+        placePiece(wallConfig: theAction.WallConfig, createdPieceType: theAction.TargetType, targetCell: theAction.TargetCell, player: player, gameIndex: gameIndex);
     }
 
     // private static void groupBuildDeletion(Action theAction, int gameIndex)
