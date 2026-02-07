@@ -14,8 +14,10 @@ public static class SpawnAction
     int actorCell,
     ref OfferBuild offerBuild)
     {
+        var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
+        if (bm.spawnerUsedThisTurn.Contains(actorCell)) return;
         if (PieceLimitReached(ref offerBuild)) return;
-        Span<int> targetCells = Scratch.GetScratchNeighborBuffer(offerBuild.gameIndex);
+        Span<int> targetCells = Scratch.GetScratchCellBuffer2(offerBuild.gameIndex);
         int foundTargets = BmCac.LOSEmptyCells(outCells: targetCells, range: Piece.spawn_range[actorType], originCell: actorCell, gameIndex: offerBuild.gameIndex);
         for (int i = 0; i < foundTargets; i++)
         {
@@ -93,7 +95,7 @@ public static class SpawnAction
     public static void Apply(in Action theAction, byte player, int gameIndex)
     {
         var bm = GameRegistry.game[gameIndex].boardModel;
-        if (Piece.spawn_isOnlyOncePerTurn[bm.GetPieceTypeFromCell(theAction.ActorsCell)]) bm.spawnerUsedThisTurn.Add(bm.occupantPieceId[theAction.ActorsCell]);
-        placePiece(wallConfig: 0, createdPieceType: Piece.spawn_targetType[bm.GetPieceTypeFromCell(theAction.ActorsCell)], targetCell: theAction.TargetCell, player: player, gameIndex: gameIndex);
+        if (Piece.spawn_isOnlyOncePerTurn[bm.GetPieceTypeFromCell(theAction.ActorsCell)]) bm.spawnerUsedThisTurn.Add(theAction.ActorsCell);
+        placePiece(wallConfig: theAction.WallConfig, createdPieceType: Piece.spawn_targetType[bm.GetPieceTypeFromCell(theAction.ActorsCell)], targetCell: theAction.TargetCell, player: player, gameIndex: gameIndex);
     }
 }

@@ -107,8 +107,17 @@ public static class AFilter
                         return false;
                     case ChoosingTargetType:
                         Chosen[(int)ChoosingTargetType] = UInput[(int)BuildItem];
+                        if (Piece.connectors_enabled[Chosen[(int)ChoosingTargetType]])
+                        {
+                            State = ChoosingWallConfig;
+                            return false;
+                        }
                         PerformAction(iNeedKind: true, iNeedActorsCell: true, iNeedTargetCell: false, TargetType: true, iNeedWallConfig: false, iNeedintakeCell: false);
                         return true;
+                    case ChoosingWallConfig:
+                        Chosen[(int)ChoosingWallConfig] = UInput[(int)WallConfig];
+                        PerformAction(iNeedKind: true, iNeedActorsCell: true, iNeedTargetCell: false, TargetType: true, iNeedWallConfig: true, iNeedintakeCell: false);
+                        return false;
                 }
                 break;
             case Spawner:
@@ -124,8 +133,17 @@ public static class AFilter
                         return false;
                     case ChoosingTargetType:
                         Chosen[(int)ChoosingTargetType] = UInput[(int)BuildItem];
+                        if (Piece.connectors_enabled[Chosen[(int)ChoosingTargetType]])
+                        {
+                            State = ChoosingWallConfig;
+                            return false;
+                        }
                         PerformAction(iNeedKind: true, iNeedActorsCell: true, iNeedTargetCell: true, TargetType: true, iNeedWallConfig: false, iNeedintakeCell: false);
                         return true;
+                    case ChoosingWallConfig:
+                        Chosen[(int)ChoosingWallConfig] = UInput[(int)WallConfig];
+                        PerformAction(iNeedKind: true, iNeedActorsCell: true, iNeedTargetCell: true, TargetType: true, iNeedWallConfig: true, iNeedintakeCell: false);
+                        return false;
                     default:
                         Debug.LogWarning($"Unhandled ActionKind");
                         return false;

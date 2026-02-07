@@ -3,36 +3,38 @@ using Game.Core;
 using Action = Game.Core.Action;
 using static Game.Core.ActionKind; // import enum values
 using System;
+using static Game.Core.GameActions;
+
 
 public static class NecroSpawnAction
 {
-        public static void CreateActions(
-        int actorPid,
-        int actorType,
-        int actorCell,
-        ref OfferBuild offerBuild)
-        {
-            var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
+    public static void CreateActions(
+    int actorPid,
+    int actorType,
+    int actorCell,
+    ref OfferBuild offerBuild)
+    {
+        var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
 
-            if (bm.necroSpawnStore[actorPid] < 0) return;
-            if (CreateAction.PieceLimitReached(ref offerBuild)) return;
-            int type = bm.necroSpawnStore[actorPid];
-            if (!CreateAction.isPieceTypeLegal(type, ref offerBuild)) return;
-            if (Piece.isBuilding[type]) return;
-            var emptyCells = BmCac.CellIdsRingAndLessthanRing(originCell: actorCell, ringSize: Piece.necroSpawn_range[actorType], requireEmpty: true, requireOcc: false, requireOwned: -1, gameIndex: offerBuild.gameIndex);
-            Debug.Log($"Necro Spawn, Empty Cells amount:{emptyCells.Count}");
-            if (emptyCells.Count < 1) return;
-            for (int i = 0; i < emptyCells.Count; i++)
+        if (bm.necroSpawnStore[actorPid] < 0) return;
+        if (PieceLimitReached(ref offerBuild)) return;
+        int type = bm.necroSpawnStore[actorPid];
+        if (!isPieceTypeLegal(type, ref offerBuild)) return;
+        if (Piece.isBuilding[type]) return;
+        var emptyCells = BmCac.CellIdsRingAndLessthanRing(originCell: actorCell, ringSize: Piece.necroSpawn_range[actorType], requireEmpty: true, requireOcc: false, requireOwned: -1, gameIndex: offerBuild.gameIndex);
+        Debug.Log($"Necro Spawn, Empty Cells amount:{emptyCells.Count}");
+        if (emptyCells.Count < 1) return;
+        for (int i = 0; i < emptyCells.Count; i++)
+        {
+            Action theAction = new Action
             {
-                Action theAction = new Action
-                {
-                    kind = NecroSpawn,
-                    ActorsCell = actorCell,
-                    TargetCell = emptyCells[i],
-                };
-                OfferProvider.Emit(theAction, ref offerBuild);
-            }
+                kind = NecroSpawn,
+                ActorsCell = actorCell,
+                TargetCell = emptyCells[i],
+            };
+            OfferProvider.Emit(theAction, ref offerBuild);
         }
+    }
 
     public static void Record(int gameIndex, int pieceIDKilled)
     {

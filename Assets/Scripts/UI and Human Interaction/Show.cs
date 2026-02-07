@@ -62,6 +62,19 @@ public static class Show
         SetGeneralUI(backDropColor: UI.hic.config.ConnectorModeBackground, panelColor: UI.hic.config.buildModePanelBackground, cellColor: UI.hic.config.defaultCellColor, build: false, create: true, action: false, pieceFull: false, execute: false, walls: false, secondWalls: true);
         UI.hic.wallOptionPanel.showWallConfigOptions(GiveMeOffersContaining(Legal: true, Kind: true, ActorsCell: false, TargetCell: true, Type: true, WallConfig: false, intakeCell: false));
         PieceInfo.SetPieceInfo(AFilter.Chosen[(int)ChoosingTargetType]);
+
+        switch (AFilter.Chosen[(int)ChoosingKind])
+        {
+            case Create:
+                UI.hic.wallOptionPanel.showWallConfigOptions(GiveMeOffersContaining(Legal: true, Kind: true, ActorsCell: false, TargetCell: true, Type: true, WallConfig: false, intakeCell: false));
+                break;
+            case Spawner:
+                UI.hic.wallOptionPanel.showWallConfigOptions(GiveMeOffersContaining(Legal: true, Kind: true, ActorsCell: true, TargetCell: true, Type: false, WallConfig: false, intakeCell: false));
+                break;
+            case Upgrade:
+                UI.hic.wallOptionPanel.showWallConfigOptions(GiveMeOffersContaining(Legal: true, Kind: true, ActorsCell: true, TargetCell: false, Type: true, WallConfig: false, intakeCell: false));
+                break;
+        }
     }
     public static void ShowSpawnerOptions()
     {
@@ -190,6 +203,9 @@ public static class Show
         {
             if (UIBridge._offers[i].ActorsCell == cell) return true;
         }
+        if (!UIBridge.bm.IsCellOccupied(cell)) return false;
+        PieceInfo.SetPieceInfo(UIBridge.bm.GetPieceTypeFromCell(cell));
+        PanelToggles.setCreatePanelTrue();
         return false;
     }
 

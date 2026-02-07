@@ -19,7 +19,14 @@ public static class CreateAction
         {
             if (!Piece.isBuildable[type]) continue;
             if (!isPieceTypeLegal(type, ref offerBuild)) continue;
-            GenerateCompleteCreateActions(in cell, in type, ref offerBuild);
+            Action theAction = new Action
+            {
+                kind = Create,
+                ActorsCell = -1,
+                TargetCell = cell,
+                TargetType = type,
+            };
+            GenerateCompleteCreateActions(theAction: in theAction, targetType: in type,  offerBuild: ref offerBuild);
         }
     }
 
@@ -289,7 +296,7 @@ public static class CreateAction
 
 
 
-    
+
 
     // public static void placePiece(in Action theAction, byte player, int gameIndex)
     // {

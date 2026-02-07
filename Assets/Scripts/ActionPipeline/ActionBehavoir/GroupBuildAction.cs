@@ -12,7 +12,7 @@ public static class GroupBuildAction
     public static void CreateActions(int pieceId, byte actorType, int cell, ref OfferBuild offerBuild)
     {
         // Cluster check
-        if (!CreateAction.isPieceTypeLegal(actorType, ref offerBuild)) return;
+        if (!isPieceTypeLegal(actorType, ref offerBuild)) return;
         int clusterSize = BmCac.CountClusterOfType(actorType, cell, offerBuild.gameIndex);
         if (clusterSize < Piece.groupBuild_requireNumber[actorType]) return;
 
@@ -39,14 +39,14 @@ public static class GroupBuildAction
 
     public static void EmitGroupBuild(Action[] theActions, ref OfferBuild offerBuild)
     {
-        if (CreateAction.PieceLimitReached(ref offerBuild)) return;
+        if (PieceLimitReached(ref offerBuild)) return;
 
         var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
 
 
         for (int cell = 0; cell < Info.totalCells; cell++)
         {
-            if (!CreateAction.isCellLegalPlacement(cell, ref offerBuild)) continue;
+            if (!isCellLegalPlacement(cell, ref offerBuild)) continue;
             for (int i = 0; i < theActions.Length; i++)
             {
                 Action theAction = new Action

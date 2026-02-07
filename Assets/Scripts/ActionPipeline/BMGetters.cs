@@ -36,6 +36,13 @@ public partial class BoardModel
     public bool IsValidCellId(int cellId) => (uint)cellId < (uint)Info.totalCells;
     public bool IsValidPieceId(int pieceId) => (uint)pieceId < (uint)pieceCount;
     public bool IsCellOccupied(int cell) => GetCellOccupant(cell) != Info.invalidId;
+    public bool AreCellsBordering(int cell1, int cell2)
+    {
+        var neighbors = geo.neighborsById[cell1];
+        for (int i = 0; i < neighbors.Length; i++) if (neighbors[i] == cell2) return true;
+        return false;
+    }
+
     // =====================================================================
     // Minimal wrappers many systems expect (ID-only)
     // =====================================================================

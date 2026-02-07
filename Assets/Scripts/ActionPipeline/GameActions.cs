@@ -118,7 +118,7 @@ namespace Game.Core
                 if (bm.IsEmpty(victimsCell)) bm.MovePieceRow(bm.occupantPieceId[actorsCell], victimsCell);
                 return;
             }
-            bm.MovePieceRow(bm.occupantPieceId[actorsCell], BmCac.FindNearestEmptyAdjacent(actorsCell, victimsCell, gameIndex));
+            if (!bm.AreCellsBordering(actorsCell, victimsCell)) bm.MovePieceRow(bm.occupantPieceId[actorsCell], BmCac.FindNearestEmptyAdjacent(actorsCell, victimsCell, gameIndex));
         }
 
         #region Offers for Create

@@ -156,6 +156,7 @@ namespace Game.Core
         {
             events.turnBegin(new TurnContext { ThePlayer = currentPlayer });
             ps[currentPlayer].BeginTurnReset();
+            bm.spawnerUsedThisTurn.Clear();
             if (LogEnabled) DbLog.onTurnBegin(currentPlayer, gameIndex);
             if (ps[currentPlayer].applyStartOfTurnBudgetDecrease) ps[currentPlayer].AddBudget(-(float)Info.startOfTurnBudgetDecrease);
             PiecesSides.RecomputeConnectorComponents(gameIndex);

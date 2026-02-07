@@ -23,6 +23,12 @@ public static class PanelToggles
         HCost.UpdateCreate = create;
     }
 
+    public static void setCreatePanelTrue()
+    {
+        UI.hic.createPanel.gameObject.SetActive(true);
+        HCost.UpdateCreate = true;
+    }
+
     private static void moveCreatePanel(bool firstPosition)
     {
         if (firstPosition) { UI.hic.createPanel.anchoredPosition = new Vector2(-407, -4); UI.hic.CreatePanelBackGround.gameObject.SetActive(true);  } else { UI.hic.createPanel.anchoredPosition = new Vector2(-260, -4); UI.hic.CreatePanelBackGround.gameObject.SetActive(false); }
