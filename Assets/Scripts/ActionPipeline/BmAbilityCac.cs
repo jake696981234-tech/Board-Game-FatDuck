@@ -7,6 +7,22 @@ public static class BmCac
 {
     //The Aim of this script is to contain board Model related Methods, that are needed for abilitys
 
+    public static int LOSEmptyCells(Span<int> outCells, int range, int originCell, int gameIndex)
+    {
+        var bm = GameRegistry.game[gameIndex].boardModel;
+        int cellCount = 0;
+        for (int cell = 0; cell < Info.totalCells; cell++)
+        {
+            if (!bm.IsEmpty(cell)) continue;
+            int dist = bm.Distance(originCell, cell);
+            if (dist < 1 || dist > range) continue;
+            if (!LineOfSightClear(originCell, cell, gameIndex)) continue;
+            outCells[cellCount++] = cell;
+        }
+        return cellCount;
+    }
+
+
     // ---- Geometry-free snapshots for analytics/logging ----
     public static Dictionary<(int owner, int type), int> SnapshotOwnerTypeCounts(BoardModel bm)
     {
@@ -178,8 +194,8 @@ public static class BmCac
 
 
 
-        
-    
+
+
     public static List<int> CellIdsRingAndLessthanRing(int originCell, int ringSize, bool requireEmpty, bool requireOcc, int requireOwned, int gameIndex)
     {
         var bm = GameRegistry.game[gameIndex].boardModel;
@@ -198,7 +214,7 @@ public static class BmCac
                     if (requireOwned != -1 && bm.isPieceIDOwnedFromCell(requireOwned, cells[i])) continue;
                 }
                 outCells.Add(cells[i]);
-            } 
+            }
         }
         return outCells;
     }

@@ -121,67 +121,151 @@ namespace Game.Core
             bm.MovePieceRow(bm.occupantPieceId[actorsCell], BmCac.FindNearestEmptyAdjacent(actorsCell, victimsCell, gameIndex));
         }
 
+        #region Offers for Create
 
-
-
-        // public static List<int> CollectClusterCells(byte type, int startCell, int gameIndex)
+        // public static void CreateActions(int cell, ref OfferBuild offerBuild)
         // {
-        //     var bm = GameRegistry.game[gameIndex].boardModel;
-
-        //     var cells = new List<int>();
-        //     if (startCell < 0) return cells;
-        //     var visited = Scratch.GetScratchCellBuffer(gameIndex);
-        //     Array.Clear(visited, 0, visited.Length);
-        //     int[] queue = Scratch.GetScratchCellBuffer(gameIndex);
-        //     int head = 0, tail = 0;
-        //     queue[tail++] = startCell;
-        //     visited[startCell] = 1;
-        //     while (head < tail)
+        //     for (int type = 0; type <  Piece.typeCount; type++)
         //     {
-        //         int cell = queue[head++];
-        //         int pid = bm.GetCellOccupant(cell);
-        //         if (pid >= 0 && bm.GetPieceType(pid) == type)
+        //         Action theAction = new Action
         //         {
-        //             cells.Add(cell);
-        //             int[] neigh = Scratch.GetScratchNeighborBuffer(gameIndex);
-        //             int n = bm.GetNeighbors(cell, neigh);
-        //             for (int i = 0; i < n; i++)
-        //             {
-        //                 int nb = neigh[i];
-        //                 if (nb < 0 || nb >= visited.Length) continue;
-        //                 if (visited[nb] != 0) continue;
-        //                 int nbPid = bm.GetCellOccupant(nb);
-        //                 if (nbPid < 0 || bm.GetPieceType(nbPid) != type) continue;
-        //                 visited[nb] = 1;
-        //                 queue[tail++] = nb;
-        //             }
-        //         }
+        //             kind = Create,
+        //             ActorsCell = -1,
+        //             TargetCell = cell,
+        //             TargetType = type,
+        //         };
+        //         GenerateCompleteCreateActions(in theAction, ref offerBuild);
         //     }
-        //     return cells;
         // }
 
-
-
-        // public static void GetMultiCreateState(out bool active, out byte type, out bool border, out int remaining, out int[] cells, out int count, int gameIndex)
+        // public static void GiveMeCreateActions(byte actionKind, int targetcell, bool careAboutPieceLimit, ref OfferBuild offerBuild)
         // {
-        //     var gameState = GameRegistry.game[gameIndex].gameState;
+        //     if (PieceLimitReached(ref offerBuild) && careAboutPieceLimit) return;
+        //     if (!isCellLegalPlacement(targetcell, ref offerBuild)) return;
 
-        //     active = gameState.multiCreateActive;
-        //     type = gameState.multiCreateType;
-        //     border = gameState.multiCreateBorder;
-        //     remaining = gameState.multiCreateRemaining;
-        //     cells = gameState.multiCreateCells.ToArray();
-        //     count = gameState.multiCreateCells.Count;
+        //     int typeCount = Piece.typeCount;
+        //     for (int type = 0; type < typeCount; type++)
+        //     {
+        //         if (!Piece.isBuildable[type]) continue;
+        //         if (!isPieceTypeLegal(type, ref offerBuild)) continue;
+        //         GenerateCompleteCreateActions(in theAction, ref offerBuild);
+        //     }
         // }
 
+        public static void GenerateCompleteCreateActions(in Action theAction, in int targetType, ref OfferBuild offerBuild)
+        {
+            List<Action> CreateActions = new List<Action> { theAction };
+            if (Piece.connectors_enabled[targetType] && !CreateConnectorOptions(CreateActions, in targetType, ref offerBuild)) return;
+            // if (Piece.sacrificeCost_enabled[theAction.TargetType] && !GenerateSacrificeCosts(CreateActions, ref offerBuild)) return;
+            for (int i = 0; i < CreateActions.Count; i++) { OfferProvider.Emit(CreateActions[i], ref offerBuild); }
+        }
 
-        //         #endregion
+        public static bool CreateConnectorOptions(List<Action> actions, in int targetType, ref OfferBuild offerBuild)
+        {
+            List<Action> ConnectorActions = new List<Action>();
+            bool legal = false;
+
+            for (int i = 0; i < actions.Count; i++)
+            {
+                for (int cfg = 0; cfg < 64; cfg++)
+                {
+                    // if ((allowedMask & (1UL << cfg)) == 0) continue;
+                    if (!PiecesSides.IsConnectorPlacementLegal(actions[i].TargetCell, (byte)targetType, cfg, offerBuild.query.playerId, offerBuild.gameIndex)) continue;
+
+                    legal = true;
+                    Action theAction = new Action
+                    {
+                        kind = actions[i].kind,
+                        ActorsCell = actions[i].ActorsCell,
+                        TargetCell = actions[i].TargetCell,
+                        TargetType = actions[i].TargetType,
+                        WallConfig = (ushort)cfg,
+                    };
+                    ConnectorActions.Add(theAction);
+                }
+            }
+
+            if (legal)
+            {
+                actions.Clear();
+                actions.AddRange(ConnectorActions);
+                return true;
+            }
+            return false;
+        }
+        public static bool PieceLimitReached(ref OfferBuild offerBuild)
+        {
+            var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
+            bool limitActive = offerBuild.query.pieceLimitEnabled && offerBuild.query.pieceLimitPerPlayer > 0;
+            return limitActive && bm.GetPieceCountForPlayer(offerBuild.query.playerId) >= offerBuild.query.pieceLimitPerPlayer;
+        }
+
+        public static bool isCellLegalPlacement(int cell, ref OfferBuild offerBuild)
+        {
+            var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
+            if (!bm.IsEmpty(cell)) return false; // only empties
+
+            var coreCell = bm.GetPlayerCoreCellId(offerBuild.query.playerId);
+
+            if (cell == coreCell) return true;
+            if (isBaseHex(ref offerBuild, coreCell, cell)) return true;
+            if (isAdjecentABuilding(cell, ref offerBuild)) return true;
+            return false;
+        }
+
+        public static bool isPieceTypeLegal(int type, ref OfferBuild offerBuild)
+        {
+
+            if (!HasRequiredDigits(type, ref offerBuild)) return false;
+
+            bool hasConn = Piece.connectors_enabled[type];
+            ulong allowedMask = hasConn ? Piece.connector_allowedMasks[type] : 0UL;
+            if (hasConn && allowedMask == 0UL) return false;
+
+            return true;
+        }
+        public static bool HasRequiredDigits(int type, ref OfferBuild offerBuild)
+        {
+            var gameState = GameRegistry.game[offerBuild.gameIndex].gameState;
+            int req = Piece.requiredDigit[(byte)type];
+            if (req >= 0 && !gameState.ps[offerBuild.query.playerId].HasDigit(req)) return false;
+            return true;
+        }
+
+        public static bool isBaseHex(ref OfferBuild offerBuild, int coreCell, int cell)
+        {
+            var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
+            int[] neighScratch = Scratch.GetScratchNeighborBuffer(offerBuild.gameIndex);
+
+            int numberOfCoreNeighbors = bm.GetNeighbors(coreCell, neighScratch);
+            for (int i = 0; i < numberOfCoreNeighbors; i++)
+            {
+                if (neighScratch[i] == cell) return true;
+            }
+            return false;
+        }
+
+        public static bool isAdjecentABuilding(int cell, ref OfferBuild offerBuild)
+        {
+            var bm = GameRegistry.game[offerBuild.gameIndex].boardModel;
+
+            int[] neighScratch = Scratch.GetScratchNeighborBuffer(offerBuild.gameIndex);
+            int nNbrs = bm.GetNeighbors(cell, neighScratch);
+            for (int i = 0; i < nNbrs; i++)
+            {
+                int nbCell = neighScratch[i];
+                int nbPid = bm.GetCellOccupant(nbCell);
+                if (OfferProvider.IsInvalid(bm, nbPid)) continue;
+                if (bm.GetPieceOwner(nbPid) != offerBuild.query.playerId) continue;
+                byte nbType = bm.GetPieceType(nbPid);
+                if (Piece.isBuilding[nbType]) return true;
+            }
+            return false;
+        }
 
 
 
-        //         //Helper to call methods for applyActions easier
-
-
+        #endregion
     }
 }
 public readonly struct PerPiecePayout

@@ -48,6 +48,7 @@ public static class MoveAction
         // Emit EMPTY destinations (distance-filtered)
         for (int i = 0; i < reachCount; i++)
         {
+            if (bm.IsCellOccupied(tmpReachable[i]) && Piece.move_damage[actorType] <= 0) continue;
             int cell = tmpReachable[i];
             int d = bm.Distance(originCell, cell);
             if (d >= rmin && d <= rmax)
