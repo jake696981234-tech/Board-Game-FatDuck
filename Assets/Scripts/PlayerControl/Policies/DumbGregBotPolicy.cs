@@ -171,7 +171,8 @@ public class DumbGregBotPolicy
 
             if (a.kind != ActionKind.Move) continue;
 
-            int src = a.ActorsCell; int dst = a.TargetCell;
+            int src = a.ActorsCell; 
+            int dst = a.TargetCell;
             int before = bm.DistToVictoryPoint(src);
             int after = bm.DistToVictoryPoint(dst);
             int delta = before - after;

@@ -15,6 +15,9 @@ public static class Info
     // public static readonly PolicyKind[] playerPolicy;
     // [Header("Dumb Greg Policy Tuning")]
     public static readonly DumbGregAuthoring dumbGreg;
+    public static Dictionary<Piece.AbilityKind, int>[] BobWeights;
+    public static readonly DumbBobAuthoring dumbBobAuthoring;
+
     // [Header("ML Settings")]
     // [Header("ML Behavior Parameters (auto-injected)")]
     public static readonly string behaviorName;
@@ -130,6 +133,8 @@ public static class Info
         playerControl = (ControlMode[])config.playerControl.Clone();
         // playerPolicy = (PolicyKind[])config.playerPolicy.Clone();
         dumbGreg = config.dumbGreg;
+        BobWeights = config.giveMeDumbBobDictionary();
+        dumbBobAuthoring = config.dumbBobAuthoring;
 
         behaviorName = config.behaviorParams.behaviorName;
         useChildSensors = config.behaviorParams.useChildSensors;

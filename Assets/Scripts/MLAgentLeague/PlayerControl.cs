@@ -86,6 +86,12 @@ public class PlayerControl
         dumbGreg = new DumbGregBotPolicy(bot);
     }
 
+    private void initAsDumbBob()
+    {
+        var bot = new Bot(playerIndex, gameIndex);
+        dumbGreg = new DumbGregBotPolicy(bot);
+    }
+
     private void initAsMLFrozenBrain(ModelAsset MyBrain)
     {
         MLsam.bot = new Bot(playerIndex, gameIndex);

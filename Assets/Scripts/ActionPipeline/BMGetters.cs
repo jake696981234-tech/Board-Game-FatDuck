@@ -7,7 +7,7 @@ public partial class BoardModel
     #region General Fields
     public int[] occupantPieceId; // occupantPieceId[cellId] = pieceId | -1
     public int _vpCellId;
-    private int[] _coreCellIdByPlayer = new int[4];
+    public int[] _coreCellIdByPlayer = new int[4];
     public int pieceCount;    // rows in use [0..pieceCount-1]
     public int pieceCapacity; // allocated length of columns
 

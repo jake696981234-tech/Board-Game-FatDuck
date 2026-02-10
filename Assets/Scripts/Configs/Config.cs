@@ -2,6 +2,9 @@
 using UnityEngine;
 using Unity.MLAgents.Policies;
 using Unity.InferenceEngine;
+using Action = Game.Core.Action;
+using System.Collections.Generic;
+
 
 
 [CreateAssetMenu(fileName = "Config", menuName = "Game/Config", order = 0)]
@@ -37,7 +40,7 @@ public sealed class Config : ScriptableObject
     //     Info.PolicyKind.Heuristic
     // };
 
-    [Header("Dumb Greg Policy Tuning")]
+    [Header("Dumb Policy Tuning")]
     public DumbGregAuthoring dumbGreg = new DumbGregAuthoring
     {
         endTurnAfterFirstPct = 0.08f,
@@ -48,6 +51,28 @@ public sealed class Config : ScriptableObject
         seedBase = 12345,
         seedBySeat = true
     };
+
+    public DumbBobActionProbilitys[] dumbBob;
+    public DumbBobAuthoring dumbBobAuthoring;
+
+
+    public Dictionary<Piece.AbilityKind, int>[] giveMeDumbBobDictionary()
+    {
+        int enumCount = System.Enum.GetValues(typeof(Piece.AbilityKind)).Length;
+        var actionWeights = new Dictionary<Piece.AbilityKind, int>[enumCount];
+
+        for (int aPath = 0; aPath < dumbBob.Length; aPath++)
+        {
+            int slot = (int)dumbBob[aPath].kind;
+            // allocate if needed
+            if (actionWeights[slot] == null) actionWeights[slot] = new Dictionary<Piece.AbilityKind, int>();
+            int count = dumbBob[aPath].WeightKey.Length;
+            for (int i = 0; i < count; i++) actionWeights[slot][dumbBob[aPath].WeightKey[i]] = dumbBob[aPath].weight[i];
+        }
+        return actionWeights;
+    }
+
+
 
     [Header("---------ML Settings---------")]
     [Header("ML Behavior Parameters (auto-injected)")]
@@ -267,6 +292,25 @@ public struct DumbGregAuthoring
     public int seedBase;          // base seed used for RNG (combine with seat)
     public bool seedBySeat;       // if true, actual seed = seedBase + seat
 }
+
+[System.Serializable]
+public struct DumbBobActionProbilitys
+{
+    public Piece.AbilityKind kind;
+    public Piece.AbilityKind[] WeightKey;
+    public int[] weight;
+}
+[System.Serializable]
+public struct DumbBobAuthoring
+{
+    public Piece.AbilityKind[] Priority;
+    public int[] PayOutAimByRound;
+    public int VillagePieceTypeId;
+}
+
+
+
+
 
 [System.Serializable]
 public struct MLRewardsAuthoring

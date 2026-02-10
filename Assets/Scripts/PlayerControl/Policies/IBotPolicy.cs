@@ -4,8 +4,29 @@ using Action = Game.Core.Action;
 
 
 
+
 public class Bot
 {
+    public void initAsBob()
+    {
+        if (rng.Next(2) == 0) return;
+        isCellAimVP = false;
+        playerTargets = BotHelpers.MakeRandomPlayerOrder(excludePlayer: playerId, bot: this);
+    }
+    //dumb bob additions
+    public int[] playerTargets;
+    public bool isCellAimVP = true;
+    public int[] availableActions;
+    public Random rng = new Random();
+    public Action[] LegalOffers;
+
+    
+
+
+
+
+
+
     // Returns chosen action index in acts, or -1 to indicate no-op.
     // int PickAction(in OfferQuery q,
     //                ReadOnlySpan<Game.Core.Action> acts,
@@ -19,7 +40,7 @@ public class Bot
     public int NumberOfOffers;
     public float[] Quoted = new float[Info.maxOffersToConsider];
     public byte[] ActionMask = new byte[Info.maxOffersToConsider];
-    
+
 
     public Bot(byte thePlayerId, int theGameIndex)
     {
@@ -27,7 +48,7 @@ public class Bot
         gameIndex = theGameIndex;
     }
 
-    public void BuildOffersForCurrentPlayer() 
+    public void BuildOffersForCurrentPlayer()
     {
         var gameState = GameRegistry.game[gameIndex].gameState;
         // Build OfferQuery: (bm, pcs, ps, playerId, cost)
