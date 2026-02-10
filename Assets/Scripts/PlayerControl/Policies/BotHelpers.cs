@@ -48,29 +48,54 @@ public static class BotHelpers
         return min;
     }
 
-    public static Action[] SetLegalOffers(ReadOnlySpan<Action> acts, ReadOnlySpan<byte> mask)
+    public static Action[] SetLegalOffers(Bot bot)
     {
         List<Action> returnList = new();
-        for (int i = 0; i < acts.Length; i++) if (mask[i] == 0) returnList.Add(acts[i]);
+        for (int i = 0; i < bot.Offers.Length; i++) if (bot.ActionMask[i] != 0) returnList.Add(bot.Offers[i]);
         return returnList.ToArray();
     }
 
     public static int[] MakeRandomPlayerOrder(int excludePlayer, Bot bot)
     {
-        // Build pool 1..playerCount, excluding one player
-        int[] pool = new int[Info.playerCount - (excludePlayer >= 1 && excludePlayer <= Info.playerCount ? 1 : 0)];
+        int count = Info.playerCount;
+
+        // Build pool 0..count-1, excluding excludePlayer
+        int[] pool = new int[count - 1];
         int idx = 0;
-        for (int i = 1; i <= Info.playerCount; i++)
+
+        for (int i = 0; i < count; i++)
         {
             if (i == excludePlayer) continue;
             pool[idx++] = i;
         }
-        // Shuffle
+
+        // Shuffle (Fisher–Yates)
         for (int i = pool.Length - 1; i > 0; i--)
         {
             int j = bot.rng.Next(i + 1);
             (pool[i], pool[j]) = (pool[j], pool[i]);
         }
+
         return pool;
     }
+
+
+    // public static int[] MakeRandomPlayerOrder(int excludePlayer, Bot bot)
+    // {
+    //     // Build pool 1..playerCount, excluding one player
+    //     int[] pool = new int[Info.playerCount - (excludePlayer >= 1 && excludePlayer <= Info.playerCount ? 1 : 0)];
+    //     int idx = 0;
+    //     for (int i = 1; i <= Info.playerCount; i++)
+    //     {
+    //         if (i == excludePlayer) continue;
+    //         pool[idx++] = i;
+    //     }
+    //     // Shuffle
+    //     for (int i = pool.Length - 1; i > 0; i--)
+    //     {
+    //         int j = bot.rng.Next(i + 1);
+    //         (pool[i], pool[j]) = (pool[j], pool[i]);
+    //     }
+    //     return pool;
+    // }
 }

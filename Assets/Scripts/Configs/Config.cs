@@ -305,7 +305,6 @@ public struct DumbBobAuthoring
 {
     public Piece.AbilityKind[] Priority;
     public int[] PayOutAimByRound;
-    public int VillagePieceTypeId;
 }
 
 

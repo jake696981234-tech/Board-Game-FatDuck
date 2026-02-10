@@ -10,7 +10,7 @@ using Unity.InferenceEngine;
 public class PlayerManager
 {
     private PlayerControl[] playerControl = new PlayerControl[4];
-    
+
     public PlayerState[] SetPlayers(int gameIndex)
     {
         PlayerState[] playerStructs = CreateAndSeedThePlayerStructs();
@@ -39,7 +39,7 @@ public class PlayerManager
         if (Info.EnableMLLeague) { SetLeaguePlayers(gameIndex); return; }
         SetPlayersManually(gameIndex);
     }
-    
+
     private void SetPlayersManually(int gameIndex)
     {
         for (byte seat = 0; seat < Info.playerCount; seat++)
@@ -58,6 +58,10 @@ public class PlayerManager
                     playerControl[seat] = new PlayerControl();
                     playerControl[seat].init(LearningML, seat, gameIndex, this, null, Info.behaviorName);
                     break;
+                case dumbBob:
+                    playerControl[seat] = new PlayerControl();
+                    playerControl[seat].init(dumbBob, seat, gameIndex, this);
+                    break;
                 case Human:
                 default:
                     // Dont Need go do anything- could change this for multple players, and/or can seed some values here 
@@ -65,7 +69,7 @@ public class PlayerManager
             }
         }
     }
-    
+
 
     #region League SetUp
 
@@ -144,7 +148,7 @@ public class PlayerManager
             playerControl[i].OnTerminal(winner);
         }
     }
-    
 
-    #endregion 
+
+    #endregion
 }

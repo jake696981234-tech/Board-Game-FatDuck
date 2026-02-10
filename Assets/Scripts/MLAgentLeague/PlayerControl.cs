@@ -18,7 +18,9 @@ public class PlayerControl
     private BehaviorParameters MyMLParamters;
     GameObject MLObjectRoot;
     private DumbGregBotPolicy dumbGreg;
-    
+    private DumbBob theDumbBob;
+
+
     public byte playerIndex;
     public void tickPlayer(int playerId, GameState gameState)
     {
@@ -27,6 +29,9 @@ public class PlayerControl
         {
             case DumbGreg:
                 gameState.Perform(dumbGreg.bot.Offers[dumbGreg.PickAction()], dumbGreg.bot.Offers);
+                break;
+            case dumbBob:
+                gameState.Perform(theDumbBob.theBot.Offers[theDumbBob.PickAction()], theDumbBob.theBot.Offers);
                 break;
             case FrozenML:
             case LearningML:
@@ -52,20 +57,20 @@ public class PlayerControl
         if (isLearning) MLsam.ApplyTerminal(winner);
     }
 
-    
 
- 
+
+
     public void init(Info.ControlMode thePlayerType, byte thePlayerIndex, int theGameIndex, PlayerManager thePlayerManager, ModelAsset MyBrain = null, string behaviorName = null)
     {
         gameIndex = theGameIndex;
         playerManager = thePlayerManager;
         gameState = GameRegistry.game[gameIndex].gameState;
         playerIndex = thePlayerIndex;
-        playerType = thePlayerType; 
+        playerType = thePlayerType;
 
         subscribePlayer();
 
-        switch(playerType)
+        switch (playerType)
         {
             case FrozenML:
                 initAsMLFrozenBrain(MyBrain);
@@ -76,9 +81,12 @@ public class PlayerControl
             case DumbGreg:
                 initAsDumbGreg();
                 break;
+            case dumbBob:
+                initAsDumbBob();
+                break;
         }
     }
-   
+
 
     private void initAsDumbGreg()
     {
@@ -89,7 +97,8 @@ public class PlayerControl
     private void initAsDumbBob()
     {
         var bot = new Bot(playerIndex, gameIndex);
-        dumbGreg = new DumbGregBotPolicy(bot);
+        bot.initAsBob();
+        theDumbBob = new DumbBob(bot);
     }
 
     private void initAsMLFrozenBrain(ModelAsset MyBrain)
@@ -111,7 +120,7 @@ public class PlayerControl
 
         MyMLParamters.BehaviorName = behaviorName;
         MyMLParamters.DeterministicInference = false;
-        MLsam.bot = new Bot(playerIndex, gameIndex); 
+        MLsam.bot = new Bot(playerIndex, gameIndex);
     }
 
 
@@ -132,7 +141,7 @@ public class PlayerControl
 
     }
 
-    
+
 
     public struct BootSpecficPlayerInfo
     {

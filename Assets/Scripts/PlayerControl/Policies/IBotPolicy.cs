@@ -20,12 +20,6 @@ public class Bot
     public Random rng = new Random();
     public Action[] LegalOffers;
 
-    
-
-
-
-
-
 
     // Returns chosen action index in acts, or -1 to indicate no-op.
     // int PickAction(in OfferQuery q,

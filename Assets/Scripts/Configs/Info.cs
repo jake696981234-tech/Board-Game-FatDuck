@@ -216,7 +216,7 @@ public static class Info
         dbLogging = config.dbLogging;
     }
 
-    public enum ControlMode : byte { Human = 0, DumbGreg = 1, LearningML = 2, FrozenML }
+    public enum ControlMode : byte { Human = 0, DumbGreg = 1, LearningML = 2, FrozenML = 3, dumbBob = 4 }
     // public enum PolicyKind : byte { Heuristic = 0, DumbGreg = 1 }
 
     public enum GraduationRequirment
